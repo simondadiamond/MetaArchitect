@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "n8n-native": {
+      "command": "C:\\Program Files\\nodejs\\npx.cmd",
+      "args": [
+        "-y",
+        "supergateway",
+        "--streamableHttp",
+        "http://localhost:5678/mcp-server/http",
+        "--header",
+        "authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiNjFjNjMxZi00Njk5LTRjNDItYmM4MS03ZGMyOGM0MTg5YzkiLCJpc3MiOiJuOG4iLCJhdWQiOiJtY3Atc2VydmVyLWFwaSIsImp0aSI6IjViNzZmNjQwLTJkNDYtNDcxOS1iZjc3LTdiZDIzYTM4NDEzYiIsImlhdCI6MTc3MjAxNDc4Nn0.nAqVC_NfnVaeE4QaoSrHyZANd9IQXKvLUvOTXDeBZaM"
+      ]
+    },
+    "n8n-mcp": {
+      "command": "C:\\Program Files\\nodejs\\npx.cmd",
+      "args": ["-y", "n8n-mcp"],
+      "env": {
+        "N8N_API_URL": "http://localhost:5678",
+        "N8N_API_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiNjFjNjMxZi00Njk5LTRjNDItYmM4MS03ZGMyOGM0MTg5YzkiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiNTZiNmE1OGMtNDczZi00ZTA4LTg5NDEtZGY3YmIyYWU0ZmFhIiwiaWF0IjoxNzcyMDE4MDgyLCJleHAiOjE3Nzk3NjgwMDB9.pWYQAgQgcADTRSY0ELkKpq2weYtUA8pudK6Po3B9b0Y",
+        "MCP_MODE": "stdio",
+        "LOG_LEVEL": "error",
+        "DISABLE_CONSOLE_OUTPUT": "true"
+      }
+    }
+  }
+}
