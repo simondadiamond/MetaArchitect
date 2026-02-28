@@ -42,6 +42,11 @@ Voice rules:
 - First person only when anchored in a specific moment, never for general claims
 - The burned practitioner test: would someone paged at 2am for an LLM failure find this exact and useful?
 
+Fact citation rules:
+- tier1 or tier2 with verified: true → use as a primary citation, name the source in the post
+- tier3 or tier4 → color and framing only, never the anchor claim
+- verified: false → never use as a standalone claim; only as supporting context when a verified fact already anchors the point
+
 POST ANATOMY (LinkedIn — 10 lines + hashtags):
 Line 1: Hook (adapted from the provided hook — do NOT copy verbatim, fit to context)
 Line 2: (blank)
@@ -64,7 +69,11 @@ Output: the post text only. No preamble, no explanation.
 Topic: {uif.meta.topic}
 Angle: {angle.angle_name}
 Contrarian take: {angle.contrarian_take}
-Key facts: {supporting_facts.map(i => uif.core_knowledge.facts[i].statement).join("\n")}
+Key facts (use source_tier and verified to determine citation weight):
+{supporting_facts.map(i => {
+  const f = uif.core_knowledge.facts[i];
+  return `[${f.source_tier} / verified:${f.verified}] ${f.statement}`;
+}).join("\n")}
 
 Framework to apply: {framework.framework_name}
 Framework template: {framework.template}

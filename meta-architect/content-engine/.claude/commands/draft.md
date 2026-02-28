@@ -97,13 +97,29 @@ const needsSnippet = snippet === null;
 ### 7. Generate draft (writer skill)
 ```javascript
 updateStage(state, "drafting");
+// Classify supporting facts by citation weight before passing to writer:
+// Primary (anchor claims): source_tier tier1|tier2 AND verified: true
+// Color only (framing, not standalone claims): tier3|tier4
+// Never standalone: verified: false (only usable when a verified fact already anchors the point)
+const supporting_facts = angle.supporting_facts ?? [];
 // Call claude-sonnet-4-6 with writer.md Draft Generation Prompt
-// Inputs: uif, angle, framework, hook, snippet (or null), platform, brand
+// Inputs: uif, angle, supporting_facts, framework, hook, snippet (or null), platform, brand
 // Log result (step_name: "draft_generation")
-const draftContent = await generateDraft({ uif, angle, framework, hook, snippet, platform, brand });
+const draftContent = await generateDraft({ uif, angle, supporting_facts, framework, hook, snippet, platform, brand });
 ```
 
 **E — Explicit gate**: Run `validatePost({ draft_content: draftContent, platform })` — must pass before creating post record.
+
+<!-- BACKLOG GAP-2: Draft fact citation gate (LLM-soft, not enforced)
+     Current state: citation rules live in writer.md system prompt and facts are
+     labeled [tier / verified] inline — the writer is instructed but not blocked.
+     A verified:false fact used as a standalone anchor claim will not be caught.
+     To close: add a post-generation check that parses draftContent against the
+     fact list and rejects any draft that cites a verified:false fact without a
+     verified:true anchor already present in the post.
+     Revisit when: post volume is high enough that manual review can't catch it,
+     or after the first time a bad citation ships.
+-->
 
 ### 8. Create posts record
 ```javascript

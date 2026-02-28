@@ -35,6 +35,15 @@ Rules:
 - what_to_find describes what a successful result looks like for this query
 - All 3 queries must relate to the same topic/angle from the brief
 - Never generate more or fewer than 3 queries
+
+Source metadata requirement:
+Every query must be constructed so Perplexity is prompted to return, alongside each fact or statistic:
+- The publication or organization name (not just a URL)
+- Whether the source is peer-reviewed, a named survey with stated methodology, or a secondary source
+- If a study is cited: sample size and study type in one line (e.g. "RCT, n=42" or "longitudinal survey, n=1,200")
+
+Append this instruction to every query string:
+"For each finding, state: (1) publication or organization name, (2) whether peer-reviewed / named survey with methodology / secondary source, (3) if a study: sample size and study type in one line."
 ```
 
 **User prompt**:
@@ -122,7 +131,8 @@ UIF v3.0 SCHEMA:
       {
         "statement": string (required),
         "source_url": string (required),
-        "credibility": "high"|"medium"|"low" (optional),
+        "source_tier": "tier1"|"tier2"|"tier3"|"tier4" (required),
+        "verified": boolean (required),
         "context": string (optional)
       }
     ]
@@ -160,7 +170,16 @@ CRITICAL RULES:
 5. No content_outline, no hooks[] per angle, no content_brief_summary in meta. This is UIF v3.0, not v2.0.
 6. All string values must be non-empty.
 7. INVERSION TEST — before finalizing each angle, ask: does the source data actually support this contrarian_take, or does it contradict it? If the research finding says the opposite of what you're claiming, do not use it as support. Find a different angle or leave that supporting_facts slot empty. Never invert a source's conclusion to fit a predetermined take.
-8. CREDIBILITY RUBRIC — assign ratings as follows: high = peer-reviewed paper or Tier 1 primary source (HBR article itself, NYT, WSJ, Stack Overflow official survey, published academic journal); medium = established industry publication, recognized newsletter, major vendor report with methodology; low = blog post, community forum, secondary source citing another source, or any stat with no methodology link. When a stat has no methodology link, add "unverified stat — no methodology link" to its context field.
+8. SOURCE TIER & VERIFICATION — assign two separate fields to every fact:
+   source_tier (based on source type only — never penalize for sample size; note sample size in context instead):
+   - "tier1" = Peer-reviewed academic journal (PMC, Science, Nature, Frontiers, etc.) — regardless of sample size
+   - "tier2" = Research org study with named methodology, government data, major named industry survey (Stack Overflow, McKinsey, Gartner, Deloitte, etc.)
+   - "tier3" = Established industry publication, named analyst firm report, recognized professional body
+   - "tier4" = Blog, newsletter, Substack, secondary source, or any source that summarizes another source without adding methodology
+   verified (based solely on whether methodology is traceable at the source URL):
+   - true = methodology is findable at the source URL
+   - false = stat is a round number, no methodology link, or source is summarizing a claim from elsewhere without citing the original study
+   Any fact with verified: false MUST have this exact text appended to its context field: "UNVERIFIED — do not use as a primary citation in published content without locating the original study."
 9. PILLAR CONNECTION — valid pillar names are exactly: "Production Failure Taxonomy", "STATE Framework Applied", "Defensive Architecture", "The Meta Layer", "Regulated AI & Law 25". Every angle must name one and explain in one sentence how this angle serves it. If none of the 5 pillars fit, the angle is off-brand and must be replaced.
 10. BRAND SPECIFIC ANGLE — set to TRUE only if this angle depends on Simon Paris's specific positioning, experience, or the STATE framework by name. A generic AI/developer take that any commentator could write = FALSE. At least 1 angle per UIF must be TRUE.
 11. HUMANITY SNIPPETS — output one entry per angle that would be meaningfully improved by a personal moment. Use tags that a practitioner's story bank would be indexed by (e.g. "production-incident", "late-night", "client-demo", "debugging", "wrong-model", "hallucination", "compliance", "origin-story"). If the angle is purely data-driven and a personal moment would not add value, omit it. If no angles need a snippet, output an empty array — but this should be rare.
