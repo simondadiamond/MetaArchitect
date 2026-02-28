@@ -34,11 +34,33 @@ function validateUIF(json) {
     }
   }
 
+  const validPillars = [
+    "Production Failure Taxonomy",
+    "STATE Framework Applied",
+    "Defensive Architecture",
+    "The Meta Layer",
+    "Regulated AI & Law 25"
+  ];
+
   if (Array.isArray(json.angles)) {
     if (json.angles.length < 1) errors.push("angles must have at least 1 item");
+    let hasBrandSpecific = false;
     json.angles.forEach((a, i) => {
       if (!a.angle_name || a.angle_name.trim() === "") errors.push(`angles[${i}].angle_name is empty`);
       if (!a.contrarian_take || a.contrarian_take.trim() === "") errors.push(`angles[${i}].contrarian_take is empty`);
+      // pillar_connection required
+      if (!a.pillar_connection || a.pillar_connection.trim() === "") {
+        errors.push(`angles[${i}].pillar_connection is missing`);
+      } else {
+        const namedPillar = validPillars.find(p => a.pillar_connection.includes(p));
+        if (!namedPillar) errors.push(`angles[${i}].pillar_connection must name one of the 5 content pillars`);
+      }
+      // brand_specific_angle required boolean
+      if (typeof a.brand_specific_angle !== "boolean") {
+        errors.push(`angles[${i}].brand_specific_angle must be a boolean`);
+      } else if (a.brand_specific_angle === true) {
+        hasBrandSpecific = true;
+      }
       // Validate supporting_facts indices are in bounds
       if (Array.isArray(a.supporting_facts) && json.core_knowledge?.facts) {
         const maxIdx = json.core_knowledge.facts.length - 1;
@@ -47,6 +69,17 @@ function validateUIF(json) {
           else if (idx < 0 || idx > maxIdx) errors.push(`angles[${i}].supporting_facts[${j}] = ${idx} out of bounds (max: ${maxIdx})`);
         });
       }
+    });
+    if (!hasBrandSpecific) errors.push("angles: at least 1 angle must have brand_specific_angle = true");
+  }
+
+  // humanity_snippets required array
+  if (!Array.isArray(json.humanity_snippets)) {
+    errors.push("humanity_snippets must be an array (may be empty)");
+  } else {
+    json.humanity_snippets.forEach((s, i) => {
+      if (!Array.isArray(s.suggested_tags)) errors.push(`humanity_snippets[${i}].suggested_tags must be an array`);
+      if (!s.relevance_note || s.relevance_note.trim() === "") errors.push(`humanity_snippets[${i}].relevance_note is empty`);
     });
   }
 

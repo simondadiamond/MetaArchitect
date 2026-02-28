@@ -2,6 +2,22 @@
 
 All Airtable operations use the REST API v0 with Personal Access Token auth.
 
+## Reusable Module
+
+A pre-built utility module lives at `lib/airtable.mjs`. **Always import from it instead of writing boilerplate.**
+
+```javascript
+import { getRecords, getAllRecords, getRecord, patchRecord, createRecord, TABLES } from '../lib/airtable.mjs';
+
+// Examples:
+const brand = await getRecords(TABLES.BRAND, `{name} = "metaArchitect"`);
+const ideas = await getRecords(TABLES.IDEAS, `{Status} = "selected"`, [{ field: "captured_at", direction: "asc" }]);
+await patchRecord(TABLES.IDEAS, recordId, { Status: "researching" });
+const log = await createRecord(TABLES.LOGS, { workflow_id: "...", step_name: "..." });
+```
+
+The module handles: dotenv loading, auth headers, BASE ID, error throwing on Airtable error responses.
+
 ---
 
 ## Authentication
@@ -45,15 +61,18 @@ main_guidelines         (long text)
 
 ### `ideas` table
 ```
-title                   (text)
-status                  (single select: processing/pending_selection/selected/researching/researched/research_failed)
+Topic                   (text) ← actual field name, NOT "title"
+Status                  (single select) ← actual field name, NOT "status"
+                        Options: New | Selected | Ready | Research_failed | Completed
+                        Pipeline mapping: New=captured, Selected=selected, Ready=researched, Research_failed=research_failed, Completed=published/scored
+                        ⚠ No "Researching" option exists yet — lock is tracked via research_started_at field only
 source_type             (single select: text/youtube/blog)
 source_url              (url)
 raw_input               (long text)
 workflow_id             (text)
 intent                  (single select: authority/education/community/virality)
 content_brief           (long text — JSON string)
-intelligence_file       (long text — JSON string, UIF v3.0)
+Intelligence File       (long text — JSON string, UIF v3.0) ← actual field name, NOT "intelligence_file"
 score_brand_fit         (number 1-10)
 score_originality       (number 1-10)
 score_monetization      (number 1-10)
@@ -67,6 +86,10 @@ captured_at             (date/time)
 selected_at             (date/time)
 research_started_at     (date/time — LOCK FIELD)
 research_completed_at   (date/time — GATE FIELD)
+Summary (AI)            (long text — Airtable-managed, do not write)
+Next Best Action (AI)   (text — Airtable-managed, do not write)
+Created Time            (created time — auto)
+Last Modified           (last modified time — auto)
 ```
 
 **Note**: `score_audience_relevance` exists in Airtable but is never read or written by any command.
@@ -95,13 +118,12 @@ published_at            (date/time)
 ```
 hook_text               (long text)
 hook_type               (single select: contrarian/stat_lead/question/story_open/provocative_claim)
-source_idea             (linked record — ideas)
+source_idea             (linked record — ideas, write as array: ["recXXX"])
 angle_name              (text)
 intent                  (single select: authority/education/community/virality)
 status                  (single select: candidate/proven/retired)
 avg_score               (number — running average of performance scores)
 use_count               (number — times used in published posts)
-created_at              (created time — auto)
 ```
 
 ### `framework_library` table
@@ -207,9 +229,11 @@ async function createRecord(tableId, fields) {
 Always use nullish coalescing when reading Airtable fields — fields missing from the response return `undefined`, not `null`:
 
 ```javascript
-const title = record.fields?.title ?? null;
-const score = record.fields?.score_overall ?? null;
-const brief = record.fields?.content_brief
+const topic = record.fields?.["Topic"] ?? null;                    // ideas: capital T
+const status = record.fields?.["Status"] ?? null;                  // ideas: capital S
+const uif = record.fields?.["Intelligence File"] ?? null;          // ideas: spaced, capital I/F
+const score = record.fields?.score_overall ?? null;                // ideas: lowercase
+const brief = record.fields?.content_brief                         // ideas: lowercase
   ? JSON.parse(record.fields.content_brief)
   : null;
 ```
@@ -235,11 +259,11 @@ function updateRunningAverage(oldAvg, oldCount, newScore) {
 ## Common Filter Formulas
 
 ```javascript
-// Ideas ready for research
-`AND({status} = "selected", {research_started_at} = "")`
+// Ideas ready for research (Status = "Selected", capital S)
+`AND({Status} = "Selected", {research_started_at} = "")`
 
-// Ideas ready for drafting
-`AND({status} = "researched", {research_completed_at} != "")`
+// Ideas ready for drafting (Status = "Ready" maps to researched)
+`AND({Status} = "Ready", {research_completed_at} != "")`
 
 // Posts ready for review
 `{status} = "drafted"`

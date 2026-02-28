@@ -6,7 +6,7 @@ Execute deep research on a selected idea: generate queries, call Perplexity, com
 
 ## Precondition
 
-`status = selected` AND `research_started_at IS NULL`.
+`Status = "Selected"` AND `research_started_at IS NULL`.
 
 Default (no argument): oldest selected idea by `selected_at` ascending.
 With argument: `/research [record_id]` — research a specific idea.
@@ -41,11 +41,11 @@ if (!brand) throw new Error("Brand record 'metaArchitect' not found in Airtable 
 ```javascript
 const ideas = await getRecords(
   process.env.AIRTABLE_TABLE_IDEAS,
-  `AND({status} = "selected", {research_started_at} = "")`,
+  `AND({Status} = "Selected", {research_started_at} = "")`,
   [{ field: "selected_at", direction: "asc" }]
 );
 if (ideas.length === 0) {
-  return "No ideas with status = selected and research_started_at empty. Run /ideas first.";
+  return "No ideas with Status = Selected and research_started_at empty. Run /ideas first.";
 }
 const idea = ideas[0];  // oldest selected
 ```
@@ -53,7 +53,7 @@ const idea = ideas[0];  // oldest selected
 ### 2. Idempotency check
 ```javascript
 if (idea.fields?.research_started_at) {
-  return `⚠ Research already started at ${idea.fields.research_started_at}. Status: ${idea.fields.status}. Check Airtable for current state.`;
+  return `⚠ Research already started at ${idea.fields.research_started_at}. Status: ${idea.fields?.["Status"]}. Check Airtable for current state.`;
 }
 ```
 
@@ -62,7 +62,7 @@ if (idea.fields?.research_started_at) {
 updateStage(state, "locking");
 await patchRecord(process.env.AIRTABLE_TABLE_IDEAS, idea.id, {
   research_started_at: new Date().toISOString(),
-  status: "researching"
+  Status: "Researching"
 });
 // Log the lock
 await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
@@ -71,7 +71,7 @@ await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
   step_name: "lock",
   stage: "locking",
   timestamp: new Date().toISOString(),
-  output_summary: `Research locked for: ${idea.fields?.title}`,
+  output_summary: `Research locked for: ${idea.fields?.["Topic"]}`,
   model_version: "n/a",
   status: "success"
 });
@@ -136,9 +136,9 @@ updateStage(state, "writing");
 uifOutput.meta.provenance_log = [q1LogId, q2LogId, q3LogId].join(",");
 
 await patchRecord(process.env.AIRTABLE_TABLE_IDEAS, idea.id, {
-  intelligence_file: JSON.stringify(uifOutput),
+  "Intelligence File": JSON.stringify(uifOutput),
   research_completed_at: new Date().toISOString(),
-  status: "researched"
+  Status: "Ready"
 });
 ```
 
@@ -178,8 +178,8 @@ await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
 | Table | Field | Value |
 |---|---|---|
 | `ideas` | `research_started_at` | `now()` (set at step 3, BEFORE API calls) |
-| `ideas` | `status` | `researching` → `researched` |
-| `ideas` | `intelligence_file` | UIF v3.0 JSON string |
+| `ideas` | `Status` | `"Researching"` → `"Ready"` (or `"Research_failed"`) |
+| `ideas` | `Intelligence File` | UIF v3.0 JSON string |
 | `ideas` | `research_completed_at` | `now()` |
 | `hooks_library` | (new records) | hooks as `status = candidate` |
 | `logs` | (multiple entries) | one per stage |
@@ -193,7 +193,7 @@ await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
   // Clear the lock — allow retry
   await patchRecord(process.env.AIRTABLE_TABLE_IDEAS, idea.id, {
     research_started_at: null,
-    status: "research_failed"
+    Status: "Research_failed"
   });
 
   // Log the failure

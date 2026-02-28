@@ -131,8 +131,16 @@ UIF v3.0 SCHEMA:
     {
       "angle_name": string (required),
       "contrarian_take": string (required),
+      "pillar_connection": string (required — name one of the 5 content pillars, then one sentence on how this angle serves it),
+      "brand_specific_angle": boolean (required — TRUE only if this angle would not work published by anyone other than The Meta Architect specifically),
       "target_persona": string (optional),
       "supporting_facts": integer[] (optional — ZERO-BASED indices into core_knowledge.facts[])
+    }
+  ],
+  "humanity_snippets": [               (required — array, may be empty)
+    {
+      "suggested_tags": string[],      (tags to query the snippet bank with at draft time — e.g. ["production-incident", "late-night", "client-demo"])
+      "relevance_note": string         (one sentence: what kind of personal moment would land here and why)
     }
   ],
   "distribution_formats": {            (optional object)
@@ -151,6 +159,11 @@ CRITICAL RULES:
    Never reference an index that doesn't exist.
 5. No content_outline, no hooks[] per angle, no content_brief_summary in meta. This is UIF v3.0, not v2.0.
 6. All string values must be non-empty.
+7. INVERSION TEST — before finalizing each angle, ask: does the source data actually support this contrarian_take, or does it contradict it? If the research finding says the opposite of what you're claiming, do not use it as support. Find a different angle or leave that supporting_facts slot empty. Never invert a source's conclusion to fit a predetermined take.
+8. CREDIBILITY RUBRIC — assign ratings as follows: high = peer-reviewed paper or Tier 1 primary source (HBR article itself, NYT, WSJ, Stack Overflow official survey, published academic journal); medium = established industry publication, recognized newsletter, major vendor report with methodology; low = blog post, community forum, secondary source citing another source, or any stat with no methodology link. When a stat has no methodology link, add "unverified stat — no methodology link" to its context field.
+9. PILLAR CONNECTION — valid pillar names are exactly: "Production Failure Taxonomy", "STATE Framework Applied", "Defensive Architecture", "The Meta Layer", "Regulated AI & Law 25". Every angle must name one and explain in one sentence how this angle serves it. If none of the 5 pillars fit, the angle is off-brand and must be replaced.
+10. BRAND SPECIFIC ANGLE — set to TRUE only if this angle depends on Simon Paris's specific positioning, experience, or the STATE framework by name. A generic AI/developer take that any commentator could write = FALSE. At least 1 angle per UIF must be TRUE.
+11. HUMANITY SNIPPETS — output one entry per angle that would be meaningfully improved by a personal moment. Use tags that a practitioner's story bank would be indexed by (e.g. "production-incident", "late-night", "client-demo", "debugging", "wrong-model", "hallucination", "compliance", "origin-story"). If the angle is purely data-driven and a personal moment would not add value, omit it. If no angles need a snippet, output an empty array — but this should be rare.
 ```
 
 **User prompt**:
