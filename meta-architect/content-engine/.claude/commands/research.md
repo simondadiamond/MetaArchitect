@@ -30,7 +30,14 @@ const state = buildStateObject({
 
 ## Steps
 
-### 1. Find target idea
+### 1. Find brand context
+```javascript
+const brands = await getRecords(process.env.AIRTABLE_TABLE_BRAND, `{name} = "metaArchitect"`);
+const brand = brands.length > 0 ? brands[0] : null;
+if (!brand) throw new Error("Brand record 'metaArchitect' not found in Airtable (AIRTABLE_TABLE_BRAND)");
+```
+
+### 2. Find target idea
 ```javascript
 const ideas = await getRecords(
   process.env.AIRTABLE_TABLE_IDEAS,
@@ -78,10 +85,11 @@ const contentBrief = idea.fields?.content_brief
 if (!contentBrief) throw new Error("content_brief is null or unparseable");
 ```
 
-### 5. Research Architect — generate 3 queries
+### 6. Research Architect — generate 3 queries
 ```javascript
 updateStage(state, "research_architect");
 // Call claude-sonnet-4-6 with Research Architect prompt (see researcher.md)
+// Provide `brand` and `contentBrief` as context.
 // Validate: validateResearchPlan(output) — must be true before proceeding
 // Log result to logs table (step_name: "research_architect")
 ```

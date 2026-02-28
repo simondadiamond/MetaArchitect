@@ -29,7 +29,14 @@ const state = buildStateObject({
 
 ## Steps
 
-### 1. Find target idea
+### 1. Find brand context
+```javascript
+const brands = await getRecords(process.env.AIRTABLE_TABLE_BRAND, `{name} = "metaArchitect"`);
+const brand = brands.length > 0 ? brands[0] : null;
+if (!brand) throw new Error("Brand record 'metaArchitect' not found in Airtable (AIRTABLE_TABLE_BRAND)");
+```
+
+### 2. Find target idea
 ```javascript
 const ideas = await getRecords(
   process.env.AIRTABLE_TABLE_IDEAS,
@@ -91,9 +98,9 @@ const needsSnippet = snippet === null;
 ```javascript
 updateStage(state, "drafting");
 // Call claude-sonnet-4-6 with writer.md Draft Generation Prompt
-// Inputs: uif, angle, framework, hook, snippet (or null), platform
+// Inputs: uif, angle, framework, hook, snippet (or null), platform, brand
 // Log result (step_name: "draft_generation")
-const draftContent = await generateDraft({ uif, angle, framework, hook, snippet, platform });
+const draftContent = await generateDraft({ uif, angle, framework, hook, snippet, platform, brand });
 ```
 
 **E — Explicit gate**: Run `validatePost({ draft_content: draftContent, platform })` — must pass before creating post record.

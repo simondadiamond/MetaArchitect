@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Meta Architect — Brand Style Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:wght@400;700&family=Roboto+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-primary: #0F0F0F;
+      --bg-surface: #1A1A1A;
+      --bg-elevated: #1F1F1F;
+      --border: #333333;
+      --text-primary: #EAEAEA;
+      --text-secondary: #B4B4B4;
+      --text-muted: #777777;
+      --accent: #E04500;
+      --accent-hover: #FF5A1A;
+      --accent-link: #C97A1A;
+      --accent-red: #F85149;
+
+      --font-serif: 'Merriweather', Georgia, 'Times New Roman', serif;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── LAYOUT ── */
+    .page-wrapper {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 32px 120px;
+    }
+
+    /* ── HEADER ── */
+    .site-header {
+      border-bottom: 1px solid var(--border);
+      padding: 48px 32px 40px;
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+
+    .header-brand {}
+
+    .brand-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .brand-title {
+      font-family: var(--font-serif);
+      font-size: 2.25rem;
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--text-primary);
+    }
+
+    .header-meta {
+      text-align: right;
+    }
+
+    .header-meta p {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      line-height: 1.8;
+    }
+
+    /* ── SECTION ── */
+    .section {
+      padding-top: 80px;
+    }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-label::after {
+      content: '';
+      display: block;
+      height: 1px;
+      width: 60px;
+      background: var(--accent);
+      opacity: 0.4;
+    }
+
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .section-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      max-width: 680px;
+      margin-bottom: 40px;
+      line-height: 1.7;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0;
+    }
+
+    /* ── COLOR SWATCHES ── */
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-bottom: 40px;
+    }
+
+    .color-swatch {
+      background: var(--bg-surface);
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .swatch-color {
+      height: 80px;
+      width: 100%;
+    }
+
+    .swatch-info {
+      padding: 16px;
+    }
+
+    .swatch-name {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .swatch-hex {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .swatch-usage {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .color-group-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 32px 0 16px;
+    }
+
+    /* ── TYPOGRAPHY SPECIMENS ── */
+    .type-specimen {
+      border: 1px solid var(--border);
+      margin-bottom: 1px;
+      background: var(--bg-surface);
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      min-height: 80px;
+    }
+
+    .type-meta {
+      padding: 20px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .type-meta-name {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .type-meta-details {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+
+    .type-preview {
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* ── CODE BLOCK ── */
+    .code-block {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      padding: 20px 24px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      overflow-x: auto;
+      margin-bottom: 24px;
+      white-space: pre;
+    }
+
+    .code-comment {
+      color: var(--text-muted);
+    }
+
+    .code-key {
+      color: var(--accent-link);
+    }
+
+    .code-value {
+      color: #C8E6C9;
+    }
+
+    .code-string {
+      color: var(--text-secondary);
+    }
+
+    /* ── RULES LIST ── */
+    .rules-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+
+    .rule-item {
+      background: var(--bg-surface);
+      padding: 24px 28px;
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .rule-number {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      padding-top: 2px;
+    }
+
+    .rule-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .rule-text strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* ── COMPONENTS SHOWCASE ── */
+    .components-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-bottom: 40px;
+    }
+
+    .component-cell {
+      background: var(--bg-surface);
+      padding: 32px;
+    }
+
+    .component-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: background 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--text-muted);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+
+    .btn-ghost:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    /* Badge/Tag */
+    .tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .tag-accent {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .tag-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* Card */
+    .card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      padding: 24px;
+    }
+
+    .card-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+
+    .card-body {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Score pill */
+    .score-display {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .score-num {
+      font-family: var(--font-serif);
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+
+    .score-denom {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      color: var(--text-muted);
+    }
+
+    .score-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* Inline code */
+    code {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      color: var(--accent-link);
+    }
+
+    /* Link style */
+    .demo-link {
+      color: var(--accent-link);
+      font-size: 15px;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .demo-link:hover {
+      color: var(--accent-hover);
+    }
+
+    /* STATE pillars */
+    .state-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-bottom: 40px;
+    }
+
+    .state-pillar {
+      background: var(--bg-surface);
+      padding: 24px 20px;
+      text-align: center;
+    }
+
+    .state-letter {
+      font-family: var(--font-serif);
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .state-word {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .state-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Quote block */
+    .pull-quote {
+      border-left: 3px solid var(--accent);
+      padding: 20px 28px;
+      background: var(--bg-surface);
+      margin-bottom: 40px;
+    }
+
+    .pull-quote p {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--text-primary);
+      line-height: 1.5;
+      font-style: italic;
+    }
+
+    .pull-quote .attribution {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-top: 12px;
+      font-style: normal;
+    }
+
+    /* ── LOGO TREATMENT ── */
+    .logo-showcase {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-bottom: 40px;
+    }
+
+    .logo-cell {
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .logo-cell-dark {
+      background: var(--bg-primary);
+    }
+
+    .logo-cell-surface {
+      background: var(--bg-surface);
+    }
+
+    .logo-cell-orange {
+      background: var(--accent);
+    }
+
+    .logo-text-wrapper {}
+
+    .logo-eyebrow-text {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .logo-eyebrow-text.on-orange {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .logo-wordmark {
+      font-family: var(--font-serif);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.15;
+    }
+
+    .logo-wordmark.on-orange {
+      color: #fff;
+    }
+
+    .logo-tagline {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .logo-tagline.on-orange {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    /* ── SPACING TABLE ── */
+    .spacing-row {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .spacing-bar {
+      background: var(--accent);
+      height: 8px;
+      opacity: 0.7;
+    }
+
+    .spacing-label {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-secondary);
+      min-width: 80px;
+    }
+
+    .spacing-px {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* ── VOICE TABLE ── */
+    .voice-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--border);
+      margin-bottom: 40px;
+    }
+
+    .voice-table th {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 14px 20px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-elevated);
+    }
+
+    .voice-table td {
+      padding: 16px 20px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      line-height: 1.6;
+    }
+
+    .voice-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .voice-table .yes {
+      color: #81C784;
+    }
+
+    .voice-table .no {
+      color: var(--accent-red);
+    }
+
+    .voice-table tr:nth-child(even) td {
+      background: var(--bg-surface);
+    }
+
+    /* ── FOOTER ── */
+    .page-footer {
+      border-top: 1px solid var(--border);
+      margin-top: 80px;
+      padding: 32px 32px;
+      max-width: 1100px;
+      margin-left: auto;
+      margin-right: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-brand {
+      font-family: var(--font-serif);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .footer-meta {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+    }
+
+    @media (max-width: 700px) {
+
+      .components-grid,
+      .rules-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .state-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .logo-showcase {
+        grid-template-columns: 1fr;
+      }
+
+      .type-specimen {
+        grid-template-columns: 1fr;
+      }
+
+      .type-meta {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .site-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+
+      .header-meta {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="site-header">
+    <div class="header-brand">
+      <p class="brand-eyebrow">Brand Style Guide</p>
+      <h1 class="brand-title">The Meta Architect</h1>
+    </div>
+    <div class="header-meta">
+      <p>Simon Paris · simonparis.ca</p>
+      <p>Version 1.0 · March 2026</p>
+      <p>State Beats Intelligence</p>
+    </div>
+  </header>
+
+  <main class="page-wrapper">
+
+    <!-- ── BRAND FOUNDATION ── -->
+    <section class="section">
+      <p class="section-label">01 — Foundation</p>
+      <h2 class="section-title">The Principle</h2>
+      <p class="section-desc">Every visual decision is an expression of the core thesis. Control, precision, and state
+        management made aesthetic. Dark. Industrial. Zero-radius. The architecture speaks before the words do.</p>
+
+      <div class="pull-quote">
+        <p>"A mid-tier model with proper state management beats a frontier model running stateless — every time."</p>
+        <p class="attribution">— State Beats Intelligence / The Meta Architect</p>
+      </div>
+
+      <div class="state-grid">
+        <div class="state-pillar">
+          <div class="state-letter">S</div>
+          <div class="state-word">Structured</div>
+          <div class="state-desc">Explicit state schemas, not implicit context</div>
+        </div>
+        <div class="state-pillar">
+          <div class="state-letter">T</div>
+          <div class="state-word">Traceable</div>
+          <div class="state-desc">Every step observable, every decision logged</div>
+        </div>
+        <div class="state-pillar">
+          <div class="state-letter">A</div>
+          <div class="state-word">Auditable</div>
+          <div class="state-desc">Governance-ready, explainable under Law 25</div>
+        </div>
+        <div class="state-pillar">
+          <div class="state-letter">T</div>
+          <div class="state-word">Tolerant</div>
+          <div class="state-desc">Fault-tolerant and resumable after failure</div>
+        </div>
+        <div class="state-pillar">
+          <div class="state-letter">E</div>
+          <div class="state-word">Explicit</div>
+          <div class="state-desc">Deterministic boundaries, no magic</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ── LOGO ── -->
+    <section class="section">
+      <p class="section-label">02 — Logo & Wordmark</p>
+      <h2 class="section-title">Brand Identity</h2>
+      <p class="section-desc">The wordmark is always Merriweather Bold. The mono eyebrow creates the "architect"
+        context. Three approved backgrounds only.</p>
+
+      <div class="logo-showcase">
+        <div class="logo-cell logo-cell-dark">
+          <div class="logo-text-wrapper">
+            <div class="logo-eyebrow-text">The Meta Architect</div>
+            <div class="logo-wordmark">Simon Paris</div>
+            <div class="logo-tagline">State Beats Intelligence</div>
+          </div>
+        </div>
+        <div class="logo-cell logo-cell-surface">
+          <div class="logo-text-wrapper">
+            <div class="logo-eyebrow-text">The Meta Architect</div>
+            <div class="logo-wordmark">Simon Paris</div>
+            <div class="logo-tagline">State Beats Intelligence</div>
+          </div>
+        </div>
+        <div class="logo-cell logo-cell-orange">
+          <div class="logo-text-wrapper">
+            <div class="logo-eyebrow-text on-orange">The Meta Architect</div>
+            <div class="logo-wordmark on-orange">Simon Paris</div>
+            <div class="logo-tagline on-orange">State Beats Intelligence</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ── COLOR ── -->
+    <section class="section">
+      <p class="section-label">03 — Color</p>
+      <h2 class="section-title">Palette</h2>
+      <p class="section-desc">Always dark mode. Orange is the action color. Amber-gold replaces blue for links — stays
+        in the orange family, reads as interactive. Red is reserved for errors only. No teal, no green, no blue.</p>
+
+      <p class="color-group-label">Backgrounds</p>
+      <div class="color-grid">
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#0F0F0F;border-bottom:1px solid #333;"></div>
+          <div class="swatch-info"><span class="swatch-name">Background</span><span
+              class="swatch-hex">#0F0F0F</span><span class="swatch-usage">Primary page background</span></div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#1A1A1A;"></div>
+          <div class="swatch-info"><span class="swatch-name">Surface</span><span class="swatch-hex">#1A1A1A</span><span
+              class="swatch-usage">Cards, panels, elevated surfaces</span></div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#1F1F1F;"></div>
+          <div class="swatch-info"><span class="swatch-name">Elevated</span><span class="swatch-hex">#1F1F1F</span><span
+              class="swatch-usage">Modals, dropdowns, overlays</span></div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#333333;"></div>
+          <div class="swatch-info"><span class="swatch-name">Border</span><span class="swatch-hex">#333333</span><span
+              class="swatch-usage">Dividers, borders, card edges</span></div>
+        </div>
+      </div>
+
+      <p class="color-group-label">Text</p>
+      <div class="color-grid">
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#EAEAEA;"></div>
+          <div class="swatch-info"><span class="swatch-name">Primary Text</span><span
+              class="swatch-hex">#EAEAEA</span><span class="swatch-usage">Body text, headings</span></div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#B4B4B4;"></div>
+          <div class="swatch-info"><span class="swatch-name">Secondary Text</span><span
+              class="swatch-hex">#B4B4B4</span><span class="swatch-usage">Muted text, captions, metadata</span></div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#777777;"></div>
+          <div class="swatch-info"><span class="swatch-name">Muted Text</span><span
+              class="swatch-hex">#777777</span><span class="swatch-usage">Disabled, placeholder, tertiary</span></div>
+        </div>
+      </div>
+
+      <p class="color-group-label">Accents</p>
+      <div class="color-grid">
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#E04500;"></div>
+          <div class="swatch-info"><span class="swatch-name">Orange — Primary</span><span
+              class="swatch-hex">#E04500</span><span class="swatch-usage">CTAs, buttons, highlights, brand accent</span>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#FF5A1A;"></div>
+          <div class="swatch-info"><span class="swatch-name">Orange Hover</span><span
+              class="swatch-hex">#FF5A1A</span><span class="swatch-usage">Hover / active state</span></div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#C97A1A;"></div>
+          <div class="swatch-info"><span class="swatch-name">Amber — Links</span><span
+              class="swatch-hex">#C97A1A</span><span class="swatch-usage">Interactive text, inline code, links</span>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="swatch-color" style="background:#F85149;"></div>
+          <div class="swatch-info"><span class="swatch-name">Red — Errors</span><span
+              class="swatch-hex">#F85149</span><span class="swatch-usage">Errors, destructive actions only</span></div>
+        </div>
+      </div>
+
+      <div class="code-block"><span class="code-comment">/* CSS Custom Properties */</span>
+        :root {
+        <span class="code-key">--bg-primary</span>: <span class="code-value">#0F0F0F</span>; <span
+          class="code-comment">/* primary background */</span>
+        <span class="code-key">--bg-surface</span>: <span class="code-value">#1A1A1A</span>; <span
+          class="code-comment">/* cards, panels */</span>
+        <span class="code-key">--bg-elevated</span>: <span class="code-value">#1F1F1F</span>; <span
+          class="code-comment">/* modals, dropdowns */</span>
+        <span class="code-key">--border</span>: <span class="code-value">#333333</span>; <span class="code-comment">/*
+          all borders */</span>
+
+        <span class="code-key">--text-primary</span>: <span class="code-value">#EAEAEA</span>; <span
+          class="code-comment">/* body text, headings */</span>
+        <span class="code-key">--text-secondary</span>:<span class="code-value">#B4B4B4</span>; <span
+          class="code-comment">/* muted, captions */</span>
+        <span class="code-key">--text-muted</span>: <span class="code-value">#777777</span>; <span
+          class="code-comment">/* disabled, placeholder */</span>
+
+        <span class="code-key">--accent</span>: <span class="code-value">#E04500</span>; <span class="code-comment">/*
+          primary action — orange */</span>
+        <span class="code-key">--accent-hover</span>: <span class="code-value">#FF5A1A</span>; <span
+          class="code-comment">/* hover state */</span>
+        <span class="code-key">--accent-link</span>: <span class="code-value">#C97A1A</span>; <span
+          class="code-comment">/* links — amber, NOT blue */</span>
+        <span class="code-key">--accent-red</span>: <span class="code-value">#F85149</span>; <span
+          class="code-comment">/* errors only */</span>
+        }
+      </div>
+
+      <div class="code-block"><span class="code-comment">/* Tailwind Config Extension */</span>
+        colors: {
+        background: { DEFAULT: <span class="code-string">'#0F0F0F'</span>, surface: <span
+          class="code-string">'#1A1A1A'</span>, elevated: <span class="code-string">'#1F1F1F'</span> },
+        border: { DEFAULT: <span class="code-string">'#333333'</span> },
+        text: { primary: <span class="code-string">'#EAEAEA'</span>, secondary: <span
+          class="code-string">'#B4B4B4'</span>, muted: <span class="code-string">'#777777'</span> },
+        accent: { DEFAULT: <span class="code-string">'#E04500'</span>, hover: <span
+          class="code-string">'#FF5A1A'</span>, link: <span class="code-string">'#C97A1A'</span>, red: <span
+          class="code-string">'#F85149'</span> },
+        }</div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ── TYPOGRAPHY ── -->
+    <section class="section">
+      <p class="section-label">04 — Typography</p>
+      <h2 class="section-title">Type System</h2>
+      <p class="section-desc">Three fonts. Merriweather for authority. Inter for readability. Roboto Mono for technical
+        credibility. The combination says "architect who builds systems." Each font has a single job.</p>
+
+      <!-- Font overview -->
+      <div
+        style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:40px;">
+        <div style="background:var(--bg-surface);padding:28px;">
+          <div
+            style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;">
+            Primary — Serif</div>
+          <div
+            style="font-family:var(--font-serif);font-size:26px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">
+            Merriweather</div>
+          <div style="font-family:var(--font-serif);font-size:14px;color:var(--text-secondary);line-height:1.6;">
+            Headlines, section headers, brand name in hero contexts. The authority font.</div>
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);margin-top:12px;">Weights:
+            400, 700</div>
+        </div>
+        <div style="background:var(--bg-surface);padding:28px;">
+          <div
+            style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;">
+            Secondary — Sans</div>
+          <div
+            style="font-family:var(--font-sans);font-size:26px;font-weight:600;color:var(--text-primary);margin-bottom:8px;">
+            Inter</div>
+          <div style="font-family:var(--font-sans);font-size:14px;color:var(--text-secondary);line-height:1.6;">Body
+            text, long-form content, secondary UI text. Optimized for screens.</div>
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);margin-top:12px;">Weights:
+            400, 500, 600</div>
+        </div>
+        <div style="background:var(--bg-surface);padding:28px;">
+          <div
+            style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;">
+            Tertiary — Mono</div>
+          <div
+            style="font-family:var(--font-mono);font-size:22px;font-weight:600;color:var(--text-primary);margin-bottom:8px;">
+            Roboto Mono</div>
+          <div style="font-family:var(--font-mono);font-size:13px;color:var(--text-secondary);line-height:1.6;">Code,
+            labels, nav, metadata, tags. Technical credibility without dominating.</div>
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);margin-top:12px;">Weights:
+            400, 500, 600</div>
+        </div>
+      </div>
+
+      <!-- Type scale -->
+      <div class="type-specimen">
+        <div class="type-meta">
+          <div class="type-meta-name">Display</div>
+          <div class="type-meta-details">48px / 3rem<br>Bold 700<br>Merriweather<br>LH 1.1</div>
+        </div>
+        <div class="type-preview"><span
+            style="font-family:var(--font-serif);font-size:clamp(28px,4vw,48px);font-weight:700;line-height:1.1;color:var(--text-primary);">State
+            Beats Intelligence</span></div>
+      </div>
+      <div class="type-specimen">
+        <div class="type-meta">
+          <div class="type-meta-name">H1</div>
+          <div class="type-meta-details">36px / 2.25rem<br>Bold 700<br>Merriweather<br>LH 1.15</div>
+        </div>
+        <div class="type-preview"><span
+            style="font-family:var(--font-serif);font-size:clamp(22px,3vw,36px);font-weight:700;line-height:1.15;color:var(--text-primary);">AI
+            Reliability Engineering</span></div>
+      </div>
+      <div class="type-specimen">
+        <div class="type-meta">
+          <div class="type-meta-name">H2</div>
+          <div class="type-meta-details">28px / 1.75rem<br>Bold 700<br>Merriweather<br>LH 1.2</div>
+        </div>
+        <div class="type-preview"><span
+            style="font-family:var(--font-serif);font-size:clamp(18px,2.5vw,28px);font-weight:700;line-height:1.2;color:var(--text-primary);">The
+            STATE Framework</span></div>
+      </div>
+      <div class="type-specimen">
+        <div class="type-meta">
+          <div class="type-meta-name">H3</div>
+          <div class="type-meta-details">22px / 1.375rem<br>Regular 400<br>Merriweather<br>LH 1.3</div>
+        </div>
+        <div class="type-preview"><span
+            style="font-family:var(--font-serif);font-size:22px;font-weight:400;line-height:1.3;color:var(--text-primary);">Production
+            failure taxonomy</span></div>
+      </div>
+      <div class="type-specimen">
+        <div class="type-meta">
+          <div class="type-meta-name">Body Large</div>
+          <div class="type-meta-details">18px / 1.125rem<br>Regular 400<br>Inter<br>LH 1.6</div>
+        </div>
+        <div class="type-preview"><span
+            style="font-family:var(--font-sans);font-size:18px;line-height:1.6;color:var(--text-primary);">The model
+            isn't the problem. The plumbing around it is.</span></div>
+      </div>
+      <div class="type-specimen">
+        <div class="type-meta">
+          <div class="type-meta-name">Body</div>
+          <div class="type-meta-details">16px / 1rem<br>Regular 400<br>Inter<br>LH 1.7</div>
+        </div>
+        <div class="type-preview"><span
+            style="font-family:var(--font-sans);font-size:16px;line-height:1.7;color:var(--text-secondary);">If your
+            agent crashed right now, could you look at the last saved state object and know exactly where in the
+            workflow it stopped — without reading the conversation history?</span></div>
+      </div>
+      <div class="type-specimen">
+        <div class="type-meta">
+          <div class="type-meta-name">Body Small</div>
+          <div class="type-meta-details">14px / 0.875rem<br>Regular 400<br>Inter<br>LH 1.6</div>
+        </div>
+        <div class="type-preview"><span
+            style="font-family:var(--font-sans);font-size:14px;line-height:1.6;color:var(--text-secondary);">Captions,
+            metadata, supporting copy, fine print</span></div>
+      </div>
+      <div class="type-specimen">
+        <div class="type-meta">
+          <div class="type-meta-name">Code</div>
+          <div class="type-meta-details">14px / 0.875rem<br>Regular 400<br>Roboto Mono<br>LH 1.5</div>
+        </div>
+        <div class="type-preview"><span
+            style="font-family:var(--font-mono);font-size:14px;line-height:1.5;color:var(--accent-link);">const state =
+            await checkpoint.load(workflowId)</span></div>
+      </div>
+      <div class="type-specimen" style="margin-bottom:40px;">
+        <div class="type-meta">
+          <div class="type-meta-name">Label</div>
+          <div class="type-meta-details">12px / 0.75rem<br>Medium 500<br>Roboto Mono<br>LH 1.4, +0.15em</div>
+        </div>
+        <div class="type-preview"><span
+            style="font-family:var(--font-mono);font-size:12px;font-weight:500;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);">State
+            Management · Law 25 · AI Reliability</span></div>
+      </div>
+
+      <div class="code-block"><span class="code-comment">/* Font imports */</span>
+        @import url(<span
+          class="code-string">'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:wght@400;700&family=Roboto+Mono:wght@400;500;600&display=swap'</span>);
+
+        :root {
+        <span class="code-key">--font-serif</span>: <span class="code-string">'Merriweather'</span>, Georgia, <span
+          class="code-string">'Times New Roman'</span>, serif;
+        <span class="code-key">--font-sans</span>: <span class="code-string">'Inter'</span>, -apple-system,
+        BlinkMacSystemFont, <span class="code-string">'Segoe UI'</span>, sans-serif;
+        <span class="code-key">--font-mono</span>: <span class="code-string">'Roboto Mono'</span>, ui-monospace,
+        SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+
+        <span class="code-comment">/* Apply the system */</span>
+        body { font-family: var(--font-sans); }
+        h1, h2, h3 { font-family: var(--font-serif); }
+        code, pre,
+        nav a,
+        .label { font-family: var(--font-mono); }
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ── COMPONENTS ── -->
+    <section class="section">
+      <p class="section-label">05 — Components</p>
+      <h2 class="section-title">UI Elements</h2>
+      <p class="section-desc">Zero border-radius everywhere. Sharp edges, no rounding. This is the architectural
+        signature. Components are built from the same industrial logic as the brand.</p>
+
+      <div class="components-grid">
+
+        <div class="component-cell">
+          <div class="component-label">Buttons</div>
+          <div class="btn-row">
+            <button class="btn btn-primary">Run STATE audit</button>
+            <button class="btn btn-ghost">View cohort</button>
+            <button class="btn btn-secondary">Learn more</button>
+          </div>
+        </div>
+
+        <div class="component-cell">
+          <div class="component-label">Tags / Badges</div>
+          <div class="tag-row">
+            <span class="tag tag-accent">STATE-Compliant</span>
+            <span class="tag">LLMOps</span>
+            <span class="tag">Law 25</span>
+            <span class="tag">Production</span>
+            <span class="tag tag-accent">AI Reliability</span>
+          </div>
+        </div>
+
+        <div class="component-cell">
+          <div class="component-label">Card</div>
+          <div class="card">
+            <div class="card-eyebrow">Pillar 1 — Structured</div>
+            <div class="card-title">Explicit state schemas, not implicit context</div>
+            <div class="card-body">Business entities are first-class state objects with defined schemas. Context rot is
+              eliminated at the architecture level.</div>
+          </div>
+        </div>
+
+        <div class="component-cell">
+          <div class="component-label">Score Display</div>
+          <div>
+            <div class="score-display">
+              <div class="score-num">8</div>
+              <div class="score-denom">/10</div>
+            </div>
+            <div class="score-label">Production-Ready</div>
+          </div>
+        </div>
+
+        <div class="component-cell">
+          <div class="component-label">Code Block</div>
+          <div class="code-block" style="margin-bottom:0;font-size:12px;">await checkpoint.save({
+            workflowId, stage: <span class="code-string">'classify'</span>,
+            state: claimData
+            })</div>
+        </div>
+
+        <div class="component-cell">
+          <div class="component-label">Links & Inline Code</div>
+          <div style="font-size:15px;line-height:2;color:var(--text-secondary);">
+            Read about <a class="demo-link" href="#">LangGraph checkpointing</a> or <a class="demo-link" href="#">Law 25
+              requirements</a>.<br>
+            The <code>stage</code> field always reflects workflow position.
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ── VOICE & TONE ── -->
+    <section class="section">
+      <p class="section-label">06 — Voice & Tone</p>
+      <h2 class="section-title">Writing Rules</h2>
+      <p class="section-desc">Practitioner voice, not theory voice. Every sentence passes the test: would someone who's
+        been burned by a production LLM failure read this and think "yes, exactly"?</p>
+
+      <table class="voice-table">
+        <thead>
+          <tr>
+            <th>Write This</th>
+            <th>Not This</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="yes">"Your agent isn't failing because of the model. Here's what's actually breaking."</td>
+            <td class="no">"I'm excited to share some thoughts on AI reliability challenges."</td>
+          </tr>
+          <tr>
+            <td class="yes">"Always assume the LLM will fuck up. Design for it."</td>
+            <td class="no">"It's important to implement robust testing in your AI systems."</td>
+          </tr>
+          <tr>
+            <td class="yes">"The backtick thing happened to me at 11pm, client demo the next morning."</td>
+            <td class="no">"As a practitioner, I've seen many cases where JSON parsing can fail."</td>
+          </tr>
+          <tr>
+            <td class="yes">"Can we log why the agent did this? Law 25 says you need to answer that."</td>
+            <td class="no">"Organizations should consider regulatory compliance in their AI journey."</td>
+          </tr>
+          <tr>
+            <td class="yes">"It's not about the model — it's about the plumbing around it."</td>
+            <td class="no">"Game-changing LLM architectures for the future of enterprise AI."</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="rules-grid">
+        <div class="rule-item">
+          <div class="rule-number">01</div>
+          <div class="rule-text"><strong>Specific over general.</strong> Name the tool, the error, the exact failure
+            mode. "The LLM wrapped its JSON in markdown backticks" beats "parsing issues can occur."</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">02</div>
+          <div class="rule-text"><strong>Practitioner voice, not expert voice.</strong> You earned the right to teach
+            through failure, not credentials. The scar is the credential.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">03</div>
+          <div class="rule-text"><strong>Make the audience feel seen first.</strong> They've hit this wall. They've been
+            blamed the model. Start there before offering the fix.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">04</div>
+          <div class="rule-text"><strong>No hype language.</strong> Cut: "game-changing," "revolutionary," "the future
+            of AI," "I'm excited to share," "transformational."</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">05</div>
+          <div class="rule-text"><strong>Dry wit is allowed.</strong> "Always assume the LLM will fuck up" is on-brand.
+            Careful precision and sharp humor coexist here.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">06</div>
+          <div class="rule-text"><strong>French is natural, not forced.</strong> Bilingual brain. Quebec context appears
+            organically — never performatively.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ── SPACING ── -->
+    <section class="section">
+      <p class="section-label">07 — Spacing & Layout</p>
+      <h2 class="section-title">Grid & Space</h2>
+      <p class="section-desc">8px base unit. Content max-width of 1100px. Single-column on mobile, grid on desktop.
+        Generous whitespace in reading contexts, dense in UI contexts.</p>
+
+      <div style="border:1px solid var(--border);padding:32px;background:var(--bg-surface);margin-bottom:40px;">
+        <div class="spacing-row">
+          <div class="spacing-label">4px — xs</div>
+          <div class="spacing-bar" style="width:4px;"></div>
+          <div class="spacing-px">Inline gaps, micro spacing</div>
+        </div>
+        <div class="spacing-row">
+          <div class="spacing-label">8px — sm</div>
+          <div class="spacing-bar" style="width:8px;"></div>
+          <div class="spacing-px">Tag gaps, tight element spacing</div>
+        </div>
+        <div class="spacing-row">
+          <div class="spacing-label">12px</div>
+          <div class="spacing-bar" style="width:12px;"></div>
+          <div class="spacing-px">Button padding (vertical)</div>
+        </div>
+        <div class="spacing-row">
+          <div class="spacing-label">16px — md</div>
+          <div class="spacing-bar" style="width:16px;"></div>
+          <div class="spacing-px">Component inner padding</div>
+        </div>
+        <div class="spacing-row">
+          <div class="spacing-label">24px — lg</div>
+          <div class="spacing-bar" style="width:24px;"></div>
+          <div class="spacing-px">Card padding, section sub-elements</div>
+        </div>
+        <div class="spacing-row">
+          <div class="spacing-label">32px — xl</div>
+          <div class="spacing-bar" style="width:32px;"></div>
+          <div class="spacing-px">Page horizontal padding, large gaps</div>
+        </div>
+        <div class="spacing-row">
+          <div class="spacing-label">48px — 2xl</div>
+          <div class="spacing-bar" style="width:48px;"></div>
+          <div class="spacing-px">Header padding, major separations</div>
+        </div>
+        <div class="spacing-row" style="border-bottom:none;">
+          <div class="spacing-label">80px — 3xl</div>
+          <div class="spacing-bar" style="width:80px;"></div>
+          <div class="spacing-px">Section spacing, page rhythm</div>
+        </div>
+      </div>
+
+      <div class="rules-grid">
+        <div class="rule-item">
+          <div class="rule-number">01</div>
+          <div class="rule-text"><strong>Zero border-radius everywhere.</strong> No rounding, ever. Sharp edges are the
+            architectural signature of the brand.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">02</div>
+          <div class="rule-text"><strong>1px borders in #333333.</strong> Borders separate surfaces; they never
+            decorate. One weight, one color throughout.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">03</div>
+          <div class="rule-text"><strong>Max-width 1100px, centered.</strong> Wide enough for grids, narrow enough to
+            stay readable. Horizontal padding 32px.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">04</div>
+          <div class="rule-text"><strong>Grid gaps via 1px background trick.</strong> Set gap:1px on grid,
+            background:var(--border). Elements fill with surface color. Clean dividers without extra markup.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ── USAGE RULES ── -->
+    <section class="section">
+      <p class="section-label">08 — Design Rules</p>
+      <h2 class="section-title">Non-Negotiables</h2>
+      <p class="section-desc">These are the load-bearing constraints of the visual system. The equivalent of the STATE
+        framework, applied to design.</p>
+
+      <div class="rules-grid">
+        <div class="rule-item">
+          <div class="rule-number">01</div>
+          <div class="rule-text"><strong>Always dark mode.</strong> No light mode variant. Pure black backgrounds. This
+            is not a toggle — it's a statement.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">02</div>
+          <div class="rule-text"><strong>Orange is the primary action color.</strong> Buttons, CTAs, highlights, brand
+            accents. One action color.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">03</div>
+          <div class="rule-text"><strong>Amber for links only.</strong> #C97A1A on interactive text elements. Distinct
+            from orange, in the same family. Never blue.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">04</div>
+          <div class="rule-text"><strong>Red is reserved for errors.</strong> Never decorative. Never as a brand color.
+            Destructive and error states only.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">05</div>
+          <div class="rule-text"><strong>High contrast text.</strong> Primary text on background = 14:1+ ratio (WCAG
+            AAA). Readability is non-negotiable.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">06</div>
+          <div class="rule-text"><strong>Zero border-radius everywhere.</strong> Sharp edges, no rounding. Architectural
+            precision, not friendly softness.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">07</div>
+          <div class="rule-text"><strong>No teal, no green, no blue.</strong> Two accent families: orange (action) and
+            amber (links). That's the complete palette.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">08</div>
+          <div class="rule-text"><strong>Mono font for all labels and navigation.</strong> Roboto Mono with
+            letter-spacing 0.1–0.2em on uppercase labels. Technical precision as aesthetic.</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="page-footer">
+    <div class="footer-brand">The Meta Architect</div>
+    <div class="footer-meta">simonparis.ca · Version 1.0 · March 2026 · State Beats Intelligence</div>
+  </footer>
+
+</body>
+
+</html>

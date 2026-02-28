@@ -13,7 +13,7 @@ Use slash commands (`.claude/commands/`) to run each pipeline stage.
 
 | Stage | Tool | Command | Status Field Gate |
 |---|---|---|---|
-| 1. Idea Capture | n8n (`idea-capture`) | — via Telegram | sets `status = pending_selection` |
+| 1. Idea Capture | Claude Code | `/capture` | prompts for input → writes `status = pending_selection` |
 | 2. Idea Selection | Claude Code | `/ideas` | requires `status = pending_selection` → writes `status = selected` |
 | 3. Research | Claude Code | `/research` | requires `status = selected` + `research_started_at IS NULL` → writes `status = researched` |
 | 4. Draft | Claude Code | `/draft` | requires `status = researched` + `research_completed_at IS NOT NULL` → writes `status = drafted` |
@@ -21,7 +21,7 @@ Use slash commands (`.claude/commands/`) to run each pipeline stage.
 | 6. Publish | Claude Code | `/publish` | requires `status = approved` → writes `status = published` |
 | 7. Score | Claude Code | `/score` | requires `status = published` + `performance_score IS NULL` → writes `status = scored` |
 
-**n8n handles Stage 1 only.** Stages 2–7 are all Claude Code slash commands.
+**All stages are Claude Code slash commands.** No external n8n workflows are required.
 
 ---
 
@@ -78,6 +78,7 @@ Key fields: `workflow_id`, `entity_id`, `step_name`, `stage`, `timestamp`,
 | `AIRTABLE_TABLE_FRAMEWORKS` | `framework_library` table ID |
 | `AIRTABLE_TABLE_SNIPPETS` | `humanity_snippets` table ID |
 | `AIRTABLE_TABLE_LOGS` | `logs` table ID |
+| `AIRTABLE_TABLE_BRAND` | `brand` table ID |
 | `PERPLEXITY_API_KEY` | Perplexity API key (for `/research`) |
 | `ANTHROPIC_API_KEY` | Anthropic API key (for all LLM calls) |
 

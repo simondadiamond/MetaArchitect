@@ -26,10 +26,22 @@ const BASE = process.env.AIRTABLE_BASE_ID;
 | `AIRTABLE_TABLE_FRAMEWORKS` | `framework_library` | Content frameworks and templates |
 | `AIRTABLE_TABLE_SNIPPETS` | `humanity_snippets` | Personal story/experience snippets |
 | `AIRTABLE_TABLE_LOGS` | `logs` | STATE traceability log |
+| `AIRTABLE_TABLE_BRAND` | `brand` | Core brand context and guidelines |
 
 ---
 
 ## Field Name Reference
+
+### `brand` table
+```
+name                    (text)
+colors                  (text)
+typography              (text)
+goals                   (text)
+icp_short               (text)
+icp_long                (long text)
+main_guidelines         (long text)
+```
 
 ### `ideas` table
 ```
