@@ -33,3 +33,14 @@ logs/
 
 # Claude local settings (personal overrides, not shared)
 .claude/settings.local.json
+
+# Research pipeline temp/context files
+.research_ctx.json
+.research_queries.json
+.research_results.json
+.research_uif.json
+.research_hooks.json
+.capture_input
+
+# Agent runtime state
+.agents/

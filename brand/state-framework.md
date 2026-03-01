@@ -17,7 +17,7 @@ Production AI systems fail not because models are too weak, but because they lac
 | Medium | Airtable writes, LLM calls, external API calls, external-facing | S + T + E |
 | High | Decisions affecting individuals, financial operations, regulated data, Law 25 scope | All five — no exceptions |
 
-All content-engine commands operate at **medium risk minimum** (S + T + E).
+All pipeline commands operate at **medium risk minimum** (S + T + E).
 
 ---
 
