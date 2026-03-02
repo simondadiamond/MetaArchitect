@@ -1,9 +1,9 @@
 # Brand Guidelines — The Meta Architect
 
-**Brand**: The Meta Architect  
-**Owner**: Simon Paris (simonparis.ca)  
-**Core thesis**: State beats intelligence. Reliable AI systems are architectural, not model-dependent.  
-**Category**: AI Reliability Engineering  
+**Brand**: The Meta Architect
+**Owner**: Simon Paris (simonparis.ca)
+**Core thesis**: State beats intelligence. Reliable AI systems are architectural, not model-dependent.
+**Category**: AI Reliability Engineering
 **Tagline**: "I design AI systems that don't break."
 
 ---
@@ -37,27 +37,29 @@ Dark. Industrial. Zero-radius. Every visual decision is an expression of the cor
 ### Color Palette
 
 #### Backgrounds
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `--bg-primary` | `#0F0F0F` | Primary page background |
-| `--bg-surface` | `#1A1A1A` | Cards, panels, elevated surfaces |
-| `--bg-elevated` | `#1F1F1F` | Modals, dropdowns, overlays |
-| `--border` | `#333333` | All dividers, borders, card edges |
+| Token | Hex | RGB | Usage |
+|-------|-----|-----|-------|
+| `--bg-primary` | `#0F0F0F` | 15, 15, 15 | Primary page background |
+| `--bg-surface` | `#1A1A1A` | 26, 26, 26 | Cards, panels, elevated surfaces |
+| `--bg-elevated` | `#1F1F1F` | 31, 31, 31 | Modals, dropdowns, overlays |
+| `--border` | `#333333` | 51, 51, 51 | All dividers, borders, card edges |
 
 #### Text
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `--text-primary` | `#EAEAEA` | Body text, headings |
-| `--text-secondary` | `#B4B4B4` | Muted text, captions, metadata |
-| `--text-muted` | `#777777` | Disabled, placeholder, tertiary |
+| Token | Hex | RGB | Usage |
+|-------|-----|-----|-------|
+| `--text-primary` | `#EAEAEA` | 234, 234, 234 | Body text, headings (14:1+ contrast ratio) |
+| `--text-secondary` | `#B4B4B4` | 180, 180, 180 | Muted text, captions, metadata |
+| `--text-muted` | `#777777` | 119, 119, 119 | Disabled, placeholder, tertiary |
 
 #### Accents
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `--accent` | `#E04500` | **Primary action** — CTAs, buttons, highlights |
-| `--accent-hover` | `#FF5A1A` | Hover / active state |
-| `--accent-link` | `#C97A1A` | **Links only** — amber, never blue |
-| `--accent-red` | `#F85149` | **Errors only** — never decorative |
+| Token | Hex | RGB | Usage |
+|-------|-----|-----|-------|
+| `--accent` | `#E04500` | 224, 69, 0 | **Primary action** — CTAs, buttons, highlights |
+| `--accent-hover` | `#FF5A1A` | 255, 90, 26 | Hover / active state |
+| `--accent-link` | `#C97A1A` | 201, 122, 26 | **Links only** — amber, never blue |
+| `--accent-red` | `#F85149` | 248, 81, 73 | **Errors only** — never decorative |
+
+> **Why amber for links, not blue:** Blue is foreign to the palette and breaks the industrial aesthetic. Amber (`#C97A1A`) is visually distinct from orange (action) while staying in the same color family. If it reads too close to orange on your screens, nudge toward `#B8860B`.
 
 ```css
 :root {
@@ -75,6 +77,16 @@ Dark. Industrial. Zero-radius. Every visual decision is an expression of the cor
 }
 ```
 
+### Tailwind Config Extension
+```js
+colors: {
+  background: { DEFAULT: '#0F0F0F', surface: '#1A1A1A', elevated: '#1F1F1F' },
+  border:     { DEFAULT: '#333333' },
+  text:       { primary: '#EAEAEA', secondary: '#B4B4B4', muted: '#777777' },
+  accent:     { DEFAULT: '#E04500', hover: '#FF5A1A', link: '#C97A1A', red: '#F85149' },
+}
+```
+
 ### Typography
 
 Three fonts. Each has one job.
@@ -86,10 +98,32 @@ Three fonts. Each has one job.
 | **Mono** | Roboto Mono | 400, 500, 600 | Code, labels, nav, metadata, tags. |
 
 ```css
---font-serif: 'Merriweather', Georgia, serif;
---font-sans:  'Inter', -apple-system, sans-serif;
---font-mono:  'Roboto Mono', ui-monospace, monospace;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:wght@400;700&family=Roboto+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --font-serif: 'Merriweather', Georgia, 'Times New Roman', serif;
+  --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:  'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+body           { font-family: var(--font-sans); }
+h1, h2, h3, h4 { font-family: var(--font-serif); }
+code, pre,
+nav a, .label  { font-family: var(--font-mono); }
 ```
+
+### Type Scale (1.25 Major Third ratio)
+| Name | Size | Line Height | Weight | Font | Usage |
+|------|------|-------------|--------|------|-------|
+| Display | 48px / 3rem | 1.1 | 700 | Merriweather | Hero headlines |
+| H1 | 36px / 2.25rem | 1.15 | 700 | Merriweather | Page titles |
+| H2 | 28px / 1.75rem | 1.2 | 700 | Merriweather | Section headers |
+| H3 | 22px / 1.375rem | 1.3 | 400 | Merriweather | Subsection headers |
+| Body Large | 18px / 1.125rem | 1.6 | 400 | Inter | Lead paragraphs |
+| Body | 16px / 1rem | 1.7 | 400 | Inter | Default body text |
+| Body Small | 14px / 0.875rem | 1.6 | 400 | Inter | Captions, metadata |
+| Code | 14px / 0.875rem | 1.5 | 400 | Roboto Mono | Inline code, blocks |
+| Label | 12px / 0.75rem | 1.4 | 500 | Roboto Mono | Tags, badges, nav links |
 
 ### Design Rules (Non-Negotiable)
 1. **Always dark mode.** No light mode. No toggle.
@@ -100,6 +134,103 @@ Three fonts. Each has one job.
 6. **No teal, no green, no blue** as accent colors.
 7. **Mono font for all labels and navigation** with letter-spacing 0.10–0.20em.
 8. **14:1+ contrast ratio** for primary text (WCAG AAA).
+
+### Components
+
+**All components: zero border-radius. No exceptions.**
+
+```css
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 12px 24px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  border-radius: 0;
+  transition: background 0.15s ease;
+}
+.btn-primary        { background: var(--accent); color: #fff; border: none; }
+.btn-primary:hover  { background: var(--accent-hover); }
+.btn-ghost          { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+.btn-ghost:hover    { background: var(--accent); color: #fff; }
+.btn-secondary      { background: transparent; color: var(--text-primary); border: 1px solid var(--border); }
+.btn-secondary:hover{ border-color: var(--text-muted); }
+
+/* Tags / Badges */
+.tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 0;
+}
+.tag-accent { border-color: var(--accent); color: var(--accent); }
+
+/* Cards */
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  padding: 24px;
+  border-radius: 0;
+}
+
+/* Code Blocks */
+pre, .code-block {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  padding: 20px 24px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  border-radius: 0;
+  overflow-x: auto;
+}
+
+/* Links */
+a { color: var(--accent-link); text-decoration: underline; text-underline-offset: 3px; }
+a:hover { color: var(--accent-hover); }
+
+/* Grid Dividers (1px gap trick) */
+.grid-divided { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.grid-divided > * { background: var(--bg-surface); }
+```
+
+### Spacing & Layout
+
+Base unit: **8px**. Max content width: **1100px**. Horizontal padding: **32px**.
+
+| Token | Size | Usage |
+|-------|------|-------|
+| xs | 4px | Inline gaps, micro spacing |
+| sm | 8px | Tag gaps, tight element spacing |
+| md | 16px | Component inner padding |
+| lg | 24px | Card padding, section sub-elements |
+| xl | 32px | Page horizontal padding, large gaps |
+| 2xl | 48px | Header padding, major separations |
+| 3xl | 80px | Section spacing, page rhythm |
+
+### Logo & Wordmark
+
+```
+[mono eyebrow, 10px, #E04500, letter-spacing 0.22em, uppercase]
+THE META ARCHITECT
+
+[serif wordmark, 22px bold, #EAEAEA]
+Simon Paris
+
+[mono tagline, 10px, #777777, letter-spacing 0.10em]
+State Beats Intelligence
+```
+
+Logo don'ts: never on a light background, never colored wordmark, never border-radius on containing element.
 
 ---
 
@@ -129,7 +260,7 @@ Systems thinker who builds in the real world. Contrarian on AI hype. Teacher who
 - "cutting-edge" / "state-of-the-art"
 - Vague lessons without mechanism: "I learned that testing matters" — always name what broke and why
 - Fabricated personal anecdotes — only use humanity snippets from the verified snippet bank
-- Passive voice for diagnostic statements: "mistakes were made" → "the system failed because..."
+- Passive voice for diagnostic statements
 - Hedging the thesis: never soften "state beats intelligence" with "in some cases" or "it depends"
 
 ### Write This / Not This
@@ -149,11 +280,11 @@ All five pillars are expressions of the spine. They are lenses on State Beats In
 
 | Pillar | Description | Post Examples |
 |--------|-------------|---------------|
-| **Production Failure Taxonomy** | Naming and classifying LLM failure modes with precision. These failures are always state failures in disguise. | "Why your RAG pipeline fails silently", "The hallucination that looked like success", "3 production failures and the architectural pattern behind all of them" |
-| **STATE Framework Applied** | Demonstrations of STATE pillars in real architecture decisions. | "Why I write the Airtable record before the LLM call", "Run your agent through the STATE checklist", "Before/after: stateless vs. stateful agent diagram" |
-| **Defensive Architecture** | Design patterns that make AI systems tolerant by construction. | "The validation gate you're skipping", "Always assume the LLM will fuck up — here's what that means architecturally", "The difference between a demo agent and a production agent" |
-| **The Meta Layer** | How Simon uses AI to do the work most people do manually — including figuring out what to ask the AI. | "I didn't know what I wanted to build. So I asked an AI what question I should be asking." (origin story — write first, pin it), "How I end every AI session: a log that becomes content" |
-| **Regulated AI & Law 25** | Quebec's Law 25 as an architecture requirement, not a checkbox. Compliance requires exactly what STATE delivers. | "Quebec's Law 25 just became your AI architecture spec", "If your AI agent makes decisions about customers, Law 25 says you need to explain why. Can you?", "The accidental compliance win: build stateful, observable agents and Law 25 comes for free" |
+| **Production Failure Taxonomy** | Naming and classifying LLM failure modes with precision. These failures are always state failures in disguise. | "Why your RAG pipeline fails silently", "3 production failures and the architectural pattern behind all of them" |
+| **STATE Framework Applied** | Demonstrations of STATE pillars in real architecture decisions. | "Run your agent through the STATE checklist", "Before/after: stateless vs. stateful agent diagram" |
+| **Defensive Architecture** | Design patterns that make AI systems tolerant by construction. | "The validation gate you're skipping", "Always assume the LLM will fuck up — here's what that means architecturally" |
+| **The Meta Layer** | How Simon uses AI to do the work most people do manually — including figuring out what to ask the AI. | "I didn't know what I wanted to build. So I asked an AI what question I should be asking." (origin story — write first, pin it) |
+| **Regulated AI & Law 25** | Quebec's Law 25 as an architecture requirement, not a checkbox. | "Quebec's Law 25 just became your AI architecture spec", "The accidental compliance win: build stateful, observable agents and Law 25 comes for free" |
 
 **The spine check**: At least 2 posts per week should explicitly or implicitly land on State Beats Intelligence.
 
@@ -173,10 +304,10 @@ Line 7-9: Lesson — specific, architectural, actionable
 Line 10: Close — question inviting response OR one-line STATE tie-in
 ```
 
-**Length**: 150–250 words.  
-**Diagrams**: Before/after architecture comparisons beat 300 words.  
-**Blank lines**: Structural, not decorative — they control reading pace.  
-**Hook (Line 1)**: Must stand alone. Works as the first line of a cold read.  
+**Length**: 150–250 words.
+**Diagrams**: Before/after architecture comparisons beat 300 words.
+**Blank lines**: Structural, not decorative — they control reading pace.
+**Hook (Line 1)**: Must stand alone. Works as the first line of a cold read.
 **Close (Line 10)**: Must earn its position. No "what do you think?" unless it's genuine.
 
 ---
@@ -217,11 +348,11 @@ If the queue has >60% authority posts, surface other intents for balance.
 
 ## 8. The Origin Story Post (write first, pin it)
 
-**Topic**: Why The Meta Architect exists.  
-**Hook**: "I didn't know what I wanted to build. So I asked an AI what question I should be asking."  
-**Arc**: Didn't know the right question → deep research → asked LLM to write the prompt → answer became the brand.  
-**Lesson**: The meta skill isn't prompting. It's knowing what to ask.  
-**Format**: Mini case study. Personal voice. Minimal AI assistance.  
+**Topic**: Why The Meta Architect exists.
+**Hook**: "I didn't know what I wanted to build. So I asked an AI what question I should be asking."
+**Arc**: Didn't know the right question → deep research → asked LLM to write the prompt → answer became the brand.
+**Lesson**: The meta skill isn't prompting. It's knowing what to ask.
+**Format**: Mini case study. Personal voice. Minimal AI assistance.
 **Why first**: Everything else points back to it. Explains the name, establishes the voice, demonstrates the meta-layer pillar live.
 
 ---
