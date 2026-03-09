@@ -42,5 +42,8 @@ logs/
 .research_hooks.json
 .capture_input
 
+# Content Engine runtime state
+projects/Content-Engine/.tmp/*.json
+
 # Agent runtime state
 .agents/

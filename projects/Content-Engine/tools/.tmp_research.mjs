@@ -2,11 +2,11 @@
  * /research pipeline — split execution
  *
  * Usage:
- *   node .tmp_research.mjs phase1          — load context, lock record, output for Claude
- *   node .tmp_research.mjs phase2          — run Perplexity with queries from .research_queries.json
- *   node .tmp_research.mjs phase3          — validate UIF from .research_uif.json, write to Airtable
- *   node .tmp_research.mjs phase4          — write hooks from .research_hooks.json to hooks_library
- *   node .tmp_research.mjs unlock          — clear lock (error recovery)
+ *   node projects/Content-Engine/tools/.tmp_research.mjs phase1          — load context, lock record, output for Claude
+ *   node projects/Content-Engine/tools/.tmp_research.mjs phase2          — run Perplexity with queries from .tmp/.research_queries.json
+ *   node projects/Content-Engine/tools/.tmp_research.mjs phase3          — validate UIF from .tmp/.research_uif.json, write to Airtable
+ *   node projects/Content-Engine/tools/.tmp_research.mjs phase4          — write hooks from .tmp/.research_hooks.json to hooks_library
+ *   node projects/Content-Engine/tools/.tmp_research.mjs unlock          — clear lock (error recovery)
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
@@ -152,7 +152,7 @@ async function phase1() {
 
   // Save state for subsequent phases
   const ctx = { workflowId, ideaId: idea.id, contentBrief };
-  writeFileSync('.research_ctx.json', JSON.stringify(ctx, null, 2));
+  writeFileSync('projects/Content-Engine/.tmp/.research_ctx.json', JSON.stringify(ctx, null, 2));
 
   console.log('✅ Locked. Record ID:', idea.id);
   console.log('   Workflow ID:', workflowId);
@@ -162,18 +162,18 @@ async function phase1() {
   console.log('\nicp_short:', brand.fields?.icp_short);
   console.log('\n=== CONTENT BRIEF ===');
   console.log(JSON.stringify(contentBrief, null, 2));
-  console.log('\n→ Claude: generate 3 queries and save to .research_queries.json, then run phase2');
+  console.log('\n→ Claude: generate 3 queries and save to projects/Content-Engine/.tmp/.research_queries.json, then run phase2');
 }
 
 // ─── PHASE 2: Run Perplexity with queries Claude generated ───────────────────
 async function phase2() {
   console.log('[PHASE 2] Running Perplexity...\n');
 
-  if (!existsSync('.research_queries.json')) throw new Error("Missing .research_queries.json — run phase1 first and have Claude generate queries");
-  if (!existsSync('.research_ctx.json')) throw new Error("Missing .research_ctx.json — run phase1 first");
+  if (!existsSync('projects/Content-Engine/.tmp/.research_queries.json')) throw new Error("Missing .research_queries.json — run phase1 first and have Claude generate queries");
+  if (!existsSync('projects/Content-Engine/.tmp/.research_ctx.json')) throw new Error("Missing .research_ctx.json — run phase1 first");
 
-  const { workflowId, ideaId } = JSON.parse(readFileSync('.research_ctx.json', 'utf8'));
-  const { queries } = JSON.parse(readFileSync('.research_queries.json', 'utf8'));
+  const { workflowId, ideaId } = JSON.parse(readFileSync('projects/Content-Engine/.tmp/.research_ctx.json', 'utf8'));
+  const { queries } = JSON.parse(readFileSync('projects/Content-Engine/.tmp/.research_queries.json', 'utf8'));
 
   if (!queries || queries.length !== 3) throw new Error("queries must be array of 3 items");
   if (!PERPLEXITY_KEY) throw new Error("PERPLEXITY_API_KEY not set");
@@ -217,22 +217,22 @@ async function phase2() {
     console.log(`   ✅ ${citations.length} citations`);
   }
 
-  writeFileSync('.research_results.json', JSON.stringify({ results, logIds }, null, 2));
-  console.log('\n✅ All 3 Perplexity calls complete. Results in .research_results.json');
-  console.log('→ Claude: compile UIF and save to .research_uif.json, then run phase3');
+  writeFileSync('projects/Content-Engine/.tmp/.research_results.json', JSON.stringify({ results, logIds }, null, 2));
+  console.log('\n✅ All 3 Perplexity calls complete. Results in projects/Content-Engine/.tmp/.research_results.json');
+  console.log('→ Claude: compile UIF and save to projects/Content-Engine/.tmp/.research_uif.json, then run phase3');
 }
 
 // ─── PHASE 3: Validate UIF, write to Airtable ────────────────────────────────
 async function phase3() {
   console.log('[PHASE 3] Validating and writing UIF...\n');
 
-  if (!existsSync('.research_uif.json')) throw new Error("Missing .research_uif.json");
-  if (!existsSync('.research_ctx.json')) throw new Error("Missing .research_ctx.json");
-  if (!existsSync('.research_results.json')) throw new Error("Missing .research_results.json");
+  if (!existsSync('projects/Content-Engine/.tmp/.research_uif.json')) throw new Error("Missing .research_uif.json");
+  if (!existsSync('projects/Content-Engine/.tmp/.research_ctx.json')) throw new Error("Missing .research_ctx.json");
+  if (!existsSync('projects/Content-Engine/.tmp/.research_results.json')) throw new Error("Missing .research_results.json");
 
-  const { workflowId, ideaId } = JSON.parse(readFileSync('.research_ctx.json', 'utf8'));
-  const { logIds } = JSON.parse(readFileSync('.research_results.json', 'utf8'));
-  const uif = JSON.parse(readFileSync('.research_uif.json', 'utf8'));
+  const { workflowId, ideaId } = JSON.parse(readFileSync('projects/Content-Engine/.tmp/.research_ctx.json', 'utf8'));
+  const { logIds } = JSON.parse(readFileSync('projects/Content-Engine/.tmp/.research_results.json', 'utf8'));
+  const uif = JSON.parse(readFileSync('projects/Content-Engine/.tmp/.research_uif.json', 'utf8'));
 
   // E — Explicit gate
   const validation = validateUIF(uif);
@@ -267,20 +267,20 @@ async function phase3() {
     console.log(`  Take: ${a.contrarian_take}`);
     console.log(`  Facts: ${facts.join(' | ')}`);
   });
-  console.log('\n→ Claude: generate hooks and save to .research_hooks.json, then run phase4');
+  console.log('\n→ Claude: generate hooks and save to projects/Content-Engine/.tmp/.research_hooks.json, then run phase4');
 }
 
 // ─── PHASE 4: Write hooks to hooks_library ───────────────────────────────────
 async function phase4() {
   console.log('[PHASE 4] Writing hooks...\n');
 
-  if (!existsSync('.research_hooks.json')) throw new Error("Missing .research_hooks.json");
-  if (!existsSync('.research_ctx.json')) throw new Error("Missing .research_ctx.json");
-  if (!existsSync('.research_uif.json')) throw new Error("Missing .research_uif.json");
+  if (!existsSync('projects/Content-Engine/.tmp/.research_hooks.json')) throw new Error("Missing .research_hooks.json");
+  if (!existsSync('projects/Content-Engine/.tmp/.research_ctx.json')) throw new Error("Missing .research_ctx.json");
+  if (!existsSync('projects/Content-Engine/.tmp/.research_uif.json')) throw new Error("Missing .research_uif.json");
 
-  const { workflowId, ideaId } = JSON.parse(readFileSync('.research_ctx.json', 'utf8'));
-  const uif = JSON.parse(readFileSync('.research_uif.json', 'utf8'));
-  const { hooks } = JSON.parse(readFileSync('.research_hooks.json', 'utf8'));
+  const { workflowId, ideaId } = JSON.parse(readFileSync('projects/Content-Engine/.tmp/.research_ctx.json', 'utf8'));
+  const uif = JSON.parse(readFileSync('projects/Content-Engine/.tmp/.research_uif.json', 'utf8'));
+  const { hooks } = JSON.parse(readFileSync('projects/Content-Engine/.tmp/.research_hooks.json', 'utf8'));
 
   let count = 0;
   for (const h of hooks) {
@@ -315,8 +315,8 @@ async function phase4() {
 
 // ─── UNLOCK: Error recovery ───────────────────────────────────────────────────
 async function unlock() {
-  if (!existsSync('.research_ctx.json')) throw new Error("No .research_ctx.json to unlock");
-  const { workflowId, ideaId } = JSON.parse(readFileSync('.research_ctx.json', 'utf8'));
+  if (!existsSync('projects/Content-Engine/.tmp/.research_ctx.json')) throw new Error("No .research_ctx.json to unlock");
+  const { workflowId, ideaId } = JSON.parse(readFileSync('projects/Content-Engine/.tmp/.research_ctx.json', 'utf8'));
   await patchRecord(IDEAS_TABLE, ideaId, { research_started_at: null, Status: 'Proposed' });
   await createRecord(LOGS_TABLE, {
     workflow_id: workflowId, entity_id: ideaId,
@@ -338,8 +338,8 @@ if (!runners[phase]) {
 
 runners[phase]().catch(async err => {
   console.error(`\n❌ /research failed — ${err.message}`);
-  if (existsSync('.research_ctx.json')) {
-    const { workflowId, ideaId } = JSON.parse(readFileSync('.research_ctx.json', 'utf8'));
+  if (existsSync('projects/Content-Engine/.tmp/.research_ctx.json')) {
+    const { workflowId, ideaId } = JSON.parse(readFileSync('projects/Content-Engine/.tmp/.research_ctx.json', 'utf8'));
     if (ideaId) {
       await patchRecord(IDEAS_TABLE, ideaId, { research_started_at: null, Status: 'Proposed' });
       await createRecord(LOGS_TABLE, {

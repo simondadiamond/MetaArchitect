@@ -1,0 +1,6 @@
+{
+  "enabledMcpjsonServers": [
+    "n8n-native",
+    "n8n-mcp"
+  ]
+}
