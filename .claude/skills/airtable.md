@@ -4,10 +4,10 @@ All Airtable operations use the REST API v0 with Personal Access Token auth.
 
 ## Reusable Module
 
-A pre-built utility module lives at `lib/airtable.mjs`. **Always import from it instead of writing boilerplate.**
+A pre-built utility module lives at `projects/Content-Engine/tools/airtable.mjs`. **Always import from it instead of writing boilerplate.**
 
 ```javascript
-import { getRecords, getAllRecords, getRecord, patchRecord, createRecord, TABLES } from './lib/airtable.mjs';
+import { getRecords, getAllRecords, getRecord, patchRecord, createRecord, TABLES } from './projects/Content-Engine/tools/airtable.mjs';
 
 // Examples:
 const brand = await getRecords(TABLES.BRAND, `{name} = "metaArchitect"`);
