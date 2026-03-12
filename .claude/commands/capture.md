@@ -72,8 +72,8 @@ Create the record *before* the expensive LLM calls so we have an entityId to log
 ```javascript
 updateStage(state, "creating_draft");
 const ideaRecord = await createRecord(process.env.AIRTABLE_TABLE_IDEAS, {
-  title: "Processing...",
-  status: "processing",
+  Topic: "Processing...",
+  Status: "New",
   workflow_id: state.workflowId,
   source_type: sourceType,
   source_url: sourceUrl,
@@ -142,12 +142,69 @@ await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
 });
 ```
 
+### 6.5. Shallow Research
+
+Runs immediately after scoring to produce angles for the planner. No new lock needed — the draft record exists and no other expensive operation is in flight.
+
+```javascript
+updateStage(state, "shallow_research");
+
+// 1. Build overview query from content_brief fields
+const overviewQuery = `${strategistOutput.topic} — ${strategistOutput.core_angle}`;
+
+// 2. Call Perplexity (sonar-pro) — 1 query, broad landscape overview
+const perplexityResult = await callPerplexity(overviewQuery);
+
+// Log Perplexity call
+await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+  workflow_id: state.workflowId,
+  entity_id: state.entityId,
+  step_name: "shallow_research_perplexity",
+  stage: "shallow_research",
+  timestamp: new Date().toISOString(),
+  output_summary: `Shallow research query: "${overviewQuery}"`,
+  model_version: "sonar-pro",
+  status: "success"
+});
+
+// 3. Call Claude (claude-sonnet-4-6) — Angle Extractor prompt (see researcher.md)
+//    Input: perplexityResult + strategistOutput (content_brief) + brand
+//    Output: shallow UIF — meta, core_knowledge.facts (2–5 from citations),
+//            angles[] (2–4 angles, each with angle_name, contrarian_take,
+//            pillar_connection, brand_specific_angle, supporting_facts: []),
+//            humanity_snippets: []
+//    Instruction to model: "Do not invent facts. Only extract what Perplexity
+//    returned. Focus effort on generating distinct, specific angles the
+//    practitioner audience would find valuable."
+const shallowUIF = await extractAngles({ perplexityResult, contentBrief: strategistOutput, brand });
+```
+
+**E — Explicit Gate**:
+```javascript
+const uifValidation = validateUIF(shallowUIF);
+if (!uifValidation.valid) throw new Error(`Shallow UIF validation: ${uifValidation.errors.join("; ")}`);
+```
+
+Log Claude call:
+```javascript
+await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+  workflow_id: state.workflowId,
+  entity_id: state.entityId,
+  step_name: "angle_extractor",
+  stage: "shallow_research",
+  timestamp: new Date().toISOString(),
+  output_summary: `Angle extraction complete. ${shallowUIF.angles.length} angles generated.`,
+  model_version: "claude-sonnet-4-6",
+  status: "success"
+});
+```
+
 ### 7. Final Airtable Write
 ```javascript
 updateStage(state, "saving");
 await patchRecord(process.env.AIRTABLE_TABLE_IDEAS, state.entityId, {
-  title: strategistOutput.working_title,
-  status: "pending_selection", // Replaces 'captured' for pipeline readiness
+  Topic: strategistOutput.working_title,
+  Status: "New",
   intent: strategistOutput.intent,
   content_brief: JSON.stringify(strategistOutput),
   score_brand_fit: scorerOutput.score_brand_fit,
@@ -167,6 +224,8 @@ await patchRecord(process.env.AIRTABLE_TABLE_IDEAS, state.entityId, {
     authority: scorerOutput.rationale_authority
   }),
   recommended_next_action: scorerOutput.recommended_next_action,
+  "Intelligence File": JSON.stringify(shallowUIF),
+  research_depth: "shallow",
   captured_at: new Date().toISOString()
 });
 ```
@@ -177,6 +236,7 @@ await patchRecord(process.env.AIRTABLE_TABLE_IDEAS, state.entityId, {
    {working_title}
    Intent: {intent}
    Overall Score: {score_overall}/10
+   Angles: {shallowUIF.angles.length} generated
    Next step: {recommended_next_action}
 ```
 

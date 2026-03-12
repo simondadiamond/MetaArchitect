@@ -243,6 +243,119 @@ function validateCaptureScores(scores) {
 
 ---
 
+## validateEditorialPlan(plan, candidates)
+
+Validates the Editorial Composer's output before writing to Airtable.
+
+`candidates` is the **full candidates array** (not just IDs) — required to validate `angle_index` bounds.
+Each candidate must have: `id`, `angles` (array with at least 1 item).
+
+```javascript
+function validateEditorialPlan(plan, candidates) {
+  const errors = [];
+
+  const validRoles = [
+    "authority_anchor", "resonance_story", "diagnostic_teardown",
+    "framework_playbook", "tactical_support", "contrarian_reframe", "research_commentary"
+  ];
+  const validPillars = [
+    "Production Failure Taxonomy", "STATE Framework Applied",
+    "Defensive Architecture", "The Meta Layer", "Regulated AI & Law 25"
+  ];
+  const validIntents = ["authority", "education", "community", "virality"];
+  const validHookStyles = ["contrarian", "stat_lead", "question", "story_open", "provocative_claim"];
+
+  // Build lookup: id → candidate record (for angle_index validation)
+  const candidateMap = new Map(candidates.map(c => [c.id, c]));
+  const candidateIds = candidates.map(c => c.id);
+
+  // post_count must be 3 or 4
+  if (!Number.isInteger(plan.post_count) || plan.post_count < 3 || plan.post_count > 4) {
+    errors.push(`post_count must be 3 or 4, got: ${plan.post_count}`);
+  }
+
+  if (!Array.isArray(plan.posts)) {
+    errors.push("posts must be an array");
+    return { valid: false, errors, stage: "editorial_plan_validation" };
+  }
+
+  // posts.length must match post_count
+  if (plan.posts.length !== plan.post_count) {
+    errors.push(`posts.length (${plan.posts.length}) does not match post_count (${plan.post_count})`);
+  }
+
+  // Exactly 1 authority_anchor
+  const anchorCount = plan.posts.filter(p => p.narrative_role === "authority_anchor").length;
+  if (anchorCount !== 1) {
+    errors.push(`Exactly 1 authority_anchor required, found ${anchorCount}`);
+  }
+
+  // No two consecutive posts with the same narrative_role
+  for (let i = 0; i < plan.posts.length - 1; i++) {
+    if (plan.posts[i].narrative_role === plan.posts[i + 1].narrative_role) {
+      errors.push(`Consecutive posts at order ${plan.posts[i].order} and ${plan.posts[i + 1].order} share the same narrative_role: ${plan.posts[i].narrative_role}`);
+    }
+  }
+
+  // Track idea_ids for duplicate check
+  const seenIds = new Set();
+
+  plan.posts.forEach((post, i) => {
+    const label = `posts[${i}]`;
+
+    // idea_id must exist in candidates array
+    if (!post.idea_id || post.idea_id.trim() === "") {
+      errors.push(`${label}.idea_id is empty`);
+    } else if (!candidateIds.includes(post.idea_id)) {
+      errors.push(`${label}.idea_id "${post.idea_id}" not found in candidates — possible hallucination`);
+    }
+
+    // Duplicate idea_id check
+    if (post.idea_id) {
+      if (seenIds.has(post.idea_id)) {
+        errors.push(`${label}.idea_id "${post.idea_id}" is duplicated`);
+      } else {
+        seenIds.add(post.idea_id);
+      }
+    }
+
+    // angle_index: must be a non-negative integer within bounds
+    if (!Number.isInteger(post.angle_index) || post.angle_index < 0) {
+      errors.push(`${label}.angle_index must be a non-negative integer, got: ${post.angle_index}`);
+    } else {
+      const candidate = candidateMap.get(post.idea_id);
+      const angleCount = candidate?.angles?.length ?? 0;
+      if (angleCount > 0 && post.angle_index >= angleCount) {
+        errors.push(`${label}.angle_index ${post.angle_index} out of bounds (idea has ${angleCount} angle(s))`);
+      }
+    }
+
+    // Enum validation
+    if (!validRoles.includes(post.narrative_role)) {
+      errors.push(`${label}.narrative_role "${post.narrative_role}" is not a valid role`);
+    }
+    if (!validPillars.includes(post.pillar)) {
+      errors.push(`${label}.pillar "${post.pillar}" is not a valid pillar name`);
+    }
+    if (!validIntents.includes(post.intent)) {
+      errors.push(`${label}.intent "${post.intent}" is not valid`);
+    }
+    if (!validHookStyles.includes(post.hook_style)) {
+      errors.push(`${label}.hook_style "${post.hook_style}" is not valid`);
+    }
+
+    // Required non-empty strings
+    if (!post.topic || post.topic.trim() === "") errors.push(`${label}.topic is empty`);
+    if (!post.thesis_angle || post.thesis_angle.trim() === "") errors.push(`${label}.thesis_angle is empty`);
+    if (!post.why_selected || post.why_selected.trim() === "") errors.push(`${label}.why_selected is empty`);
+  });
+
+  return { valid: errors.length === 0, errors, stage: "editorial_plan_validation" };
+}
+```
+
+---
+
 ## riskTier(operationType)
 
 Returns the required STATE pillars for a given operation type.

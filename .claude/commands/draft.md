@@ -1,15 +1,15 @@
 # /draft — Post Drafting Command
 
-Create draft posts from a researched idea using framework + hook + humanity snippet.
+Create a draft post from a `research_ready` post stub, using the stub's assigned angle, framework, hook, and humanity snippet.
 
 ---
 
 ## Precondition
 
-`status = researched` AND `research_completed_at IS NOT NULL`.
+Post stub `status = "research_ready"`.
 
-Default: oldest researched idea by `research_completed_at` ascending.
-With argument: `/draft [record_id]` — draft a specific idea.
+Default: oldest research_ready post stub by `planned_week` asc, `planned_order` asc.
+With argument: `/draft [post_stub_id]` — draft a specific post stub.
 
 Risk tier: medium → S + T + E required.
 
@@ -20,8 +20,8 @@ Risk tier: medium → S + T + E required.
 ```javascript
 const state = buildStateObject({
   stage: "init",
-  entityType: "idea",
-  entityId: idea.id
+  entityType: "post",
+  entityId: postStub.id
 });
 ```
 
@@ -36,38 +36,51 @@ const brand = brands.length > 0 ? brands[0] : null;
 if (!brand) throw new Error("Brand record 'metaArchitect' not found in Airtable (AIRTABLE_TABLE_BRAND)");
 ```
 
-### 2. Find target idea
+### 2. Find target post stub
 ```javascript
-const ideas = await getRecords(
-  process.env.AIRTABLE_TABLE_IDEAS,
-  `AND({status} = "researched", {research_completed_at} != "")`,
-  [{ field: "research_completed_at", direction: "asc" }]
+const posts = await getRecords(
+  TABLES.POSTS,
+  `{status} = "research_ready"`,
+  [{ field: "planned_week", direction: "asc" }, { field: "planned_order", direction: "asc" }]
 );
-if (ideas.length === 0) {
-  return "No ideas with status = researched. Run /research first.";
+if (posts.length === 0) {
+  return "No post stubs with status = research_ready. Run /research first.";
 }
-const idea = ideas[0];
+const postStub = posts[0];
+const angleIndex = postStub.fields?.angle_index ?? 0;
+const ideaId = postStub.fields?.idea_id?.[0];
+
+if (!ideaId) throw new Error("Post stub is missing idea_id — check Airtable data");
 ```
 
-### 2. Parse UIF
+### 3. Load idea + parse UIF
 ```javascript
-const uif = idea.fields?.intelligence_file
-  ? JSON.parse(idea.fields.intelligence_file)
+const idea = await getRecord(TABLES.IDEAS, ideaId);
+if (!idea) throw new Error(`Idea ${ideaId} not found`);
+
+const uif = idea.fields?.["Intelligence File"]
+  ? JSON.parse(idea.fields["Intelligence File"])
   : null;
-if (!uif) throw new Error("intelligence_file is null — research may not have completed");
+if (!uif) throw new Error("Intelligence File is null — research may not have completed");
 
 const contentBrief = idea.fields?.content_brief
   ? JSON.parse(idea.fields.content_brief)
   : null;
+
+// Select the assigned angle
+const angle = uif.angles?.[angleIndex];
+if (!angle) throw new Error(`angle_index ${angleIndex} not found in UIF (${uif.angles?.length ?? 0} angles)`);
 ```
 
-### 3. Determine distribution targets
-From `contentBrief.distribution_platforms[]` or default to `["linkedin"]`.
-Each platform gets one draft per angle (or limit to top 2 angles if >3 to avoid overload).
+### 4. Determine platform
 
-For each `(platform, angle)` combination:
+Default to `"linkedin"`. In a future iteration this can be derived from `contentBrief.distribution_platforms`.
 
-### 4. Query framework_library
+```javascript
+const platform = "linkedin";
+```
+
+### 5. Query framework_library
 ```javascript
 updateStage(state, "framework_query");
 // Use improver.md Framework Query:
@@ -76,7 +89,7 @@ updateStage(state, "framework_query");
 const framework = await queryFramework(angle, idea);
 ```
 
-### 5. Query hooks_library
+### 6. Query hooks_library
 ```javascript
 updateStage(state, "hook_query");
 // Use improver.md Hook Query:
@@ -85,16 +98,55 @@ updateStage(state, "hook_query");
 const hook = await queryHook(idea.fields?.intent);
 ```
 
-### 6. Query humanity_snippets
+### 7. Query humanity_snippets
 ```javascript
 updateStage(state, "snippet_query");
-// Use improver.md Humanity Snippet Query:
-// Filter: status = active, order used_count asc, tag overlap with angle
-const snippet = await querySnippet(angle);
+// Fetch top 3 candidates using weighted scoring (see querySnippets below).
+// snippet = best match; alternateSnippets = next 2 for /review to offer.
+const snippetCandidates = await querySnippets(angle, 3);
+const snippet = snippetCandidates[0] ?? null;
+const alternateSnippets = snippetCandidates.slice(1);
 const needsSnippet = snippet === null;
 ```
 
-### 7. Generate draft (writer skill)
+**querySnippets(angle, limit) — weighted scoring:**
+```javascript
+async function querySnippets(angle, limit = 3) {
+  const allSnippets = await getRecords(TABLES.SNIPPETS, `{status} != "retired"`);
+
+  const angleText = [
+    angle.angle_name ?? "",
+    angle.contrarian_take ?? "",
+    angle.single_lesson ?? "",
+    angle.pillar_connection ?? ""
+  ].join(" ").toLowerCase();
+
+  function tokenize(text) {
+    return text.split(/\W+/).filter(t => t.length > 3);
+  }
+  const angleTokens = tokenize(angleText);
+
+  const scored = allSnippets.map(s => {
+    const tags = String(s.fields.tags ?? "").toLowerCase().split(",").map(t => t.trim());
+    const snippetText = String(s.fields.snippet_text ?? "").toLowerCase();
+    const tagOverlap   = angleTokens.filter(t => tags.some(tag => tag.includes(t))).length;
+    const textOverlap  = angleTokens.filter(t => snippetText.includes(t)).length;
+    const avgScore     = Number(s.fields.avg_score ?? 0);
+    const usedCount    = Number(s.fields.used_count ?? 0);
+
+    const score = (tagOverlap * 4) + (textOverlap * 2) + (avgScore * 1.5) - (usedCount * 0.25);
+    return { record: s, score, tagOverlap, textOverlap };
+  });
+
+  return scored
+    .filter(x => x.tagOverlap > 0 || x.textOverlap > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(x => x.record);
+}
+```
+
+### 8. Generate draft (writer skill)
 ```javascript
 updateStage(state, "drafting");
 // Classify supporting facts by citation weight before passing to writer:
@@ -108,7 +160,7 @@ const supporting_facts = angle.supporting_facts ?? [];
 const draftContent = await generateDraft({ uif, angle, supporting_facts, framework, hook, snippet, platform, brand });
 ```
 
-**E — Explicit gate**: Run `validatePost({ draft_content: draftContent, platform })` — must pass before creating post record.
+**E — Explicit gate**: Run `validatePost({ draft_content: draftContent, platform })` — must pass before writing to post stub.
 
 <!-- BACKLOG GAP-2: Draft fact citation gate (LLM-soft, not enforced)
      Current state: citation rules live in writer.md system prompt and facts are
@@ -121,11 +173,11 @@ const draftContent = await generateDraft({ uif, angle, supporting_facts, framewo
      or after the first time a bad citation ships.
 -->
 
-### 8. Create posts record
+### 9. Patch post stub in place
 ```javascript
 updateStage(state, "writing");
-const postRecord = await createRecord(process.env.AIRTABLE_TABLE_POSTS, {
-  idea_id: [idea.id],
+// Update the existing post stub — do NOT create a new record.
+await patchRecord(TABLES.POSTS, postStub.id, {
   platform,
   intent: idea.fields?.intent,
   format: framework?.fields?.pattern_type ?? "none",
@@ -133,43 +185,44 @@ const postRecord = await createRecord(process.env.AIRTABLE_TABLE_POSTS, {
   hook_id: hook ? [hook.id] : [],
   framework_id: framework ? [framework.id] : [],
   humanity_snippet_id: snippet ? [snippet.id] : [],
+  alt_snippet_ids: alternateSnippets.map(s => s.id),
   needs_snippet: needsSnippet,
   status: "drafted",
   drafted_at: new Date().toISOString()
 });
 ```
 
-### 9. Log creation
+### 10. Log completion
 ```javascript
 await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
   workflow_id: state.workflowId,
-  entity_id: postRecord.id,
+  entity_id: postStub.id,
   step_name: "draft_created",
   stage: "complete",
   timestamp: new Date().toISOString(),
-  output_summary: `Draft created: ${platform} / ${angle.angle_name} / framework: ${framework?.fields?.framework_name ?? "none"} / hook: ${hook?.id ?? "none"}`,
+  output_summary: `Draft written to post stub ${postStub.id}: ${platform} / ${angle.angle_name} / framework: ${framework?.fields?.framework_name ?? "none"} / hook: ${hook?.id ?? "none"}`,
   model_version: "claude-sonnet-4-6",
   status: "success"
 });
 ```
 
-### 10. Report to Simon
-For each draft created:
+### 11. Report to Simon
 ```
-✅ Draft created: [platform] — [angle_name]
-   Framework: [framework_name] | Hook: [hook_type] | Snippet: [yes/no]
+✅ Draft created: [platform] — Angle [N]: [angle_name]
+   Framework: [framework_name] | Hook: [hook_type]
+   Snippet: [snippet_text first 60 chars...] (+ [N] alternates for /review)
 ```
 
-For any draft with `needs_snippet = true`:
+If `needs_snippet = true`:
 ```
 ⚠ No snippet matched for angle: [angle_name]
   What would fit: [brief description of the kind of operational moment that would work —
   e.g., "a specific moment when you discovered a silent failure in a production pipeline"]
 ```
 
-After all drafts:
+After draft:
 ```
-[N] drafts created. Run /review to approve.
+Draft written to post stub. Run /review to approve.
 ```
 
 ---
@@ -178,40 +231,54 @@ After all drafts:
 
 | Table | Field | Value |
 |---|---|---|
-| `posts` | `idea_id` | linked to idea |
-| `posts` | `platform` | platform string |
+| `posts` | `platform` | `"linkedin"` |
 | `posts` | `intent` | from idea.intent |
 | `posts` | `format` | framework pattern_type |
 | `posts` | `draft_content` | generated post text |
 | `posts` | `hook_id` | linked to hook record (if matched) |
 | `posts` | `framework_id` | linked to framework record (if matched) |
 | `posts` | `humanity_snippet_id` | linked to snippet (if matched) |
+| `posts` | `alt_snippet_ids` | linked to up to 2 alternate snippet candidates |
 | `posts` | `needs_snippet` | true/false |
-| `posts` | `status` | `drafted` |
+| `posts` | `status` | `"drafted"` |
 | `posts` | `drafted_at` | `now()` |
-| `logs` | multiple | one per draft generated |
+| `logs` | one entry | draft_created |
 
 ---
 
 ## Rules
 
+- **Single angle per run** — draft the post stub's assigned `angle_index` only. No iteration over all angles.
+- **Patch, don't create** — the post stub already exists; update it in place. Never `createRecord` a new posts record.
 - **Never block on missing snippet** — draft without, flag `needs_snippet = true`
 - **Never fabricate a humanity snippet** — only use verified records from `humanity_snippets` table
 - `needs_snippet` is reported to Simon with a description of what kind of moment would fit
 - `score_audience_relevance` is never read or used in any draft decision
+- **`needs_snippet` must be derived, not hardcoded**: always `snippet === null` — never `false` as a literal
+- **`alt_snippet_ids` must always be present in the payload**: `alternateSnippets.map(s => s.id)` (empty array `[]` if no alternates) — Airtable silently ignores missing fields; omitting it is invisible at write time but breaks `/review`
+- **Airtable checkbox read-back**: `needs_snippet = false` (unchecked) does NOT appear in the API response — the field is absent, not `false`. This is correct Airtable behavior.
 
 ---
 
 ## Error Path
 
-No persistent lock for `/draft` (drafts are created per-attempt, not pre-locked).
-If a draft generation fails for one (platform, angle) pair, log the error and continue with remaining combinations:
+No persistent lock for `/draft`. If draft generation fails:
 
-```
-⚠ Draft failed for [platform]/[angle]: [error] — skipped, [N] other drafts completed
+```javascript
+} catch (error) {
+  await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+    workflow_id: state.workflowId,
+    entity_id: postStub.id,
+    step_name: "error",
+    stage: state.stage,
+    timestamp: new Date().toISOString(),
+    output_summary: `Error: ${error.message}`,
+    model_version: "n/a",
+    status: "error"
+  });
+  return formatError("/draft", state.stage, error.message, false);
+  // Output: ❌ /draft failed at [stage] — [error]
+}
 ```
 
-If all drafts fail:
-```
-❌ Draft failed for all targets — [error] — logged, safe to retry
-```
+Post stub remains at `status = "research_ready"` — safe to retry.

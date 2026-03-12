@@ -23,12 +23,13 @@ You are operating within the **WAT framework** (Workflows, Agents, Tools) enforc
 | Stage | Command | Gate |
 |-------|---------|------|
 | 1. Idea Capture | `/capture` | None |
-| 2. Idea Selection | `/ideas` | `Status = pending_selection` |
-| 3. Research | `/research` | `Status = Selected` + `research_started_at IS NULL` |
-| 4. Draft | `/draft` | `Status = Ready` + `research_completed_at IS NOT NULL` |
-| 5. Review | `/review` | `status = drafted` |
-| 6. Publish | `/publish` | `status = approved` |
-| 7. Score | `/score` | `status = published` + `performance_score IS NULL` |
+| 2. Editorial Planning | `/editorial-planner` | ≥3 ideas with `Status = "New"` + UIF exists (shallow research runs at capture) |
+| 2b. Backlog View | `/ideas` (deprecated) | Read-only display only |
+| 3. Research | `/research` | Post stub `status = "planned"` + `research_started_at` empty |
+| 4. Draft | `/draft` | Post stub `status = "research_ready"` |
+| 5. Review | `/review` | Post `status = "drafted"` |
+| 6. Publish | `/publish` | Post `status = "approved"` |
+| 7. Score | `/score` | Post `status = "published"` + `performance_score IS NULL` |
 
 All stages are Claude Code slash commands. See [workflows/README.md](workflows/README.md) for the full index.
 
@@ -73,8 +74,10 @@ Runtime state lives in `projects/Content-Engine/.tmp/` (gitignored). These files
 ## Data Model — Quick Reference
 
 ### Status Flows
-- `ideas`: `New → Selected → (lock) Researching → Ready | Research_failed`
-- `posts`: `drafted → approved | rejected → published → scored`
+- `ideas`: `New → Selected → Ready → Completed`
+  - `research_depth` field: `shallow` (set at `/capture`) → `deep` (set after `/research`)
+  - Note: ideas no longer pass through "Researching" status — research lock is now on the post stub
+- `posts`: `planned → researching → research_ready → drafted → approved | rejected → published → scored`
 - `hooks_library`: `candidate → proven | retired`
 
 ### Field Name Gotchas (case-sensitive, exact names required)
@@ -83,9 +86,13 @@ Runtime state lives in `projects/Content-Engine/.tmp/` (gitignored). These files
 |-------|--------|
 | `ideas` | `Topic` (not "title"), `Status` (not "status"), `Intelligence File` (not "intelligence_file") |
 | `ideas` | `research_started_at`, `research_completed_at` (lowercase, underscore) |
+| `ideas` | `research_depth` — single select: `shallow` (capture) or `deep` (after /research) |
 | `ideas` | `score_audience_relevance` exists — **never read or write it** |
 | `ideas` | `Summary (AI)`, `Next Best Action (AI)` — **Airtable-managed, never write** |
 | `posts` | `status` (lowercase), `idea_id` (linked record — write as array `["recXXX"]`) |
+| `posts` | `angle_index` — 0-based index into the UIF angles array; set at planning time |
+| `posts` | `planned_week`, `planned_order`, `narrative_role` — set at planning time by /editorial-planner |
+| `posts` | `research_started_at` — lock field for /research (not on ideas table anymore) |
 | `hooks_library` | `source_idea` (linked record — write as array `["recXXX"]`) |
 
 ### UIF v3.0 Required Fields
@@ -145,11 +152,15 @@ const state = {
 **E — Explicit**: All LLM/API output passes through a validation gate before any Airtable write. Invalid output → error path, never silent continue.
 
 ### Lock Pattern
+
+`/capture` — no lock (draft record acts as the unit; expensive ops guarded by validation gates).
+
+`/research` — lock on the **post stub** (not the idea):
 ```javascript
 // Before expensive operation:
-await patchRecord(TABLES.IDEAS, id, { research_started_at: new Date().toISOString() });
-// On failure — clear the lock:
-await patchRecord(TABLES.IDEAS, id, { research_started_at: null, Status: "Research_failed" });
+await patchRecord(TABLES.POSTS, postStubId, { research_started_at: new Date().toISOString(), status: "researching" });
+// On failure — clear the lock, revert to planned:
+await patchRecord(TABLES.POSTS, postStubId, { research_started_at: null, status: "planned" });
 ```
 
 ### Error Format

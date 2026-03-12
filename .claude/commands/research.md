@@ -1,15 +1,15 @@
 # /research — Deep Research Command
 
-Execute deep research on a selected idea: generate queries, call Perplexity, compile UIF, extract hooks.
+Deepen research on a planned post stub: target the assigned angle, run 2 Perplexity queries, merge results into the idea's UIF, mark the post stub `research_ready`.
 
 ---
 
 ## Precondition
 
-`Status = "Selected"` AND `research_started_at IS NULL`.
+Post stub `status = "planned"` AND `research_started_at` is empty.
 
-Default (no argument): oldest selected idea by `selected_at` ascending.
-With argument: `/research [record_id]` — research a specific idea.
+Default (no argument): oldest planned post stub by `planned_week` asc, `planned_order` asc.
+With argument: `/research [post_stub_id]` — research a specific post stub.
 
 Risk tier: medium → S + T + E required.
 
@@ -20,8 +20,8 @@ Risk tier: medium → S + T + E required.
 ```javascript
 const state = buildStateObject({
   stage: "init",
-  entityType: "idea",
-  entityId: idea.id
+  entityType: "post",
+  entityId: postStub.id
 });
 // state.workflowId is the ID used for all log entries in this run
 ```
@@ -37,66 +37,76 @@ const brand = brands.length > 0 ? brands[0] : null;
 if (!brand) throw new Error("Brand record 'metaArchitect' not found in Airtable (AIRTABLE_TABLE_BRAND)");
 ```
 
-### 2. Find target idea
+### 2. Find target post stub
 ```javascript
-const ideas = await getRecords(
-  process.env.AIRTABLE_TABLE_IDEAS,
-  `AND({Status} = "Selected", {research_started_at} = "")`,
-  [{ field: "selected_at", direction: "asc" }]
+const posts = await getRecords(
+  TABLES.POSTS,
+  `AND({status} = "planned", {research_started_at} = "")`,
+  [{ field: "planned_week", direction: "asc" }, { field: "planned_order", direction: "asc" }]
 );
-if (ideas.length === 0) {
-  return "No ideas with Status = Selected and research_started_at empty. Run /ideas first.";
+if (posts.length === 0) {
+  return "No post stubs with status = planned and research_started_at empty. Run /editorial-planner first.";
 }
-const idea = ideas[0];  // oldest selected
+const postStub = posts[0];
+const ideaId = postStub.fields?.idea_id?.[0];
+const angleIndex = postStub.fields?.angle_index ?? 0;
+
+if (!ideaId) throw new Error("Post stub is missing idea_id — check Airtable data");
 ```
 
-### 2. Idempotency check
+### 3. Load idea + UIF
 ```javascript
-if (idea.fields?.research_started_at) {
-  return `⚠ Research already started at ${idea.fields.research_started_at}. Status: ${idea.fields?.["Status"]}. Check Airtable for current state.`;
-}
+const idea = await getRecord(TABLES.IDEAS, ideaId);
+if (!idea) throw new Error(`Idea ${ideaId} not found`);
+
+const contentBrief = idea.fields?.content_brief
+  ? JSON.parse(idea.fields.content_brief)
+  : null;
+if (!contentBrief) throw new Error("content_brief is null or unparseable");
+
+const existingUIF = idea.fields?.["Intelligence File"]
+  ? JSON.parse(idea.fields["Intelligence File"])
+  : null;
+if (!existingUIF) throw new Error("Intelligence File is null — run /capture first to generate shallow UIF");
+
+const targetAngle = existingUIF.angles?.[angleIndex];
+if (!targetAngle) throw new Error(`angle_index ${angleIndex} not found in UIF (${existingUIF.angles?.length ?? 0} angles)`);
 ```
 
-### 3. Lock immediately — BEFORE any API call
+### 4. Lock on post stub — BEFORE any API call
 ```javascript
 updateStage(state, "locking");
-await patchRecord(process.env.AIRTABLE_TABLE_IDEAS, idea.id, {
+await patchRecord(TABLES.POSTS, postStub.id, {
   research_started_at: new Date().toISOString(),
-  Status: "Researching"
+  status: "researching"
 });
-// Log the lock
 await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
   workflow_id: state.workflowId,
-  entity_id: idea.id,
+  entity_id: postStub.id,
   step_name: "lock",
   stage: "locking",
   timestamp: new Date().toISOString(),
-  output_summary: `Research locked for: ${idea.fields?.["Topic"]}`,
+  output_summary: `Research locked for post stub ${postStub.id} — angle_index ${angleIndex}: "${targetAngle.angle_name}"`,
   model_version: "n/a",
   status: "success"
 });
 ```
 
-### 4. Parse content_brief
-```javascript
-const contentBrief = idea.fields?.content_brief
-  ? JSON.parse(idea.fields.content_brief)
-  : null;
-if (!contentBrief) throw new Error("content_brief is null or unparseable");
-```
-
-### 6. Research Architect — generate 3 queries
+### 5. Research Architect — generate 2 targeted queries
 ```javascript
 updateStage(state, "research_architect");
-// Call claude-sonnet-4-6 with Research Architect prompt (see researcher.md)
-// Provide `brand` and `contentBrief` as context.
-// Validate: validateResearchPlan(output) — must be true before proceeding
-// Log result to logs table (step_name: "research_architect")
+// Call claude-sonnet-4-6 with Research Architect prompt (see researcher.md).
+// Input: brand, contentBrief, targetAngle (the specific angle object), existingUIF.core_knowledge.facts
+// Task: generate exactly 2 Perplexity queries that deepen THIS angle's contrarian_take
+//       and pillar_connection. Do not generate broad overview queries — the shallow
+//       research already covered that. Target depth, not breadth.
+// Validate: validateResearchPlan(output) must pass before proceeding.
+// Log result (step_name: "research_architect")
 ```
 
 **E — Explicit gate**: If `validateResearchPlan` returns false → throw error (goes to error path).
 
-### 6. Execute 3 Perplexity calls (sequential)
+### 6. Execute 2 Perplexity calls (sequential)
 ```javascript
 updateStage(state, "perplexity_q1");
 const q1 = await callPerplexity(queries[0].query);
@@ -105,22 +115,23 @@ const q1 = await callPerplexity(queries[0].query);
 updateStage(state, "perplexity_q2");
 const q2 = await callPerplexity(queries[1].query);
 // Log Q2 (step_name: "perplexity_q2")
-
-updateStage(state, "perplexity_q3");
-const q3 = await callPerplexity(queries[2].query);
-// Log Q3 (step_name: "perplexity_q3")
 ```
 
-### 7. UIF Compiler — synthesize to UIF v3.0
+### 7. UIF Merger — deepen target angle only
 ```javascript
-updateStage(state, "uif_compiler");
-// Call claude-sonnet-4-6 with UIF Compiler prompt (see researcher.md)
-// Log result (step_name: "uif_compiler")
+updateStage(state, "uif_merger");
+// Call claude-sonnet-4-6 with UIF Merger prompt (see researcher.md).
+// Input: existingUIF, angleIndex, q1 + q2 results
+// Task: merge new facts from q1/q2 into existingUIF.core_knowledge.facts (append, no duplicates),
+//       update existingUIF.angles[angleIndex].supporting_facts with indices of newly added facts,
+//       do not modify any other angle.
+// Output: updatedUIF (full UIF object with the single angle deepened)
+// Log result (step_name: "uif_merger")
 ```
 
-### 8. Validate UIF
+### 8. Validate updated UIF
 ```javascript
-const uifResult = validateUIF(uifOutput);
+const uifResult = validateUIF(updatedUIF);
 if (!uifResult.valid) {
   throw new Error(`UIF validation: ${uifResult.errors.join("; ")}`);
 }
@@ -132,33 +143,46 @@ if (!uifResult.valid) {
 ```javascript
 updateStage(state, "writing");
 
-// Set provenance_log with actual log record IDs
-uifOutput.meta.provenance_log = [q1LogId, q2LogId, q3LogId].join(",");
+// Set provenance_log to include new log IDs
+updatedUIF.meta.provenance_log = [
+  existingUIF.meta.provenance_log ?? "",
+  q1LogId,
+  q2LogId
+].filter(Boolean).join(",");
 
-await patchRecord(process.env.AIRTABLE_TABLE_IDEAS, idea.id, {
-  "Intelligence File": JSON.stringify(uifOutput),
+// Update the idea's Intelligence File with the deepened UIF
+await patchRecord(TABLES.IDEAS, ideaId, {
+  "Intelligence File": JSON.stringify(updatedUIF),
+  research_depth: "deep",
   research_completed_at: new Date().toISOString(),
   Status: "Ready"
+});
+
+// Mark post stub research_ready
+await patchRecord(TABLES.POSTS, postStub.id, {
+  status: "research_ready",
+  research_completed_at: new Date().toISOString()
 });
 ```
 
 ### 10. Extract hooks → write to hooks_library
 ```javascript
 updateStage(state, "hook_extraction");
-// For each angle in uifOutput.angles:
+// For the deepened angle (targetAngle after merge):
 //   Call hook generation prompt (see researcher.md Stage 4)
 //   Write each hook to hooks_library as status = "candidate"
+//   source_idea: [ideaId]
 ```
 
 ### 11. Log completion
 ```javascript
 await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
   workflow_id: state.workflowId,
-  entity_id: idea.id,
+  entity_id: postStub.id,
   step_name: "complete",
   stage: "complete",
   timestamp: new Date().toISOString(),
-  output_summary: `Research complete: ${uifOutput.meta.topic} — ${uifOutput.angles.length} angles, ${uifOutput.core_knowledge.facts.length} facts`,
+  output_summary: `Research complete: angle "${targetAngle.angle_name}" deepened — ${updatedUIF.core_knowledge.facts.length} total facts`,
   model_version: "n/a",
   status: "success"
 });
@@ -166,9 +190,9 @@ await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
 
 ### 12. Report to Simon
 ```
-✅ Research complete: [topic]
-   Angles: [N] | Facts: [N] | Hooks extracted: [N]
-   Run /draft to create posts.
+✅ Research complete: [topic] — Angle [N]: [angle_name]
+   New facts added: [N] | Total facts: [N] | Hooks extracted: [N]
+   Run /draft to create the post.
 ```
 
 ---
@@ -177,11 +201,14 @@ await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
 
 | Table | Field | Value |
 |---|---|---|
-| `ideas` | `research_started_at` | `now()` (set at step 3, BEFORE API calls) |
-| `ideas` | `Status` | `"Researching"` → `"Ready"` (or `"Research_failed"`) |
-| `ideas` | `Intelligence File` | UIF v3.0 JSON string |
+| `posts` | `research_started_at` | `now()` (set at step 4, BEFORE API calls) |
+| `posts` | `status` | `"researching"` → `"research_ready"` (or reverted to `"planned"` on error) |
+| `posts` | `research_completed_at` | `now()` |
+| `ideas` | `Intelligence File` | updated UIF v3.0 JSON string (target angle deepened) |
+| `ideas` | `research_depth` | `"deep"` |
 | `ideas` | `research_completed_at` | `now()` |
-| `hooks_library` | (new records) | hooks as `status = candidate` |
+| `ideas` | `Status` | `"Ready"` |
+| `hooks_library` | (new records) | hooks from deepened angle as `status = candidate` |
 | `logs` | (multiple entries) | one per stage |
 
 ---
@@ -190,16 +217,16 @@ await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
 
 ```javascript
 } catch (error) {
-  // Clear the lock — allow retry
-  await patchRecord(process.env.AIRTABLE_TABLE_IDEAS, idea.id, {
+  // Clear the lock on the post stub — revert to planned for retry
+  await patchRecord(TABLES.POSTS, postStub.id, {
     research_started_at: null,
-    Status: "Research_failed"
+    status: "planned"
   });
 
   // Log the failure
   await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
     workflow_id: state.workflowId,
-    entity_id: idea.id,
+    entity_id: postStub.id,
     step_name: "error",
     stage: state.stage,
     timestamp: new Date().toISOString(),
