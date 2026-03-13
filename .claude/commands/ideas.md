@@ -1,125 +1,73 @@
-# /ideas — Idea Selection Command
+# /ideas — Idea Backlog Viewer
 
-Surface ideas ready for selection and let Simon choose which to move forward.
+> **Deprecated**: `/ideas` is now a read-only backlog diagnostic. To build the weekly plan, run `/editorial-planner` instead.
 
----
+Display the current backlog of unselected ideas, ranked by score. No writes. No selection prompt.
 
-## Precondition
-
-Ideas with `status = pending_selection`.
-
-No LLM calls. No lock needed. Risk tier: low (read-only display + one Airtable write on selection).
-
----
-
-## STATE Init
-
-```javascript
-// Low risk — S+T only
-const state = {
-  workflowId: crypto.randomUUID(),
-  stage: "init",
-  entityType: "idea",
-  entityId: null,   // set after selection
-  startedAt: new Date().toISOString(),
-  lastUpdatedAt: new Date().toISOString()
-};
-```
+**Risk tier**: low (read-only).
 
 ---
 
 ## Steps
 
-### 1. Load ideas
+### 1. Load backlog
+
 ```javascript
 const ideas = await getRecords(
   process.env.AIRTABLE_TABLE_IDEAS,
-  `{status} = "pending_selection"`,
+  `{Status} = "New"`,
   [{ field: "score_overall", direction: "desc" }]
 );
 
 if (ideas.length === 0) {
-  return "No ideas with status = pending_selection. Send something to the Telegram bot first.";
+  return "No ideas with Status = New. Run /capture to add ideas to the backlog.";
 }
 ```
 
 ### 2. Compute current queue composition
+
 ```javascript
 const allSelected = await getRecords(
   process.env.AIRTABLE_TABLE_IDEAS,
-  `OR({status} = "selected", {status} = "researching", {status} = "researched", {status} = "drafted")`
+  `OR({Status} = "Selected", {Status} = "Researching", {Status} = "Ready")`
 );
 const queueCounts = { authority: 0, education: 0, community: 0, virality: 0 };
 allSelected.forEach(r => {
   const intent = r.fields?.intent;
-  if (intent) queueCounts[intent] = (queueCounts[intent] ?? 0) + 1;
+  if (intent && queueCounts[intent] !== undefined) queueCounts[intent]++;
 });
 const queueTotal = Object.values(queueCounts).reduce((a, b) => a + b, 0);
 ```
 
-### 3. Display ranked table
-```
-## Ideas Ready for Selection
+### 3. Display ranked backlog
 
-#  | Title                          | Intent    | Overall | Brand | Original | Virality | Next Action
----|--------------------------------|-----------|---------|-------|----------|----------|------------
-1  | [title]                        | authority |   8.2   |  9    |    7     |    8     | [recommended_next_action]
-2  | [title]                        | education |   7.8   |  8    |    8     |    6     | ...
+```
+## Idea Backlog (Status = New)
+
+#  | Title                          | Intent    | Overall | Brand | Original | Virality
+---|--------------------------------|-----------|---------|-------|----------|----------
+1  | [topic]                        | authority |   8.2   |  9    |    7     |    8
+2  | [topic]                        | education |   7.8   |  8    |    8     |    6
 ...
 
-## Current Queue Composition
+## Current Pipeline Composition
 authority: [N] posts in pipeline (target: 50%)
 education:  [N] posts in pipeline (target: 30%)
 community:  [N] posts in pipeline (target: 15%)
 virality:   [N] posts in pipeline (target:  5%)
 
-[⚠ Over-indexed: authority at 70% — consider selecting education or community next]
+[⚠ Over-indexed: authority at 70% — editorial-planner will balance this]
+
+Run /editorial-planner to build the weekly lineup.
 ```
 
-**Over-indexing flag**: If any intent exceeds its target by >20 percentage points AND there are alternatives available, flag it prominently.
+**Over-indexing flag**: If any intent exceeds its target by >20 percentage points, flag it prominently.
 
 **Dimensions shown**: `score_overall`, `score_brand_fit`, `score_originality`, `score_virality`.
 **Never show**: `score_audience_relevance` — this field is invisible to all commands.
 
-### 4. Simon selects
-```
-Enter number to select (or 'q' to quit):
-```
-
-### 5. Idempotency check
-```javascript
-const selected = ideas[choice - 1];
-if (selected.fields?.selected_at) {
-  return `⚠ Idea already selected at ${selected.fields.selected_at} — run /research to proceed.`;
-}
-```
-
-### 6. Write
-```javascript
-await patchRecord(
-  process.env.AIRTABLE_TABLE_IDEAS,
-  selected.id,
-  {
-    selected_at: new Date().toISOString(),
-    status: "selected"
-  }
-);
-```
-
 ---
 
-## Writes
+## No Writes
 
-| Field | Value |
-|---|---|
-| `selected_at` | `now()` |
-| `status` | `selected` |
-
----
-
-## Error Path
-
-No lock to reset. If write fails:
-```
-❌ Failed to mark idea as selected — [error]. Idea status unchanged. Safe to retry.
-```
+This command makes no Airtable writes. It is safe to run at any time.

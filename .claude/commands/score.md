@@ -164,22 +164,57 @@ if (post.fields?.framework_id?.length > 0) {
 }
 ```
 
-#### Update humanity_snippet used_count (if humanity_snippet_id set)
+#### Update humanity_snippet quality (if humanity_snippet_id set)
 ```javascript
 if (post.fields?.humanity_snippet_id?.length > 0) {
   const snippetId = post.fields.humanity_snippet_id[0];
   const snippet = await getRecord(process.env.AIRTABLE_TABLE_SNIPPETS, snippetId);
-  const newUsedCount = (snippet.fields?.used_count ?? 0) + 1;
+
+  const oldAvg   = snippet.fields?.avg_score ?? null;
+  const oldCount = Number(snippet.fields?.used_count ?? 0);
+  const newCount = oldCount + 1;
+
+  // Blend post performance_score with review-stage snippet_fit_score (if present).
+  // snippet_fit_score is 1–5; normalize to 0–10 scale before blending.
+  const fitScore  = Number(post.fields?.snippet_fit_score ?? 0);  // 1-5 or 0 if not rated
+  const postScore = Number(score);                                  // 0-10
+  const normalizedFit = fitScore > 0 ? fitScore * 2 : postScore;   // if no fit score, use postScore
+  const blendedScore  = fitScore > 0
+    ? (postScore * 0.7) + (normalizedFit * 0.3)
+    : postScore;
+
+  const newAvg = updateRunningAverage(oldAvg, newCount, blendedScore);
+
+  let newStatus = snippet.fields?.status ?? "candidate";
+  let statusChanged = false;
+  if (shouldPromote(newAvg, newCount) && newStatus !== "proven") {
+    newStatus = "proven";
+    statusChanged = true;
+    promotedCount++;
+  } else if (shouldRetire(newAvg, newCount) && newStatus !== "retired") {
+    newStatus = "retired";
+    statusChanged = true;
+    retiredCount++;
+  } else if (newStatus === "candidate" && newCount >= 1) {
+    newStatus = "active";
+    statusChanged = true;
+  }
+
   await patchRecord(process.env.AIRTABLE_TABLE_SNIPPETS, snippetId, {
-    used_count: newUsedCount
+    avg_score:    newAvg,
+    used_count:   newCount,
+    status:       newStatus,
+    last_used_at: new Date().toISOString()
   });
+  snippetsUpdated++;
+
   await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
     workflow_id: state.workflowId,
     entity_id: snippetId,
     step_name: "improver",
     stage: "score_propagation",
     timestamp: new Date().toISOString(),
-    output_summary: `snippet [${snippetId}] used_count updated to ${newUsedCount}`,
+    output_summary: `snippet [${snippetId}] avg_score: ${newAvg.toFixed(2)}, use_count: ${newCount}, status: ${newStatus}${statusChanged ? " (changed)" : ""}${fitScore > 0 ? `, fit_score: ${fitScore}/5` : ""}`,
     model_version: "n/a",
     status: "success"
   });
@@ -191,7 +226,7 @@ if (post.fields?.humanity_snippet_id?.length > 0) {
 ### 7. Final report
 ```
 [N] posts scored.
-[N] hooks updated. [N] frameworks updated.
+[N] hooks updated. [N] frameworks updated. [N] snippets updated.
 [N] promoted to proven. [N] retired.
 ```
 
@@ -206,8 +241,8 @@ if (post.fields?.humanity_snippet_id?.length > 0) {
 | `posts` | `status` | `scored` |
 | `hooks_library` | `avg_score`, `use_count`, `status` | updated via improver logic |
 | `framework_library` | `avg_score`, `use_count`, `status` | updated via improver logic |
-| `humanity_snippets` | `used_count` | incremented |
-| `logs` | multiple | one per post scored, one per hook/framework updated |
+| `humanity_snippets` | `avg_score`, `used_count`, `status`, `last_used_at` | updated via improver logic |
+| `logs` | multiple | one per post scored, one per hook/framework/snippet updated |
 
 ---
 
@@ -226,6 +261,6 @@ If score write fails for one post:
 
 If improver update fails:
 ```
-⚠ Score saved but improver update failed for hook [id] — [error]. Logged. Run /score again to retry propagation.
+⚠ Score saved but improver update failed for [hook|framework|snippet] [id] — [error]. Logged. Run /score again to retry propagation.
 ```
 Note: The `performance_score` write is the primary operation. Improver updates are secondary — a failure there does not invalidate the score.

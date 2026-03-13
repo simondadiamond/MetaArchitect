@@ -1,0 +1,10 @@
+{
+  "open-in-terminal:open-claude": [
+    {
+      "modifiers": [
+        "Mod"
+      ],
+      "key": "C"
+    }
+  ]
+}

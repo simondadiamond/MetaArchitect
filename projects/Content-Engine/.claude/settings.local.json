@@ -1,4 +1,18 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Read(//c/repos/MetaArchitect/**)",
+      "Bash(node projects/Content-Engine/tools/.tmp_capture.mjs)",
+      "Bash(node:*)",
+      "Bash(C:/repos/MetaArchitect/projects/Content-Engine/.tmp/.research_queries.json:*)",
+      "Bash(C:/repos/MetaArchitect/projects/Content-Engine/.tmp/.research_uif.json:*)",
+      "Bash(gh repo:*)",
+      "Bash(gh api:*)",
+      "Bash(git clone:*)",
+      "Bash(find \"c:\\\\repos\\\\MetaArchitect\\\\projects\\\\Content-Engine\\\\docs\" -type f -name \"*.md\" 2>/dev/null | head -20)"
+    ]
+  },
   "enabledMcpjsonServers": [
     "n8n-native",
     "n8n-mcp"

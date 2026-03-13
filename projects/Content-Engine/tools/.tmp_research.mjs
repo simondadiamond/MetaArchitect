@@ -15,8 +15,8 @@ import { randomUUID } from 'crypto';
 // Load .env
 if (existsSync('.env')) {
   for (const line of readFileSync('.env', 'utf8').split('\n')) {
-    const m = line.match(/^([A-Z_]+)=(.+)$/);
-    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
+    const m = line.trimEnd().match(/^([A-Z_]+)=(.+)$/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2];
   }
 }
 
@@ -120,9 +120,12 @@ async function phase1() {
   const brand = brands[0];
   if (!brand) throw new Error("Brand record not found");
 
-  // Find the captured idea (Proposed status = pending_selection equivalent)
-  const ideas = await getRecords(IDEAS_TABLE, `{Topic} = "I Didn't Know What I Wanted to Build — So I Asked an AI What Question I Should Be Asking"`);
-  if (!ideas.length) throw new Error("Idea not found");
+  const ideas = await getRecords(
+    IDEAS_TABLE,
+    `AND({Status} = "Selected", {research_started_at} = "")`,
+    [{ field: 'selected_at', direction: 'asc' }]
+  );
+  if (!ideas.length) throw new Error("No ideas with Status = Selected and research_started_at empty. Run /ideas first.");
   const idea = ideas[0];
 
   if (idea.fields?.research_started_at) {
