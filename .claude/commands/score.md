@@ -10,6 +10,8 @@ Posts with `status = published` AND `performance_score IS NULL`.
 
 Risk tier: medium → S + T + E.
 
+> **Airtable**: Use MCP tools directly — no node scripts. See `.claude/skills/airtable.md` for field IDs. Always `typecast: true` on writes.
+
 ---
 
 ## STATE Init
@@ -28,11 +30,15 @@ const state = buildStateObject({
 
 ### 1. Load scorable posts
 ```javascript
-const posts = await getRecords(
-  process.env.AIRTABLE_TABLE_POSTS,
-  `AND({status} = "published", {performance_score} = "")`,
-  [{ field: "published_at", direction: "asc" }]
-);
+// MCP: get_table_schema for status "published" choice ID, then:
+//   mcp__claude_ai_Airtable__list_records_for_table
+//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblz0nikoZ89MHHTs"
+//   fieldIds: [fldlC1PMzRw0z6cTR, fldgVwvcXFDA7RCxf, fldztvQenFV0pW44l,
+//              fldphmqLqRe5j2m7m, fldRHUQer2GFyLieS, fldk046kLs4yG2p1Y,
+//              fldNQw5L5KBFpFt5a, fldIjahm90oqJEqHx, fldr6w1R6fRiGXyXp, fld9OwHI6Z2Al3p7T]
+//   filters: status = "published" (choice ID) AND performance_score isEmpty
+//   sort: fldr6w1R6fRiGXyXp asc
+const posts = // result.records
 
 if (posts.length === 0) {
   return "No published posts with performance_score empty. Nothing to score.";
@@ -69,7 +75,9 @@ if (!validation.valid) {
 ### 4. Write performance_score
 ```javascript
 updateStage(state, "scoring");
-await patchRecord(process.env.AIRTABLE_TABLE_POSTS, post.id, {
+// MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs, typecast: true)
+//   fields: fldIjahm90oqJEqHx (performance_score), fldHUA73iAythfRsQ (score_source), fldlC1PMzRw0z6cTR (status)
+await patchRecord(POSTS, post.id, {
   performance_score: score,
   score_source: "manual",
   status: "scored"
@@ -82,7 +90,9 @@ await patchRecord(process.env.AIRTABLE_TABLE_POSTS, post.id, {
 ```javascript
 if (post.fields?.hook_id?.length > 0) {
   const hookId = post.fields.hook_id[0];
-  const hook = await getRecord(process.env.AIRTABLE_TABLE_HOOKS, hookId);
+  // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblWuQNSJ25bs18DZ, recordIds: [hookId])
+  //   fieldIds: [fld0b1nWNg3ZXT21f, fldfckbIwaSSebctW, fldVKrSnP34sofwZ7]
+  const hook = // result.records[0]
   const oldAvg = hook.fields?.avg_score ?? null;
   const oldCount = hook.fields?.use_count ?? 0;
   const newCount = oldCount + 1;
@@ -100,15 +110,16 @@ if (post.fields?.hook_id?.length > 0) {
     retiredCount++;
   }
 
-  await patchRecord(process.env.AIRTABLE_TABLE_HOOKS, hookId, {
+  // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblWuQNSJ25bs18DZ, typecast: true)
+  await patchRecord(HOOKS, hookId, {
     avg_score: newAvg,
     use_count: newCount,
     status: newStatus
   });
   hooksUpdated++;
 
-  // Log update
-  await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+  // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+  await createRecord(LOGS, {
     workflow_id: state.workflowId,
     entity_id: hookId,
     step_name: "improver",
@@ -125,7 +136,9 @@ if (post.fields?.hook_id?.length > 0) {
 ```javascript
 if (post.fields?.framework_id?.length > 0) {
   const frameworkId = post.fields.framework_id[0];
-  const framework = await getRecord(process.env.AIRTABLE_TABLE_FRAMEWORKS, frameworkId);
+  // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblYsys2ydvryVtmf, recordIds: [frameworkId])
+  //   fieldIds: [fldoAs2QC066Th0x9, fldtVJ6vuENyFgz8A, fldBhDdj55AxwLEUl]
+  const framework = // result.records[0]
   const oldAvg = framework.fields?.avg_score ?? null;
   const oldCount = framework.fields?.use_count ?? 0;
   const newCount = oldCount + 1;
@@ -143,15 +156,16 @@ if (post.fields?.framework_id?.length > 0) {
     retiredCount++;
   }
 
-  await patchRecord(process.env.AIRTABLE_TABLE_FRAMEWORKS, frameworkId, {
+  // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblYsys2ydvryVtmf, typecast: true)
+  await patchRecord(FRAMEWORKS, frameworkId, {
     avg_score: newAvg,
     use_count: newCount,
     status: newStatus
   });
   frameworksUpdated++;
 
-  // Log update
-  await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+  // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+  await createRecord(LOGS, {
     workflow_id: state.workflowId,
     entity_id: frameworkId,
     step_name: "improver",
@@ -168,7 +182,9 @@ if (post.fields?.framework_id?.length > 0) {
 ```javascript
 if (post.fields?.humanity_snippet_id?.length > 0) {
   const snippetId = post.fields.humanity_snippet_id[0];
-  const snippet = await getRecord(process.env.AIRTABLE_TABLE_SNIPPETS, snippetId);
+  // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblk8QpMOBOs6BMbF, recordIds: [snippetId])
+  //   fieldIds: [fldiAFNJJZUcqhr7C, fldZ6ifFD4OW0PDOt, fld90hLmFbyPWvy59]
+  const snippet = // result.records[0]
 
   const oldAvg   = snippet.fields?.avg_score ?? null;
   const oldCount = Number(snippet.fields?.used_count ?? 0);
@@ -200,7 +216,10 @@ if (post.fields?.humanity_snippet_id?.length > 0) {
     statusChanged = true;
   }
 
-  await patchRecord(process.env.AIRTABLE_TABLE_SNIPPETS, snippetId, {
+  // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblk8QpMOBOs6BMbF, typecast: true)
+  //   fields: fldiAFNJJZUcqhr7C (avg_score), fldZ6ifFD4OW0PDOt (used_count),
+  //           fld90hLmFbyPWvy59 (status), fldfqHyUlwn7JqBFn (last_used_at)
+  await patchRecord(SNIPPETS, snippetId, {
     avg_score:    newAvg,
     used_count:   newCount,
     status:       newStatus,
@@ -208,7 +227,8 @@ if (post.fields?.humanity_snippet_id?.length > 0) {
   });
   snippetsUpdated++;
 
-  await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+  // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+  await createRecord(LOGS, {
     workflow_id: state.workflowId,
     entity_id: snippetId,
     step_name: "improver",

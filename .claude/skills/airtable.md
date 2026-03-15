@@ -1,294 +1,359 @@
-# Airtable Skill
+# Airtable Skill — MCP Edition
 
-All Airtable operations use the REST API v0 with Personal Access Token auth.
-
-## Reusable Module
-
-A pre-built utility module lives at `projects/Content-Engine/tools/airtable.mjs`. **Always import from it instead of writing boilerplate.**
-
-```javascript
-import { getRecords, getAllRecords, getRecord, patchRecord, createRecord, TABLES } from './projects/Content-Engine/tools/airtable.mjs';
-
-// Examples:
-const brand = await getRecords(TABLES.BRAND, `{name} = "metaArchitect"`);
-const ideas = await getRecords(TABLES.IDEAS, `{Status} = "selected"`, [{ field: "captured_at", direction: "asc" }]);
-await patchRecord(TABLES.IDEAS, recordId, { Status: "researching" });
-const log = await createRecord(TABLES.LOGS, { workflow_id: "...", step_name: "..." });
-```
-
-The module handles: dotenv loading, auth headers, BASE ID, error throwing on Airtable error responses.
+All Airtable operations use MCP tools directly. **No node scripts. No HTTP client.**
 
 ---
 
-## Authentication
+## MCP Tool Reference
 
-```javascript
-const headers = {
-  "Authorization": `Bearer ${process.env.AIRTABLE_PAT}`,
-  "Content-Type": "application/json"
-};
-const BASE = process.env.AIRTABLE_BASE_ID;
-```
-
----
-
-## Table Environment Variables
-
-| Variable | Table | Purpose |
-|---|---|---|
-| `AIRTABLE_TABLE_IDEAS` | `ideas` | Content ideas with scoring and research data |
-| `AIRTABLE_TABLE_POSTS` | `posts` | Draft and published posts |
-| `AIRTABLE_TABLE_HOOKS` | `hooks_library` | Hook candidates, proven hooks, retired hooks |
-| `AIRTABLE_TABLE_FRAMEWORKS` | `framework_library` | Content frameworks and templates |
-| `AIRTABLE_TABLE_SNIPPETS` | `humanity_snippets` | Personal story/experience snippets |
-| `AIRTABLE_TABLE_LOGS` | `logs` | STATE traceability log |
-| `AIRTABLE_TABLE_BRAND` | `brand` | Core brand context and guidelines |
+| Tool | When to Use |
+|------|-------------|
+| `mcp__claude_ai_Airtable__list_records_for_table` | Read/query records from any table |
+| `mcp__claude_ai_Airtable__create_records_for_table` | Create new records (up to 10 per call) |
+| `mcp__claude_ai_Airtable__update_records_for_table` | Update existing records by record ID |
+| `mcp__claude_ai_Airtable__get_table_schema` | **Required before filtering on singleSelect/multipleSelects** — returns choice IDs |
+| `mcp__claude_ai_Airtable__list_tables_for_base` | Discover table/field schemas |
 
 ---
 
-## Field Name Reference
+## Base & Table IDs
 
-### `brand` table
 ```
-name                    (text)
-colors                  (text)
-typography              (text)
-goals                   (text)
-icp_short               (text)
-icp_long                (long text)
-main_guidelines         (long text)
-```
+BASE_ID:    appgvQDqiFZ3ESigA
 
-### `ideas` table
-```
-Topic                   (text) ← actual field name, NOT "title"
-Status                  (single select) ← actual field name, NOT "status"
-                        Options: New | Selected | Ready | Research_failed | Completed
-                        Pipeline mapping: New=captured, Selected=selected, Ready=researched, Research_failed=research_failed, Completed=published/scored
-                        ⚠ No "Researching" option exists yet — lock is tracked via research_started_at field only
-source_type             (single select: text/youtube/blog)
-source_url              (url)
-raw_input               (long text)
-workflow_id             (text)
-intent                  (single select: authority/education/community/virality)
-content_brief           (long text — JSON string)
-Intelligence File       (long text — JSON string, UIF v3.0) ← actual field name, NOT "intelligence_file"
-score_brand_fit         (number 1-10)
-score_originality       (number 1-10)
-score_monetization      (number 1-10)
-score_production_effort (number 1-10, inverted: 10=easy)
-score_virality          (number 1-10)
-score_authority         (number 1-10)
-score_overall           (number 1-10)
-score_rationales        (long text — JSON string)
-recommended_next_action (text)
-captured_at             (date/time)
-selected_at             (date/time)
-research_started_at     (date/time — LOCK FIELD)
-research_completed_at   (date/time — GATE FIELD)
-Summary (AI)            (long text — Airtable-managed, do not write)
-Next Best Action (AI)   (text — Airtable-managed, do not write)
-Created Time            (created time — auto)
-Last Modified           (last modified time — auto)
-```
-
-**Note**: `score_audience_relevance` exists in Airtable but is never read or written by any command.
-
-### `posts` table
-```
-idea_id                 (linked record — array of record IDs)
-platform                (single select: linkedin/twitter/youtube)
-intent                  (single select: authority/education/community/virality)
-format                  (text)
-draft_content           (long text)
-hook_id                 (linked record — hooks_library)
-framework_id            (linked record — framework_library)
-humanity_snippet_id     (linked record — humanity_snippets)
-needs_snippet           (checkbox — true if no snippet matched during draft)
-post_url                (url)
-performance_score       (number 0-10)
-score_source            (single select: manual)
-status                  (single select: planned/researching/research_ready/drafted/approved/rejected/published/scored)
-planned_week            (text — ISO week, e.g. "2026-W11")
-planned_order           (number — 1–4)
-narrative_role          (single select — same 7 options as planner)
-angle_index             (number — 0-based index into UIF angles array)
-pillar                  (single select — same 5 pillar names as ideas table)
-thesis_angle            (long text — one-sentence thesis from planner output)
-source_angle_name       (text — angle_name from the idea's UIF at angle_index)
-territory_key           (text — stable slug: angle name → thesis → topic)
-post_class              (single select: practitioner_core / territory_deepening / trend_commentary / product_commentary)
-selection_reason        (long text)
-series_id               (text — nullable)
-series_part             (number — nullable)
-series_total            (number — nullable)
-research_started_at     (date/time — LOCK FIELD for /research)
-research_completed_at   (date/time)
-drafted_at              (date/time)
-approved_at             (date/time)
-published_at            (date/time)
-```
-
-### `hooks_library` table
-```
-hook_text               (long text)
-hook_type               (single select: contrarian/stat_lead/question/story_open/provocative_claim)
-source_idea             (linked record — ideas, write as array: ["recXXX"])
-angle_name              (text)
-intent                  (single select: authority/education/community/virality)
-status                  (single select: candidate/proven/retired)
-avg_score               (number — running average of performance scores)
-use_count               (number — times used in published posts)
-```
-
-### `framework_library` table
-```
-framework_name          (text)
-pattern_type            (single select: before_after/problem_solution/contrarian/stat_lead/story_arc/case_study)
-best_for                (text — comma-separated pillar names)
-template                (long text — structural scaffold, 3-5 sentences)
-status                  (single select: candidate/proven/retired)
-use_count               (number)
-avg_score               (number — running average)
-```
-
-### `humanity_snippets` table
-```
-snippet_text            (long text)
-tags                    (text — comma-separated)
-status                  (single select: active/inactive)
-used_count              (number)
-```
-
-### `logs` table
-```
-workflow_id             (text)
-entity_id               (text — Airtable record ID)
-step_name               (text)
-stage                   (text)
-timestamp               (date/time)
-output_summary          (long text)
-model_version           (text)
-status                  (single select: success/error)
+IDEAS:      tblVKVojZscMG6gDk
+POSTS:      tblz0nikoZ89MHHTs
+HOOKS:      tblWuQNSJ25bs18DZ
+FRAMEWORKS: tblYsys2ydvryVtmf
+SNIPPETS:   tblk8QpMOBOs6BMbF
+LOGS:       tblzT4NBJ2Q6zm3Qf
+BRAND:      tblwfU5EpDgOKUF7f
+SESSIONS:   tblcqd1u7lPHbLRDZ
 ```
 
 ---
 
-## API Patterns
+## Write Rules
 
-### GET — list with filter
-```javascript
-async function getRecords(tableId, formula, sort = []) {
-  const params = new URLSearchParams();
-  if (formula) params.append("filterByFormula", formula);
-  if (sort.length) sort.forEach((s, i) => {
-    params.append(`sort[${i}][field]`, s.field);
-    params.append(`sort[${i}][direction]`, s.direction || "asc");
-  });
+**Always pass `typecast: true`** on any `create_records_for_table` or `update_records_for_table` call that touches:
+- singleSelect fields (Status, status, intent, hook_type, pattern_type, narrative_role, pillar, post_class, etc.)
+- multipleSelects fields (tags, best_for, etc.)
+- Any field value that might not yet exist in Airtable's option list
 
-  const res = await fetch(
-    `https://api.airtable.com/v0/${BASE}/${tableId}?${params}`,
-    { headers }
-  );
-  const data = await res.json();
-  return data.records || [];
-}
+`typecast: true` instructs Airtable to auto-create missing select options instead of rejecting with `INVALID_VALUE_FOR_COLUMN`.
+
+---
+
+## Filter Patterns
+
+**Text/number fields**: use `operator: "="` with plain string/number value — no schema lookup needed.
+
+**singleSelect/multipleSelects fields**: call `get_table_schema` first to get choice IDs, then use those choice IDs (`selXXX...`) in the filter.
+
+```
+// Example: filter posts by status = "planned"
+// Step 1 — get choice ID:
+get_table_schema(appgvQDqiFZ3ESigA, [{ tableId: "tblz0nikoZ89MHHTs", fieldIds: ["fldlC1PMzRw0z6cTR"] }])
+// → returns choices including { id: "selXXX", name: "planned" }
+
+// Step 2 — filter with choice ID:
+list_records_for_table(appgvQDqiFZ3ESigA, "tblz0nikoZ89MHHTs", {
+  filters: { operator: "=", operands: ["fldlC1PMzRw0z6cTR", "selXXX"] }
+})
 ```
 
-### GET — paginated (use for large tables)
-```javascript
-async function getAllRecords(tableId, formula) {
-  let records = [], offset;
-  do {
-    const params = new URLSearchParams();
-    if (formula) params.append("filterByFormula", formula);
-    if (offset) params.append("offset", offset);
-    const res = await fetch(
-      `https://api.airtable.com/v0/${BASE}/${tableId}?${params}`,
-      { headers }
-    );
-    const data = await res.json();
-    records = records.concat(data.records || []);
-    offset = data.offset;
-  } while (offset);
-  return records;
-}
+**Shortcut for non-select fields** (text, url, number, dateTime): pass the plain value directly — no `get_table_schema` needed.
+
+```
+// Filter brand by name (singleLineText — no schema lookup):
+filters: { operator: "=", operands: ["fldsP8FwcTxJdkac8", "metaArchitect"] }
+
+// Filter ideas by Status (singleSelect — needs schema lookup for choice ID first)
 ```
 
-### PATCH — update by record ID
-```javascript
-async function patchRecord(tableId, recordId, fields) {
-  const res = await fetch(
-    `https://api.airtable.com/v0/${BASE}/${tableId}/${recordId}`,
-    { method: "PATCH", headers, body: JSON.stringify({ fields }) }
-  );
-  return res.json();
-}
+---
+
+## Field ID Registry
+
+### `brand` table (`tblwfU5EpDgOKUF7f`)
+
+| Field Name | Field ID | Type |
+|-----------|----------|------|
+| name | `fldsP8FwcTxJdkac8` | singleLineText |
+| colors | `fld9E3rY6tQfZDas6` | multilineText |
+| typography | `fldMgky7tvS2Y877o` | multilineText |
+| goals | `fld7N55IwEM8CQYW0` | multilineText |
+| icp_short | `fldLYt1DMS1Fwd5Vy` | multilineText |
+| icp_long | `fldIgCmPBohoEqet2` | multilineText |
+| main_guidelines | `fldBtXwgSegiYP2pB` | multilineText |
+
+---
+
+### `ideas` table (`tblVKVojZscMG6gDk`)
+
+| Field Name | Field ID | Type | Notes |
+|-----------|----------|------|-------|
+| Topic | `fldMtlpG32VKE0WkN` | singleLineText | Primary field — capital T |
+| Status | `fld9frOZF4oaf3r6V` | singleSelect | capital S — New/Selected/Ready/Completed |
+| Intelligence File | `fldQMArYmpP8s6VKb` | richText | UIF JSON string |
+| Source | `fld7FkHIuCaZ47SyA` | url | |
+| Idea Tags | `fldKlNHyRvqi2AXSt` | multipleSelects | |
+| Summary (AI) | `fldCS8r2zHVVoxN98` | aiText | **never write** |
+| Next Best Action (AI) | `fldGGeutXvC8udZlY` | aiText | **never write** |
+| posts | `fldTiDp9W9smM5LYi` | multipleRecordLinks | |
+| hooks_library | `fld2Y7Kc0XIncrPdF` | multipleRecordLinks | |
+| workflow_id | `fldoREHCHsCU6pXuE` | singleLineText | |
+| source_type | `fldBkIqNugXb4M5Fk` | singleSelect | text/youtube/blog |
+| raw_input | `fldrQ3CDTEDuIhEsy` | multilineText | |
+| intent | `fldF8BxXjbUiHCWIa` | singleSelect | authority/education/community/virality |
+| content_brief | `fldBvV1FgpD1l2PG1` | multilineText | JSON string |
+| score_brand_fit | `fldeYByfFx9xjFnnK` | number | 1–10 |
+| score_originality | `fldquN4wVbd6eLKYF` | number | 1–10 |
+| score_monetization | `fldnFzMf3h6L7ez0l` | number | 1–10 |
+| score_production_effort | `fldrYVICu2Tg71Jrk` | number | 1–10 |
+| score_virality | `fldvw93lwpYEqD5nX` | number | 1–10 |
+| score_authority | `fld1L6eEoqpP6uxbX` | number | 1–10 |
+| score_overall | `fldJatmYz453YGTyV` | number | 1–10 |
+| score_rationales | `flddvjuABw1KBIf4K` | multilineText | JSON string |
+| recommended_next_action | `fldgyi72BLytnCNPN` | singleLineText | |
+| captured_at | `fldYU3CKk5HZAfrWo` | dateTime | |
+| selected_at | `fldx3QLe3tKPmU88U` | dateTime | |
+| research_started_at | `fldzWpw1NBIgxrduE` | dateTime | LOCK FIELD (ideas-level, legacy) |
+| research_completed_at | `fldvnK9lQWpoJaL30` | dateTime | |
+| planned_week | `fldQ4HAbKT4EpDHia` | singleLineText | |
+| planned_order | `fldobKcPlvIW5JWYS` | number | |
+| narrative_role | `fldzcXD1wJnhu5ZEs` | singleSelect | |
+| series_id | `fldjo0FClUuE1zBNQ` | singleLineText | |
+| series_part | `flduIvX09gNOJ7Dg0` | number | |
+| series_total | `fldl5MtAuGBTFxsgb` | number | |
+| selection_reason | `fld5Q97Lwm8ZzHpAK` | multilineText | |
+| research_depth | `fldAwyDJrDdoyPmtR` | singleSelect | shallow / deep |
+| score_audience_relevance | — | — | **NEVER READ OR WRITE** |
+
+---
+
+### `posts` table (`tblz0nikoZ89MHHTs`)
+
+| Field Name | Field ID | Type | Notes |
+|-----------|----------|------|-------|
+| format | `fldNLoKpmKHPvxP4Q` | singleLineText | Primary field |
+| status | `fldlC1PMzRw0z6cTR` | singleSelect | planned/researching/research_ready/drafted/approved/rejected/published/scored |
+| idea_id | `fldlGGDwqp6Hy17jT` | multipleRecordLinks | write as array `["recXXX"]` |
+| platform | `fldztvQenFV0pW44l` | singleSelect | linkedin/twitter |
+| intent | `fldps8GeW62IjxTze` | singleSelect | |
+| content_brief | `fldOz9xBFwXTHBMAR` | multilineText | |
+| draft_content | `fldgVwvcXFDA7RCxf` | multilineText | |
+| humanity_snippet_id | `fldNQw5L5KBFpFt5a` | multipleRecordLinks | |
+| alt_snippet_ids | `fldmmLHwgsBpa6KP6` | multipleRecordLinks | |
+| snippet_fit_score | `fld9OwHI6Z2Al3p7T` | number | 1–5 |
+| hook_id | `fldRHUQer2GFyLieS` | multipleRecordLinks | |
+| framework_id | `fldk046kLs4yG2p1Y` | multipleRecordLinks | |
+| post_url | `fldphmqLqRe5j2m7m` | url | |
+| performance_score | `fldIjahm90oqJEqHx` | number | 0–10 |
+| score_source | `fldHUA73iAythfRsQ` | singleSelect | manual |
+| impressions | `fldRyYfmhccOoey4l` | number | |
+| likes | `fldCOE7QjPrgWhbbk` | number | |
+| comments | `fld4oisT7v4LXXi9C` | number | |
+| shares | `fldn7UrJDVcSLCgob` | number | |
+| saves | `fld9VHOO3Buk7NVwN` | number | |
+| drafted_at | `flde3pQnFHI8shfyX` | dateTime | |
+| reviewed_at | `fldbADciv8HNH3Byd` | dateTime | |
+| approved_at | `fldT83d0w0fpnPSLj` | dateTime | |
+| published_at | `fldr6w1R6fRiGXyXp` | dateTime | |
+| needs_snippet | `fldcQe7vI0lE6qqwQ` | checkbox | |
+| planned_week | `fldViXirsiFl1j1w4` | singleLineText | |
+| planned_order | `fldIqhg3WzB4vZfhl` | number | |
+| narrative_role | `fldDNwByEQkXdq4lV` | singleSelect | |
+| angle_index | `fldwDOdJgmbf2IZKv` | number | |
+| series_id | `fldpBvFcdLC7HzPMW` | singleLineText | |
+| series_part | `fldTRXgVNHg6xVty6` | number | |
+| series_total | `fldrU6OKqbY0Ho1Zk` | number | |
+| selection_reason | `fldoQ2b3a98KFqF76` | multilineText | |
+| research_started_at | `fldC2PIfrupZA2Ohk` | singleLineText | **LOCK FIELD for /research** |
+| research_completed_at | `fldzTm7FfPo9FtEYX` | singleLineText | |
+| pillar | `fldoszwWyI2UBIIzu` | singleSelect | |
+| thesis_angle | `fldQCAzyYIQIuCxuz` | multilineText | |
+| source_angle_name | `fldytfAwg6mutdJyK` | multilineText | |
+| post_class | `fldw3GtLHQeFtN9xl` | singleSelect | |
+| territory_key | `fldrhO25vUB5CDjgt` | singleLineText | |
+
+---
+
+### `hooks_library` table (`tblWuQNSJ25bs18DZ`)
+
+| Field Name | Field ID | Type |
+|-----------|----------|------|
+| hook_text | `fldSIjqzsFuxWOaYb` | multilineText |
+| hook_type | `fldOvWxj7O0x51aIX` | singleSelect |
+| source_idea | `fld3aBVety5oSAxKu` | multipleRecordLinks |
+| angle_name | `fldnuhK79wUIKnrw4` | singleLineText |
+| avg_score | `fld0b1nWNg3ZXT21f` | number |
+| use_count | `fldfckbIwaSSebctW` | number |
+| status | `fldVKrSnP34sofwZ7` | singleSelect |
+| created_at | `fldvdfu2VmrMCiFUp` | dateTime |
+| posts | `fldUhX4Ok8FusbGhb` | multipleRecordLinks |
+| intent | `fld6UZ8Fy7q2cZQyF` | singleSelect |
+
+---
+
+### `framework_library` table (`tblYsys2ydvryVtmf`)
+
+| Field Name | Field ID | Type |
+|-----------|----------|------|
+| framework_name | `fldcFJnXRemmm2PqU` | singleLineText |
+| pattern_type | `fld92B4yioAGqEbfL` | singleSelect |
+| template | `fldMPkk9oVvbqvTv5` | multilineText |
+| best_for | `fldlCsQrc9GWIT1yg` | multipleSelects |
+| avg_score | `fldoAs2QC066Th0x9` | number |
+| use_count | `fldtVJ6vuENyFgz8A` | number |
+| status | `fldBhDdj55AxwLEUl` | singleSelect |
+| posts | `fldsoT3IJfFwUBJWr` | multipleRecordLinks |
+
+---
+
+### `humanity_snippets` table (`tblk8QpMOBOs6BMbF`)
+
+| Field Name | Field ID | Type |
+|-----------|----------|------|
+| snippet_text | `fldaWegy2OyWpA28D` | multilineText |
+| tags | `fldZFO5xKMiqBuUMY` | multipleSelects |
+| used_count | `fldZ6ifFD4OW0PDOt` | number |
+| avg_score | `fldiAFNJJZUcqhr7C` | number |
+| last_used_at | `fldfqHyUlwn7JqBFn` | dateTime |
+| status | `fld90hLmFbyPWvy59` | singleSelect |
+| posts | `fldt8KvFx16GKiPYE` | multipleRecordLinks |
+
+---
+
+### `logs` table (`tblzT4NBJ2Q6zm3Qf`)
+
+| Field Name | Field ID | Type |
+|-----------|----------|------|
+| step_name | `fldqFGc3QNHtYiPjp` | singleLineText |
+| workflow_id | `fldp7Zsgs888JvnYq` | singleLineText |
+| entity_id | `fldn6jkRqcSEpDcc7` | singleLineText |
+| stage | `fldSFNnlFROARTXfE` | singleLineText |
+| timestamp | `fldBxL1E3SVtJSVWj` | dateTime |
+| output_summary | `fldrSZoPUa7UjNYbt` | multilineText |
+| model_version | `fldymNXN8sOW1abY3` | singleLineText |
+| status | `fldsP1V6BvOxeZ5l7` | singleSelect |
+
+---
+
+### `sessions` table (`tblcqd1u7lPHbLRDZ`)
+
+| Field Name | Field ID | Type |
+|-----------|----------|------|
+| core_insight | `fldLPEsaae8WeDu3t` | multilineText |
+| date | `fldH9soyr17SWtMwK` | date |
+| humanity_snippet | `fldZPquZjCrtMf7XG` | multilineText |
+| icp_pain | `fldOPmlpP4IKsoIES` | singleSelect |
+| tags | `fldGoAnyUdOjHxla8` | multipleSelects |
+| pattern_confidence | `fldb7Xhw9KR4EGbbs` | singleSelect |
+| full_log | `flduCUerEj69CqX7X` | multilineText |
+| status | `fldGnEjn1ClybjRBe` | singleSelect |
+
+---
+
+## Common MCP Patterns
+
+### Read brand record
+```
+mcp__claude_ai_Airtable__list_records_for_table(
+  baseId: "appgvQDqiFZ3ESigA",
+  tableId: "tblwfU5EpDgOKUF7f",
+  fieldIds: ["fldsP8FwcTxJdkac8","fld9E3rY6tQfZDas6","fldMgky7tvS2Y877o","fld7N55IwEM8CQYW0","fldLYt1DMS1Fwd5Vy","fldIgCmPBohoEqet2","fldBtXwgSegiYP2pB"],
+  filters: { operator: "=", operands: ["fldsP8FwcTxJdkac8", "metaArchitect"] }
+)
+→ brand = result.records[0]
 ```
 
-### POST — create record
-```javascript
-async function createRecord(tableId, fields) {
-  const res = await fetch(
-    `https://api.airtable.com/v0/${BASE}/${tableId}`,
-    { method: "POST", headers, body: JSON.stringify({ fields }) }
-  );
-  return res.json();
-}
+### Create a log entry
+```
+mcp__claude_ai_Airtable__create_records_for_table(
+  baseId: "appgvQDqiFZ3ESigA",
+  tableId: "tblzT4NBJ2Q6zm3Qf",
+  typecast: true,
+  records: [{
+    fields: {
+      fldp7Zsgs888JvnYq: workflow_id,
+      fldn6jkRqcSEpDcc7: entity_id,
+      fldqFGc3QNHtYiPjp: step_name,
+      fldSFNnlFROARTXfE: stage,
+      fldBxL1E3SVtJSVWj: new Date().toISOString(),
+      fldrSZoPUa7UjNYbt: output_summary,
+      fldymNXN8sOW1abY3: model_version,
+      fldsP1V6BvOxeZ5l7: "success" | "error"
+    }
+  }]
+)
+```
+
+### Set research lock on post stub (before expensive op)
+```
+mcp__claude_ai_Airtable__update_records_for_table(
+  baseId: "appgvQDqiFZ3ESigA",
+  tableId: "tblz0nikoZ89MHHTs",
+  typecast: true,
+  records: [{ id: postStubId, fields: {
+    fldC2PIfrupZA2Ohk: new Date().toISOString(),   // research_started_at
+    fldlC1PMzRw0z6cTR: "researching"                // status
+  }}]
+)
+```
+
+### Clear lock on error
+```
+mcp__claude_ai_Airtable__update_records_for_table(
+  baseId: "appgvQDqiFZ3ESigA",
+  tableId: "tblz0nikoZ89MHHTs",
+  typecast: true,
+  records: [{ id: postStubId, fields: {
+    fldC2PIfrupZA2Ohk: null,       // research_started_at cleared
+    fldlC1PMzRw0z6cTR: "planned"   // status reverted
+  }}]
+)
 ```
 
 ---
 
 ## Safe Field Access
 
-Always use nullish coalescing when reading Airtable fields — fields missing from the response return `undefined`, not `null`:
+Always use nullish coalescing — fields missing from the MCP response return `undefined`, not `null`:
 
 ```javascript
-const topic = record.fields?.["Topic"] ?? null;                    // ideas: capital T
-const status = record.fields?.["Status"] ?? null;                  // ideas: capital S
-const uif = record.fields?.["Intelligence File"] ?? null;          // ideas: spaced, capital I/F
-const score = record.fields?.score_overall ?? null;                // ideas: lowercase
-const brief = record.fields?.content_brief                         // ideas: lowercase
+const topic   = record.fields?.["Topic"] ?? null;             // ideas: capital T
+const status  = record.fields?.status ?? null;                // posts: lowercase
+const uif     = record.fields?.["Intelligence File"] ?? null; // ideas: spaced, capital I/F
+const score   = record.fields?.score_overall ?? null;
+const brief   = record.fields?.content_brief
   ? JSON.parse(record.fields.content_brief)
   : null;
 ```
+
+**Airtable checkbox read-back**: `needs_snippet = false` (unchecked) does NOT appear in the API response — the field is absent, not `false`. This is correct Airtable behavior.
 
 ---
 
 ## Running Average Formula
 
-Used by improver skill when updating `avg_score` after a new `performance_score`:
+Used by `/score` when updating `avg_score` after a new `performance_score`:
 
 ```javascript
 function updateRunningAverage(oldAvg, oldCount, newScore) {
   if (oldCount === 0 || oldAvg === null) return newScore;
   return ((oldAvg * (oldCount - 1)) + newScore) / oldCount;
 }
-// Note: call AFTER incrementing use_count, so oldCount = new use_count
+// Call AFTER incrementing use_count. oldCount = new (incremented) use_count.
 // Example: use_count was 2, now 3. oldCount = 3.
 // new_avg = ((old_avg * 2) + new_score) / 3
 ```
 
 ---
 
-## Common Filter Formulas
+## Promote / Retire Thresholds
 
 ```javascript
-// Ideas ready for research (Status = "Selected", capital S)
-`AND({Status} = "Selected", {research_started_at} = "")`
-
-// Ideas ready for drafting (Status = "Ready" maps to researched)
-`AND({Status} = "Ready", {research_completed_at} != "")`
-
-// Posts ready for review
-`{status} = "drafted"`
-
-// Posts ready for scoring
-`AND({status} = "published", {performance_score} = "")`
-
-// Hooks not retired, for /draft
-`{status} != "retired"`
-
-// Proven hooks first (sort: proven before candidate)
-// Use status field sort: proven → candidate order in sort array
+function shouldPromote(avg, count) { return count >= 3 && avg >= 7.5; }
+function shouldRetire(avg, count)  { return count >= 3 && avg < 4.0; }
 ```

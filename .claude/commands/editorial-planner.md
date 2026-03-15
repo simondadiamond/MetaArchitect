@@ -5,6 +5,8 @@ Compose the optimal 3–4 post lineup for the current ISO week. Answers: "What s
 **Risk tier**: medium (LLM call + Airtable batch writes) → S + T + E required.
 **No lock needed**: no single expensive operation to gate — the whole command is the unit.
 
+> **Airtable**: Use MCP tools directly — no node scripts. All table IDs and field IDs are in `.claude/skills/airtable.md`. Always `typecast: true` on writes.
+
 ---
 
 ## STATE Init
@@ -50,10 +52,9 @@ Check the **posts** table (not ideas) — post stubs are the canonical record of
 
 ```javascript
 state.stage = "idempotency_check";
-const existing = await getRecords(
-  TABLES.POSTS,
-  `{planned_week} = "${plannedWeek}"`
-);
+// MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs)
+//   fieldIds: [fldViXirsiFl1j1w4] — filters: planned_week = plannedWeek (text field)
+const existing = // result.records
 if (existing.length > 0) {
   return `⚠ Editorial plan for ${plannedWeek} already exists (${existing.length} post stubs). Check Airtable before re-running.`;
 }
@@ -65,11 +66,12 @@ if (existing.length > 0) {
 
 ```javascript
 state.stage = "fetch_candidates";
-const candidates = await getRecords(
-  process.env.AIRTABLE_TABLE_IDEAS,
-  `{Status} = "New"`,
-  [{ field: "score_overall", direction: "desc" }]
-);
+// MCP: get_table_schema for Status "New" choice ID, then:
+//   list_records_for_table(appgvQDqiFZ3ESigA, tblVKVojZscMG6gDk)
+//   fieldIds: [fldMtlpG32VKE0WkN, fld9frOZF4oaf3r6V, fldQMArYmpP8s6VKb, fldBvV1FgpD1l2PG1,
+//              fldF8BxXjbUiHCWIa, fldJatmYz453YGTyV, fldeYByfFx9xjFnnK, fldquN4wVbd6eLKYF, fldvw93lwpYEqD5nX]
+//   filters: Status = "New" (choice ID) — sort: fldJatmYz453YGTyV desc
+const candidates = // result.records
 if (candidates.length < 3) {
   return `⚠ Only ${candidates.length} ideas with Status = "New" — need at least 3. Run /capture to add more.`;
 }
@@ -83,10 +85,11 @@ This data is passed to the composer as awareness context. It is NOT the primary 
 
 ```javascript
 state.stage = "fetch_pipeline_context";
-const inFlight = await getRecords(
-  process.env.AIRTABLE_TABLE_IDEAS,
-  `OR({Status} = "Selected", {Status} = "Researching", {Status} = "Ready")`
-);
+// MCP: get_table_schema for Status choice IDs (Selected, Ready), then:
+//   list_records_for_table(appgvQDqiFZ3ESigA, tblVKVojZscMG6gDk)
+//   fieldIds: [fld9frOZF4oaf3r6V, fldF8BxXjbUiHCWIa]
+//   filters: Status isAnyOf ["Selected", "Ready"] (choice IDs)
+const inFlight = // result.records
 const inFlightCounts = { authority: 0, education: 0, community: 0, virality: 0 };
 inFlight.forEach(r => {
   const intent = r.fields?.intent;
@@ -136,8 +139,11 @@ function getPriorWeeks(currentWeek, count) {
 }
 
 const priorWeeks = getPriorWeeks(plannedWeek, 4);
-const weekFilter = priorWeeks.map(w => `{planned_week} = "${w}"`).join(", ");
-const recentPosts = await getRecords(TABLES.POSTS, `OR(${weekFilter})`);
+// MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs)
+//   fieldIds: [fldViXirsiFl1j1w4, fldoszwWyI2UBIIzu, fldDNwByEQkXdq4lV, fldlGGDwqp6Hy17jT,
+//              fldw3GtLHQeFtN9xl, fldrhO25vUB5CDjgt, fldps8GeW62IjxTze]
+//   filters: planned_week isAnyOf priorWeeks (text field — use OR with multiple "=" operands)
+const recentPosts = // result.records
 
 // Group by week for consecutive-week checks
 const recentByWeek = {};
@@ -248,10 +254,9 @@ const recentHistory = {
 
 ```javascript
 state.stage = "fetch_brand";
-const brandRecords = await getRecords(
-  process.env.AIRTABLE_TABLE_BRAND,
-  `{name} = "metaArchitect"`
-);
+// MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblwfU5EpDgOKUF7f)
+//   fieldIds: all brand fields — filters: name = "metaArchitect"
+const brandRecords = // result.records
 const brand = brandRecords[0]?.fields ?? {};
 ```
 
@@ -348,13 +353,15 @@ let plan;
 try {
   plan = JSON.parse(rawOutput);
 } catch (e) {
-  await logEntry({ workflow_id: state.workflowId, entity_id: "batch", step_name: "editorial_composer", stage: state.stage, output_summary: `JSON parse failed: ${e.message}`, model_version: "claude-sonnet-4-6", status: "error" });
+  // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+await logEntry({ workflow_id: state.workflowId, entity_id: "batch", step_name: "editorial_composer", stage: state.stage, output_summary: `JSON parse failed: ${e.message}`, model_version: "claude-sonnet-4-6", status: "error" });
   return `❌ /editorial-planner failed at validation — JSON parse error: ${e.message} — safe to retry`;
 }
 
 const validation = validateEditorialPlan(plan, candidates);
 if (!validation.valid) {
-  await logEntry({ workflow_id: state.workflowId, entity_id: "batch", step_name: "editorial_composer", stage: state.stage, output_summary: `Validation failed: ${validation.errors.join("; ")}`, model_version: "claude-sonnet-4-6", status: "error" });
+  // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+await logEntry({ workflow_id: state.workflowId, entity_id: "batch", step_name: "editorial_composer", stage: state.stage, output_summary: `Validation failed: ${validation.errors.join("; ")}`, model_version: "claude-sonnet-4-6", status: "error" });
   return `❌ /editorial-planner failed at validation — ${validation.errors.join("; ")} — safe to retry`;
 }
 ```
@@ -364,6 +371,7 @@ if (!validation.valid) {
 ### 9. Log LLM call
 
 ```javascript
+// MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
 await logEntry({
   workflow_id: state.workflowId,
   entity_id: "batch",
@@ -435,8 +443,10 @@ for (const post of plan.posts) {
     }
     const postClass = inferPostClass(post, sourceAngleName, territoryKey, recentHistory);
 
-    // Create post stub
-    const postStub = await createRecord(TABLES.POSTS, {
+    // MCP: mcp__claude_ai_Airtable__create_records_for_table
+    //   baseId: "appgvQDqiFZ3ESigA", tableId: "tblz0nikoZ89MHHTs", typecast: true
+    //   Use field IDs from airtable.md for all fields below
+    const postStub = await createRecord(POSTS, {
       idea_id: [post.idea_id],
       planned_week: plannedWeek,
       planned_order: post.order,
@@ -455,8 +465,9 @@ for (const post of plan.posts) {
       post_class:        postClass,
     });
 
-    // Mark idea Selected + copy planning metadata for Airtable visibility
-    await patchRecord(TABLES.IDEAS, post.idea_id, {
+    // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblVKVojZscMG6gDk, typecast: true)
+    //   fields: fld9frOZF4oaf3r6V (Status), fldx3QLe3tKPmU88U (selected_at), etc.
+    await patchRecord(IDEAS, post.idea_id, {
       Status: "Selected",
       selected_at,
       planned_week: plannedWeek,
@@ -470,7 +481,8 @@ for (const post of plan.posts) {
 
     written.push(postStub.id);
 
-    await logEntry({
+    // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+await logEntry({
       workflow_id: state.workflowId,
       entity_id: postStub.id,
       step_name: "post_stub_created",

@@ -13,6 +13,8 @@ With argument: `/draft [post_stub_id]` — draft a specific post stub.
 
 Risk tier: medium → S + T + E required.
 
+> **Airtable**: Use MCP tools directly — no node scripts. All table IDs and field IDs are in `.claude/skills/airtable.md`. Always `typecast: true` on writes.
+
 ---
 
 ## STATE Init
@@ -31,18 +33,24 @@ const state = buildStateObject({
 
 ### 1. Find brand context
 ```javascript
-const brands = await getRecords(process.env.AIRTABLE_TABLE_BRAND, `{name} = "metaArchitect"`);
+// MCP: mcp__claude_ai_Airtable__list_records_for_table
+//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblwfU5EpDgOKUF7f"
+//   fieldIds: all brand fields — filters: name = "metaArchitect"
+const brands = // result.records
 const brand = brands.length > 0 ? brands[0] : null;
-if (!brand) throw new Error("Brand record 'metaArchitect' not found in Airtable (AIRTABLE_TABLE_BRAND)");
+if (!brand) throw new Error("Brand record 'metaArchitect' not found in Airtable");
 ```
 
 ### 2. Find target post stub
 ```javascript
-const posts = await getRecords(
-  TABLES.POSTS,
-  `{status} = "research_ready"`,
-  [{ field: "planned_week", direction: "asc" }, { field: "planned_order", direction: "asc" }]
-);
+// MCP: get_table_schema for status choice ID "research_ready", then:
+//   mcp__claude_ai_Airtable__list_records_for_table
+//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblz0nikoZ89MHHTs"
+//   fieldIds: [fldlC1PMzRw0z6cTR, fldlGGDwqp6Hy17jT, fldwDOdJgmbf2IZKv,
+//              fldViXirsiFl1j1w4, fldIqhg3WzB4vZfhl, fldps8GeW62IjxTze]
+//   filters: status = "research_ready" (choice ID)
+//   sort: fldViXirsiFl1j1w4 asc, fldIqhg3WzB4vZfhl asc
+const posts = // result.records
 if (posts.length === 0) {
   return "No post stubs with status = research_ready. Run /research first.";
 }
@@ -55,7 +63,11 @@ if (!ideaId) throw new Error("Post stub is missing idea_id — check Airtable da
 
 ### 3. Load idea + parse UIF
 ```javascript
-const idea = await getRecord(TABLES.IDEAS, ideaId);
+// MCP: mcp__claude_ai_Airtable__list_records_for_table
+//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblVKVojZscMG6gDk"
+//   recordIds: [ideaId]
+//   fieldIds: [fldMtlpG32VKE0WkN, fldQMArYmpP8s6VKb, fldBvV1FgpD1l2PG1, fldF8BxXjbUiHCWIa]
+const idea = // result.records[0]
 if (!idea) throw new Error(`Idea ${ideaId} not found`);
 
 const uif = idea.fields?.["Intelligence File"]
@@ -83,18 +95,22 @@ const platform = "linkedin";
 ### 5. Query framework_library
 ```javascript
 updateStage(state, "framework_query");
-// Use improver.md Framework Query:
-// Filter: status != retired, best_for contains angle's pillar
-// Sort: proven first, then avg_score desc
+// MCP: get_table_schema for status choice IDs, then list_records_for_table
+//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblYsys2ydvryVtmf"
+//   fieldIds: [fldcFJnXRemmm2PqU, fld92B4yioAGqEbfL, fldMPkk9oVvbqvTv5,
+//              fldlCsQrc9GWIT1yg, fldoAs2QC066Th0x9, fldtVJ6vuENyFgz8A, fldBhDdj55AxwLEUl]
+//   filters: status != "retired" — sort by proven first, then avg_score desc
 const framework = await queryFramework(angle, idea);
 ```
 
 ### 6. Query hooks_library
 ```javascript
 updateStage(state, "hook_query");
-// Use improver.md Hook Query:
-// Filter: status != retired, intent matches idea.intent
-// Sort: proven first, then avg_score desc
+// MCP: list_records_for_table
+//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblWuQNSJ25bs18DZ"
+//   fieldIds: [fldSIjqzsFuxWOaYb, fldOvWxj7O0x51aIX, fld6UZ8Fy7q2cZQyF,
+//              fldVKrSnP34sofwZ7, fld0b1nWNg3ZXT21f, fldfckbIwaSSebctW]
+//   filters: status != "retired", intent = idea.intent — sort proven first
 const hook = await queryHook(idea.fields?.intent);
 ```
 
@@ -112,7 +128,10 @@ const needsSnippet = snippet === null;
 **querySnippets(angle, limit) — weighted scoring:**
 ```javascript
 async function querySnippets(angle, limit = 3) {
-  const allSnippets = await getRecords(TABLES.SNIPPETS, `{status} != "retired"`);
+  // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblk8QpMOBOs6BMbF)
+  //   fieldIds: [fldaWegy2OyWpA28D, fldZFO5xKMiqBuUMY, fldiAFNJJZUcqhr7C, fldZ6ifFD4OW0PDOt, fld90hLmFbyPWvy59]
+  //   filters: status != "retired" (get_table_schema first for choice ID)
+  const allSnippets = // result.records
 
   const angleText = [
     angle.angle_name ?? "",
@@ -176,8 +195,11 @@ const draftContent = await generateDraft({ uif, angle, supporting_facts, framewo
 ### 9. Patch post stub in place
 ```javascript
 updateStage(state, "writing");
-// Update the existing post stub — do NOT create a new record.
-await patchRecord(TABLES.POSTS, postStub.id, {
+// MCP: mcp__claude_ai_Airtable__update_records_for_table
+//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblz0nikoZ89MHHTs", typecast: true
+//   records: [{ id: postStub.id, fields: { ... } }] — see field IDs in airtable.md
+// Do NOT create a new record — update the existing post stub.
+await patchRecord(POSTS, postStub.id, {
   platform,
   intent: idea.fields?.intent,
   format: framework?.fields?.pattern_type ?? "none",
@@ -194,7 +216,8 @@ await patchRecord(TABLES.POSTS, postStub.id, {
 
 ### 10. Log completion
 ```javascript
-await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+// MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+await createRecord(LOGS, {
   workflow_id: state.workflowId,
   entity_id: postStub.id,
   step_name: "draft_created",
@@ -266,7 +289,8 @@ No persistent lock for `/draft`. If draft generation fails:
 
 ```javascript
 } catch (error) {
-  await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+  // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+  await createRecord(LOGS, {
     workflow_id: state.workflowId,
     entity_id: postStub.id,
     step_name: "error",

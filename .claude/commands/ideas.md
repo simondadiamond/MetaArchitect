@@ -6,6 +6,8 @@ Display the current backlog of unselected ideas, ranked by score. No writes. No 
 
 **Risk tier**: low (read-only).
 
+> **Airtable**: Use MCP tools directly — no node scripts. See `.claude/skills/airtable.md` for field IDs.
+
 ---
 
 ## Steps
@@ -13,11 +15,14 @@ Display the current backlog of unselected ideas, ranked by score. No writes. No 
 ### 1. Load backlog
 
 ```javascript
-const ideas = await getRecords(
-  process.env.AIRTABLE_TABLE_IDEAS,
-  `{Status} = "New"`,
-  [{ field: "score_overall", direction: "desc" }]
-);
+// MCP: get_table_schema for Status choice IDs, then:
+//   mcp__claude_ai_Airtable__list_records_for_table
+//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblVKVojZscMG6gDk"
+//   fieldIds: [fldMtlpG32VKE0WkN, fld9frOZF4oaf3r6V, fldF8BxXjbUiHCWIa,
+//              fldJatmYz453YGTyV, fldeYByfFx9xjFnnK, fldquN4wVbd6eLKYF, fldvw93lwpYEqD5nX]
+//   filters: Status = "New" (choice ID)
+//   sort: fldJatmYz453YGTyV desc
+const ideas = // result.records
 
 if (ideas.length === 0) {
   return "No ideas with Status = New. Run /capture to add ideas to the backlog.";
@@ -27,10 +32,10 @@ if (ideas.length === 0) {
 ### 2. Compute current queue composition
 
 ```javascript
-const allSelected = await getRecords(
-  process.env.AIRTABLE_TABLE_IDEAS,
-  `OR({Status} = "Selected", {Status} = "Researching", {Status} = "Ready")`
-);
+// MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblVKVojZscMG6gDk)
+//   fieldIds: [fld9frOZF4oaf3r6V, fldF8BxXjbUiHCWIa]
+//   filters: Status isAnyOf ["Selected", "Ready"] (choice IDs via get_table_schema)
+const allSelected = // result.records
 const queueCounts = { authority: 0, education: 0, community: 0, virality: 0 };
 allSelected.forEach(r => {
   const intent = r.fields?.intent;

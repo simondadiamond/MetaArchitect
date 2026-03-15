@@ -12,6 +12,9 @@ Posts with `status = drafted`.
 
 Risk tier: low for display, medium for approve/revise writes → S + T + E on writes.
 
+> **Airtable**: Use MCP tools directly — no node scripts. See `.claude/skills/airtable.md` for field IDs. Always `typecast: true` on writes.
+> **Optimization cache**: No `.tmp/` files. Store the `optimization` object as an in-memory variable per post within the session. No file I/O.
+
 ---
 
 ## STATE Init
@@ -30,11 +33,15 @@ const state = buildStateObject({
 
 ### 1. Load drafted posts
 ```javascript
-const posts = await getRecords(
-  process.env.AIRTABLE_TABLE_POSTS,
-  `{status} = "drafted"`,
-  [{ field: "drafted_at", direction: "asc" }]
-);
+// MCP: get_table_schema for status "drafted" choice ID, then:
+//   mcp__claude_ai_Airtable__list_records_for_table
+//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblz0nikoZ89MHHTs"
+//   fieldIds: [fldlC1PMzRw0z6cTR, fldgVwvcXFDA7RCxf, fldztvQenFV0pW44l,
+//              fldps8GeW62IjxTze, fldRHUQer2GFyLieS, fldk046kLs4yG2p1Y,
+//              fldNQw5L5KBFpFt5a, fldmmLHwgsBpa6KP6, fldcQe7vI0lE6qqwQ,
+//              fld9OwHI6Z2Al3p7T, flde3pQnFHI8shfyX]
+//   filters: status = "drafted" (choice ID) — sort: flde3pQnFHI8shfyX asc
+const posts = // result.records
 
 if (posts.length === 0) {
   return "No posts with status = drafted. Run /draft first.";
@@ -42,12 +49,12 @@ if (posts.length === 0) {
 ```
 
 ### 2. Load linked records for each post
-For each post, fetch:
-- `hook_id` → hook record from `hooks_library` (`hook_text`, `hook_type`)
-- `framework_id` → framework record from `framework_library` (`framework_name`)
-- `humanity_snippet_id` → snippet from `humanity_snippets` (`snippet_text`)
-- `alt_snippet_ids` → up to 2 alternate snippet records from `humanity_snippets` (`snippet_text`)
-- `needs_snippet` flag
+For each post, fetch via MCP:
+- `hook_id` → `list_records_for_table(appgvQDqiFZ3ESigA, tblWuQNSJ25bs18DZ, recordIds: [hookId])` — fieldIds: `[fldSIjqzsFuxWOaYb, fldOvWxj7O0x51aIX]`
+- `framework_id` → `list_records_for_table(appgvQDqiFZ3ESigA, tblYsys2ydvryVtmf, recordIds: [frameworkId])` — fieldIds: `[fldcFJnXRemmm2PqU]`
+- `humanity_snippet_id` → `list_records_for_table(appgvQDqiFZ3ESigA, tblk8QpMOBOs6BMbF, recordIds: [snippetId])` — fieldIds: `[fldaWegy2OyWpA28D]`
+- `alt_snippet_ids` → same table, recordIds: array from alt_snippet_ids field
+- `needs_snippet` flag from `fldcQe7vI0lE6qqwQ`
 
 ### 2.5. Run editorial optimization loop
 
@@ -56,9 +63,10 @@ This runs after linked records are loaded, before display. See `editorial.md` fo
 ```javascript
 updateStage(state, "editorial_optimizing");
 
-// Tolerant: load checkpoint if exists (skip re-optimization on resumed session)
-const optimizationCachePath = `projects/Content-Engine/.tmp/.review_optimization_${post.id}.json`;
-let optimization = loadTmpJson(optimizationCachePath); // returns null if file not found
+// Tolerant: optimization is stored as an in-memory variable (no .tmp files).
+// Within a session, if this post was already optimized (e.g. after a revision), reuse
+// the existing `optimization` variable rather than re-running the editorial loop.
+let optimization = null; // set per-post — persists in-session only
 
 if (!optimization) {
   let editorialError = null;
@@ -125,7 +133,7 @@ if (!optimization) {
     winner = post.fields.draft_content;
   }
 
-  // Checkpoint
+  // Store in-memory (no file write)
   optimization = {
     postId: post.id,
     originalContent: post.fields.draft_content,
@@ -136,10 +144,8 @@ if (!optimization) {
     editorialError,
     createdAt: new Date().toISOString()
   };
-  writeTmpJson(optimizationCachePath, optimization);
-
-  // Log
-  await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+  // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+  await createRecord(LOGS, {
     workflow_id: state.workflowId,
     entity_id: post.id,
     step_name: "editorial_loop",
@@ -198,16 +204,19 @@ updateStage(state, "approving");
 
 // If preferOriginal, approve original as-is; otherwise write optimized content first
 if (!optimization.preferOriginal && optimization.winnerContent !== optimization.originalContent) {
-  await patchRecord(process.env.AIRTABLE_TABLE_POSTS, post.id, {
+  // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs, typecast: true)
+await patchRecord(POSTS, post.id, {
     draft_content: optimization.winnerContent
   });
 }
 
-await patchRecord(process.env.AIRTABLE_TABLE_POSTS, post.id, {
+// MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs, typecast: true)
+await patchRecord(POSTS, post.id, {
   status: "approved",
   approved_at: new Date().toISOString()
 });
-await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+// MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+await createRecord(LOGS, {
   workflow_id: state.workflowId,
   entity_id: post.id,
   step_name: "review_approved",
@@ -218,8 +227,8 @@ await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
   status: "success"
 });
 
-// Clean up .tmp checkpoint
-deleteTmpFile(optimizationCachePath);
+// Clear in-memory optimization cache for this post
+optimization = null;
 console.log("✅ Approved. Run /publish when ready.");
 ```
 
@@ -229,16 +238,19 @@ updateStage(state, "approving");
 
 // Write original content back if the optimized version was different
 if (optimization.winnerContent !== optimization.originalContent) {
-  await patchRecord(process.env.AIRTABLE_TABLE_POSTS, post.id, {
+  // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs, typecast: true)
+await patchRecord(POSTS, post.id, {
     draft_content: optimization.originalContent
   });
 }
 
-await patchRecord(process.env.AIRTABLE_TABLE_POSTS, post.id, {
+// MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs, typecast: true)
+await patchRecord(POSTS, post.id, {
   status: "approved",
   approved_at: new Date().toISOString()
 });
-await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+// MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+await createRecord(LOGS, {
   workflow_id: state.workflowId,
   entity_id: post.id,
   step_name: "review_approved",
@@ -249,7 +261,8 @@ await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
   status: "success"
 });
 
-deleteTmpFile(optimizationCachePath);
+// Clear in-memory optimization cache for this post
+optimization = null;
 console.log("✅ Approved (original). Run /publish when ready.");
 ```
 
@@ -273,7 +286,8 @@ const notes = input.replace(/^r\s*/i, "").trim();
 // Display revised post
 // If revisionCount >= 3: "Max revisions reached. Approve or reject."
 // Delete .tmp checkpoint so next pass re-checks fidelity
-deleteTmpFile(optimizationCachePath);
+// Clear in-memory optimization cache for this post
+optimization = null;
 ```
 
 **Revision prompt** for writer skill (same as existing, but starts from optimized):
@@ -292,10 +306,12 @@ Output the revised post only. No explanation.
 
 After revision: update `draft_content` in Airtable immediately and log:
 ```javascript
-await patchRecord(process.env.AIRTABLE_TABLE_POSTS, post.id, {
+// MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs, typecast: true)
+await patchRecord(POSTS, post.id, {
   draft_content: revisedContent
 });
-await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+// MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+await createRecord(LOGS, {
   workflow_id: state.workflowId,
   entity_id: post.id,
   step_name: "review_revised",
@@ -315,16 +331,19 @@ updateStage(state, "revising");
 const notes = input.replace(/^ro\s*/i, "").trim();
 // Same revision flow, same max 3, same log pattern
 // Base content: optimization.originalContent
-deleteTmpFile(optimizationCachePath);
+// Clear in-memory optimization cache for this post
+optimization = null;
 ```
 
 #### Reject (`x`)
 ```javascript
 updateStage(state, "rejecting");
-await patchRecord(process.env.AIRTABLE_TABLE_POSTS, post.id, {
+// MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs, typecast: true)
+await patchRecord(POSTS, post.id, {
   status: "rejected"
 });
-await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+// MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+await createRecord(LOGS, {
   workflow_id: state.workflowId,
   entity_id: post.id,
   step_name: "review_rejected",
@@ -334,7 +353,8 @@ await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
   model_version: "n/a",
   status: "success"
 });
-deleteTmpFile(optimizationCachePath);
+// Clear in-memory optimization cache for this post
+optimization = null;
 console.log("Post rejected.");
 ```
 
@@ -347,11 +367,13 @@ if (!swapTarget) {
   // Re-display options
 } else {
   updateStage(state, "snippet_swap");
-  await patchRecord(process.env.AIRTABLE_TABLE_POSTS, post.id, {
+  // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs, typecast: true)
+await patchRecord(POSTS, post.id, {
     humanity_snippet_id: [swapTarget.id]
   });
   currentSnippet = swapTarget;
-  await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+  // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+await createRecord(LOGS, {
     workflow_id: state.workflowId,
     entity_id: post.id,
     step_name: "review_snippet_swapped",
@@ -373,10 +395,12 @@ if (isNaN(fitScore) || fitScore < 1 || fitScore > 5) {
   console.log("⚠ Enter a number 1–5 (1 = poor fit, 5 = perfect).");
 } else {
   updateStage(state, "snippet_rating");
-  await patchRecord(process.env.AIRTABLE_TABLE_POSTS, post.id, {
+  // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs, typecast: true)
+await patchRecord(POSTS, post.id, {
     snippet_fit_score: fitScore
   });
-  await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+  // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+await createRecord(LOGS, {
     workflow_id: state.workflowId,
     entity_id: post.id,
     step_name: "review_snippet_rated",
@@ -413,12 +437,15 @@ Respond with JSON only:
     console.log(`⚠ Not saved — ${parsed.reason}. Revise and try again with sn.`);
   } else {
     updateStage(state, "snippet_create");
-    const newSnippet = await createRecord(process.env.AIRTABLE_TABLE_SNIPPETS, {
+    // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblk8QpMOBOs6BMbF, typecast: true)
+    //   fields: fldaWegy2OyWpA28D (snippet_text), fldZFO5xKMiqBuUMY (tags), fld90hLmFbyPWvy59 (status)
+    const newSnippet = await createRecord(SNIPPETS, {
       snippet_text: parsed.cleaned_text,
       tags: parsed.tags.join(", "),
       status: "candidate"
     });
-    await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+    // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+await createRecord(LOGS, {
       workflow_id: state.workflowId,
       entity_id: post.id,
       step_name: "review_snippet_created",
@@ -470,7 +497,7 @@ When implementing, embed or import the text from `.claude/skills/editorial.md`.
 | `posts` | `snippet_fit_score` | 1–5 | snippet rating (`sf`) |
 | `humanity_snippets` | `snippet_text`, `tags`, `status` | new candidate record | `sn` |
 | `logs` | multiple | one per editorial loop pass, one per decision, swap, rating, new snippet |  |
-| `.tmp/` | `.review_optimization_<postId>.json` | optimization checkpoint | created before display, deleted on approve/reject |
+| in-memory | `optimization` variable | editorial optimization result | set per post during session, cleared on approve/reject |
 
 ---
 

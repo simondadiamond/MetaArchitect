@@ -39,16 +39,12 @@ All stages are Claude Code slash commands. See [workflows/README.md](workflows/R
 
 All tools live in `projects/Content-Engine/tools/`. Run from repo root.
 
+> **Airtable operations use MCP tools directly** — no node scripts for Airtable reads/writes. See `.claude/skills/airtable.md` for the field ID registry and MCP tool reference.
+
 | Tool | Purpose | Invoke |
 |------|---------|--------|
-| `airtable.mjs` | Reusable Airtable client — import in all scripts | `import { getRecords, patchRecord, createRecord, TABLES } from './projects/Content-Engine/tools/airtable.mjs'` |
-| `research-init.mjs` | Load brand + idea context for research | `node projects/Content-Engine/tools/research-init.mjs` |
-| `research-lock.mjs` | Set research lock + STATE init | `node projects/Content-Engine/tools/research-lock.mjs` |
-| `research-perplexity.mjs` | Run 3 Perplexity queries (sonar-pro) | Called internally |
-| `research-hooks.mjs` | Extract + write hooks to hooks_library | Called internally |
-| `research-fetch.mjs` | Fetch + lock override utility | Called internally |
-| `.tmp_research.mjs` | Research pipeline runner (phase1–4 + unlock) | `node projects/Content-Engine/tools/.tmp_research.mjs <phase1\|phase2\|phase3\|phase4\|unlock>` |
-| `.tmp_draft.mjs` | Write pre-generated drafts to Airtable | `node projects/Content-Engine/tools/.tmp_draft.mjs` |
+| `airtable.mjs` | Reusable Airtable REST client — still used by `research-perplexity.mjs` for logging | `import { getRecords, patchRecord, createRecord, TABLES } from './projects/Content-Engine/tools/airtable.mjs'` |
+| `research-perplexity.mjs` | Run Perplexity queries (sonar-pro) + log to Airtable | Called by `/research` command |
 | `_draft_check.mjs` | Dev utility — probe Airtable field names | `node projects/Content-Engine/tools/_draft_check.mjs` |
 
 **Before building anything new**: check `tools/` first. Only create new scripts when nothing exists for the task.
@@ -57,17 +53,9 @@ All tools live in `projects/Content-Engine/tools/`. Run from repo root.
 
 ## Temp Files
 
-Runtime state lives in `projects/Content-Engine/.tmp/` (gitignored). These files are disposable — they can always be regenerated.
+`.tmp/` is gitignored and may contain leftover files from old pipeline versions. No current pipeline command writes to `.tmp/` — all state is persisted directly to Airtable via MCP tools.
 
-| File | Written by | Read by |
-|------|-----------|---------|
-| `.research_ctx.json` | phase1 | phase2, phase3, phase4, unlock |
-| `.research_queries.json` | Claude (you) | phase2 |
-| `.research_results.json` | phase2 | phase3 |
-| `.research_uif.json` | Claude (you) | phase3 |
-| `.research_hooks.json` | Claude (you) | phase4 |
-
-**The Reboot Test**: if this system reboots mid-pipeline, the `.tmp/` files let it resume from the last completed phase — not from scratch.
+**The Reboot Test**: if this system reboots mid-pipeline, the lock field (`research_started_at` on the post stub) is the checkpoint — the command checks this field at startup to detect in-progress or already-completed work.
 
 ---
 

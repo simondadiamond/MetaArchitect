@@ -9,6 +9,8 @@ Replaces the Telegram/n8n pipeline. Captures raw ideas, fetches external content
 None. This is the top-of-funnel entry point.
 Risk tier: medium → S + T + E required.
 
+> **Airtable**: Use MCP tools directly — no node scripts. All table IDs and field IDs are in `.claude/skills/airtable.md`. Always `typecast: true` on any create or update call.
+
 ---
 
 ## STATE Init
@@ -71,21 +73,24 @@ if (ytRe.test(rawInput)) {
 Create the record *before* the expensive LLM calls so we have an entityId to log against.
 ```javascript
 updateStage(state, "creating_draft");
-const ideaRecord = await createRecord(process.env.AIRTABLE_TABLE_IDEAS, {
-  Topic: "Processing...",
-  Status: "New",
-  workflow_id: state.workflowId,
-  source_type: sourceType,
-  source_url: sourceUrl,
-  raw_input: rawInput
-});
+// MCP: mcp__claude_ai_Airtable__create_records_for_table
+//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblVKVojZscMG6gDk", typecast: true
+//   fields: { Topic: "Processing...", Status: "New", workflow_id, source_type, raw_input }
+//   field IDs: fldMtlpG32VKE0WkN (Topic), fld9frOZF4oaf3r6V (Status),
+//              fldoREHCHsCU6pXuE (workflow_id), fldBkIqNugXb4M5Fk (source_type),
+//              fld7FkHIuCaZ47SyA (Source/url), fldrQ3CDTEDuIhEsy (raw_input)
+const ideaRecord = // result.records[0]
 
 state.entityId = ideaRecord.id;
 ```
 
 ### 4. Fetch Brand Context
 ```javascript
-const brands = await getRecords(process.env.AIRTABLE_TABLE_BRAND, `{name} = "metaArchitect"`);
+// MCP: mcp__claude_ai_Airtable__list_records_for_table
+//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblwfU5EpDgOKUF7f"
+//   fieldIds: all brand fields (fldsP8FwcTxJdkac8 through fldBtXwgSegiYP2pB)
+//   filters: { operator: "=", operands: ["fldsP8FwcTxJdkac8", "metaArchitect"] }
+const brands = // result.records
 const brand = brands.length > 0 ? brands[0] : null;
 if (!brand) throw new Error("Brand record 'metaArchitect' not found in Airtable");
 ```
@@ -104,7 +109,8 @@ if (!briefValidation.valid) throw new Error(`Brief Validation Failed: ${briefVal
 ```
 Log success:
 ```javascript
-await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+// MCP: mcp__claude_ai_Airtable__create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+await createRecord(LOGS, {
   workflow_id: state.workflowId,
   entity_id: state.entityId,
   step_name: "brand_strategist",
@@ -130,7 +136,8 @@ if (!scoreValidation.valid) throw new Error(`Score Validation Failed: ${scoreVal
 ```
 Log success:
 ```javascript
-await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+// MCP: mcp__claude_ai_Airtable__create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+await createRecord(LOGS, {
   workflow_id: state.workflowId,
   entity_id: state.entityId,
   step_name: "brand_scorer",
@@ -156,7 +163,8 @@ const overviewQuery = `${strategistOutput.topic} — ${strategistOutput.core_ang
 const perplexityResult = await callPerplexity(overviewQuery);
 
 // Log Perplexity call
-await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+// MCP: mcp__claude_ai_Airtable__create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+await createRecord(LOGS, {
   workflow_id: state.workflowId,
   entity_id: state.entityId,
   step_name: "shallow_research_perplexity",
@@ -205,7 +213,8 @@ if (!uifValidation.valid) throw new Error(`Shallow UIF validation: ${uifValidati
 
 Log Claude call:
 ```javascript
-await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+// MCP: mcp__claude_ai_Airtable__create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+await createRecord(LOGS, {
   workflow_id: state.workflowId,
   entity_id: state.entityId,
   step_name: "angle_extractor",
@@ -220,7 +229,11 @@ await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
 ### 7. Final Airtable Write
 ```javascript
 updateStage(state, "saving");
-await patchRecord(process.env.AIRTABLE_TABLE_IDEAS, state.entityId, {
+// MCP: mcp__claude_ai_Airtable__update_records_for_table
+//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblVKVojZscMG6gDk", typecast: true
+//   records: [{ id: state.entityId, fields: { ... } }]
+//   Use field IDs from airtable.md (Intelligence File = fldQMArYmpP8s6VKb, etc.)
+await patchRecord(IDEAS, state.entityId, {
   Topic: strategistOutput.working_title,
   Status: "New",
   intent: strategistOutput.intent,
@@ -265,14 +278,16 @@ await patchRecord(process.env.AIRTABLE_TABLE_IDEAS, state.entityId, {
 } catch (error) {
   // If we have an entityId, update the Airtable record to failed
   if (state.entityId) {
-    await patchRecord(process.env.AIRTABLE_TABLE_IDEAS, state.entityId, {
+    // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblVKVojZscMG6gDk, typecast: true)
+    await patchRecord(IDEAS, state.entityId, {
       status: "processing_failed",
       recommended_next_action: `Failed at ${state.stage}: ${error.message}`
     });
   }
 
   // Always log the error
-  await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+  // MCP: mcp__claude_ai_Airtable__create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+await createRecord(LOGS, {
     workflow_id: state.workflowId,
     entity_id: state.entityId || "none",
     step_name: "error",

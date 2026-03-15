@@ -13,6 +13,8 @@ With argument: `/research [post_stub_id]` — research a specific post stub.
 
 Risk tier: medium → S + T + E required.
 
+> **Airtable**: Use MCP tools directly — no node scripts. All table IDs and field IDs are in `.claude/skills/airtable.md`. Always `typecast: true` on writes. Perplexity calls still use `node projects/Content-Engine/tools/research-perplexity.mjs` or inline via WebFetch.
+
 ---
 
 ## STATE Init
@@ -32,18 +34,23 @@ const state = buildStateObject({
 
 ### 1. Find brand context
 ```javascript
-const brands = await getRecords(process.env.AIRTABLE_TABLE_BRAND, `{name} = "metaArchitect"`);
+// MCP: mcp__claude_ai_Airtable__list_records_for_table
+//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblwfU5EpDgOKUF7f"
+//   fieldIds: all brand fields — filters: name = "metaArchitect" (text field, no schema lookup)
+const brands = // result.records
 const brand = brands.length > 0 ? brands[0] : null;
-if (!brand) throw new Error("Brand record 'metaArchitect' not found in Airtable (AIRTABLE_TABLE_BRAND)");
+if (!brand) throw new Error("Brand record 'metaArchitect' not found in Airtable");
 ```
 
 ### 2. Find target post stub
 ```javascript
-const posts = await getRecords(
-  TABLES.POSTS,
-  `AND({status} = "planned", {research_started_at} = "")`,
-  [{ field: "planned_week", direction: "asc" }, { field: "planned_order", direction: "asc" }]
-);
+// MCP: mcp__claude_ai_Airtable__get_table_schema to get choice IDs for status = "planned"
+//   Then: mcp__claude_ai_Airtable__list_records_for_table
+//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblz0nikoZ89MHHTs"
+//   fieldIds: [fldlC1PMzRw0z6cTR, fldlGGDwqp6Hy17jT, fldwDOdJgmbf2IZKv, fldViXirsiFl1j1w4, fldIqhg3WzB4vZfhl, fldC2PIfrupZA2Ohk]
+//   filters: status = "planned" (choice ID) AND research_started_at isEmpty
+//   sort: fldViXirsiFl1j1w4 asc, fldIqhg3WzB4vZfhl asc
+const posts = // result.records
 if (posts.length === 0) {
   return "No post stubs with status = planned and research_started_at empty. Run /editorial-planner first.";
 }
@@ -56,7 +63,11 @@ if (!ideaId) throw new Error("Post stub is missing idea_id — check Airtable da
 
 ### 3. Load idea + UIF
 ```javascript
-const idea = await getRecord(TABLES.IDEAS, ideaId);
+// MCP: mcp__claude_ai_Airtable__list_records_for_table
+//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblVKVojZscMG6gDk"
+//   recordIds: [ideaId]
+//   fieldIds: [fldMtlpG32VKE0WkN, fldQMArYmpP8s6VKb, fldBvV1FgpD1l2PG1, fldF8BxXjbUiHCWIa]
+const idea = // result.records[0];
 if (!idea) throw new Error(`Idea ${ideaId} not found`);
 
 const contentBrief = idea.fields?.content_brief
@@ -76,11 +87,15 @@ if (!targetAngle) throw new Error(`angle_index ${angleIndex} not found in UIF ($
 ### 4. Lock on post stub — BEFORE any API call
 ```javascript
 updateStage(state, "locking");
-await patchRecord(TABLES.POSTS, postStub.id, {
+// MCP: mcp__claude_ai_Airtable__update_records_for_table
+//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblz0nikoZ89MHHTs", typecast: true
+//   records: [{ id: postStub.id, fields: { fldC2PIfrupZA2Ohk: now, fldlC1PMzRw0z6cTR: "researching" } }]
+await patchRecord(POSTS, postStub.id, {
   research_started_at: new Date().toISOString(),
   status: "researching"
 });
-await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+// MCP: mcp__claude_ai_Airtable__create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+await createRecord(LOGS, {
   workflow_id: state.workflowId,
   entity_id: postStub.id,
   step_name: "lock",
@@ -150,16 +165,19 @@ updatedUIF.meta.provenance_log = [
   q2LogId
 ].filter(Boolean).join(",");
 
-// Update the idea's Intelligence File with the deepened UIF
-await patchRecord(TABLES.IDEAS, ideaId, {
+// MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblVKVojZscMG6gDk, typecast: true)
+//   fields: fldQMArYmpP8s6VKb (Intelligence File), fldAwyDJrDdoyPmtR (research_depth),
+//           fldvnK9lQWpoJaL30 (research_completed_at), fld9frOZF4oaf3r6V (Status)
+await patchRecord(IDEAS, ideaId, {
   "Intelligence File": JSON.stringify(updatedUIF),
   research_depth: "deep",
   research_completed_at: new Date().toISOString(),
   Status: "Ready"
 });
 
-// Mark post stub research_ready
-await patchRecord(TABLES.POSTS, postStub.id, {
+// MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs, typecast: true)
+//   fields: fldlC1PMzRw0z6cTR (status), fldzTm7FfPo9FtEYX (research_completed_at)
+await patchRecord(POSTS, postStub.id, {
   status: "research_ready",
   research_completed_at: new Date().toISOString()
 });
@@ -170,13 +188,16 @@ await patchRecord(TABLES.POSTS, postStub.id, {
 updateStage(state, "hook_extraction");
 // For the deepened angle (targetAngle after merge):
 //   Call hook generation prompt (see researcher.md Stage 4)
-//   Write each hook to hooks_library as status = "candidate"
-//   source_idea: [ideaId]
+//   MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblWuQNSJ25bs18DZ, typecast: true)
+//   fields: fldSIjqzsFuxWOaYb (hook_text), fldOvWxj7O0x51aIX (hook_type),
+//           fld3aBVety5oSAxKu (source_idea: [ideaId]), fldnuhK79wUIKnrw4 (angle_name),
+//           fld6UZ8Fy7q2cZQyF (intent), fldVKrSnP34sofwZ7 (status: "candidate")
 ```
 
 ### 11. Log completion
 ```javascript
-await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+// MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+await createRecord(LOGS, {
   workflow_id: state.workflowId,
   entity_id: postStub.id,
   step_name: "complete",
@@ -217,14 +238,15 @@ await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
 
 ```javascript
 } catch (error) {
-  // Clear the lock on the post stub — revert to planned for retry
-  await patchRecord(TABLES.POSTS, postStub.id, {
+  // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs, typecast: true)
+  //   Clear lock — research_started_at: null, status: "planned"
+  await patchRecord(POSTS, postStub.id, {
     research_started_at: null,
     status: "planned"
   });
 
-  // Log the failure
-  await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
+  // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+  await createRecord(LOGS, {
     workflow_id: state.workflowId,
     entity_id: postStub.id,
     step_name: "error",
