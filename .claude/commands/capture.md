@@ -170,12 +170,30 @@ await createRecord(process.env.AIRTABLE_TABLE_LOGS, {
 // 3. Call Claude (claude-sonnet-4-6) — Angle Extractor prompt (see researcher.md)
 //    Input: perplexityResult + strategistOutput (content_brief) + brand
 //    Output: shallow UIF — meta, core_knowledge.facts (2–5 from citations),
-//            angles[] (2–4 angles, each with angle_name, contrarian_take,
+//            angles[] (4–5 angles, each with angle_name, contrarian_take,
 //            pillar_connection, brand_specific_angle, supporting_facts: []),
 //            humanity_snippets: []
-//    Instruction to model: "Do not invent facts. Only extract what Perplexity
-//    returned. Focus effort on generating distinct, specific angles the
-//    practitioner audience would find valuable."
+//    Instruction to model:
+//      "Do not invent facts. Only extract what Perplexity returned.
+//      Generate 4–5 highly specific, practitioner-grade angles. Do NOT pad
+//      with weak filler angles to hit the quota — quality and specificity
+//      matter more than count. Stop at 4 if the source cannot support a 5th
+//      strong angle.
+//      Aim for diversity across these categories when the source material
+//      supports it:
+//        - diagnostic / teardown (what breaks and why)
+//        - framework / architecture (how to fix it)
+//        - resonance / story (lived failure moment)
+//        - contrarian (what everyone gets wrong)
+//        - tactical (specific checklist or technique)
+//        - regulated / governance implication (Law 25, OSFI, auditability)
+//        - trend / product / prediction (only if the source material genuinely
+//          supports a practitioner-level operator opinion — reveals mechanism,
+//          tradeoff, or production reality; not a generic trend summary)
+//      Do not force every category — use only those the source material
+//      genuinely supports. At least 1 angle must have brand_specific_angle=true.
+//      Angles represent reusable intellectual territory that may support multiple
+//      posts across multiple weeks — generate them with that durability in mind."
 const shallowUIF = await extractAngles({ perplexityResult, contentBrief: strategistOutput, brand });
 ```
 

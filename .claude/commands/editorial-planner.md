@@ -77,7 +77,9 @@ if (candidates.length < 3) {
 
 ---
 
-### 4. Fetch pipeline context (in-flight intent distribution)
+### 4. Fetch pipeline context (in-flight intent distribution — background signal only)
+
+This data is passed to the composer as awareness context. It is NOT the primary planning objective. The composer optimizes for authority density and practitioner resonance first; intent balance is a soft trailing constraint.
 
 ```javascript
 state.stage = "fetch_pipeline_context";
@@ -90,6 +92,154 @@ inFlight.forEach(r => {
   const intent = r.fields?.intent;
   if (intent && inFlightCounts[intent] !== undefined) inFlightCounts[intent]++;
 });
+```
+
+---
+
+### 4b. Fetch rolling editorial history
+
+```javascript
+state.stage = "fetch_editorial_history";
+
+// Proper ISO week decrement — handles year boundaries and 53-week years correctly
+function getPriorWeeks(currentWeek, count) {
+  const [yearStr, weekStr] = currentWeek.split("-W");
+  const year = parseInt(yearStr, 10);
+  const week = parseInt(weekStr, 10);
+
+  // Jan 4 is always in ISO week 1 — use as anchor to find Monday of any ISO week
+  function isoWeekToMonday(y, w) {
+    const jan4 = new Date(Date.UTC(y, 0, 4));
+    const dow = jan4.getUTCDay() || 7; // 1=Mon … 7=Sun
+    const d = new Date(jan4);
+    d.setUTCDate(jan4.getUTCDate() - (dow - 1) + (w - 1) * 7);
+    return d;
+  }
+
+  function dateToISOWeekStr(date) {
+    const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+    const dow = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dow); // shift to Thursday of the same ISO week
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+  }
+
+  const currentMonday = isoWeekToMonday(year, week);
+  const result = [];
+  for (let i = 1; i <= count; i++) {
+    const d = new Date(currentMonday);
+    d.setUTCDate(currentMonday.getUTCDate() - i * 7);
+    result.push(dateToISOWeekStr(d));
+  }
+  return result;
+}
+
+const priorWeeks = getPriorWeeks(plannedWeek, 4);
+const weekFilter = priorWeeks.map(w => `{planned_week} = "${w}"`).join(", ");
+const recentPosts = await getRecords(TABLES.POSTS, `OR(${weekFilter})`);
+
+// Group by week for consecutive-week checks
+const recentByWeek = {};
+recentPosts.forEach(p => {
+  const w = p.fields?.planned_week ?? "unknown";
+  if (!recentByWeek[w]) recentByWeek[w] = [];
+  recentByWeek[w].push(p.fields);
+});
+
+const priorWeekPosts = recentByWeek[priorWeeks[0]] ?? [];
+
+// Build frequency counts — required for >60% pillar and 3+ territory rules
+function buildCounts(values) {
+  return values.reduce((acc, v) => {
+    if (v) acc[v] = (acc[v] ?? 0) + 1;
+    return acc;
+  }, {});
+}
+
+// Conservative territory matching — only matches near-duplicate slugs, not conceptually related ones.
+// Excludes generic domain tokens that appear in almost every AI reliability territory.
+// Two conditions, either of which triggers a match (both require meaningful token overlap ≥3):
+//   Rule 1 — ≥3 shared meaningful tokens anywhere in both slugs
+//   Rule 2 — first 2 non-generic tokens match in order AND ≥1 additional shared token (total ≥3)
+// When uncertain, returns false. This is a soft memory aid, not a clustering system.
+const GENERIC_TERRITORY_TOKENS = new Set([
+  // Generic domain terms (appear in almost every AI reliability territory)
+  "state", "framework", "architecture", "reliability", "system",
+  "model", "agent", "llm", "ai", "production", "based", "driven",
+  // Structural suffix vocabulary (process/outcome words, not subject discriminators)
+  "error", "errors", "failure", "failures", "handling",
+  "pattern", "patterns", "detection", "strategy", "strategies"
+]);
+
+function territoriesMatch(keyA, keyB) {
+  if (!keyA || !keyB) return false;
+  if (keyA === keyB) return true;
+
+  // Extract meaningful tokens: length > 3 AND not a generic domain term
+  function meaningful(key) {
+    return key.split("_").filter(t => t.length > 3 && !GENERIC_TERRITORY_TOKENS.has(t));
+  }
+
+  const tokensA = meaningful(keyA);
+  const tokensB = meaningful(keyB);
+  const setA = new Set(tokensA);
+  const setB = new Set(tokensB);
+
+  // Count shared meaningful tokens
+  let shared = 0;
+  for (const t of setA) if (setB.has(t)) shared++;
+
+  // Rule 1: ≥3 shared meaningful tokens → near-duplicate
+  if (shared >= 3) return true;
+
+  // Rule 2: first 2 non-generic tokens match in order + ≥1 additional shared token
+  // (total shared ≥ 3 — the ordering constraint adds confidence)
+  if (tokensA.length >= 2 && tokensB.length >= 2 &&
+      tokensA[0] === tokensB[0] && tokensA[1] === tokensB[1] &&
+      shared >= 3) return true;
+
+  // When uncertain: prefer NOT matching
+  return false;
+}
+
+// Aggregate territory keys by similarity — groups near-duplicate slugs under their first-seen canonical form.
+// e.g. if "json_parsing_failures_llm" (×2) and "json_parse_failure_in_llm" (×1) match → count=3
+// Only aggregates conservative matches — distinct territories are never collapsed.
+function aggregateTerritories(keys) {
+  const groups = []; // [{ canonical: string, count: number }]
+  for (const k of keys.filter(Boolean)) {
+    const existing = groups.find(g => territoriesMatch(g.canonical, k));
+    if (existing) existing.count++;
+    else groups.push({ canonical: k, count: 1 });
+  }
+  return Object.fromEntries(groups.map(g => [g.canonical, g.count]));
+}
+
+// NOTE: territoriesMatch is also used in inferPostClass (Step 10) for territory_deepening detection.
+}
+
+const recentHistory = {
+  weeks_sampled:        priorWeeks,
+  total_posts:          recentPosts.length,
+  // Distinct arrays — for set-membership checks
+  pillars_used:         [...new Set(recentPosts.map(p => p.fields?.pillar).filter(Boolean))],
+  narrative_roles_used: [...new Set(recentPosts.map(p => p.fields?.narrative_role).filter(Boolean))],
+  idea_ids_used:        [...new Set(recentPosts.map(p => p.fields?.idea_id?.[0]).filter(Boolean))],
+  post_classes_used:    [...new Set(recentPosts.map(p => p.fields?.post_class).filter(Boolean))],
+  territory_keys_used:  [...new Set(recentPosts.map(p => p.fields?.territory_key).filter(Boolean))],
+  // Counts — required for percentage and frequency rules
+  pillar_counts:         buildCounts(recentPosts.map(p => p.fields?.pillar)),
+  narrative_role_counts: buildCounts(recentPosts.map(p => p.fields?.narrative_role)),
+  post_class_counts:     buildCounts(recentPosts.map(p => p.fields?.post_class)),
+  territory_key_counts:  aggregateTerritories(recentPosts.map(p => p.fields?.territory_key)),
+  // Prior week only — for back-to-back checks
+  prior_week_idea_ids:       priorWeekPosts.map(p => p.idea_id?.[0]).filter(Boolean),
+  prior_week_post_classes:   priorWeekPosts.map(p => p.post_class).filter(Boolean),
+  prior_week_territory_keys: priorWeekPosts.map(p => p.territory_key).filter(Boolean),
+};
+
+// Safe when no history exists yet — empty arrays/objects, planner ignores constraints
 ```
 
 ---
@@ -117,6 +267,7 @@ const composerInput = {
   planned_week: plannedWeek,
   in_flight_counts: inFlightCounts,
   target_ratios: { authority: 0.50, education: 0.30, community: 0.15, virality: 0.05 },
+  recent_history: recentHistory,
   candidates: candidates.map(r => {
     let angles = [];
     try {
@@ -146,6 +297,12 @@ const composerInput = {
       }];
     }
 
+    // Note: the planner prefers idea diversity (1 post per idea when quality allows)
+    // but permits up to 2 from the same idea when it materially strengthens the arc.
+    // Multiple posts may reference the same idea_id with different narrative_roles.
+    // Internal heuristics (authority_weight, arc pattern, gravity post) are used by
+    // the planner during reasoning and do not appear in the output JSON.
+    // This map provides all available angles as raw material only.
     return {
       idea_id: r.id,
       topic: r.fields?.Topic ?? "",
@@ -234,6 +391,50 @@ const selected_at = new Date().toISOString();
 
 for (const post of plan.posts) {
   try {
+    // Derive source_angle_name from the candidates array
+    const candidateRecord = composerInput.candidates.find(c => c.idea_id === post.idea_id);
+    const selectedAngle = candidateRecord?.angles?.[post.angle_index];
+    const sourceAngleName = selectedAngle?.angle_name ?? null;
+
+    // Derive territory_key: stable slug, prefers angle name > thesis > topic
+    function deriveTerritory(p, sourceName) {
+      const base = sourceName ?? p.thesis_angle ?? p.topic ?? "unknown";
+      return base.toLowerCase().replace(/[^a-z0-9\s_-]/g, "").replace(/\s+/g, "_").slice(0, 80);
+    }
+    const territoryKey = deriveTerritory(post, sourceAngleName);
+
+    // Infer post_class conservatively
+    // research_commentary role does NOT auto-trigger trend_commentary
+    // Use combined signal: topic + thesis_angle + sourceAngleName
+    function inferPostClass(p, srcAngle, tKey, history) {
+      const combined = [p.topic, p.thesis_angle, srcAngle]
+        .filter(Boolean).join(" ").toLowerCase();
+
+      const trendKeywords = [
+        "trend", "prediction", "forecast", "state of the industry",
+        "field is moving", "industry shift", "what's changing",
+        "2024 report", "2025 report", "2026 report",
+        "survey says", "benchmark report", "state of ai"
+      ];
+      const productKeywords = [
+        "vs ", "compared to", "is overrated", "is underrated",
+        "gpt-4", "gpt-5", "claude 3", "claude 4", "gemini ",
+        "copilot", "cursor ai", "just launched", "just released",
+        "product analysis", "tool review", "model review"
+      ];
+
+      if (trendKeywords.some(k => combined.includes(k)))   return "trend_commentary";
+      if (productKeywords.some(k => combined.includes(k))) return "product_commentary";
+
+      // territory_deepening: territory overlaps with a known territory from last 4 weeks
+      // Uses conservative token-overlap match (territoriesMatch) — prefers false negative over false positive
+      const knownTerritories = history?.territory_keys_used ?? [];
+      if (tKey && knownTerritories.some(k => k === tKey || territoriesMatch(k, tKey))) return "territory_deepening";
+
+      return "practitioner_core";
+    }
+    const postClass = inferPostClass(post, sourceAngleName, territoryKey, recentHistory);
+
     // Create post stub
     const postStub = await createRecord(TABLES.POSTS, {
       idea_id: [post.idea_id],
@@ -245,7 +446,13 @@ for (const post of plan.posts) {
       series_part: post.series_part ?? null,
       series_total: post.series_total ?? null,
       selection_reason: post.why_selected,
-      status: "planned"
+      status: "planned",
+      // editorial memory fields
+      pillar:            post.pillar,
+      thesis_angle:      post.thesis_angle,
+      source_angle_name: sourceAngleName,
+      territory_key:     territoryKey,
+      post_class:        postClass,
     });
 
     // Mark idea Selected + copy planning metadata for Airtable visibility
@@ -304,7 +511,8 @@ POST [N] — [narrative_role label]
 
 Rationale: [plan.rationale]
 
-Run /research to begin deep research on the first post stub.
+Run /research to begin deep research on post stubs (oldest planned first by default).
+Each post stub targets one angle — the same idea may have multiple stubs this week.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -333,6 +541,11 @@ Narrative role display labels:
 | `posts` | `series_total` | number or null |
 | `posts` | `selection_reason` | long text |
 | `posts` | `status` | `"planned"` |
+| `posts` | `pillar` | from planner output |
+| `posts` | `thesis_angle` | from planner output |
+| `posts` | `source_angle_name` | looked up from candidates array via `idea_id` + `angle_index` |
+| `posts` | `territory_key` | derived slug: angle name → thesis → topic |
+| `posts` | `post_class` | inferred: `practitioner_core` / `territory_deepening` / `trend_commentary` / `product_commentary` |
 | `ideas` | `Status` | `"Selected"` |
 | `ideas` | `selected_at` | `now()` |
 | `ideas` | `planned_week` | `"YYYY-WNN"` (display only) |

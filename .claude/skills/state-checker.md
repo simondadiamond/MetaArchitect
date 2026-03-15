@@ -297,8 +297,42 @@ function validateEditorialPlan(plan, candidates) {
     }
   }
 
-  // Track idea_ids for duplicate check
-  const seenIds = new Set();
+  // Count idea_id frequency — duplicates are allowed, concentration limits apply
+  const ideaIdCounts = new Map();
+  plan.posts.forEach(post => {
+    if (post.idea_id) {
+      ideaIdCounts.set(post.idea_id, (ideaIdCounts.get(post.idea_id) ?? 0) + 1);
+    }
+  });
+
+  // Concentration limit validation
+  ideaIdCounts.forEach((count, id) => {
+    if (count > 4) {
+      errors.push(`idea_id "${id}" appears ${count} times — maximum is 4 posts per idea per week`);
+    } else if (count === 4) {
+      // 4 posts requires full series structure + flagship series_action
+      const postsForIdea = plan.posts.filter(p => p.idea_id === id);
+      const hasSeriesStructure = postsForIdea.every(
+        p => p.series_id && Number.isInteger(p.series_part) && p.series_total === 4
+      );
+      const hasFlagshipAction = plan.series_action === "launch" || plan.series_action === "continue";
+      if (!hasSeriesStructure) {
+        errors.push(`idea_id "${id}" appears 4 times — all 4 posts must have series_id, series_part, and series_total=4`);
+      }
+      if (!hasFlagshipAction) {
+        errors.push(`idea_id "${id}" appears 4 times — plan.series_action must be "launch" or "continue" for a 4-post flagship week`);
+      }
+    } else if (count === 3) {
+      // 3 posts requires explicit 3-part series structure
+      const postsForIdea = plan.posts.filter(p => p.idea_id === id);
+      const hasSeriesStructure = postsForIdea.every(
+        p => p.series_id && Number.isInteger(p.series_part) && p.series_total === 3
+      );
+      if (!hasSeriesStructure) {
+        errors.push(`idea_id "${id}" appears 3 times — all 3 posts must have series_id, series_part, and series_total=3 (mini-series required)`);
+      }
+    }
+  });
 
   plan.posts.forEach((post, i) => {
     const label = `posts[${i}]`;
@@ -308,15 +342,6 @@ function validateEditorialPlan(plan, candidates) {
       errors.push(`${label}.idea_id is empty`);
     } else if (!candidateIds.includes(post.idea_id)) {
       errors.push(`${label}.idea_id "${post.idea_id}" not found in candidates — possible hallucination`);
-    }
-
-    // Duplicate idea_id check
-    if (post.idea_id) {
-      if (seenIds.has(post.idea_id)) {
-        errors.push(`${label}.idea_id "${post.idea_id}" is duplicated`);
-      } else {
-        seenIds.add(post.idea_id);
-      }
     }
 
     // angle_index: must be a non-negative integer within bounds
