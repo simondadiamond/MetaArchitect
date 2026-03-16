@@ -241,6 +241,21 @@ if (post.fields?.humanity_snippet_id?.length > 0) {
 }
 ```
 
+// TODO: recommended_next_action on ideas is set once at /capture and never updated.
+// After scoring, /score has real signal: "this idea has N published posts scoring avg X.X,
+// N angles remain." Consider writing a fresh recommended_next_action to the idea here —
+// e.g. "2 angles remain — consider planning week 2026-WXX" or "Exhausted — archive".
+// Low effort, high Airtable-visibility value.
+
+// TODO: Idea scores (score_brand_fit, score_authority, score_overall, etc.) are static —
+// set once at /capture and never adjusted based on actual post performance.
+// If posts from a given idea consistently underperform, those scores stay artificially high
+// and the idea keeps appearing as a strong candidate in the planner.
+// Future improvement: after scoring, check if this idea has ≥3 scored posts and if avg
+// performance_score diverges significantly from score_overall (±2.0). If so, flag it
+// or nudge score_overall toward the performance reality. Design carefully — don't create
+// a feedback loop that punishes ideas with only 1 weak post.
+
 ### 6. Continue to next post
 
 ### 7. Final report

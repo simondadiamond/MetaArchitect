@@ -255,6 +255,10 @@ await patchRecord(IDEAS, state.entityId, {
     authority: scorerOutput.rationale_authority
   }),
   recommended_next_action: scorerOutput.recommended_next_action,
+  // TODO: score_audience_relevance is computed by the Brand Scorer (scorerOutput.score_audience_relevance)
+  // but never written to Airtable — it's buried in score_rationales JSON and invisible to the planner.
+  // Either: (a) add a dedicated number field "score_audience_relevance" to ideas and write it here,
+  // or (b) remove it from the scorer prompt entirely to reduce noise. Decision pending.
   "Intelligence File": JSON.stringify(shallowUIF),
   research_depth: "shallow",
   captured_at: new Date().toISOString()
