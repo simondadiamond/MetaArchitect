@@ -245,13 +245,18 @@ Thesis: State Beats Intelligence
 Brand guidelines: {brand.fields?.main_guidelines}
 ICP: {brand.fields?.icp_short}
 
+Current year: 2026. Target research from 2025 — the AI space moves fast, even the wrong month matters.
+
 Generate ONE specific Perplexity search query targeting the given content pillar.
 
 Rules:
 - Query must be 8–15 words, practitioner-grade specificity
-- Must target production AI systems, LLM reliability, state management, or enterprise AI governance
-- Must surface information that LLMOps engineers and GenAI platform leads would recognize as relevant to their production problems
-- Must NOT be about: general AI trends, model comparisons, beginner tutorials, vendor marketing
+- MUST include a year anchor: "2025" or "2026" — no undated queries
+- MUST target one of: specific incident data, quantified failure rates, named regulatory actions/enforcement, enterprise deployment case studies, named framework/tool failures, published research with findings
+- Must surface information that LLMOps engineers and GenAI platform leads would recognize as relevant to their production problems RIGHT NOW
+- Must NOT be about: conceptual overviews, "what is X" topics, general AI trends, model comparisons, beginner tutorials, vendor marketing
+- Forbidden query patterns: anything that returns a blog post titled "Introduction to X" or "What is X" or "X explained"
+- Strong query signals: numbers, incident reports, named regulations + year, specific tool failures, enterprise survey data, enforcement cases
 - If avoid_topics is provided, do not produce a query with 2+ overlapping keywords from any listed topic
 
 Output ONLY this JSON — no preamble:
@@ -269,10 +274,12 @@ Target pillar: {pillar}
 Pillar description:
 {PILLAR_DESCRIPTIONS[pillar]}
 
+Current date: 2026-03-17. Target 2025 data — recent, specific, practitioner-grade.
+
 Avoid topics (these queries produced no ideas in 2+ runs — do not overlap with 2+ keywords):
 {avoidedQueries.length > 0 ? avoidedQueries.join('\n') : 'None'}
 
-Generate one query.
+Generate one query. It must be anchored to 2025 or 2026 and must target specific data, incidents, or regulatory developments — not conceptual overviews.
 ```
 
 ### Validation
