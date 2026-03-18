@@ -15,6 +15,39 @@ Risk tier: medium → S + T + E required.
 
 ---
 
+## ⚠️ Session Integrity Rule (E — Explicit)
+
+**Never write to Airtable using data that was not produced by pipeline steps running in the current session.**
+
+Each slot carries a `session_verified: false` flag initialized at query generation time. It is set to `true` only when the Perplexity call returns a non-empty result in this session. The Airtable write gate (Step 10) MUST check this flag and abort the write if it is `false`.
+
+```javascript
+// Initialized per slot:
+slotResults[i] = { session_verified: false, ideas_generated: 0 };
+
+// Set only after live Perplexity call succeeds:
+if (perplexityResult.content && perplexityResult.content.length > 0) {
+  slotResults[i].session_verified = true;
+}
+
+// Write gate — Step 10:
+if (!slotResults[slotIndex].session_verified) {
+  await logEntry({
+    step_name: "harvest_write_blocked",
+    stage: state.stage,
+    output_summary: `Write blocked: session_verified=false for slot ${slotIndex} — Perplexity result was not produced in this session. Possible context resumption without re-running pipeline.`,
+    model_version: "n/a",
+    status: "error"
+  });
+  slotResults[slotIndex].ideas_generated = 0;
+  continue; // Never write fabricated data
+}
+```
+
+**Why this exists:** When Claude resumes from a summarized/compacted context, it may have topic names in memory but not live pipeline outputs. Without this gate, it can silently write fabricated content_briefs, UIFs, and scores to Airtable — corrupting the ideas table with data that was never validated by the actual pipeline. This happened on 2026-03-17 (run hrv_20260317_c4d1). The 5 corrupted records were archived with `selection_reason: CORRUPTED`.
+
+---
+
 ## STATE Init
 
 ```javascript
