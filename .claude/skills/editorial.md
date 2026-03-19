@@ -72,6 +72,7 @@ The Meta Architect's non-negotiables:
 
 Evaluate these dimensions:
 
+**Brand fidelity dimensions (did the humanizer break anything?):**
 1. CORE_THESIS: Is "state beats intelligence" or the post's architectural argument still the spine?
 2. TECHNICAL_MECHANISM: Is the specific "why it broke" or "why this architecture matters" still present?
 3. NAMED_TOOLS: Were any specific tool names removed that carried proof-of-work credibility?
@@ -81,6 +82,11 @@ Evaluate these dimensions:
 7. WORD_COUNT: Is the optimized version within 150-250 words?
 8. POST_ANATOMY: Does it still follow the 10-line LinkedIn structure (hook → blank → setup → elaboration → blank → reframe → evidence → mechanism → blank → close)?
 
+**LinkedIn performance dimensions (would this actually land?):**
+9. HOOK_TEST: Does line 1 work as a scroll-stopping standalone in the LinkedIn feed — before anything else is visible? A weak hook is one that requires the second line to make sense, makes a claim too vague to be interesting, or sounds like it could have been written by any AI account.
+10. MECHANISM_SPECIFICITY: Is there a named, specific failure mode, architectural reason, or operational detail that signals real expertise? Generic claims ("AI can fail", "state management matters") with no mechanism named score low. A practitioner-level reader should encounter at least one thing they couldn't have written without having actually shipped something.
+11. TERRITORY_SIGNAL: After reading this post, would someone know it came from the AI reliability engineering person — not a generic AI practitioner or productivity blogger? Does it use Simon's specific language (STATE, Tolerant/Structured pillars, production-grade, etc.) or at minimum the framing that production AI fails from architecture, not model weakness?
+
 For each dimension, output status and an optional note:
 - "preserved": the element is present and intact
 - "improved": the element is present and noticeably stronger
@@ -89,8 +95,8 @@ For each dimension, output status and an optional note:
 - "not_applicable": the element was not present in the original
 
 Also output:
-- brand_fit_score: 0-10 (how well does the optimized version serve The Meta Architect brand)
-- platform_fit_score: 0-10 (how readable and engaging is this for LinkedIn practitioners)
+- brand_fit_score: 0-10 (how well does the optimized version serve The Meta Architect brand — dimensions 1–8)
+- platform_fit_score: 0-10 (how likely is this to perform on LinkedIn and build authority — dimensions 9–11; a post can be brand-faithful but forgettable — this score catches that)
 - improved_aspects: array of strings (what the humanizer actually improved — be specific)
 - preserved_aspects: array of strings (what was correctly kept intact)
 - recommendation: one of:

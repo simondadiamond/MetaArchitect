@@ -254,7 +254,11 @@ function isAvoided(candidateQuery) {
 
 ## Step 5: Generate Queries (Harvest Query Generator)
 
-For each slot in `queryPlan`, generate a targeted Perplexity search query using claude-sonnet-4-6.
+For each slot in `queryPlan`, generate TWO targeted Perplexity queries using claude-sonnet-4-6:
+- **Q1 (facts/incidents)**: specific data, named failures, enforcement cases, survey findings
+- **Q2 (contrarian angles)**: what practitioners get wrong, what the conventional wisdom misses, what a specific finding actually means vs. how it's being interpreted
+
+Both queries are generated in a single LLM call per slot. Both go to Perplexity. Both feed the angle extractor (Step 9).
 
 ### Pillar descriptions (inline constant)
 
@@ -280,22 +284,62 @@ ICP: {brand.fields?.icp_short}
 
 Current year: 2026. Target research from 2025 — the AI space moves fast, even the wrong month matters.
 
-Generate ONE specific Perplexity search query targeting the given content pillar.
+Generate TWO Perplexity search queries targeting the given content pillar.
 
-Rules:
-- Query must be 8–15 words, practitioner-grade specificity
-- MUST include a year anchor: "2025" or "2026" — no undated queries
-- MUST target one of: specific incident data, quantified failure rates, named regulatory actions/enforcement, enterprise deployment case studies, named framework/tool failures, published research with findings
-- Must surface information that LLMOps engineers and GenAI platform leads would recognize as relevant to their production problems RIGHT NOW
-- Must NOT be about: conceptual overviews, "what is X" topics, general AI trends, model comparisons, beginner tutorials, vendor marketing
-- Forbidden query patterns: anything that returns a blog post titled "Introduction to X" or "What is X" or "X explained"
-- Strong query signals: numbers, incident reports, named regulations + year, specific tool failures, enterprise survey data, enforcement cases
-- If avoid_topics is provided, do not produce a query with 2+ overlapping keywords from any listed topic
+## NAMED ENTITY REQUIREMENT (non-negotiable)
+
+Every query MUST contain at least one named entity from this list:
+- A specific tool by name: LangChain, LangGraph, LangSmith, LlamaIndex, LangFuse, Weights & Biases, Arize Phoenix, OpenTelemetry, Cleanlab, CrewAI, AutoGen, Semantic Kernel
+- A specific organization or company by name: OpenAI, Anthropic, Cohere, Mistral, Hugging Face, AWS Bedrock, Azure OpenAI, Google Vertex AI — OR a named enterprise organization
+- A specific named survey or report: Cleanlab State of AI in Production, McKinsey The State of AI, Stack Overflow Developer Survey, Gartner Magic Quadrant, OWASP LLM Top 10
+- A specific regulation with article/section: OSFI B-13, Quebec Law 25 Article 12.1, EU AI Act Article 6, SOC 2 Type II
+
+## WHAT GOOD LOOKS LIKE
+
+**Bad (fails named entity requirement):**
+- "LLM agent context window overflow silent truncation production failures 2025"
+  → Returns: generic overview blog post, no specific data
+- "enterprise GenAI stateful agent architecture migration case studies 2025"
+  → Returns: "Enterprise organizations are adopting stateful agents..."
+- "AI output validation failures production pipeline incident reports 2025"
+  → Returns: OWASP list + abstract risks
+
+**Good (has named entity + targets specific findable data):**
+- "Cleanlab 2025 state of AI in production survey LLM agent reliability hallucination rates"
+  → Returns: specific survey data with methodology and percentages
+- "LangSmith LangFuse production debugging LLM agent tracing failure root cause practitioners 2025"
+  → Returns: specific tool comparison with named failure scenarios
+- "OSFI B-13 AI model governance examination findings financial institutions compliance gaps 2025"
+  → Returns: named regulatory findings from specific institutions
+- "LangChain LangGraph production failure agentic workflow lock starvation tool call errors 2025"
+  → Returns: specific GitHub issues, named failure modes, practitioner reports
+
+## SELF-CHECK (required before outputting)
+
+For each query, ask: "If someone Googled this right now, would the first 3 results contain a specific named organization, a specific number or rate from a named source, or a specific named enforcement case?" If the answer is NO — rewrite the query.
+
+## Q1 vs Q2 RULES
+
+**Q1 (query_facts)**: Target specific incidents, survey data, enforcement cases, tool failure reports.
+- Must name a specific tool, org, survey, or regulation
+- Must target quantified data or named incident — not a trend overview
+
+**Q2 (query_contrarian)**: Target what practitioners get wrong, what the conventional wisdom misses, why a commonly recommended approach fails in practice.
+- Should be grounded in the same topic as Q1 but from the skeptical/failure angle
+- Example: if Q1 is about Cleanlab survey data on LLM hallucination rates, Q2 might be "why RAG pipelines fail to reduce hallucination rates despite retrieval augmentation practitioners 2025"
+- Must still name a specific tool, org, or approach — not just "why X is hard"
+
+## OTHER RULES
+- Each query must be 8–15 words
+- MUST include a year anchor: "2025" or "2026"
+- Must NOT be about: conceptual overviews, "what is X" topics, general AI trends, vendor marketing, beginner tutorials
+- If avoid_topics is provided, do not produce queries with 2+ overlapping keywords from any listed topic
 
 Output ONLY this JSON — no preamble:
 {
-  "query": "string",
-  "rationale": "one sentence"
+  "query_facts": "string",
+  "query_contrarian": "string",
+  "rationale": "one sentence covering both queries"
 }
 ```
 
@@ -307,33 +351,38 @@ Target pillar: {pillar}
 Pillar description:
 {PILLAR_DESCRIPTIONS[pillar]}
 
-Current date: 2026-03-17. Target 2025 data — recent, specific, practitioner-grade.
+Current date: {new Date().toISOString().slice(0,10)}. Target 2025 data — recent, specific, practitioner-grade.
 
 Avoid topics (these queries produced no ideas in 2+ runs — do not overlap with 2+ keywords):
 {avoidedQueries.length > 0 ? avoidedQueries.join('\n') : 'None'}
 
-Generate one query. It must be anchored to 2025 or 2026 and must target specific data, incidents, or regulatory developments — not conceptual overviews.
+Generate two queries (query_facts + query_contrarian). Both must name a specific tool, organization, survey, or regulation. Apply the self-check before outputting.
 ```
 
 ### Validation
 
 ```javascript
 function validateHarvestQuery(output) {
-  if (!output.query || output.query.trim() === "") return { valid: false, error: "query is empty" };
-  const wordCount = output.query.trim().split(/\s+/).length;
-  if (wordCount < 5) return { valid: false, error: `query too short (${wordCount} words)` };
+  if (!output.query_facts || output.query_facts.trim() === "") return { valid: false, error: "query_facts is empty" };
+  if (!output.query_contrarian || output.query_contrarian.trim() === "") return { valid: false, error: "query_contrarian is empty" };
+  const wc1 = output.query_facts.trim().split(/\s+/).length;
+  const wc2 = output.query_contrarian.trim().split(/\s+/).length;
+  if (wc1 < 5) return { valid: false, error: `query_facts too short (${wc1} words)` };
+  if (wc2 < 5) return { valid: false, error: `query_contrarian too short (${wc2} words)` };
   return { valid: true };
 }
 ```
 
+Store both as `generatedQueries[i] = { facts: output.query_facts, contrarian: output.query_contrarian }`.
+
 ### Avoidance check + one retry
 
-After generating, run `isAvoided(output.query)`. If avoided, regenerate once by appending to the user prompt:
+After generating, run `isAvoided(output.query_facts)`. If avoided, regenerate once by appending to the user prompt:
 ```
-REGENERATE — your previous query ("{previous_query}") overlaps with an avoided topic. Generate a different angle on this pillar.
+REGENERATE — your previous query_facts ("{previous_query}") overlaps with an avoided topic. Generate a different angle on this pillar.
 ```
 
-If still avoided after regeneration, use the regenerated query anyway — avoidance is best-effort, not a hard block.
+If still avoided after regeneration, use the regenerated queries anyway — avoidance is best-effort, not a hard block.
 
 ### Log the generator call
 
@@ -341,7 +390,7 @@ If still avoided after regeneration, use the regenerated query anyway — avoida
 {
   step_name: "harvest_query_generator",
   stage: state.stage,
-  output_summary: `Pillar: ${pillar} → Query: "${generatedQuery}"`,
+  output_summary: `Pillar: ${pillar} → Facts: "${output.query_facts}" | Contrarian: "${output.query_contrarian}"`,
   model_version: "claude-sonnet-4-6",
   status: "success"
 }
@@ -349,13 +398,15 @@ If still avoided after regeneration, use the regenerated query anyway — avoida
 
 ---
 
-## Step 6: Perplexity Call (per query slot)
+## Step 6: Perplexity Calls (per query slot — 2 calls)
+
+Run both queries sequentially. Both must succeed (non-empty content) for `session_verified` to be set to `true`.
 
 ```javascript
 updateStage(state, `harvesting_${PILLAR_ABBREV[pillar].toLowerCase()}`);
 
-const perplexityResult = await callPerplexity(generatedQuery);
-// Same callPerplexity pattern from researcher.md Stage 2 — sonar-pro model
+const perplexityFacts = await callPerplexity(generatedQueries[slotIndex].facts);
+const perplexityContrarian = await callPerplexity(generatedQueries[slotIndex].contrarian);
 ```
 
 ```javascript
@@ -380,38 +431,62 @@ async function callPerplexity(query) {
 }
 ```
 
-Log:
+Set `session_verified = true` only if BOTH calls return non-empty content:
+```javascript
+if (perplexityFacts.content && perplexityFacts.content.length > 0 &&
+    perplexityContrarian.content && perplexityContrarian.content.length > 0) {
+  slotResults[slotIndex].session_verified = true;
+}
+```
+
+Log each call:
 ```javascript
 {
-  step_name: "harvest_perplexity",
+  step_name: "harvest_perplexity_facts",     // or "harvest_perplexity_contrarian"
   stage: state.stage,
-  output_summary: `Query: "${generatedQuery}" → ${perplexityResult.content.slice(0, 200)}... Citations: ${perplexityResult.citations.length}`,
+  output_summary: `Query: "${query}" → ${result.content.slice(0, 200)}... Citations: ${result.citations.length}`,
   model_version: "sonar-pro",
   status: "success"
 }
 ```
 
-**On Perplexity error**: log error entry, record `ideas_generated: 0` for this slot's query_log entry, continue to next query. Do NOT abort the full harvest run.
+**On Perplexity error on either call**: log error entry, record `ideas_generated: 0` for this slot, continue to next query. Do NOT abort the full harvest run.
 
 ---
 
 ## Step 7: Brand Strategist (per query slot)
 
-Feed Perplexity result as raw content to the Brand Strategist (prompt from `strategist.md` Stage 1).
+Feed both Perplexity results to the Brand Strategist (prompt from `strategist.md` Stage 1).
 
 ```javascript
 // sourceType = "research"
 // sourceUrl = null
-// content = perplexityResult.content
+// content = perplexityFacts.content + "\n\n---\n\n" + perplexityContrarian.content
 ```
 
 Use the exact system prompt and user prompt from `strategist.md` Stage 1.
+
+**Reject handling**: The strategist may return `{ "reject": true, "reason": "..." }` if the content is too generic (see strategist.md Stage 1). Check for this before running `validateBrief`:
+
+```javascript
+// Check for strategist rejection first
+if (strategistOutput.reject === true) {
+  await logEntry({
+    step_name: "harvest_strategist",
+    stage: state.stage,
+    output_summary: `Content rejected by specificity gate: ${strategistOutput.reason}`,
+    model_version: "claude-sonnet-4-6",
+    status: "error"
+  });
+  slotResults[slotIndex].ideas_generated = 0;
+  continue;
+}
+```
 
 **E — Explicit Gate**:
 ```javascript
 const briefValidation = validateBrief(strategistOutput);
 if (!briefValidation.valid) {
-  // Log error, mark ideas_generated: 0 for this slot, continue to next query
   await logEntry({
     step_name: "harvest_strategist",
     stage: state.stage,
@@ -490,9 +565,17 @@ Log scorer success:
 Run Angle Extractor (exact same prompt and model as `/capture` Step 6.5 — from `researcher.md` Angle Extractor section).
 
 Input:
-- `perplexityResult` (from Step 6)
+- `perplexityFacts` and `perplexityContrarian` (from Step 6 — both results)
 - `contentBrief: strategistOutput` (from Step 7)
 - `brand`
+
+Pass both Perplexity results to the UIF Compiler user prompt as:
+```
+Q1 (Facts/Incidents): {perplexityFacts.content}
+Q2 (Contrarian Angles): {perplexityContrarian.content}
+```
+
+(The UIF Compiler prompt in researcher.md accepts Q1/Q2/Q3 — harvest passes Q1 and Q2 only, leaving Q3 empty or omitted.)
 
 **E — Explicit Gate**:
 ```javascript
@@ -625,8 +708,9 @@ Log:
 updateStage(state, "updating_memory");
 
 // Build new query_log entries for this run
+// query_log stores the facts query as the primary key (used for avoidance overlap checks)
 const newEntries = queryPlan.map((slot, i) => ({
-  query: generatedQueries[i],
+  query: generatedQueries[i].facts,
   pillar: slot.pillar,
   run_date: new Date().toISOString().slice(0, 10),
   ideas_generated: slotResults[i].ideas_generated

@@ -20,7 +20,22 @@
       "mcp__claude_ai_Airtable__search_bases",
       "mcp__claude_ai_Airtable__list_bases",
       "mcp__claude_ai_Airtable__list_records_for_table",
-      "mcp__claude_ai_Airtable__get_table_schema"
+      "mcp__claude_ai_Airtable__get_table_schema",
+      "WebFetch(domain:github.com)",
+      "Bash(cargo --version)",
+      "Bash(winget --version)",
+      "Bash(curl -s https://api.github.com/repos/rtk-ai/rtk/releases/latest)",
+      "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\); [print\\(a[''''name''''], a[''''browser_download_url'''']\\) for a in data.get\\(''''assets'''',[]\\)]\")",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "mcp__claude_ai_Airtable__create_field",
+      "WebFetch(domain:support.airtable.com)",
+      "WebFetch(domain:community.airtable.com)",
+      "WebFetch(domain:docs.miniextensions.com)",
+      "Bash(node -e \":*)",
+      "Bash(echo $TEMP)",
+      "Bash(echo $TMP)",
+      "Bash(rtk git:*)",
+      "Bash(powershell -Command \"Set-Location 'C:\\\\repos\\\\MetaArchitect'; git status --short\")"
     ]
   },
   "enabledMcpjsonServers": [

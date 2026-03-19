@@ -34,15 +34,33 @@ Content:
 Task:
 Analyze this content through the lens of The Meta Architect brand. Refine it into a structured content brief ready to seed a deep research workflow.
 
+## SPECIFICITY GATE (check this first)
+
+Before creating a brief, verify the content contains at least 2 specific, named facts. A named fact is any of:
+- A named organization or company + specific outcome or metric (e.g. "Intact Financial deployed LangSmith and reduced debugging time by 40%")
+- A quantified finding with a named source and sample size (e.g. "Cleanlab 2025 survey, n=400, found 68% of LLMOps teams have no hallucination monitoring")
+- A named regulatory enforcement action with regulator + organization + penalty or finding (e.g. "CAI fined [company] $X under Law 25 Article 12.1 for undisclosed automated decision-making")
+- A named tool or framework failure with specific reproducing conditions (e.g. "LangChain LCEL chains silently drop tool call results when output exceeds 8K tokens — GitHub issue #4521")
+
+If the content contains fewer than 2 named facts — it is a generic overview and cannot produce a brand-specific angle. Output this instead of a brief:
+{
+  "reject": true,
+  "reason": "content too generic — [describe what specific named data is missing]"
+}
+
+Do NOT produce a brief from generic overview content. A brief made from overview content will score high on irrelevant dimensions and produce hollow UIFs with no brand-specific angles.
+
+## BRIEF OUTPUT (only if specificity gate passes)
+
 Return ONLY this JSON schema (no markdown, no preamble):
 {
-  "working_title": "compelling on-brand title",
-  "topic": "core subject in 5-10 words",
+  "working_title": "compelling on-brand title that names the specific failure/finding/case — not a generic topic",
+  "topic": "core subject in 5-10 words — must name the specific organization, tool, or regulation",
   "strategic_intent": "which specific brand goal this serves",
   "intent": "ONE of: authority | virality | community | education | engagement",
   "target_persona": "which ICP segment and why",
-  "core_angle": "the specific frame or hook",
-  "angle_hypotheses": ["angle 1", "angle 2", "angle 3"],
+  "core_angle": "the specific frame or hook — must reference the named data from the source",
+  "angle_hypotheses": ["angle 1 — name the specific mechanism or finding", "angle 2", "angle 3"],
   "content_format": "recommended format + brief rationale",
   "research_directions": ["what to research 1", "what to research 2"],
   "key_messages": ["message 1", "message 2", "message 3"],
@@ -80,6 +98,18 @@ Content Brief:
 Task:
 Score this content brief 1-10 per dimension.
 production_effort: 1=enormous effort, 10=quick and easy. All others: 1=poor fit, 10=perfect.
+
+## SATURATION RULE FOR ORIGINALITY (apply before scoring)
+
+Ask: Could 50 other AI blogs, newsletters, or documentation sites publish this exact topic and angle right now? If yes → score_originality MUST be ≤ 4.
+
+Signs of a saturated topic:
+- The core_angle could be summarized as "X is a problem and here's how to fix it" with no named specific
+- The working_title doesn't name a specific organization, tool, regulation, or incident
+- The angle_hypotheses are conceptual (e.g. "context windows cause problems", "stateless agents fail") rather than mechanism-specific (e.g. "LangChain LCEL chains drop tool results silently above 8K tokens")
+- Replacing "Simon Paris" with any AI blogger would produce the same post
+
+A score_originality of 7+ means this angle requires The Meta Architect's specific positioning (STATE framework by name, Quebec Law 25 as architecture requirement, specific production failure taxonomy) AND is grounded in named source data that most practitioners haven't synthesized yet.
 
 Return ONLY this JSON (no markdown, no preamble):
 {

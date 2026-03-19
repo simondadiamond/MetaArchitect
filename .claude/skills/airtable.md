@@ -246,7 +246,8 @@ filters: { operator: "=", operands: ["fldsP8FwcTxJdkac8", "metaArchitect"] }
 |-----------|----------|------|
 | core_insight | `fldLPEsaae8WeDu3t` | multilineText |
 | date | `fldH9soyr17SWtMwK` | date |
-| humanity_snippet | `fldZPquZjCrtMf7XG` | multilineText |
+| humanity_snippet | `fldZPquZjCrtMf7XG` | multilineText | legacy text field — do not write |
+| related_humanity_snippet | `fldDbA1GMpBsyUbfu` | multipleRecordLinks → `humanity_snippets` |
 | icp_pain | `fldOPmlpP4IKsoIES` | singleSelect |
 | tags | `fldGoAnyUdOjHxla8` | multipleSelects |
 | pattern_confidence | `fldb7Xhw9KR4EGbbs` | singleSelect |

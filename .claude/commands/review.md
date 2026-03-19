@@ -56,84 +56,90 @@ For each post, fetch via MCP:
 - `alt_snippet_ids` → same table, recordIds: array from alt_snippet_ids field
 - `needs_snippet` flag from `fldcQe7vI0lE6qqwQ`
 
-### 2.5. Run editorial optimization loop
+### 2.5. Run editorial optimization loop (3-pass, inline — no external API calls)
 
-This runs after linked records are loaded, before display. See `editorial.md` for the three prompts.
+Runs after linked records are loaded, before display. All three passes run inside Claude using
+the `humanizer` skill and inline brand reasoning. No `callClaude()`, no external scripts.
+
+**Do NOT write the optimized content to Airtable yet.** Show the before/after comparison in
+Step 3 and wait for Simon's decision. Only write on approve (`a`).
 
 ```javascript
 updateStage(state, "editorial_optimizing");
 
-// Tolerant: optimization is stored as an in-memory variable (no .tmp files).
-// Within a session, if this post was already optimized (e.g. after a revision), reuse
-// the existing `optimization` variable rather than re-running the editorial loop.
+// Tolerant: optimization stored in-memory per post. Within a session, if this post was
+// already optimized (e.g. after a revision), reuse the existing variable — don't re-run.
 let optimization = null; // set per-post — persists in-session only
 
 if (!optimization) {
   let editorialError = null;
 
-  // Pass 1 — House Humanizer
+  // Pass 1 — Humanizer skill (generic AI-tell removal)
+  // Invoke Skill("humanizer") with post.fields.draft_content as input.
+  // The humanizer runs its own 3-step process internally:
+  //   draft rewrite → anti-AI audit ("what makes this still AI-generated?") → final version
+  // humanizedCandidate = the final version output by the skill.
+  // If the skill fails or produces no output, fall back to original (set humanizedCandidate = null).
   let humanizedCandidate;
   try {
-    humanizedCandidate = await callClaude({
-      system: EDITORIAL_HUMANIZER_SYSTEM,
-      user: post.fields.draft_content,
-      model: "claude-sonnet-4-6"
-    });
+    humanizedCandidate = await invokeSkill("humanizer", post.fields.draft_content);
+    // invokeSkill = Skill tool call with the draft as input; capture the final output text
   } catch (err) {
     editorialError = `Pass 1 failed: ${err.message}`;
     humanizedCandidate = null;
   }
 
-  // Pass 2 — Fidelity Check (only if Pass 1 succeeded)
+  // Pass 2 — Brand fidelity check (inline reasoning against editorial.md criteria)
+  // Compare original vs humanizedCandidate. Check all dimensions from editorial.md:
+  //   core_thesis, technical_mechanism, named_tools, compliance_signal,
+  //   credibility_signals, practitioner_voice, word_count, post_anatomy.
+  // ALSO check: em dashes — flag any remaining em dashes as a repair target.
+  //   Em dashes are an AI writing tell. Remove or replace with period/comma unless
+  //   a specific instance is structurally irreplaceable (rare — default to removing).
+  // Output a fidelityReport object:
   let fidelityReport = null;
   if (humanizedCandidate) {
-    try {
-      const fidelityRaw = await callClaude({
-        system: EDITORIAL_FIDELITY_SYSTEM,
-        user: `ORIGINAL:\n${post.fields.draft_content}\n\nOPTIMIZED:\n${humanizedCandidate}`,
-        model: "claude-sonnet-4-6"
-      });
-      fidelityReport = JSON.parse(fidelityRaw); // E gate
-    } catch (err) {
-      editorialError = `Pass 2 failed: ${err.message}`;
-      // Treat as accept_optimized with null scores — don't block review
-      fidelityReport = {
-        recommendation: "accept_optimized",
-        brand_fit_score: null,
-        platform_fit_score: null,
-        improved_aspects: [],
-        preserved_aspects: [],
-        repair_targets: []
-      };
-    }
+    // Inline reasoning — no API call. Produce the report as structured analysis:
+    fidelityReport = {
+      recommendation: "accept_optimized" | "repair_needed" | "prefer_original",
+      brand_fit_score: 0-10,
+      platform_fit_score: 0-10,
+      improved_aspects: [],   // what the humanizer actually fixed
+      preserved_aspects: [],  // what was correctly kept
+      repair_targets: []      // only populated if recommendation = "repair_needed"
+                              // each entry is a specific element to restore or fix
+    };
+    // If humanizer made no meaningful improvement → prefer_original
+    // If humanizer improved but lost something essential → repair_needed + list targets
+    // If humanizer is clearly better with nothing lost → accept_optimized
+  } else {
+    // Pass 1 failed — show original, note error
+    fidelityReport = {
+      recommendation: "accept_optimized",
+      brand_fit_score: null, platform_fit_score: null,
+      improved_aspects: [], preserved_aspects: [], repair_targets: []
+    };
   }
 
-  // Pass 3 — Repair (conditional)
+  // Pass 3 — Repair (conditional, inline reasoning)
+  // Only runs if fidelityReport.recommendation === "repair_needed".
+  // Apply each repair_target to humanizedCandidate — restore lost elements without
+  // reverting to the original's weaknesses. Keep the humanizer's improved rhythm.
+  // One precise repair per target is better than a full rewrite.
   let winner = humanizedCandidate ?? post.fields.draft_content;
   let repairRun = false;
-  let preferOriginal = !humanizedCandidate; // fallback to original if Pass 1 failed
+  let preferOriginal = !humanizedCandidate;
 
   if (fidelityReport?.recommendation === "repair_needed") {
-    try {
-      const repairTargetsList = fidelityReport.repair_targets
-        .map((t, i) => `${i + 1}. ${t}`)
-        .join("\n");
-      winner = await callClaude({
-        system: EDITORIAL_REPAIR_SYSTEM,
-        user: `OPTIMIZED VERSION:\n${humanizedCandidate}\n\nREPAIR TARGETS:\n${repairTargetsList}`,
-        model: "claude-sonnet-4-6"
-      });
-      repairRun = true;
-    } catch (err) {
-      editorialError = `Pass 3 failed: ${err.message}`;
-      winner = humanizedCandidate; // fall back to unrepaired optimized
-    }
+    // Inline repair reasoning — apply repair_targets to humanizedCandidate
+    winner = applyRepairs(humanizedCandidate, fidelityReport.repair_targets);
+    repairRun = true;
   } else if (fidelityReport?.recommendation === "prefer_original") {
     preferOriginal = true;
     winner = post.fields.draft_content;
   }
 
-  // Store in-memory (no file write)
+  // Store in-memory (no file write until Simon approves)
   optimization = {
     postId: post.id,
     originalContent: post.fields.draft_content,
@@ -144,6 +150,8 @@ if (!optimization) {
     editorialError,
     createdAt: new Date().toISOString()
   };
+
+  // Log the editorial loop run
   // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
   await createRecord(LOGS, {
     workflow_id: state.workflowId,
@@ -160,6 +168,10 @@ if (!optimization) {
 
 ### 3. Display each post
 
+Always show the optimized version. If the content changed from the original, show a brief
+before/after analysis — what the humanizer fixed and what was preserved — so Simon can make
+an informed decision. **Never write the optimized content to Airtable until Simon types `a`.**
+
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Post [N] of [Total]
@@ -172,8 +184,9 @@ Platform: [linkedin/twitter] | Intent: [authority/education/community/virality]
   EDITORIAL  Brand: [X]/10 | Platform: [X]/10 | Repair: [yes/no]
   [⚠ Optimization flagged: prefer original — use ? to compare]   ← only if preferOriginal
   [⚠ Optimization unavailable: [editorialError]]                  ← only if editorialError
-  Improved:  [fidelityReport.improved_aspects joined by ", "]
-  Preserved: [fidelityReport.preserved_aspects joined by ", "]
+  Fixed:     [fidelityReport.improved_aspects joined by ", "]
+  Kept:      [fidelityReport.preserved_aspects joined by ", "]
+  Analysis:  [1–2 sentence plain-language verdict — is this better copy? why?]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Hook used:      [hook_text] ([hook_type])
 Framework used: [framework_name]
@@ -183,15 +196,15 @@ Snippet used:   [snippet_text first 80 chars...] | [⚠ needs_snippet — no sni
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Options:
-  a         — approve [optimized/original]
-  ao        — approve original (bypass optimization)
-  r [notes] — revise optimized version (e.g., "r tighten the close")
+  a          — approve (writes optimized content + sets status=approved)
+  ao         — approve original (bypasses optimization)
+  r [notes]  — revise optimized version (max 3 passes)
   ro [notes] — revise original instead
-  x         — reject
-  ?         — show full original for comparison
-  s1 / s2   — swap to alternate snippet 1 or 2
-  sf [1-5]  — rate snippet fit
-  sn [text] — save a new snippet candidate
+  x          — reject
+  ?          — show full original for comparison
+  s1 / s2    — swap to alternate snippet 1 or 2
+  sf [1-5]   — rate snippet fit
+  sn [text]  — save a new snippet candidate
 
 Enter choice:
 ```
@@ -468,19 +481,6 @@ After all posts:
 Review complete: [N] approved, [N] revised+approved, [N] rejected.
 Approved posts are ready to publish. Run /publish.
 ```
-
----
-
-## Editorial Prompt Constants
-
-The system prompts from `editorial.md` are referenced as named constants here for clarity.
-When implementing, embed or import the text from `.claude/skills/editorial.md`.
-
-| Constant | Purpose |
-|---|---|
-| `EDITORIAL_HUMANIZER_SYSTEM` | Pass 1 — House Humanizer system prompt |
-| `EDITORIAL_FIDELITY_SYSTEM` | Pass 2 — Fidelity Check system prompt |
-| `EDITORIAL_REPAIR_SYSTEM` | Pass 3 — Repair system prompt |
 
 ---
 
