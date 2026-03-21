@@ -1,6 +1,6 @@
 # /score — Performance Scoring Command
 
-Record manual performance scores for published posts and trigger the self-improvement loop.
+Record LinkedIn engagement metrics for published posts, compute calibrated performance scores, and trigger the self-improvement loop.
 
 ---
 
@@ -14,6 +14,15 @@ Risk tier: medium → S + T + E.
 
 ---
 
+## Calibration Constant
+
+```javascript
+const ER_CEILING = 0.07;  // 7% ER = 10/10. Recalibrate when following changes significantly.
+// Signal to recalibrate: avg ER across last 20 posts drops below 3% → lower to 0.05.
+```
+
+---
+
 ## STATE Init
 
 ```javascript
@@ -22,6 +31,40 @@ const state = buildStateObject({
   entityType: "post",
   entityId: null   // set per post
 });
+
+// Session counters (reset per /score run)
+let hooksUpdated = 0, frameworksUpdated = 0, snippetsUpdated = 0;
+let promotedCount = 0, retiredCount = 0;
+let totalER = 0, totalComputedScore = 0, scoredCount = 0;  // for final report averages
+```
+
+---
+
+## Helper Functions
+
+```javascript
+// Compute performance_score from raw metrics
+function computeFromMetrics(impressions, likes, comments, shares, saves) {
+  const engagements = likes + comments + shares + saves;
+  const er = engagements / impressions;                                  // decimal, e.g. 0.042
+  const score = Math.min(Math.round((er / ER_CEILING) * 100) / 10, 10.0); // 1 decimal, clamp at 10
+  return { er, score };
+}
+
+// EMA for scale-aware averaging (avg_impressions, avg_engagement_rate)
+function updateEMA(oldAvg, newValue, alpha = 0.3) {
+  if (oldAvg == null) return newValue;
+  return (alpha * newValue) + ((1 - alpha) * oldAvg);
+}
+
+// Simple running average for avg_score (stable quality signal)
+function updateRunningAverage(oldAvg, oldCount, newScore) {
+  if (oldCount === 0 || oldAvg == null) return newScore;
+  return ((oldAvg * (oldCount - 1)) + newScore) / oldCount;
+}
+
+function shouldPromote(avg, count) { return count >= 3 && avg >= 7.5; }
+function shouldRetire(avg, count)  { return count >= 3 && avg < 4.0; }
 ```
 
 ---
@@ -45,7 +88,7 @@ if (posts.length === 0) {
 }
 ```
 
-### 2. Display each post
+### 2. Display each post and collect metrics
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Score Post [N] of [Total]
@@ -56,76 +99,129 @@ URL:         [post_url]
 
 [First 2 lines of draft_content]...
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Enter performance score (0-10):
+Open LinkedIn Analytics for this post and enter:
+
+  Impressions : ___
+  Likes       : ___
+  Comments    : ___
+  Shares      : ___
+  Saves       : ___  (enter 0 if not visible)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-Note: Only `performance_score` is collected — no other dimensions. `score_audience_relevance` is never shown or collected.
+### 3a. Validate raw inputs
+Each field: non-negative integer. Re-prompt individually on invalid input. `score_audience_relevance` is never shown or collected.
 
-### 3. Validate score
+### 3b. Guard for impressions = 0
+```
+"Impressions can't be 0 — skip this post? [y/n]"
+```
+- `y` → skip post (remains `published`, `performance_score = null`); continue to next
+- `n` → re-prompt impressions
+
+### 3c. Compute and present score
+```javascript
+const { er, score: computedScore } = computeFromMetrics(impressions, likes, comments, shares, saves);
+```
+
+Display:
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Engagement rate : [X.X]%
+Computed score  : [X.X] / 10
+
+Press Enter to accept, or type a number (0-10) to override:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+### 3d. Override
 ```javascript
 const input = await prompt("Score: ");
-const score = parseFloat(input);
-const validation = validateScore({ performance_score: score });
-if (!validation.valid) {
-  console.log(`⚠ ${validation.errors.join(", ")}. Enter a number 0-10:`);
-  // Re-prompt until valid
+let finalScore, scoreSource;
+if (input.trim() === "") {
+  finalScore  = computedScore;
+  scoreSource = "metrics";
+} else {
+  const override = parseFloat(input.trim());
+  if (isNaN(override) || override < 0 || override > 10) {
+    // re-prompt until valid
+  }
+  finalScore  = Math.round(override * 10) / 10;
+  scoreSource = "metrics_override";
 }
 ```
 
-### 4. Write performance_score
+### 4. Write post metrics + score (atomic)
 ```javascript
 updateStage(state, "scoring");
 // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs, typecast: true)
-//   fields: fldIjahm90oqJEqHx (performance_score), fldHUA73iAythfRsQ (score_source), fldlC1PMzRw0z6cTR (status)
-await patchRecord(POSTS, post.id, {
-  performance_score: score,
-  score_source: "manual",
-  status: "scored"
+records: [{ id: post.id, fields: {
+  fldRyYfmhccOoey4l: impressions,        // impressions
+  fldCOE7QjPrgWhbbk: likes,              // likes
+  fld4oisT7v4LXXi9C: comments,           // comments
+  fldn7UrJDVcSLCgob: shares,             // shares
+  fld9VHOO3Buk7NVwN: saves,              // saves
+  fldIjahm90oqJEqHx: finalScore,         // performance_score
+  fldHUA73iAythfRsQ: scoreSource,        // "metrics" | "metrics_override"
+  fldlC1PMzRw0z6cTR: "scored"            // status
+}}]
+
+// Log the score
+await createRecord(LOGS, {
+  workflow_id: state.workflowId,
+  entity_id: post.id,
+  step_name: "score",
+  stage: "scoring",
+  timestamp: new Date().toISOString(),
+  output_summary: `post scored: impressions=${impressions}, er=${(er*100).toFixed(1)}%, computed=${computedScore}, final=${finalScore}, source=${scoreSource}`,
+  model_version: "n/a",
+  status: "success"
 });
 ```
 
-### 5. Trigger improver skill — score propagation
+### 5. Trigger improver — score propagation
 
 #### Update hook (if hook_id set)
 ```javascript
 if (post.fields?.hook_id?.length > 0) {
   const hookId = post.fields.hook_id[0];
   // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblWuQNSJ25bs18DZ, recordIds: [hookId])
-  //   fieldIds: [fld0b1nWNg3ZXT21f, fldfckbIwaSSebctW, fldVKrSnP34sofwZ7]
+  //   fieldIds: [fld0b1nWNg3ZXT21f, fldfckbIwaSSebctW, fldVKrSnP34sofwZ7,
+  //              fld6RgXuUNgyMBuFe, flddxiv4RPE8IEwvm]
   const hook = // result.records[0]
-  const oldAvg = hook.fields?.avg_score ?? null;
-  const oldCount = hook.fields?.use_count ?? 0;
-  const newCount = oldCount + 1;
-  const newAvg = updateRunningAverage(oldAvg, newCount, score);
+
+  const oldAvg    = hook.fields?.avg_score ?? null;
+  const oldCount  = hook.fields?.use_count ?? 0;
+  const newCount  = oldCount + 1;
+  const newAvg    = updateRunningAverage(oldAvg, newCount, finalScore);
+  const newAvgImp = updateEMA(hook.fields?.avg_impressions ?? null, impressions);
+  const newAvgER  = updateEMA(hook.fields?.avg_engagement_rate ?? null, er);
 
   let newStatus = hook.fields?.status;
   let statusChanged = false;
   if (shouldPromote(newAvg, newCount) && newStatus !== "proven") {
-    newStatus = "proven";
-    statusChanged = true;
-    promotedCount++;
+    newStatus = "proven"; statusChanged = true; promotedCount++;
   } else if (shouldRetire(newAvg, newCount) && newStatus !== "retired") {
-    newStatus = "retired";
-    statusChanged = true;
-    retiredCount++;
+    newStatus = "retired"; statusChanged = true; retiredCount++;
   }
 
   // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblWuQNSJ25bs18DZ, typecast: true)
-  await patchRecord(HOOKS, hookId, {
-    avg_score: newAvg,
-    use_count: newCount,
-    status: newStatus
-  });
+  records: [{ id: hookId, fields: {
+    fld0b1nWNg3ZXT21f: newAvg,       // avg_score
+    fldfckbIwaSSebctW: newCount,      // use_count
+    fldVKrSnP34sofwZ7: newStatus,     // status
+    fld6RgXuUNgyMBuFe: newAvgImp,    // avg_impressions (EMA)
+    flddxiv4RPE8IEwvm: newAvgER      // avg_engagement_rate (EMA)
+  }}]
   hooksUpdated++;
 
-  // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
   await createRecord(LOGS, {
     workflow_id: state.workflowId,
     entity_id: hookId,
     step_name: "improver",
     stage: "score_propagation",
     timestamp: new Date().toISOString(),
-    output_summary: `hook [${hookId}] avg_score updated to ${newAvg.toFixed(2)}, use_count: ${newCount}, status: ${newStatus}${statusChanged ? " (changed)" : ""}`,
+    output_summary: `hook [${hookId}] avg_score: ${newAvg.toFixed(2)}, avg_imp: ${Math.round(newAvgImp)}, avg_er: ${(newAvgER*100).toFixed(1)}%, use_count: ${newCount}, status: ${newStatus}${statusChanged ? " (changed)" : ""}`,
     model_version: "n/a",
     status: "success"
   });
@@ -137,41 +233,42 @@ if (post.fields?.hook_id?.length > 0) {
 if (post.fields?.framework_id?.length > 0) {
   const frameworkId = post.fields.framework_id[0];
   // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblYsys2ydvryVtmf, recordIds: [frameworkId])
-  //   fieldIds: [fldoAs2QC066Th0x9, fldtVJ6vuENyFgz8A, fldBhDdj55AxwLEUl]
+  //   fieldIds: [fldoAs2QC066Th0x9, fldtVJ6vuENyFgz8A, fldBhDdj55AxwLEUl,
+  //              fldiGWr8FwZMQjqfe, fldAQX51YZ6YsIAE7]
   const framework = // result.records[0]
-  const oldAvg = framework.fields?.avg_score ?? null;
-  const oldCount = framework.fields?.use_count ?? 0;
-  const newCount = oldCount + 1;
-  const newAvg = updateRunningAverage(oldAvg, newCount, score);
+
+  const oldAvg    = framework.fields?.avg_score ?? null;
+  const oldCount  = framework.fields?.use_count ?? 0;
+  const newCount  = oldCount + 1;
+  const newAvg    = updateRunningAverage(oldAvg, newCount, finalScore);
+  const newAvgImp = updateEMA(framework.fields?.avg_impressions ?? null, impressions);
+  const newAvgER  = updateEMA(framework.fields?.avg_engagement_rate ?? null, er);
 
   let newStatus = framework.fields?.status;
   let statusChanged = false;
   if (shouldPromote(newAvg, newCount) && newStatus !== "proven") {
-    newStatus = "proven";
-    statusChanged = true;
-    promotedCount++;
+    newStatus = "proven"; statusChanged = true; promotedCount++;
   } else if (shouldRetire(newAvg, newCount) && newStatus !== "retired") {
-    newStatus = "retired";
-    statusChanged = true;
-    retiredCount++;
+    newStatus = "retired"; statusChanged = true; retiredCount++;
   }
 
   // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblYsys2ydvryVtmf, typecast: true)
-  await patchRecord(FRAMEWORKS, frameworkId, {
-    avg_score: newAvg,
-    use_count: newCount,
-    status: newStatus
-  });
+  records: [{ id: frameworkId, fields: {
+    fldoAs2QC066Th0x9: newAvg,       // avg_score
+    fldtVJ6vuENyFgz8A: newCount,      // use_count
+    fldBhDdj55AxwLEUl: newStatus,     // status
+    fldiGWr8FwZMQjqfe: newAvgImp,    // avg_impressions (EMA)
+    fldAQX51YZ6YsIAE7: newAvgER      // avg_engagement_rate (EMA)
+  }}]
   frameworksUpdated++;
 
-  // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
   await createRecord(LOGS, {
     workflow_id: state.workflowId,
     entity_id: frameworkId,
     step_name: "improver",
     stage: "score_propagation",
     timestamp: new Date().toISOString(),
-    output_summary: `framework [${frameworkId}] avg_score updated to ${newAvg.toFixed(2)}, use_count: ${newCount}, status: ${newStatus}${statusChanged ? " (changed)" : ""}`,
+    output_summary: `framework [${frameworkId}] avg_score: ${newAvg.toFixed(2)}, avg_imp: ${Math.round(newAvgImp)}, avg_er: ${(newAvgER*100).toFixed(1)}%, use_count: ${newCount}, status: ${newStatus}${statusChanged ? " (changed)" : ""}`,
     model_version: "n/a",
     status: "success"
   });
@@ -183,7 +280,8 @@ if (post.fields?.framework_id?.length > 0) {
 if (post.fields?.humanity_snippet_id?.length > 0) {
   const snippetId = post.fields.humanity_snippet_id[0];
   // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblk8QpMOBOs6BMbF, recordIds: [snippetId])
-  //   fieldIds: [fldiAFNJJZUcqhr7C, fldZ6ifFD4OW0PDOt, fld90hLmFbyPWvy59]
+  //   fieldIds: [fldiAFNJJZUcqhr7C, fldZ6ifFD4OW0PDOt, fld90hLmFbyPWvy59,
+  //              fldBP8uxBquYhZHbJ, fldvIYK5Xh9v7BwOl]
   const snippet = // result.records[0]
 
   const oldAvg   = snippet.fields?.avg_score ?? null;
@@ -192,49 +290,46 @@ if (post.fields?.humanity_snippet_id?.length > 0) {
 
   // Blend post performance_score with review-stage snippet_fit_score (if present).
   // snippet_fit_score is 1–5; normalize to 0–10 scale before blending.
-  const fitScore  = Number(post.fields?.snippet_fit_score ?? 0);  // 1-5 or 0 if not rated
-  const postScore = Number(score);                                  // 0-10
-  const normalizedFit = fitScore > 0 ? fitScore * 2 : postScore;   // if no fit score, use postScore
+  const fitScore      = Number(post.fields?.snippet_fit_score ?? 0);  // 1-5 or 0 if not rated
+  const normalizedFit = fitScore > 0 ? fitScore * 2 : finalScore;
   const blendedScore  = fitScore > 0
-    ? (postScore * 0.7) + (normalizedFit * 0.3)
-    : postScore;
+    ? (finalScore * 0.7) + (normalizedFit * 0.3)
+    : finalScore;
 
-  const newAvg = updateRunningAverage(oldAvg, newCount, blendedScore);
+  const newAvg    = updateRunningAverage(oldAvg, newCount, blendedScore);
+  const newAvgImp = updateEMA(snippet.fields?.avg_impressions ?? null, impressions);
+  const newAvgER  = updateEMA(snippet.fields?.avg_engagement_rate ?? null, er);
 
   let newStatus = snippet.fields?.status ?? "candidate";
   let statusChanged = false;
   if (shouldPromote(newAvg, newCount) && newStatus !== "proven") {
-    newStatus = "proven";
-    statusChanged = true;
-    promotedCount++;
+    newStatus = "proven"; statusChanged = true; promotedCount++;
   } else if (shouldRetire(newAvg, newCount) && newStatus !== "retired") {
-    newStatus = "retired";
-    statusChanged = true;
-    retiredCount++;
+    newStatus = "retired"; statusChanged = true; retiredCount++;
   } else if (newStatus === "candidate" && newCount >= 1) {
-    newStatus = "active";
-    statusChanged = true;
+    newStatus = "active"; statusChanged = true;
   }
+  // Note: candidate → retired (skipping active) is intentional.
+  // If shouldRetire fires at count >= 3, the snippet has enough data to retire regardless of active state.
 
   // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblk8QpMOBOs6BMbF, typecast: true)
-  //   fields: fldiAFNJJZUcqhr7C (avg_score), fldZ6ifFD4OW0PDOt (used_count),
-  //           fld90hLmFbyPWvy59 (status), fldfqHyUlwn7JqBFn (last_used_at)
-  await patchRecord(SNIPPETS, snippetId, {
-    avg_score:    newAvg,
-    used_count:   newCount,
-    status:       newStatus,
-    last_used_at: new Date().toISOString()
-  });
+  records: [{ id: snippetId, fields: {
+    fldiAFNJJZUcqhr7C: newAvg,       // avg_score
+    fldZ6ifFD4OW0PDOt: newCount,      // used_count
+    fld90hLmFbyPWvy59: newStatus,     // status
+    fldfqHyUlwn7JqBFn: new Date().toISOString(), // last_used_at
+    fldBP8uxBquYhZHbJ: newAvgImp,    // avg_impressions (EMA)
+    fldvIYK5Xh9v7BwOl: newAvgER      // avg_engagement_rate (EMA)
+  }}]
   snippetsUpdated++;
 
-  // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
   await createRecord(LOGS, {
     workflow_id: state.workflowId,
     entity_id: snippetId,
     step_name: "improver",
     stage: "score_propagation",
     timestamp: new Date().toISOString(),
-    output_summary: `snippet [${snippetId}] avg_score: ${newAvg.toFixed(2)}, use_count: ${newCount}, status: ${newStatus}${statusChanged ? " (changed)" : ""}${fitScore > 0 ? `, fit_score: ${fitScore}/5` : ""}`,
+    output_summary: `snippet [${snippetId}] avg_score: ${newAvg.toFixed(2)}, avg_imp: ${Math.round(newAvgImp)}, avg_er: ${(newAvgER*100).toFixed(1)}%, use_count: ${newCount}, status: ${newStatus}${statusChanged ? " (changed)" : ""}${fitScore > 0 ? `, fit_score: ${fitScore}/5` : ""}`,
     model_version: "n/a",
     status: "success"
   });
@@ -263,6 +358,7 @@ if (post.fields?.humanity_snippet_id?.length > 0) {
 [N] posts scored.
 [N] hooks updated. [N] frameworks updated. [N] snippets updated.
 [N] promoted to proven. [N] retired.
+Avg engagement rate: [X.X]%  |  Avg computed score: [X.X]
 ```
 
 ---
@@ -271,12 +367,16 @@ if (post.fields?.humanity_snippet_id?.length > 0) {
 
 | Table | Field | Value |
 |---|---|---|
-| `posts` | `performance_score` | score entered by Simon |
-| `posts` | `score_source` | `manual` |
-| `posts` | `status` | `scored` |
-| `hooks_library` | `avg_score`, `use_count`, `status` | updated via improver logic |
-| `framework_library` | `avg_score`, `use_count`, `status` | updated via improver logic |
-| `humanity_snippets` | `avg_score`, `used_count`, `status`, `last_used_at` | updated via improver logic |
+| `posts` | `impressions`, `likes`, `comments`, `shares`, `saves` | raw LinkedIn metrics |
+| `posts` | `performance_score` | computed from ER formula (or override) |
+| `posts` | `score_source` | `"metrics"` or `"metrics_override"` |
+| `posts` | `status` | `"scored"` |
+| `hooks_library` | `avg_score`, `use_count`, `status` | running average + promote/retire |
+| `hooks_library` | `avg_impressions`, `avg_engagement_rate` | EMA — scale-aware |
+| `framework_library` | `avg_score`, `use_count`, `status` | running average + promote/retire |
+| `framework_library` | `avg_impressions`, `avg_engagement_rate` | EMA — scale-aware |
+| `humanity_snippets` | `avg_score`, `used_count`, `status`, `last_used_at` | running average + promote/retire |
+| `humanity_snippets` | `avg_impressions`, `avg_engagement_rate` | EMA — scale-aware |
 | `logs` | multiple | one per post scored, one per hook/framework/snippet updated |
 
 ---
@@ -291,11 +391,21 @@ Precondition check: `performance_score IS NULL`. If a post already has a score, 
 
 If score write fails for one post:
 ```
-❌ Failed to save score for post [id] — [error]. Score: [score]. Try again.
+❌ Failed to save score for post [id] — [error]. Try again.
 ```
 
 If improver update fails:
 ```
 ⚠ Score saved but improver update failed for [hook|framework|snippet] [id] — [error]. Logged. Run /score again to retry propagation.
 ```
-Note: The `performance_score` write is the primary operation. Improver updates are secondary — a failure there does not invalidate the score.
+Note: The post write (metrics + performance_score) is the primary operation. Improver updates are secondary — a failure there does not invalidate the score.
+
+---
+
+## Future: LinkedIn API Automation
+
+When `memberCreatorPostAnalytics` Standard Tier is approved:
+1. Create `tools/linkedin-metrics.mjs` — takes `post_url` → extracts post URN → returns `{ impressions, likes, comments, shares, saves }`
+2. Replace Step 2 manual prompt with API call (display fetched values for confirmation before computing)
+3. Add `"api"` as third `score_source` option via `typecast: true`
+4. Compute → confirm → override → write path is **identical** to the manual path

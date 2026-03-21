@@ -6,26 +6,32 @@ Triggered by `/score` after each `performance_score` is written.
 
 ---
 
-## Running Average Update
+## Averaging Functions
 
 ```javascript
+// Running average — for avg_score (stable quality signal, used in promote/retire)
 function updateRunningAverage(oldAvg, oldCount, newScore) {
-  // Count guard: if this is the first score, avg = score
-  if (oldCount === 0 || oldAvg === null || oldAvg === undefined) {
-    return newScore;
-  }
-  // Running average formula
-  // Note: oldCount is the NEW use_count (already incremented before calling this)
+  if (oldCount === 0 || oldAvg === null || oldAvg === undefined) return newScore;
+  // Note: oldCount is the NEW use_count (already incremented before calling)
   return ((oldAvg * (oldCount - 1)) + newScore) / oldCount;
+}
+
+// EMA — for avg_impressions + avg_engagement_rate (scale-aware, adapts with account growth)
+// α = 0.3: each new post contributes 30%; history decays to ~10% after ~5 uses.
+function updateEMA(oldAvg, newValue, alpha = 0.3) {
+  if (oldAvg == null) return newValue;
+  return (alpha * newValue) + ((1 - alpha) * oldAvg);
 }
 ```
 
-**Update sequence** (for both hooks and frameworks):
-1. Read current `avg_score` and `use_count` from the record
+**Update sequence** (for hooks and frameworks):
+1. Read current `avg_score`, `use_count`, `avg_impressions`, `avg_engagement_rate` from the record
 2. Increment `use_count` by 1
-3. Call `updateRunningAverage(old_avg, new_use_count, performance_score)`
-4. Write `avg_score = new_avg` and `use_count = new_use_count` to Airtable
-5. Apply promote/retire logic (see below)
+3. `newAvg    = updateRunningAverage(old_avg, new_use_count, performance_score)`
+4. `newAvgImp = updateEMA(old_avg_impressions, impressions)`
+5. `newAvgER  = updateEMA(old_avg_engagement_rate, er)`  ← er is decimal (e.g. 0.042)
+6. Write all 5 fields to Airtable
+7. Apply promote/retire logic (based on `avg_score` only)
 
 ---
 
@@ -33,7 +39,7 @@ function updateRunningAverage(oldAvg, oldCount, newScore) {
 
 ```javascript
 function shouldPromote(avgScore, useCount) {
-  return avgScore >= 7.0 && useCount >= 3;
+  return avgScore >= 7.5 && useCount >= 3;
 }
 ```
 
@@ -47,7 +53,7 @@ If `shouldPromote` returns true and current `status !== "proven"`:
 
 ```javascript
 function shouldRetire(avgScore, useCount) {
-  return avgScore < 4.0 && useCount >= 5;
+  return avgScore < 4.0 && useCount >= 3;
 }
 ```
 
@@ -59,79 +65,134 @@ If `shouldRetire` returns true and current `status !== "retired"`:
 
 ## Hook Query for /draft
 
-Used by `/draft` to find the best available hook for a given angle + intent.
+Used by `/draft` to find the best available hook for a given angle + intent. Uses multi-dimensional weighted scoring based on post intent.
 
 ```javascript
-// Filter: not retired, ordered proven first then by avg_score desc
-const formula = `AND({status} != "retired", {intent} = "${idea.intent}")`;
-const sort = [
-  { field: "status", direction: "asc" },   // "proven" sorts before "candidate" alphabetically — but use secondary sort
-  { field: "avg_score", direction: "desc" }
-];
-// Note: Airtable doesn't natively sort "proven" before "candidate" with a single sort.
-// Fetch all non-retired, then in JavaScript:
-const hooks = allHooks.sort((a, b) => {
-  const statusOrder = { proven: 0, candidate: 1, retired: 2 };
-  const statusDiff = (statusOrder[a.fields.status] ?? 1) - (statusOrder[b.fields.status] ?? 1);
-  if (statusDiff !== 0) return statusDiff;
-  return (b.fields.avg_score ?? 0) - (a.fields.avg_score ?? 0);
-});
-```
+const ER_CEILING = 0.07;  // must match score.md — update both when recalibrating
 
-Return the top result. If no hooks match the intent filter, broaden to all non-retired hooks.
+const intentWeights = {
+  authority:  { score: 0.4, impressions: 0.4, er: 0.2 },  // reach matters for authority
+  virality:   { score: 0.3, impressions: 0.5, er: 0.2 },  // reach matters most
+  education:  { score: 0.5, impressions: 0.2, er: 0.3 },  // balanced
+  community:  { score: 0.3, impressions: 0.2, er: 0.5 },  // conversation matters
+  default:    { score: 0.5, impressions: 0.25, er: 0.25 }
+};
+
+// Relative rank within the candidate set (avoids absolute impressions scale problem)
+function relativeRank(value, allValues) {
+  if (value == null) return 5;  // neutral when no data
+  const sorted = [...allValues.filter(v => v != null)].sort((a, b) => a - b);
+  if (sorted.length < 2) return 5;
+  const idx = sorted.lastIndexOf(value);
+  return (idx / (sorted.length - 1)) * 10;  // 0-10
+}
+
+function scoreHook(hook, postIntent, allCandidates) {
+  const provenBonus = hook.fields.status === "proven" ? 2.0 : 0;
+  const avgScore    = hook.fields.avg_score ?? 5;
+  const avgER       = hook.fields.avg_engagement_rate ?? null;
+  const erScore     = avgER != null ? Math.min((avgER / ER_CEILING) * 10, 10) : 5;
+  const impRank     = relativeRank(
+    hook.fields.avg_impressions ?? null,
+    allCandidates.map(h => h.fields.avg_impressions ?? null)
+  );
+  const w = intentWeights[postIntent] ?? intentWeights.default;
+  return provenBonus + (avgScore * w.score) + (impRank * w.impressions) + (erScore * w.er);
+}
+
+// MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblWuQNSJ25bs18DZ)
+//   fieldIds: [fldSIjqzsFuxWOaYb, fldOvWxj7O0x51aIX, fld6UZ8Fy7q2cZQyF,
+//              fldVKrSnP34sofwZ7, fld0b1nWNg3ZXT21f, fldfckbIwaSSebctW,
+//              fld6RgXuUNgyMBuFe, flddxiv4RPE8IEwvm]
+//   filters: status != "retired", intent = postIntent
+const allCandidates = // result.records (intent-matched, non-retired)
+
+// Fallback: if no intent-matched hooks, broaden to all non-retired
+const pool = allCandidates.length > 0 ? allCandidates : allNonRetiredHooks;
+
+const ranked = pool.sort((a, b) => scoreHook(b, postIntent, pool) - scoreHook(a, postIntent, pool));
+return ranked[0] ?? null;
+```
 
 ---
 
 ## Framework Query for /draft
 
 ```javascript
-// Filter: not retired, best_for contains the post's content pillar
-// best_for is a comma-separated text field
-const pillar = "STATE Framework Applied";  // example
-const allFrameworks = await getRecords(FRAMEWORKS, `{status} != "retired"`);
-const matching = allFrameworks.filter(f =>
-  f.fields.best_for?.includes(pillar)
-);
-// Sort proven first, then by avg_score desc
-const ranked = matching.sort((a, b) => {
-  const statusOrder = { proven: 0, candidate: 1 };
-  const statusDiff = (statusOrder[a.fields.status] ?? 1) - (statusOrder[b.fields.status] ?? 1);
-  if (statusDiff !== 0) return statusDiff;
-  return (b.fields.avg_score ?? 0) - (a.fields.avg_score ?? 0);
-});
+function scoreFramework(fw, allCandidates) {
+  // Frameworks match by pillar (best_for), not intent.
+  // Use balanced weights (education preset) as default.
+  const provenBonus = fw.fields.status === "proven" ? 2.0 : 0;
+  const avgScore    = fw.fields.avg_score ?? 5;
+  const avgER       = fw.fields.avg_engagement_rate ?? null;
+  const erScore     = avgER != null ? Math.min((avgER / ER_CEILING) * 10, 10) : 5;
+  const impRank     = relativeRank(
+    fw.fields.avg_impressions ?? null,
+    allCandidates.map(f => f.fields.avg_impressions ?? null)
+  );
+  const w = intentWeights.education;  // balanced default
+  return provenBonus + (avgScore * w.score) + (impRank * w.impressions) + (erScore * w.er);
+}
+
+// MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblYsys2ydvryVtmf)
+//   fieldIds: [fldcFJnXRemmm2PqU, fld92B4yioAGqEbfL, fldMPkk9oVvbqvTv5,
+//              fldlCsQrc9GWIT1yg, fldoAs2QC066Th0x9, fldtVJ6vuENyFgz8A, fldBhDdj55AxwLEUl,
+//              fldiGWr8FwZMQjqfe, fldAQX51YZ6YsIAE7]
+//   filters: status != "retired"
+const allFrameworks = // result.records
+const pillar = angle.pillar_connection;  // e.g. "STATE Framework Applied"
+const matching = allFrameworks.filter(f => f.fields.best_for?.includes(pillar));
+
+// Fallback: if no pillar match, use all non-retired
+const pool = matching.length > 0 ? matching : allFrameworks;
+
+const ranked = pool.sort((a, b) => scoreFramework(b, pool) - scoreFramework(a, pool));
 return ranked[0] ?? null;
 ```
-
-If no framework matches the pillar, return the top non-retired framework overall.
 
 ---
 
 ## Humanity Snippet Query for /draft
 
 ```javascript
-// Filter: status = active, ordered by used_count asc (prefer less-used snippets)
-// Tag overlap with post angle: match on comma-separated tags
-const allSnippets = await getRecords(SNIPPETS, `{status} = "active"`);
+// MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblk8QpMOBOs6BMbF)
+//   fieldIds: [fldaWegy2OyWpA28D, fldZFO5xKMiqBuUMY, fldiAFNJJZUcqhr7C,
+//              fldZ6ifFD4OW0PDOt, fld90hLmFbyPWvy59, fldvIYK5Xh9v7BwOl]
+//   filters: status != "retired"
+const allSnippets = // result.records
 
-// Tag overlap scoring
-const angleTags = angle.angle_name.toLowerCase().split(/\s+/);
+const angleText = [
+  angle.angle_name ?? "",
+  angle.contrarian_take ?? "",
+  angle.single_lesson ?? "",
+  angle.pillar_connection ?? ""
+].join(" ").toLowerCase();
+
+function tokenize(text) { return text.split(/\W+/).filter(t => t.length > 3); }
+const angleTokens = tokenize(angleText);
+
 const scored = allSnippets.map(s => {
-  const snippetTags = (s.fields.tags ?? "").toLowerCase().split(",").map(t => t.trim());
-  const overlap = angleTags.filter(t => snippetTags.some(st => st.includes(t))).length;
-  return { record: s, overlap, usedCount: s.fields.used_count ?? 0 };
+  const tags        = String(s.fields.tags ?? "").toLowerCase().split(",").map(t => t.trim());
+  const snippetText = String(s.fields.snippet_text ?? "").toLowerCase();
+  const tagOverlap  = angleTokens.filter(t => tags.some(tag => tag.includes(t))).length;
+  const textOverlap = angleTokens.filter(t => snippetText.includes(t)).length;
+  const avgScore    = Number(s.fields.avg_score ?? 0);
+  const usedCount   = Number(s.fields.used_count ?? 0);
+  const avgER       = s.fields.avg_engagement_rate ?? null;
+  const erScore     = avgER != null ? Math.min((avgER / ER_CEILING) * 10, 10) : 5;
+
+  // Weighted scoring: relevance first, then performance signal
+  const score = (tagOverlap * 4) + (textOverlap * 2) + (avgScore * 1.0) + (erScore * 0.5) - (usedCount * 0.25);
+  return { record: s, score, tagOverlap, textOverlap };
 });
 
-// Sort: overlap desc, then used_count asc (less-used preferred)
-scored.sort((a, b) => {
-  if (b.overlap !== a.overlap) return b.overlap - a.overlap;
-  return a.usedCount - b.usedCount;
-});
-
-const best = scored[0]?.record ?? null;
-return best;
+return scored
+  .filter(x => x.tagOverlap > 0 || x.textOverlap > 0)
+  .sort((a, b) => b.score - a.score)
+  .slice(0, limit)
+  .map(x => x.record);
+// If no snippet returned: needs_snippet = true. Never fabricate.
 ```
-
-If no snippet returned: `needs_snippet = true`. Never fabricate.
 
 ---
 
@@ -140,11 +201,11 @@ If no snippet returned: `needs_snippet = true`. Never fabricate.
 ```javascript
 {
   workflow_id: state.workflowId,
-  entity_id: postRecordId,
+  entity_id: hookId,
   step_name: "improver",
   stage: "score_propagation",
   timestamp: new Date().toISOString(),
-  output_summary: `hook [${hookId}] avg_score updated to ${newAvg.toFixed(2)}, use_count: ${newCount}, status: ${newStatus}`,
+  output_summary: `hook [${hookId}] avg_score: ${newAvg.toFixed(2)}, avg_imp: ${Math.round(newAvgImp)}, avg_er: ${(newAvgER*100).toFixed(1)}%, use_count: ${newCount}, status: ${newStatus}`,
   model_version: "n/a",
   status: "success"
 }
@@ -158,13 +219,7 @@ After processing all scored posts, report:
 
 ```
 [N] posts scored.
-[N] hooks updated. [N] frameworks updated.
+[N] hooks updated. [N] frameworks updated. [N] snippets updated.
 [N] promoted to proven. [N] retired.
-```
-
-Example:
-```
-3 posts scored.
-2 hooks updated. 1 framework updated.
-1 promoted to proven. 0 retired.
+Avg engagement rate: [X.X]%  |  Avg computed score: [X.X]
 ```

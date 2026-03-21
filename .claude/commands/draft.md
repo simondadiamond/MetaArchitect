@@ -98,8 +98,10 @@ updateStage(state, "framework_query");
 // MCP: get_table_schema for status choice IDs, then list_records_for_table
 //   baseId: "appgvQDqiFZ3ESigA", tableId: "tblYsys2ydvryVtmf"
 //   fieldIds: [fldcFJnXRemmm2PqU, fld92B4yioAGqEbfL, fldMPkk9oVvbqvTv5,
-//              fldlCsQrc9GWIT1yg, fldoAs2QC066Th0x9, fldtVJ6vuENyFgz8A, fldBhDdj55AxwLEUl]
-//   filters: status != "retired" — sort by proven first, then avg_score desc
+//              fldlCsQrc9GWIT1yg, fldoAs2QC066Th0x9, fldtVJ6vuENyFgz8A, fldBhDdj55AxwLEUl,
+//              fldiGWr8FwZMQjqfe, fldAQX51YZ6YsIAE7]
+//   filters: status != "retired"
+// Selection: multi-dimensional weighted scoring — see scoreFramework() in improver.md
 const framework = await queryFramework(angle, idea);
 ```
 
@@ -109,60 +111,26 @@ updateStage(state, "hook_query");
 // MCP: list_records_for_table
 //   baseId: "appgvQDqiFZ3ESigA", tableId: "tblWuQNSJ25bs18DZ"
 //   fieldIds: [fldSIjqzsFuxWOaYb, fldOvWxj7O0x51aIX, fld6UZ8Fy7q2cZQyF,
-//              fldVKrSnP34sofwZ7, fld0b1nWNg3ZXT21f, fldfckbIwaSSebctW]
-//   filters: status != "retired", intent = idea.intent — sort proven first
+//              fldVKrSnP34sofwZ7, fld0b1nWNg3ZXT21f, fldfckbIwaSSebctW,
+//              fld6RgXuUNgyMBuFe, flddxiv4RPE8IEwvm]
+//   filters: status != "retired", intent = idea.intent
+// Selection: multi-dimensional weighted scoring by postIntent — see scoreHook() in improver.md
+// Fallback: if no intent-matched hooks, broaden to all non-retired
 const hook = await queryHook(idea.fields?.intent);
 ```
 
 ### 7. Query humanity_snippets
 ```javascript
 updateStage(state, "snippet_query");
-// Fetch top 3 candidates using weighted scoring (see querySnippets below).
+// Fetch top 3 candidates using weighted scoring (see querySnippets in improver.md).
 // snippet = best match; alternateSnippets = next 2 for /review to offer.
 const snippetCandidates = await querySnippets(angle, 3);
 const snippet = snippetCandidates[0] ?? null;
 const alternateSnippets = snippetCandidates.slice(1);
 const needsSnippet = snippet === null;
-```
-
-**querySnippets(angle, limit) — weighted scoring:**
-```javascript
-async function querySnippets(angle, limit = 3) {
-  // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblk8QpMOBOs6BMbF)
-  //   fieldIds: [fldaWegy2OyWpA28D, fldZFO5xKMiqBuUMY, fldiAFNJJZUcqhr7C, fldZ6ifFD4OW0PDOt, fld90hLmFbyPWvy59]
-  //   filters: status != "retired" (get_table_schema first for choice ID)
-  const allSnippets = // result.records
-
-  const angleText = [
-    angle.angle_name ?? "",
-    angle.contrarian_take ?? "",
-    angle.single_lesson ?? "",
-    angle.pillar_connection ?? ""
-  ].join(" ").toLowerCase();
-
-  function tokenize(text) {
-    return text.split(/\W+/).filter(t => t.length > 3);
-  }
-  const angleTokens = tokenize(angleText);
-
-  const scored = allSnippets.map(s => {
-    const tags = String(s.fields.tags ?? "").toLowerCase().split(",").map(t => t.trim());
-    const snippetText = String(s.fields.snippet_text ?? "").toLowerCase();
-    const tagOverlap   = angleTokens.filter(t => tags.some(tag => tag.includes(t))).length;
-    const textOverlap  = angleTokens.filter(t => snippetText.includes(t)).length;
-    const avgScore     = Number(s.fields.avg_score ?? 0);
-    const usedCount    = Number(s.fields.used_count ?? 0);
-
-    const score = (tagOverlap * 4) + (textOverlap * 2) + (avgScore * 1.5) - (usedCount * 0.25);
-    return { record: s, score, tagOverlap, textOverlap };
-  });
-
-  return scored
-    .filter(x => x.tagOverlap > 0 || x.textOverlap > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit)
-    .map(x => x.record);
-}
+// MCP fieldIds: [fldaWegy2OyWpA28D, fldZFO5xKMiqBuUMY, fldiAFNJJZUcqhr7C,
+//               fldZ6ifFD4OW0PDOt, fld90hLmFbyPWvy59, fldvIYK5Xh9v7BwOl]
+// Weighted formula: (tagOverlap*4) + (textOverlap*2) + (avgScore*1.0) + (erScore*0.5) - (usedCount*0.25)
 ```
 
 ### 8. Generate draft (writer skill)

@@ -150,7 +150,7 @@ filters: { operator: "=", operands: ["fldsP8FwcTxJdkac8", "metaArchitect"] }
 | framework_id | `fldk046kLs4yG2p1Y` | multipleRecordLinks | |
 | post_url | `fldphmqLqRe5j2m7m` | url | |
 | performance_score | `fldIjahm90oqJEqHx` | number | 0–10 |
-| score_source | `fldHUA73iAythfRsQ` | singleSelect | manual |
+| score_source | `fldHUA73iAythfRsQ` | singleSelect | manual \| metrics \| metrics_override |
 | impressions | `fldRyYfmhccOoey4l` | number | |
 | likes | `fldCOE7QjPrgWhbbk` | number | |
 | comments | `fld4oisT7v4LXXi9C` | number | |
@@ -190,6 +190,8 @@ filters: { operator: "=", operands: ["fldsP8FwcTxJdkac8", "metaArchitect"] }
 | avg_score | `fld0b1nWNg3ZXT21f` | number |
 | use_count | `fldfckbIwaSSebctW` | number |
 | status | `fldVKrSnP34sofwZ7` | singleSelect |
+| avg_impressions | `fld6RgXuUNgyMBuFe` | number | EMA — scale-aware, adapts with account growth |
+| avg_engagement_rate | `flddxiv4RPE8IEwvm` | number | EMA decimal (e.g. 0.042) |
 | created_at | `fldvdfu2VmrMCiFUp` | dateTime |
 | posts | `fldUhX4Ok8FusbGhb` | multipleRecordLinks |
 | intent | `fld6UZ8Fy7q2cZQyF` | singleSelect |
@@ -207,6 +209,8 @@ filters: { operator: "=", operands: ["fldsP8FwcTxJdkac8", "metaArchitect"] }
 | avg_score | `fldoAs2QC066Th0x9` | number |
 | use_count | `fldtVJ6vuENyFgz8A` | number |
 | status | `fldBhDdj55AxwLEUl` | singleSelect |
+| avg_impressions | `fldiGWr8FwZMQjqfe` | number | EMA — scale-aware |
+| avg_engagement_rate | `fldAQX51YZ6YsIAE7` | number | EMA decimal |
 | posts | `fldsoT3IJfFwUBJWr` | multipleRecordLinks |
 
 ---
@@ -219,6 +223,8 @@ filters: { operator: "=", operands: ["fldsP8FwcTxJdkac8", "metaArchitect"] }
 | tags | `fldZFO5xKMiqBuUMY` | multipleSelects |
 | used_count | `fldZ6ifFD4OW0PDOt` | number |
 | avg_score | `fldiAFNJJZUcqhr7C` | number |
+| avg_impressions | `fldBP8uxBquYhZHbJ` | number | EMA — scale-aware |
+| avg_engagement_rate | `fldvIYK5Xh9v7BwOl` | number | EMA decimal |
 | last_used_at | `fldfqHyUlwn7JqBFn` | dateTime |
 | status | `fld90hLmFbyPWvy59` | singleSelect |
 | posts | `fldt8KvFx16GKiPYE` | multipleRecordLinks |
@@ -336,18 +342,33 @@ const brief   = record.fields?.content_brief
 
 ---
 
-## Running Average Formula
+## Averaging Formulas
+
+### Running Average — for `avg_score` (stable quality signal)
 
 Used by `/score` when updating `avg_score` after a new `performance_score`:
 
 ```javascript
 function updateRunningAverage(oldAvg, oldCount, newScore) {
-  if (oldCount === 0 || oldAvg === null) return newScore;
+  if (oldCount === 0 || oldAvg == null) return newScore;  // == null catches both null and undefined
   return ((oldAvg * (oldCount - 1)) + newScore) / oldCount;
 }
 // Call AFTER incrementing use_count. oldCount = new (incremented) use_count.
 // Example: use_count was 2, now 3. oldCount = 3.
 // new_avg = ((old_avg * 2) + new_score) / 3
+```
+
+### EMA — for `avg_impressions` + `avg_engagement_rate` (scale-aware)
+
+Used by `/score` for the multi-dimensional fields. Recent posts count more (α = 0.3), so the average adapts automatically as Simon's following grows:
+
+```javascript
+function updateEMA(oldAvg, newValue, alpha = 0.3) {
+  if (oldAvg == null) return newValue;  // first observation seeds the EMA
+  return (alpha * newValue) + ((1 - alpha) * oldAvg);
+}
+// α = 0.3 → each new post is 30% of the result; history decays to ~10% after ~5 uses.
+// No stored history needed — just the current avg_impressions / avg_engagement_rate value.
 ```
 
 ---
@@ -357,4 +378,5 @@ function updateRunningAverage(oldAvg, oldCount, newScore) {
 ```javascript
 function shouldPromote(avg, count) { return count >= 3 && avg >= 7.5; }
 function shouldRetire(avg, count)  { return count >= 3 && avg < 4.0; }
+// Promote/retire is based on avg_score only — multi-dimensional fields inform selection, not lifecycle.
 ```
