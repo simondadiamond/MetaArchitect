@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your STATE Readiness Results</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:wght@400;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<!--
+  MailerLite conditional fields require:
+    {if $subscriber.fields.pillar_s_weak == 1} ... {/if}
+
+  Custom fields to create in MailerLite subscriber data:
+    pillar_s_weak   (number: 0 or 1)
+    pillar_t_weak   (number: 0 or 1)
+    pillar_a_weak   (number: 0 or 1)
+    pillar_tol_weak (number: 0 or 1)
+    pillar_e_weak   (number: 0 or 1)
+
+  If fields are stored as text, change comparisons to == "1"
+-->
+<body style="margin:0;padding:0;background-color:#0F0F0F;color:#EAEAEA;font-family:'Inter',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#0F0F0F" style="background-color:#0F0F0F;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+          <!-- Header -->
+          <tr>
+            <td bgcolor="#0F0F0F" style="padding-bottom:32px;border-bottom:1px solid #333333;background-color:#0F0F0F;">
+              <p style="margin:0;font-family:'Roboto Mono',Courier,monospace;font-size:10px;letter-spacing:0.22em;color:#E04500;text-transform:uppercase;">THE META ARCHITECT</p>
+              <p style="margin:4px 0 0;font-family:'Roboto Mono',Courier,monospace;font-size:10px;letter-spacing:0.10em;color:#777777;">State Beats Intelligence</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td bgcolor="#0F0F0F" style="padding:32px 0;background-color:#0F0F0F;">
+
+              <p style="margin:0 0 24px;font-family:'Inter',Arial,sans-serif;font-size:16px;line-height:1.7;color:#EAEAEA;">Hey {$name},</p>
+
+              <h2 style="margin:0 0 16px;font-family:'Merriweather',Georgia,serif;font-size:22px;font-weight:700;line-height:1.3;color:#EAEAEA;">Here's what your STATE score flagged — and how to fix it.</h2>
+
+              <p style="margin:0 0 32px;font-family:'Inter',Arial,sans-serif;font-size:16px;line-height:1.7;color:#EAEAEA;">Below are the specific gaps your results identified. Each one is a structural problem — not a prompt problem. Here's the architectural fix for each.</p>
+
+              <!-- S — STRUCTURED -->
+              {if $subscriber.fields.pillar_s_weak == 1}
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+                <tr>
+                  <td bgcolor="#1A1A1A" style="padding:24px;background-color:#1A1A1A;border:1px solid #333333;border-left:3px solid #E04500;">
+                    <p style="margin:0 0 8px;font-family:'Roboto Mono',Courier,monospace;font-size:11px;letter-spacing:0.14em;color:#E04500;text-transform:uppercase;">Structured — what's actually missing</p>
+                    <p style="margin:0 0 12px;font-family:'Inter',Arial,sans-serif;font-size:15px;line-height:1.7;color:#EAEAEA;">Your system has no persistent state schema — when a run crashes, there's no record of where it stopped, so it restarts from scratch.</p>
+                    <p style="margin:0;font-family:'Inter',Arial,sans-serif;font-size:15px;line-height:1.7;color:#B4B4B4;">Define a typed state object with a <span style="font-family:'Roboto Mono',Courier,monospace;font-size:13px;color:#EAEAEA;">stage</span> field and write it to durable storage at every stage transition. On startup, check for an existing state record before executing — never reconstruct position from conversation history.</p>
+                  </td>
+                </tr>
+              </table>
+              {/if}
+
+              <!-- T — TRACEABLE -->
+              {if $subscriber.fields.pillar_t_weak == 1}
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+                <tr>
+                  <td bgcolor="#1A1A1A" style="padding:24px;background-color:#1A1A1A;border:1px solid #333333;border-left:3px solid #E04500;">
+                    <p style="margin:0 0 8px;font-family:'Roboto Mono',Courier,monospace;font-size:11px;letter-spacing:0.14em;color:#E04500;text-transform:uppercase;">Traceable — what's actually missing</p>
+                    <p style="margin:0 0 12px;font-family:'Inter',Arial,sans-serif;font-size:15px;line-height:1.7;color:#EAEAEA;">There's no structured trace tied to individual runs — you can't pull up what happened in a specific session, and you can't explain why behavior changed between runs.</p>
+                    <p style="margin:0;font-family:'Inter',Arial,sans-serif;font-size:15px;line-height:1.7;color:#B4B4B4;">Assign a shared <span style="font-family:'Roboto Mono',Courier,monospace;font-size:13px;color:#EAEAEA;">workflow_id</span> to every run and log every LLM call, tool call, and stage transition with it. Version your prompts and models explicitly — unversioned components make behavior changes permanently undiagnosable.</p>
+                  </td>
+                </tr>
+              </table>
+              {/if}
+
+              <!-- A — AUDITABLE -->
+              {if $subscriber.fields.pillar_a_weak == 1}
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+                <tr>
+                  <td bgcolor="#1A1A1A" style="padding:24px;background-color:#1A1A1A;border:1px solid #333333;border-left:3px solid #E04500;">
+                    <p style="margin:0 0 8px;font-family:'Roboto Mono',Courier,monospace;font-size:11px;letter-spacing:0.14em;color:#E04500;text-transform:uppercase;">Auditable — what's actually missing</p>
+                    <p style="margin:0 0 12px;font-family:'Inter',Arial,sans-serif;font-size:15px;line-height:1.7;color:#EAEAEA;">Automated decisions are being made with no record of what data or model version produced them — one compliance request and you're starting from nothing.</p>
+                    <p style="margin:0;font-family:'Inter',Arial,sans-serif;font-size:15px;line-height:1.7;color:#B4B4B4;">Log model version, prompt version, input data, and output for every automated decision as a separate decision record. The trace tells you what happened — the decision record tells you why. You need both.</p>
+                  </td>
+                </tr>
+              </table>
+              {/if}
+
+              <!-- TOL — TOLERANT -->
+              {if $subscriber.fields.pillar_tol_weak == 1}
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+                <tr>
+                  <td bgcolor="#1A1A1A" style="padding:24px;background-color:#1A1A1A;border:1px solid #333333;border-left:3px solid #E04500;">
+                    <p style="margin:0 0 8px;font-family:'Roboto Mono',Courier,monospace;font-size:11px;letter-spacing:0.14em;color:#E04500;text-transform:uppercase;">Tolerant — what's actually missing</p>
+                    <p style="margin:0 0 12px;font-family:'Inter',Arial,sans-serif;font-size:15px;line-height:1.7;color:#EAEAEA;">Your workflows have no resumption logic — a failure at step 8 restarts everything from step 1, re-running expensive calls and risking duplicate writes.</p>
+                    <p style="margin:0;font-family:'Inter',Arial,sans-serif;font-size:15px;line-height:1.7;color:#B4B4B4;">Check for a committed <span style="font-family:'Roboto Mono',Courier,monospace;font-size:13px;color:#EAEAEA;">stage</span> value on startup and resume from that point. Every external dependency needs an explicit retry policy and a defined degraded mode — undocumented fallback is the same as no fallback.</p>
+                  </td>
+                </tr>
+              </table>
+              {/if}
+
+              <!-- E — EXPLICIT -->
+              {if $subscriber.fields.pillar_e_weak == 1}
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+                <tr>
+                  <td bgcolor="#1A1A1A" style="padding:24px;background-color:#1A1A1A;border:1px solid #333333;border-left:3px solid #E04500;">
+                    <p style="margin:0 0 8px;font-family:'Roboto Mono',Courier,monospace;font-size:11px;letter-spacing:0.14em;color:#E04500;text-transform:uppercase;">Explicit — what's actually missing</p>
+                    <p style="margin:0 0 12px;font-family:'Inter',Arial,sans-serif;font-size:15px;line-height:1.7;color:#EAEAEA;">LLM outputs flow directly into writes and external actions — there's no deterministic gate between what the model reasons and what the system does.</p>
+                    <p style="margin:0;font-family:'Inter',Arial,sans-serif;font-size:15px;line-height:1.7;color:#B4B4B4;">Add a validation function after every LLM call that checks the output against a schema before any write or tool call executes. If validation fails, route to an error path — never silently continue with unvalidated output.</p>
+                  </td>
+                </tr>
+              </table>
+              {/if}
+
+              <!-- Single consolidated CTA — always shown -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin:32px 0;">
+                <tr>
+                  <td bgcolor="#1F1F1F" style="padding:24px;background-color:#1F1F1F;border:1px solid #333333;">
+                    <p style="margin:0 0 12px;font-family:'Inter',Arial,sans-serif;font-size:15px;line-height:1.7;color:#EAEAEA;">These are the patterns that separate production-grade AI systems from clever demos. Each one is a design decision you make <em>before</em> something breaks.</p>
+                    <p style="margin:0;font-family:'Inter',Arial,sans-serif;font-size:15px;line-height:1.7;color:#B4B4B4;">The full implementation for every pillar above is covered in the <a href="https://simonparis.ca/workshop" style="color:#C97A1A;text-decoration:underline;">STATE Reliability Workshop →</a></p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 32px;font-family:'Inter',Arial,sans-serif;font-size:16px;line-height:1.7;color:#EAEAEA;">— Simon</p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td bgcolor="#0F0F0F" style="padding-top:32px;border-top:1px solid #333333;background-color:#0F0F0F;">
+              <p style="margin:0 0 8px;font-family:'Roboto Mono',Courier,monospace;font-size:11px;letter-spacing:0.08em;color:#B4B4B4;">THE META ARCHITECT — Simon Paris</p>
+              <p style="margin:0;font-family:'Roboto Mono',Courier,monospace;font-size:11px;color:#B4B4B4;">
+                <a href="{$unsubscribe}" style="color:#C97A1A;text-decoration:underline;">Unsubscribe</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
