@@ -43,22 +43,22 @@ Focus: AI reliability engineering content for practitioners.
 ## Repository Layout
 
 ```
-.claude/commands/              — slash commands for the content pipeline (/capture, /research, /draft, etc.)
-.claude/skills/                — reusable skill definitions (airtable, fetcher, researcher, writer, etc.)
+.claude/                       — repo-level config (settings, hooks, pattern-guardian skill)
 brand/                         — brand reference files (state-framework.md, brand-guidelines.md, icp.md)
 funnel/                        — landing pages, lead magnets, workshop assets
 projects/
-  Content-Engine/              — the content engine (WAT framework — see CLAUDE.md inside)
-    tools/                     — Node.js execution scripts (airtable.mjs, research-*.mjs)
-    workflows/                 — pipeline index (README.md → .claude/commands/)
+  Content-Engine/              — self-contained content pipeline (WAT framework)
+    .claude/commands/          — all slash commands (/capture, /research, /draft, /week, etc.)
+    .claude/skills/            — reusable skill definitions (airtable, researcher, writer, etc.)
+    tools/                     — Node.js execution scripts
     docs/                      — session logs and design plans
-    .tmp/                      — runtime state files (gitignored, regeneratable)
+    .tmp/                      — runtime state files (gitignored)
   cohort-beta/                 — cohort delivery assets
   readiness-audit/             — readiness audit project
   auto-root-eval/              — auto root eval project
 ```
 
-Run all slash commands from the **repo root**. All tools and `.env` resolution assume the repo root as the working directory.
+**Content pipeline**: run all slash commands from `projects/Content-Engine/` — commands live there, not at repo root.
 
 ## Git & Deployment
 
