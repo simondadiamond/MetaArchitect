@@ -90,7 +90,8 @@ This is the cold-start fallback — no crash, no prompt to user.
 mcp__claude_ai_Airtable__list_records_for_table(
   baseId: "appgvQDqiFZ3ESigA",
   tableId: "tblwfU5EpDgOKUF7f",
-  fieldIds: ["fldsP8FwcTxJdkac8","fld9E3rY6tQfZDas6","fldMgky7tvS2Y877o","fld7N55IwEM8CQYW0","fldLYt1DMS1Fwd5Vy","fldIgCmPBohoEqet2","fldBtXwgSegiYP2pB"],
+  fieldIds: ["fldsP8FwcTxJdkac8","fld7N55IwEM8CQYW0","fldLYt1DMS1Fwd5Vy","fldBtXwgSegiYP2pB"],
+  // name, goals, icp_short, main_guidelines only — colors/typography/icp_long excluded (not used in query gen)
   filters: { operator: "=", operands: ["fldsP8FwcTxJdkac8", "metaArchitect"] }
 )
 → brand = result.records[0]

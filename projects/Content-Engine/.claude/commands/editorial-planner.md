@@ -255,7 +255,9 @@ const recentHistory = {
 ```javascript
 state.stage = "fetch_brand";
 // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblwfU5EpDgOKUF7f)
-//   fieldIds: all brand fields — filters: name = "metaArchitect"
+//   fieldIds: [fldsP8FwcTxJdkac8, fld7N55IwEM8CQYW0, fldLYt1DMS1Fwd5Vy, fldBtXwgSegiYP2pB]
+//   (name, goals, icp_short, main_guidelines — colors/typography/icp_long not needed for planning)
+//   filters: name = "metaArchitect"
 const brandRecords = // result.records
 const brand = brandRecords[0]?.fields ?? {};
 ```

@@ -35,11 +35,41 @@
       "Bash(echo $TEMP)",
       "Bash(echo $TMP)",
       "Bash(rtk git:*)",
-      "Bash(powershell -Command \"Set-Location 'C:\\\\repos\\\\MetaArchitect'; git status --short\")"
+      "Bash(powershell -Command \"Set-Location 'C:\\\\repos\\\\MetaArchitect'; git status --short\")",
+      "Skill(update-config)",
+      "Bash(claude mcp:*)",
+      "mcp__mailerlite__list_fields",
+      "mcp__mailerlite__list_forms",
+      "mcp__mailerlite__list_automations",
+      "mcp__mailerlite__list_email_templates",
+      "mcp__mailerlite__list_form_templates",
+      "mcp__mailerlite__discover_automation_templates",
+      "mcp__mailerlite__get_subscriber_count",
+      "mcp__mailerlite__create_group",
+      "mcp__mailerlite__generate_email_content",
+      "mcp__mailerlite__build_custom_automation",
+      "mcp__mailerlite__create_automation",
+      "WebFetch(domain:developers.mailerlite.com)",
+      "mcp__mailerlite__fetch",
+      "mcp__mailerlite__update_automation_email",
+      "Skill(humanizer)",
+      "Read(//c/Users/diamond/.claude/**)",
+      "Bash(echo $AIRTABLE_PAT)",
+      "Bash(ls:*)",
+      "mcp__airtable-mcp__list_records",
+      "mcp__airtable-mcp__create_record",
+      "mcp__airtable-mcp__update_records",
+      "mcp__airtable-mcp__get_record",
+      "mcp__notebooklm-mcp__research_start",
+      "mcp__notebooklm-mcp__refresh_auth",
+      "mcp__notebooklm-mcp__server_info",
+      "mcp__notebooklm-mcp__research_import",
+      "mcp__notebooklm-mcp__notebook_query"
     ]
   },
   "enabledMcpjsonServers": [
     "n8n-native",
     "n8n-mcp"
-  ]
+  ],
+  "outputStyle": "Learning"
 }

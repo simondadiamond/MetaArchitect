@@ -16,6 +16,7 @@ This file is the navigation index.
 | 5. Review | `/review` | [`.claude/commands/review.md`](../../../.claude/commands/review.md) | `status = drafted` |
 | 6. Publish | `/publish` | [`.claude/commands/publish.md`](../../../.claude/commands/publish.md) | `status = approved` |
 | 7. Score | `/score` | [`.claude/commands/score.md`](../../../.claude/commands/score.md) | `status = published` + `performance_score = null` |
+| **2–5 (consolidated)** | **`/week`** | [`.claude/commands/week.md`](.claude/commands/week.md) | ≥3 ideas `Status = "New"`. Runs plan → research (parallel) → draft → review in one session. Resumes from current phase if stubs exist. |
 
 ## Reusable Skills
 

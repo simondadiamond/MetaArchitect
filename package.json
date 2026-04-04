@@ -3,5 +3,8 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
     "dotenv": "^17.3.1"
+  },
+  "devDependencies": {
+    "puppeteer": "^24.40.0"
   }
 }

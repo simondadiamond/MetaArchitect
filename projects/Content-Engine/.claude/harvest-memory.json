@@ -1,5 +1,5 @@
 {
-  "run_count": 2,
+  "run_count": 3,
   "query_log": [
     {
       "query": "LLM agent context window overflow silent truncation production failures 2025",
@@ -59,6 +59,36 @@
       "query": "OSFI B-13 AI model risk management examination findings financial institutions compliance gaps 2025",
       "pillar": "Regulated AI & Law 25",
       "run_date": "2026-03-19",
+      "ideas_generated": 1
+    },
+    {
+      "query": "Arize Phoenix 2025 LLM production observability report hallucination silent failure enterprise rates",
+      "pillar": "Production Failure Taxonomy",
+      "run_date": "2026-03-22",
+      "ideas_generated": 1
+    },
+    {
+      "query": "AWS Bedrock Agents stateful session management production reliability enterprise deployment patterns 2025",
+      "pillar": "STATE Framework Applied",
+      "run_date": "2026-03-22",
+      "ideas_generated": 1
+    },
+    {
+      "query": "Anthropic Claude tool use structured output JSON validation production failures enterprise teams 2025",
+      "pillar": "Defensive Architecture",
+      "run_date": "2026-03-22",
+      "ideas_generated": 1
+    },
+    {
+      "query": "Stack Overflow Developer Survey 2025 AI coding assistant productivity LLM tool workflow adoption rates",
+      "pillar": "The Meta Layer",
+      "run_date": "2026-03-22",
+      "ideas_generated": 1
+    },
+    {
+      "query": "EU AI Act Article 6 high-risk system automated decision audit trail requirements enforcement 2025",
+      "pillar": "Regulated AI & Law 25",
+      "run_date": "2026-03-22",
       "ideas_generated": 1
     }
   ]
