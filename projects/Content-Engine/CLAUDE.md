@@ -1,3 +1,5 @@
+@../../brand/brand-summary.md
+
 # Content Engine — Agent Instructions
 
 You are operating within the **WAT framework** (Workflows, Agents, Tools) enforcing the **STATE Framework** (Structured, Traceable, Auditable, Tolerant, Explicit) on all outputs.
@@ -10,9 +12,9 @@ You are operating within the **WAT framework** (Workflows, Agents, Tools) enforc
 
 | Layer | What | Where |
 |-------|------|-------|
-| **Workflows** | Markdown SOPs — the instructions | `.claude/commands/` (slash commands) + `.claude/skills/` (skill context) |
+| **Workflows** | Markdown SOPs — the instructions | `.claude/commands/` (slash commands) + `.claude/skills/` (skill context) — both relative to this folder |
 | **Agents** | Intelligent coordination — you | This file |
-| **Tools** | Deterministic execution | `projects/Content-Engine/tools/` |
+| **Tools** | Deterministic execution | `tools/` |
 
 **The separation that makes this reliable**: reasoning stays with you; side effects stay in tools.
 
@@ -25,9 +27,10 @@ You are operating within the **WAT framework** (Workflows, Agents, Tools) enforc
 | 1. Idea Capture | `/capture` | None |
 | 2. Editorial Planning | `/editorial-planner` | ≥3 ideas with `Status = "New"` + UIF exists (shallow research runs at capture) |
 | 2b. Backlog View | `/ideas` (deprecated) | Read-only display only |
-| 3. Research | `/research` | Post stub `status = "planned"` + `research_started_at` empty |
+| 3. Research | `/research` | Post stub `status = "planned"` + `research_started_at` empty. For ideas with `notebook_id` (manually captured), fast path: single targeted `notebook_query` (~30 sec). For harvest ideas (no `notebook_id`), full NLM crawl (~5 min). |
 | 4. Draft | `/draft` | Post stub `status = "research_ready"` |
 | 5. Review | `/review` | Post `status = "drafted"` |
+| **2–5 (consolidated)** | **`/week`** | **≥3 ideas at `Status = "New"`. Runs plan → research → draft → review in one session. Supports `/week YYYY-WNN` for a specific week. Resumes from current phase if stubs already exist.** |
 | 6. Publish | `/publish` | Post `status = "approved"` |
 | 7. Score | `/score` | Post `status = "published"` + `performance_score IS NULL` |
 
@@ -37,15 +40,15 @@ All stages are Claude Code slash commands. See [workflows/README.md](workflows/R
 
 ## Tools — Execution Scripts
 
-All tools live in `projects/Content-Engine/tools/`. Run from repo root.
+All tools live in `tools/` (relative to this folder).
 
 > **Airtable operations use MCP tools directly** — no node scripts for Airtable reads/writes. See `.claude/skills/airtable.md` for the field ID registry and MCP tool reference.
 
 | Tool | Purpose | Invoke |
 |------|---------|--------|
-| `airtable.mjs` | Reusable Airtable REST client — still used by `research-perplexity.mjs` for logging | `import { getRecords, patchRecord, createRecord, TABLES } from './projects/Content-Engine/tools/airtable.mjs'` |
-| `research-perplexity.mjs` | Run Perplexity queries (sonar-pro) + log to Airtable | Called by `/research` command |
-| `_draft_check.mjs` | Dev utility — probe Airtable field names | `node projects/Content-Engine/tools/_draft_check.mjs` |
+| `airtable.mjs` | Reusable Airtable REST client — still used by `research-perplexity.mjs` for logging | `import { getRecords, patchRecord, createRecord, TABLES } from './tools/airtable.mjs'` |
+| `research-perplexity.mjs` | Run Perplexity queries (sonar-pro) + log to Airtable | Called by `/harvest` command |
+| `_draft_check.mjs` | Dev utility — probe Airtable field names | `node tools/_draft_check.mjs` |
 
 **Before building anything new**: check `tools/` first. Only create new scripts when nothing exists for the task.
 
@@ -74,7 +77,8 @@ All tools live in `projects/Content-Engine/tools/`. Run from repo root.
 |-------|--------|
 | `ideas` | `Topic` (not "title"), `Status` (not "status"), `Intelligence File` (not "intelligence_file") |
 | `ideas` | `research_started_at`, `research_completed_at` (lowercase, underscore) |
-| `ideas` | `research_depth` — single select: `shallow` (capture) or `deep` (after /research) |
+| `ideas` | `research_depth` — single select: `deep` (set at /capture) or `shallow` (harvest-sourced ideas, upgraded to `deep` after /research) |
+| `ideas` | `notebook_id` — NLM notebook ID stored at /capture; read by /research to skip full crawl |
 | `ideas` | `score_audience_relevance` exists — **never read or write it** |
 | `ideas` | `Summary (AI)`, `Next Best Action (AI)` — **Airtable-managed, never write** |
 | `posts` | `status` (lowercase), `idea_id` (linked record — write as array `["recXXX"]`) |
@@ -164,22 +168,27 @@ When something breaks:
 1. Identify root cause (stochastic agent failure vs. deterministic tool failure)
 2. Fix the tool in `tools/`
 3. Verify the fix
-4. Update the relevant workflow SOP in `.claude/commands/`
+4. Update the relevant workflow SOP in `.claude/commands/` (relative to this folder)
 5. Every failure loop ends by logging as a potential content asset (`/capture` the insight)
 
 ---
 
 ## Where to Find Things
 
+All paths below are relative to `projects/Content-Engine/` (this folder).
+
 | Asset | Location |
 |-------|---------|
 | Pipeline SOPs (slash commands) | `.claude/commands/` |
 | Reusable skill definitions | `.claude/skills/` |
-| Execution scripts | `projects/Content-Engine/tools/` |
-| Runtime temp state | `projects/Content-Engine/.tmp/` |
-| Session logs + plans | `projects/Content-Engine/docs/` |
-| Brand guidelines, ICP, STATE framework | `brand/` |
-| Funnel assets | `funnel/` |
+| Harvest state | `.claude/harvest-memory.json` |
+| Execution scripts | `tools/` |
+| Runtime temp state | `.tmp/` |
+| Session logs + plans | `docs/` |
+| Brand guidelines, ICP, STATE framework | `../../brand/` |
+| Funnel assets | `../../funnel/` |
+
+**Run all slash commands from `projects/Content-Engine/`** (not repo root). `.env` loads via dotenv walking up to repo root automatically.
 
 ---
 

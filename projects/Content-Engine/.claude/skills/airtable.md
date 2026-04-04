@@ -128,6 +128,7 @@ filters: { operator: "=", operands: ["fldsP8FwcTxJdkac8", "metaArchitect"] }
 | series_total | `fldl5MtAuGBTFxsgb` | number | |
 | selection_reason | `fld5Q97Lwm8ZzHpAK` | multilineText | |
 | research_depth | `fldAwyDJrDdoyPmtR` | singleSelect | shallow / deep |
+| notebook_id | `fld6IEXqxWqwZtHow` | singleLineText | NLM notebook ID from /capture — used by /research for fast targeted query |
 | score_audience_relevance | — | — | **NEVER READ OR WRITE** |
 
 ---
@@ -265,6 +266,20 @@ filters: { operator: "=", operands: ["fldsP8FwcTxJdkac8", "metaArchitect"] }
 ## Common MCP Patterns
 
 ### Read brand record
+
+**Pipeline commands** (writing, research, drafting, planning) — exclude visual/design fields:
+```
+mcp__claude_ai_Airtable__list_records_for_table(
+  baseId: "appgvQDqiFZ3ESigA",
+  tableId: "tblwfU5EpDgOKUF7f",
+  fieldIds: ["fldsP8FwcTxJdkac8","fld7N55IwEM8CQYW0","fldLYt1DMS1Fwd5Vy","fldBtXwgSegiYP2pB"],
+  // name, goals, icp_short, main_guidelines
+  filters: { operator: "=", operands: ["fldsP8FwcTxJdkac8", "metaArchitect"] }
+)
+→ brand = result.records[0]
+```
+
+**Design/UI commands** (frontend, PDF, visual assets) — fetch all fields including colors and typography:
 ```
 mcp__claude_ai_Airtable__list_records_for_table(
   baseId: "appgvQDqiFZ3ESigA",

@@ -1,111 +1,119 @@
 # Researcher Skill
 
-Executes the three-stage research pipeline: query generation → Perplexity calls → UIF compilation + hook extraction.
+Executes the research pipeline: NLM deep research → grounded angle extraction → UIF compilation + hook extraction.
 
 ---
 
-## Stage 1: Research Architect
+## Stage 1: Query Derivation (deterministic)
 
-**Input**: `content_brief` JSON (from `ideas.content_brief` field)
+**Input**: `contentBrief` + `targetAngle` + current year
 
-**Prompt** (system):
-```
-You are the Research Architect for The Meta Architect content brand.
-Your role: take a content brief and generate exactly 3 targeted research queries.
+No LLM call needed. Derive the NLM research query from existing data:
 
-Brand guidelines: {brand.fields?.main_guidelines}
-Brand goals: {brand.fields?.goals}
-ICP: {brand.fields?.icp_short}
-
-Output JSON with this exact schema — no other text:
-{
-  "queries": [
-    { "query": string, "intent": "facts_context", "what_to_find": string },
-    { "query": string, "intent": "statistics_data", "what_to_find": string },
-    { "query": string, "intent": "contrarian_angles", "what_to_find": string }
-  ]
-}
-
-Query 1 (facts_context): Target foundational facts, real-world examples, key definitions, current state of the problem.
-Query 2 (statistics_data): Target quantitative data, research findings, trend numbers, failure rates, adoption metrics.
-Query 3 (contrarian_angles): Target opposing views, underexplored angles, common myths to debunk, nuances practitioners miss.
-
-Rules:
-- Each query must be specific enough to return useful results (not "AI reliability" — "LLM production failure rates 2024")
-- what_to_find describes what a successful result looks like for this query
-- All 3 queries must relate to the same topic/angle from the brief
-- Never generate more or fewer than 3 queries
-
-Source metadata requirement:
-Every query must be constructed so Perplexity is prompted to return, alongside each fact or statistic:
-- The publication or organization name (not just a URL)
-- Whether the source is peer-reviewed, a named survey with stated methodology, or a secondary source
-- If a study is cited: sample size and study type in one line (e.g. "RCT, n=42" or "longitudinal survey, n=1,200")
-
-Append this instruction to every query string:
-"For each finding, state: (1) publication or organization name, (2) whether peer-reviewed / named survey with methodology / secondary source, (3) if a study: sample size and study type in one line."
-```
-
-**User prompt**:
-```
-Content brief:
-{JSON.stringify(content_brief, null, 2)}
-
-Generate 3 research queries.
-```
-
-**Validation** (before proceeding):
 ```javascript
-function validateResearchPlan(output) {
-  if (!output.queries || output.queries.length !== 3) return false;
-  return output.queries.every(q => q.query && q.intent && q.what_to_find);
+const currentYear = new Date().getFullYear();
+const researchQuery = `${contentBrief.topic} — ${targetAngle.contrarian_take} — ${currentYear}`;
+
+// Year-anchor gate (required — same rule as /capture)
+if (!researchQuery.includes(String(currentYear))) {
+  throw new Error(`/research aborted: query missing ${currentYear} year anchor`);
 }
 ```
+
+The query combines topic + contrarian_take to direct NLM toward the specific angle being deepened, not a broad overview (shallow research already covered that).
 
 ---
 
-## Stage 2: Perplexity API Calls
+## Stage 2: NotebookLM Deep Research
 
-Execute queries sequentially (Q1 → Q2 → Q3). Log each to `logs` table.
+Four sequential MCP calls. Log each to `logs` table.
 
-**Request pattern**:
+**2a. Start research**
 ```javascript
-async function callPerplexity(query) {
-  const res = await fetch("https://api.perplexity.ai/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: "sonar-pro",
-      messages: [{ role: "user", content: query }]
-    })
-  });
-  const data = await res.json();
-  return {
-    content: data.choices?.[0]?.message?.content ?? "",
-    citations: data.citations ?? []
-  };
-}
+// MCP: mcp__notebooklm-mcp__research_start
+//   query: researchQuery
+//   source: "web"
+//   mode: "deep"   ← ~5 min, ~40 sources
+//   title: `Research: ${contentBrief.topic} — ${new Date().toISOString().slice(0,10)}`
+// Returns: { task_id, notebook_id }
 ```
 
-**Log each call**:
+**2b. Poll for completion**
 ```javascript
-{
-  step_name: "perplexity_q1",  // or q2, q3
-  stage: "researching",
-  output_summary: `Q1 response: ${response.content.slice(0, 200)}... Citations: ${response.citations.length}`,
-  model_version: "sonar-pro",
-  status: "success"
-}
+// MCP: mcp__notebooklm-mcp__research_status
+//   notebook_id, task_id
+//   poll_interval: 30      ← seconds between polls
+//   max_wait: 360          ← 6 min max
+//   compact: false         ← get full source list
+// Returns: { status: "completed"|"error", sources_found: N, sources: [...] }
+// Gate: if status !== "completed" → throw error
+```
+
+**2c. Import top web sources**
+```javascript
+// MCP: mcp__notebooklm-mcp__research_import
+//   notebook_id, task_id
+//   source_indices: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+//   NOTE: skip index 0 (result_type=5, deep_report) — it's internal to the notebook
+//         and automatically informs queries; importing it as a source adds no value
+// Returns: { imported_count, imported_sources: [{ id, title }] }
+```
+
+**2d. Query notebook — extract grounded angle facts**
+```javascript
+// MCP: mcp__notebooklm-mcp__notebook_query
+//   notebook_id
+//   query: <angle extractor prompt below>
+// Returns: { answer, sources_used, citations, conversation_id }
+// Gate: if answer is empty → throw error
+```
+
+**Angle extractor prompt** (used in 2d):
+```
+You are the Angle Extractor for The Meta Architect brand (AI Reliability Engineering, "State Beats Intelligence" thesis).
+
+Target angle to deepen:
+- angle_name: {targetAngle.angle_name}
+- contrarian_take: {targetAngle.contrarian_take}
+- pillar_connection: {targetAngle.pillar_connection}
+
+ICP context: The practitioner reading this has been paged at 2am because an LLM hallucinated.
+Their reality: non-deterministic outputs, no stack trace, compliance asking "can we log why the agent did this?",
+leadership demanding GenAI yesterday. Their language: "debugging is a game of chance" /
+"clever demo duct-taped into production" / "prompt whack-a-mole" / "it's not about the model — it's about the plumbing."
+
+Existing facts already in the UIF (do not repeat these):
+{existingUIF.core_knowledge.facts.map((f,i) => `[${i}] ${f.statement}`).join('\n')}
+
+Extract 3-5 NEW facts from the sources that deepen the target angle above.
+For each fact:
+- grounding_quote: exact sentence from the source (not a paraphrase)
+- source_name: publication or organization name
+- source_url: URL
+- source_tier: "tier1"|"tier2"|"tier3"|"tier4" (same rules as UIF schema)
+- verified: true if methodology traceable at source URL, false if secondary/round number
+- stat: specific number/percentage if available
+
+Self-check per fact (cut any that fail):
+✓ Can you quote a specific sentence from the source? If not → cut it.
+✓ Does it directly support the contrarian_take above?
+✓ Is it new — not already in the existing facts list?
+
+Output JSON array of fact objects only. No preamble.
+```
+
+**Log entries**:
+```javascript
+// 2a: step_name: "nlm_research_start", model_version: "notebooklm-deep"
+// 2c: step_name: "nlm_research_import", model_version: "notebooklm-deep"
+// 2d: step_name: "nlm_angle_query",    model_version: "notebooklm-deep"
 ```
 
 ---
 
 ## Stage 3: UIF Compiler
 
-**Input**: Research Architect output + 3 Perplexity responses + `content_brief`
+**Input**: NLM `notebook_query` answer (grounded facts JSON array) + `existingUIF` + `angleIndex` + `content_brief`
 
 **Prompt** (system):
 ```
@@ -190,12 +198,15 @@ CRITICAL RULES:
 Content brief:
 {JSON.stringify(content_brief, null, 2)}
 
-Research findings:
-Q1 (Facts/Context): {q1_response}
-Q2 (Statistics): {q2_response}
-Q3 (Contrarian Angles): {q3_response}
+Existing UIF (deepen angle at index {angleIndex} only — do not modify other angles):
+{JSON.stringify(existingUIF, null, 2)}
 
-Compile the UIF v3.0.
+New facts from NotebookLM deep research (grounded, cited):
+{nlmQueryResult.answer}
+
+Merge the new facts into existingUIF.core_knowledge.facts (append, no duplicates).
+Update existingUIF.angles[{angleIndex}].supporting_facts with the indices of newly added facts.
+Return the full updated UIF v3.0 object.
 ```
 
 ---

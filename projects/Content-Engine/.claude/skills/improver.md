@@ -157,9 +157,20 @@ return ranked[0] ?? null;
 ```javascript
 // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblk8QpMOBOs6BMbF)
 //   fieldIds: [fldaWegy2OyWpA28D, fldZFO5xKMiqBuUMY, fldiAFNJJZUcqhr7C,
-//              fldZ6ifFD4OW0PDOt, fld90hLmFbyPWvy59, fldvIYK5Xh9v7BwOl]
+//              fldZ6ifFD4OW0PDOt, fld90hLmFbyPWvy59, fldvIYK5Xh9v7BwOl,
+//              fldfqHyUlwn7JqBFn]  ← last_used_at (required for cooldown gate)
 //   filters: status != "retired"
 const allSnippets = // result.records
+
+// Hard cooldown: exclude any snippet used in the last 28 days.
+// Prevents consecutive-week reuse even when tag/text overlap is high.
+// If all snippets are on cooldown, eligible = [] → needs_snippet = true.
+const SNIPPET_COOLDOWN_DAYS = 28;
+const cooldownCutoff = new Date(Date.now() - SNIPPET_COOLDOWN_DAYS * 24 * 60 * 60 * 1000);
+const eligible = allSnippets.filter(s => {
+  const lastUsed = s.fields.last_used_at ? new Date(s.fields.last_used_at) : null;
+  return lastUsed === null || lastUsed < cooldownCutoff;
+});
 
 const angleText = [
   angle.angle_name ?? "",
@@ -171,8 +182,9 @@ const angleText = [
 function tokenize(text) { return text.split(/\W+/).filter(t => t.length > 3); }
 const angleTokens = tokenize(angleText);
 
-const scored = allSnippets.map(s => {
-  const tags        = String(s.fields.tags ?? "").toLowerCase().split(",").map(t => t.trim());
+const scored = eligible.map(s => {
+  const tags        = (Array.isArray(s.fields.tags) ? s.fields.tags : [])
+                      .map(t => (typeof t === "object" && t !== null ? t.name : String(t)).toLowerCase());
   const snippetText = String(s.fields.snippet_text ?? "").toLowerCase();
   const tagOverlap  = angleTokens.filter(t => tags.some(tag => tag.includes(t))).length;
   const textOverlap = angleTokens.filter(t => snippetText.includes(t)).length;
@@ -191,7 +203,8 @@ return scored
   .sort((a, b) => b.score - a.score)
   .slice(0, limit)
   .map(x => x.record);
-// If no snippet returned: needs_snippet = true. Never fabricate.
+// If no snippet returned (no overlap OR all on cooldown): needs_snippet = true. Never fabricate.
+// When needs_snippet = true due to cooldown: report reason — "all matching snippets used within 28 days".
 ```
 
 ---

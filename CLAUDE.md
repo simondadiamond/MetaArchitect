@@ -1,6 +1,4 @@
-@brand/state-framework.md
-@brand/brand-guidelines.md
-@brand/icp.md
+@brand/brand-summary.md
 
 # YOUR ROLE — COO
 
@@ -45,21 +43,33 @@ Focus: AI reliability engineering content for practitioners.
 ## Repository Layout
 
 ```
-.claude/commands/              — slash commands for the content pipeline (/capture, /research, /draft, etc.)
-.claude/skills/                — reusable skill definitions (airtable, fetcher, researcher, writer, etc.)
+.claude/                       — repo-level config (settings, hooks, pattern-guardian skill)
 brand/                         — brand reference files (state-framework.md, brand-guidelines.md, icp.md)
 funnel/                        — landing pages, lead magnets, workshop assets
 projects/
-  Content-Engine/              — the content engine (WAT framework — see CLAUDE.md inside)
-    tools/                     — Node.js execution scripts (airtable.mjs, research-*.mjs)
-    workflows/                 — pipeline index (README.md → .claude/commands/)
+  Content-Engine/              — self-contained content pipeline (WAT framework)
+    .claude/commands/          — all slash commands (/capture, /research, /draft, /week, etc.)
+    .claude/skills/            — reusable skill definitions (airtable, researcher, writer, etc.)
+    tools/                     — Node.js execution scripts
     docs/                      — session logs and design plans
-    .tmp/                      — runtime state files (gitignored, regeneratable)
+    .tmp/                      — runtime state files (gitignored)
   cohort-beta/                 — cohort delivery assets
   readiness-audit/             — readiness audit project
   auto-root-eval/              — auto root eval project
 ```
 
-Run all slash commands from the **repo root**. All tools and `.env` resolution assume the repo root as the working directory.
+**Content pipeline**: run all slash commands from `projects/Content-Engine/` — commands live there, not at repo root.
+
+## Git & Deployment
+
+**Always use `gh` CLI for git operations, never raw `git push`.** Simon SSH-es into this machine and SSH agent forwarding is unreliable. Standard `git push` hangs. The fix:
+- `gh auth setup-git` — wires HTTPS credential helper (run once, already done)
+- All pushes: `git push origin <branch>` will now use gh token automatically
+- If auth ever breaks: `echo "ghp_TOKEN" | gh auth login --with-token` — do NOT paste tokens in chat
+
+**simonparis.ca website** lives at `projects/simonparis-website/` (own git repo, gitignored from root).
+- GitHub: `github.com/simondadiamond/simonparis-website` (private)
+- Deploy target: Vercel — check if a Vercel MCP is available (`/vercel` or check MCP list) before doing anything manually
+- Env vars needed in Vercel: `MAILERLITE_API_KEY` + `MAILERLITE_GROUP_ID=182570285404260273`
 
 For full content engine details (pipeline, data model, STATE requirements): see [projects/Content-Engine/CLAUDE.md](projects/Content-Engine/CLAUDE.md).
