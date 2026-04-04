@@ -1,6 +1,6 @@
 # /research — Deep Research Command
 
-Deepen research on a planned post stub: target the assigned angle, run 2 Perplexity queries, merge results into the idea's UIF, mark the post stub `research_ready`.
+Deepen research on a planned post stub: target the assigned angle, run NotebookLM deep research (~40 sources), query for grounded angle facts, merge results into the idea's UIF, mark the post stub `research_ready`.
 
 ---
 
@@ -13,7 +13,8 @@ With argument: `/research [post_stub_id]` — research a specific post stub.
 
 Risk tier: medium → S + T + E required.
 
-> **Airtable**: Use MCP tools directly — no node scripts. All table IDs and field IDs are in `.claude/skills/airtable.md`. Always `typecast: true` on writes. Perplexity calls still use `node projects/Content-Engine/tools/research-perplexity.mjs` or inline via WebFetch.
+> **Airtable**: Use MCP tools directly — no node scripts. All table IDs and field IDs are in `.claude/skills/airtable.md`. Always `typecast: true` on writes.
+> **NotebookLM**: Deep research uses `mcp__notebooklm-mcp__research_start/status/import/notebook_query` — no Perplexity, no node scripts.
 
 ---
 
@@ -36,7 +37,9 @@ const state = buildStateObject({
 ```javascript
 // MCP: mcp__claude_ai_Airtable__list_records_for_table
 //   baseId: "appgvQDqiFZ3ESigA", tableId: "tblwfU5EpDgOKUF7f"
-//   fieldIds: all brand fields — filters: name = "metaArchitect" (text field, no schema lookup)
+//   fieldIds: [fldsP8FwcTxJdkac8, fld7N55IwEM8CQYW0, fldLYt1DMS1Fwd5Vy, fldBtXwgSegiYP2pB]
+//   (name, goals, icp_short, main_guidelines — colors/typography/icp_long not needed for research)
+//   filters: name = "metaArchitect" (text field, no schema lookup)
 const brands = // result.records
 const brand = brands.length > 0 ? brands[0] : null;
 if (!brand) throw new Error("Brand record 'metaArchitect' not found in Airtable");
@@ -66,9 +69,17 @@ if (!ideaId) throw new Error("Post stub is missing idea_id — check Airtable da
 // MCP: mcp__claude_ai_Airtable__list_records_for_table
 //   baseId: "appgvQDqiFZ3ESigA", tableId: "tblVKVojZscMG6gDk"
 //   recordIds: [ideaId]
-//   fieldIds: [fldMtlpG32VKE0WkN, fldQMArYmpP8s6VKb, fldBvV1FgpD1l2PG1, fldF8BxXjbUiHCWIa]
+//   fieldIds: [fldMtlpG32VKE0WkN, fldQMArYmpP8s6VKb, fldBvV1FgpD1l2PG1, fldF8BxXjbUiHCWIa, fld6IEXqxWqwZtHow]
+//             (Topic, Intelligence File, content_brief, intent, notebook_id)
 const idea = // result.records[0];
 if (!idea) throw new Error(`Idea ${ideaId} not found`);
+
+const notebookId = idea.fields?.notebook_id ?? null;
+const hasExistingNotebook = !!notebookId;
+// hasExistingNotebook = true  → idea was captured via /capture (NLM deep already done)
+//                               → fast path: skip crawl, run targeted notebook_query only
+// hasExistingNotebook = false → harvest-sourced idea (shallow Perplexity UIF)
+//                               → full path: run complete NLM deep research sequence
 
 const contentBrief = idea.fields?.content_brief
   ? JSON.parse(idea.fields.content_brief)
@@ -107,37 +118,111 @@ await createRecord(LOGS, {
 });
 ```
 
-### 5. Research Architect — generate 2 targeted queries
+### 5. Derive NLM research query (deterministic — no LLM needed)
 ```javascript
-updateStage(state, "research_architect");
-// Call claude-sonnet-4-6 with Research Architect prompt (see researcher.md).
-// Input: brand, contentBrief, targetAngle (the specific angle object), existingUIF.core_knowledge.facts
-// Task: generate exactly 2 Perplexity queries that deepen THIS angle's contrarian_take
-//       and pillar_connection. Do not generate broad overview queries — the shallow
-//       research already covered that. Target depth, not breadth.
-// Validate: validateResearchPlan(output) must pass before proceeding.
-// Log result (step_name: "research_architect")
+updateStage(state, "query_derivation");
+const currentYear = new Date().getFullYear();
+const researchQuery = `${contentBrief.topic} — ${targetAngle.contrarian_take} — ${currentYear}`;
+
+// Year-anchor gate
+if (!researchQuery.includes(String(currentYear))) {
+  throw new Error(`/research aborted: query missing ${currentYear} year anchor. Query: "${researchQuery}"`);
+}
 ```
 
-**E — Explicit gate**: If `validateResearchPlan` returns false → throw error (goes to error path).
+### 6. NotebookLM research
 
-### 6. Execute 2 Perplexity calls (sequential)
+Two paths based on whether `/capture` already created a notebook for this idea.
+
 ```javascript
-updateStage(state, "perplexity_q1");
-const q1 = await callPerplexity(queries[0].query);
-// Log Q1 (step_name: "perplexity_q1")
+let nlmQueryResult;
 
-updateStage(state, "perplexity_q2");
-const q2 = await callPerplexity(queries[1].query);
-// Log Q2 (step_name: "perplexity_q2")
+if (hasExistingNotebook) {
+  // ── FAST PATH (manually captured ideas) ──────────────────────────────────
+  // Notebook already has ~40 sources from /capture. Skip the crawl.
+  // Run one targeted notebook_query for the assigned angle only (~30 sec).
+  updateStage(state, "nlm_angle_query");
+  // MCP: mcp__notebooklm-mcp__notebook_query
+  //   notebook_id: notebookId
+  //   query: <angle extractor prompt — see researcher.md Stage 2>
+  //   Input to prompt: brand, contentBrief, targetAngle, existingUIF
+  nlmQueryResult = // notebook_query result
+
+  await createRecord(LOGS, {
+    workflow_id: state.workflowId, entity_id: postStub.id,
+    step_name: "nlm_angle_query", stage: "nlm_angle_query",
+    timestamp: new Date().toISOString(),
+    output_summary: `NLM targeted query (fast path). notebook_id: ${notebookId}. conversation_id: ${nlmQueryResult.conversation_id}. Sources used: ${nlmQueryResult.sources_used?.length ?? 0}`,
+    model_version: "notebooklm-deep", status: "success"
+  });
+
+} else {
+  // ── FULL PATH (harvest-sourced ideas — no existing notebook) ─────────────
+  // Run complete NLM deep research sequence (~5 min, ~40 sources).
+
+  // 6a. Start research
+  updateStage(state, "nlm_research_start");
+  // MCP: mcp__notebooklm-mcp__research_start
+  //   query: researchQuery, source: "web", mode: "deep"
+  //   title: `Research: ${contentBrief.topic} — ${new Date().toISOString().slice(0,10)}`
+  const { task_id, notebook_id } = // research_start result
+
+  await createRecord(LOGS, {
+    workflow_id: state.workflowId, entity_id: postStub.id,
+    step_name: "nlm_research_start", stage: "nlm_research_start",
+    timestamp: new Date().toISOString(),
+    output_summary: `NLM research started (full path). notebook_id: ${notebook_id} query: "${researchQuery}"`,
+    model_version: "notebooklm-deep", status: "success"
+  });
+
+  // 6b. Poll until complete (max 6 min)
+  updateStage(state, "nlm_research_status");
+  // MCP: mcp__notebooklm-mcp__research_status
+  //   notebook_id, task_id, poll_interval: 30, max_wait: 360, compact: false
+  const researchResult = // research_status result
+  if (researchResult.status !== "completed") {
+    throw new Error(`NLM research did not complete in time. Status: ${researchResult.status}`);
+  }
+
+  // 6c. Import top 20 web sources (skip index 0 = deep_report, internal to notebook)
+  updateStage(state, "nlm_research_import");
+  // MCP: mcp__notebooklm-mcp__research_import
+  //   notebook_id, task_id, source_indices: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+  const importResult = // research_import result
+
+  await createRecord(LOGS, {
+    workflow_id: state.workflowId, entity_id: postStub.id,
+    step_name: "nlm_research_import", stage: "nlm_research_import",
+    timestamp: new Date().toISOString(),
+    output_summary: `NLM import complete. ${importResult.imported_count} sources imported. Sources found: ${researchResult.sources_found}`,
+    model_version: "notebooklm-deep", status: "success"
+  });
+
+  // 6d. Query notebook — extract grounded facts for target angle
+  updateStage(state, "nlm_angle_query");
+  // MCP: mcp__notebooklm-mcp__notebook_query
+  //   notebook_id, query: <angle extractor prompt — see researcher.md Stage 2>
+  //   Input to prompt: brand, contentBrief, targetAngle, existingUIF
+  nlmQueryResult = // notebook_query result
+
+  await createRecord(LOGS, {
+    workflow_id: state.workflowId, entity_id: postStub.id,
+    step_name: "nlm_angle_query", stage: "nlm_angle_query",
+    timestamp: new Date().toISOString(),
+    output_summary: `NLM query complete (full path). conversation_id: ${nlmQueryResult.conversation_id}. Sources used: ${nlmQueryResult.sources_used?.length ?? 0}`,
+    model_version: "notebooklm-deep", status: "success"
+  });
+}
 ```
+
+**E — Explicit gate**: If `nlmQueryResult.answer` is empty → throw error (goes to error path).
 
 ### 7. UIF Merger — deepen target angle only
 ```javascript
 updateStage(state, "uif_merger");
 // Call claude-sonnet-4-6 with UIF Merger prompt (see researcher.md).
-// Input: existingUIF, angleIndex, q1 + q2 results
-// Task: merge new facts from q1/q2 into existingUIF.core_knowledge.facts (append, no duplicates),
+// Input: existingUIF, angleIndex, nlmQueryResult.answer + nlmQueryResult.sources_used
+// Task: extract new facts from NLM answer into existingUIF.core_knowledge.facts (append, no duplicates),
 //       update existingUIF.angles[angleIndex].supporting_facts with indices of newly added facts,
 //       do not modify any other angle.
 // Output: updatedUIF (full UIF object with the single angle deepened)
@@ -158,11 +243,12 @@ if (!uifResult.valid) {
 ```javascript
 updateStage(state, "writing");
 
-// Set provenance_log to include new log IDs
+// Set provenance_log to include NLM notebook reference
+// Use notebookId (fast path) or notebook_id (full path) — whichever is defined
+const activeNotebookId = notebookId ?? notebook_id;
 updatedUIF.meta.provenance_log = [
   existingUIF.meta.provenance_log ?? "",
-  q1LogId,
-  q2LogId
+  `nlm:${activeNotebookId}`
 ].filter(Boolean).join(",");
 
 // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblVKVojZscMG6gDk, typecast: true)

@@ -35,7 +35,9 @@ const state = buildStateObject({
 ```javascript
 // MCP: mcp__claude_ai_Airtable__list_records_for_table
 //   baseId: "appgvQDqiFZ3ESigA", tableId: "tblwfU5EpDgOKUF7f"
-//   fieldIds: all brand fields — filters: name = "metaArchitect"
+//   fieldIds: [fldsP8FwcTxJdkac8, fld7N55IwEM8CQYW0, fldLYt1DMS1Fwd5Vy, fldBtXwgSegiYP2pB]
+//   (name, goals, icp_short, main_guidelines — colors/typography/icp_long not needed for drafting)
+//   filters: name = "metaArchitect"
 const brands = // result.records
 const brand = brands.length > 0 ? brands[0] : null;
 if (!brand) throw new Error("Brand record 'metaArchitect' not found in Airtable");
@@ -129,7 +131,8 @@ const snippet = snippetCandidates[0] ?? null;
 const alternateSnippets = snippetCandidates.slice(1);
 const needsSnippet = snippet === null;
 // MCP fieldIds: [fldaWegy2OyWpA28D, fldZFO5xKMiqBuUMY, fldiAFNJJZUcqhr7C,
-//               fldZ6ifFD4OW0PDOt, fld90hLmFbyPWvy59, fldvIYK5Xh9v7BwOl]
+//               fldZ6ifFD4OW0PDOt, fld90hLmFbyPWvy59, fldvIYK5Xh9v7BwOl,
+//               fldfqHyUlwn7JqBFn]  ← last_used_at required for 28-day cooldown gate
 // Weighted formula: (tagOverlap*4) + (textOverlap*2) + (avgScore*1.0) + (erScore*0.5) - (usedCount*0.25)
 ```
 
@@ -180,6 +183,17 @@ await patchRecord(POSTS, postStub.id, {
   status: "drafted",
   drafted_at: new Date().toISOString()
 });
+
+// Set cooldown on selected snippet immediately — at draft time, not score time.
+// This prevents the same snippet from being picked again within 28 days even if
+// /score hasn't run yet (which would be 7+ days after publish).
+if (snippet) {
+  // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblk8QpMOBOs6BMbF, typecast: true)
+  //   records: [{ id: snippet.id, fields: { fldfqHyUlwn7JqBFn: now() } }]
+  await patchRecord(SNIPPETS, snippet.id, {
+    last_used_at: new Date().toISOString()
+  });
+}
 ```
 
 ### 10. Log completion
@@ -233,6 +247,7 @@ Draft written to post stub. Run /review to approve.
 | `posts` | `needs_snippet` | true/false |
 | `posts` | `status` | `"drafted"` |
 | `posts` | `drafted_at` | `now()` |
+| `humanity_snippets` | `last_used_at` | `now()` — written immediately on snippet selection to start the 28-day cooldown |
 | `logs` | one entry | draft_created |
 
 ---

@@ -317,7 +317,7 @@ if (post.fields?.humanity_snippet_id?.length > 0) {
     fldiAFNJJZUcqhr7C: newAvg,       // avg_score
     fldZ6ifFD4OW0PDOt: newCount,      // used_count
     fld90hLmFbyPWvy59: newStatus,     // status
-    fldfqHyUlwn7JqBFn: new Date().toISOString(), // last_used_at
+    fldfqHyUlwn7JqBFn: post.fields?.published_at ?? new Date().toISOString(), // last_used_at — refines draft-time timestamp to actual publish date
     fldBP8uxBquYhZHbJ: newAvgImp,    // avg_impressions (EMA)
     fldvIYK5Xh9v7BwOl: newAvgER      // avg_engagement_rate (EMA)
   }}]

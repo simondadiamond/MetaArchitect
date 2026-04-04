@@ -98,10 +98,57 @@ if (!brand) throw new Error("Brand record 'metaArchitect' not found in Airtable"
 ### 5. Brand Strategist (Refinement)
 ```javascript
 updateStage(state, "strategist");
-// Call claude-sonnet-4-6 with the Brand Strategist prompt (from strategist.md).
-// Provide `content`, `sourceType`, `sourceUrl`, and `brand`.
+// Call claude-sonnet-4-6 with the prompt below.
+// Input: content, sourceType, brand
 // IMPORTANT: validateBrief(output) must pass before proceeding.
 ```
+
+**System prompt:**
+```
+You are the Brand Strategist for The Meta Architect, Simon Paris's AI reliability engineering brand.
+
+Brand thesis: State Beats Intelligence. Production AI fails from architecture failures — missing state,
+no checkpoints, no observability — not model weakness.
+Category: AI Reliability Engineering. Never "AI automation" or "prompt engineering."
+ICP: LLMOps engineers and GenAI platform leads at regulated enterprises. 7–15 years in software.
+Owns a pilot that worked in demos and is now breaking in production.
+
+Voice: practitioner-to-practitioner. Diagnostic, not inspirational.
+Never: "excited to share", "game-changing", "revolutionary", "in the age of AI".
+
+Content pillars:
+- Production Failure Taxonomy
+- STATE Framework Applied
+- Defensive Architecture
+- The Meta Layer
+- Regulated AI & Law 25
+
+Spine check: output must implicitly or explicitly connect to "State Beats Intelligence."
+```
+
+**User prompt:**
+```
+Raw input: {content}
+Source type: {sourceType}
+
+Analyze this input and produce a content brief as JSON with exactly these fields:
+{
+  "working_title": string,         // punchy, under 8 words
+  "topic": string,                 // 1-sentence topic framing
+  "core_angle": string,            // the non-obvious practitioner insight
+  "intent": "authority" | "education" | "community" | "virality",
+  "pillar_connection": string,     // one of the 5 pillars exactly as written above
+  "icp_pain": string,              // which ICP frustration this hits (1-2 words)
+  "hook_idea": string,             // 1-line hook concept (not final copy)
+  "thesis_tie": string,            // how this lands on State Beats Intelligence
+  "single_lesson": string,         // the one architectural takeaway
+  "contrarian_claim": string       // the claim that flips conventional wisdom
+}
+
+Output JSON only. No preamble.
+```
+
+**validateBrief checks:** all 10 fields present and non-empty, `intent` is one of the 4 allowed values, `pillar_connection` is one of the 5 exact pillar names.
 **E — Explicit Gate**: 
 ```javascript
 const briefValidation = validateBrief(strategistOutput);
@@ -125,10 +172,54 @@ await createRecord(LOGS, {
 ### 6. Brand Scorer (Evaluation)
 ```javascript
 updateStage(state, "scorer");
-// Call claude-sonnet-4-6 with the Brand Scorer prompt (from strategist.md).
-// Provide `strategistOutput` (the content_brief) and `brand`.
+// Call claude-sonnet-4-6 with the prompt below.
+// Input: strategistOutput (content_brief), brand
 // IMPORTANT: validateCaptureScores(output) must pass before proceeding.
 ```
+
+**System prompt:**
+```
+You are the Brand Scorer for The Meta Architect. Score content ideas for their value to a solo
+AI reliability engineering brand targeting enterprise LLMOps practitioners.
+
+Scoring dimensions:
+- brand_fit: alignment with STATE thesis and AI Reliability Engineering category
+- originality: says something the ICP hasn't read 10 times already
+- monetization: moves someone toward Beta Cohort ($700–900 CAD) or consulting engagement
+- production_effort: how much work to produce (1=trivial, 10=very heavy lift)
+- virality: would practitioners share or repost this
+- authority: builds Simon's credibility as the AI reliability engineering practitioner
+- audience_relevance: ICP (paged at 2am, non-deterministic failures, no observability) finds this immediately recognizable
+```
+
+**User prompt:**
+```
+Content brief: {JSON.stringify(contentBrief)}
+Brand guidelines: {brand.fields?.main_guidelines}
+ICP: {brand.fields?.icp_short}
+
+Score this idea. Output JSON only:
+{
+  "score_brand_fit": number,           // 1–10
+  "score_originality": number,         // 1–10
+  "score_monetization": number,        // 1–10
+  "score_production_effort": number,   // 1–10
+  "score_virality": number,            // 1–10
+  "score_authority": number,           // 1–10
+  "score_overall": number,             // 1–10 weighted average
+  "score_audience_relevance": number,  // 1–10 — computed only, NEVER written to Airtable
+  "rationale_brand_fit": string,
+  "rationale_audience_relevance": string,
+  "rationale_originality": string,
+  "rationale_monetization": string,
+  "rationale_production_effort": string,
+  "rationale_virality": string,
+  "rationale_authority": string,
+  "recommended_next_action": string    // 1–2 sentences: when to schedule, what to pair with
+}
+```
+
+**validateCaptureScores checks:** all score fields present and numeric 1–10, all rationale fields non-empty, `recommended_next_action` present.
 **E — Explicit Gate**:
 ```javascript
 const scoreValidation = validateCaptureScores(scorerOutput);
@@ -149,80 +240,148 @@ await createRecord(LOGS, {
 });
 ```
 
-### 6.5. Shallow Research
+### 6.5. Deep Research (NotebookLM)
 
-Runs immediately after scoring to produce angles for the planner. No new lock needed — the draft record exists and no other expensive operation is in flight.
+Runs immediately after scoring. Uses NLM deep mode (~40 sources) on a broad topic query — no angle is assigned yet, so the query covers the full topic landscape. The notebook_id is stored for reuse by `/research` (fast targeted query instead of a second full crawl).
 
 ```javascript
-updateStage(state, "shallow_research");
+updateStage(state, "deep_research");
 
-// 1. Build overview query from content_brief fields
-const overviewQuery = `${strategistOutput.topic} — ${strategistOutput.core_angle}`;
+// 1. Build research query — broad topic overview (angle targeting happens in /research)
+const currentYear = new Date().getFullYear();
+const researchQuery = `${strategistOutput.topic} — ${strategistOutput.core_angle} — ${currentYear}`;
 
-// 2. Call Perplexity (sonar-pro) — 1 query, broad landscape overview
-const perplexityResult = await callPerplexity(overviewQuery);
+// Year-anchor gate
+if (!researchQuery.includes(String(currentYear))) {
+  throw new Error(`/capture deep research aborted: query missing ${currentYear} year anchor. Query: "${researchQuery}"`);
+}
 
-// Log Perplexity call
-// MCP: mcp__claude_ai_Airtable__create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
+// 2a. Start NLM deep research (~5 min, ~40 sources)
+// MCP: mcp__notebooklm-mcp__research_start
+//   query: researchQuery, source: "web", mode: "deep"
+//   title: `Research: ${strategistOutput.topic} — ${new Date().toISOString().slice(0,10)}`
+// Returns: { task_id, notebook_id }
+const { task_id, notebook_id } = // research_start result
+
+// Log start
 await createRecord(LOGS, {
-  workflow_id: state.workflowId,
-  entity_id: state.entityId,
-  step_name: "shallow_research_perplexity",
-  stage: "shallow_research",
+  workflow_id: state.workflowId, entity_id: state.entityId,
+  step_name: "nlm_research_start", stage: "deep_research",
   timestamp: new Date().toISOString(),
-  output_summary: `Shallow research query: "${overviewQuery}"`,
-  model_version: "sonar-pro",
-  status: "success"
+  output_summary: `NLM research started. notebook_id: ${notebook_id}. query: "${researchQuery}"`,
+  model_version: "notebooklm-deep", status: "success"
 });
 
-// 3. Call Claude (claude-sonnet-4-6) — Angle Extractor prompt (see researcher.md)
-//    Input: perplexityResult + strategistOutput (content_brief) + brand
-//    Output: shallow UIF — meta, core_knowledge.facts (2–5 from citations),
-//            angles[] (4–5 angles, each with angle_name, contrarian_take,
-//            pillar_connection, brand_specific_angle, supporting_facts: []),
-//            humanity_snippets: []
-//    Instruction to model:
-//      "Do not invent facts. Only extract what Perplexity returned.
-//      Generate 4–5 highly specific, practitioner-grade angles. Do NOT pad
-//      with weak filler angles to hit the quota — quality and specificity
-//      matter more than count. Stop at 4 if the source cannot support a 5th
-//      strong angle.
-//      Aim for diversity across these categories when the source material
-//      supports it:
-//        - diagnostic / teardown (what breaks and why)
-//        - framework / architecture (how to fix it)
-//        - resonance / story (lived failure moment)
-//        - contrarian (what everyone gets wrong)
-//        - tactical (specific checklist or technique)
-//        - regulated / governance implication (Law 25, OSFI, auditability)
-//        - trend / product / prediction (only if the source material genuinely
-//          supports a practitioner-level operator opinion — reveals mechanism,
-//          tradeoff, or production reality; not a generic trend summary)
-//      Do not force every category — use only those the source material
-//      genuinely supports. At least 1 angle must have brand_specific_angle=true.
-//      Angles represent reusable intellectual territory that may support multiple
-//      posts across multiple weeks — generate them with that durability in mind."
-const shallowUIF = await extractAngles({ perplexityResult, contentBrief: strategistOutput, brand });
+// 2b. Poll until complete (max 6 min)
+// MCP: mcp__notebooklm-mcp__research_status
+//   notebook_id, task_id, poll_interval: 30, max_wait: 360, compact: false
+const researchResult = // research_status result
+if (researchResult.status !== "completed") {
+  throw new Error(`NLM research did not complete in time. Status: ${researchResult.status}`);
+}
+
+// 2c. Import top 20 web sources (skip index 0 = deep_report, internal to notebook)
+// MCP: mcp__notebooklm-mcp__research_import
+//   notebook_id, task_id, source_indices: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+const importResult = // research_import result
+
+await createRecord(LOGS, {
+  workflow_id: state.workflowId, entity_id: state.entityId,
+  step_name: "nlm_research_import", stage: "deep_research",
+  timestamp: new Date().toISOString(),
+  output_summary: `NLM import complete. ${importResult.imported_count} sources. Sources found: ${researchResult.sources_found}`,
+  model_version: "notebooklm-deep", status: "success"
+});
+
+// 2d. Query notebook — extract grounded angles across the full topic
+// MCP: mcp__notebooklm-mcp__notebook_query
+//   notebook_id
+//   query: <angle extractor prompt below>
+const nlmQueryResult = // notebook_query result
+if (!nlmQueryResult.answer) throw new Error("NLM notebook_query returned empty answer");
+
+await createRecord(LOGS, {
+  workflow_id: state.workflowId, entity_id: state.entityId,
+  step_name: "nlm_angle_query", stage: "deep_research",
+  timestamp: new Date().toISOString(),
+  output_summary: `NLM query complete. conversation_id: ${nlmQueryResult.conversation_id}. Sources used: ${nlmQueryResult.sources_used?.length ?? 0}`,
+  model_version: "notebooklm-deep", status: "success"
+});
+```
+
+**Angle extractor query** (pass as `query` to `notebook_query`):
+```
+You are the Angle Extractor for The Meta Architect brand (AI Reliability Engineering, "State Beats Intelligence" thesis).
+
+ICP context: The practitioner reading this post has been paged at 2am because an LLM hallucinated.
+Their reality: non-deterministic outputs they can't reproduce, no stack trace,
+no observability, compliance asking "can we log why the agent did this?",
+leadership demanding GenAI yesterday.
+Their language: "debugging is a game of chance" / "clever demo duct-taped into
+production" / "it's not about the model — it's about the plumbing" /
+"prompt whack-a-mole" / "there's no stack trace."
+Their goal: stop betting their job on vibes. Get a proper architecture for
+stateful, auditable LLM systems.
+
+Topic: {strategistOutput.topic}
+Core angle: {strategistOutput.core_angle}
+
+Extract 5–8 grounded facts from the sources, then generate 4–5 practitioner-grade content angles.
+
+For each FACT:
+- statement: the specific claim
+- grounding_quote: exact sentence from a source (not a paraphrase)
+- source_url: URL
+- source_tier: "tier1"|"tier2"|"tier3"|"tier4"
+- verified: true if methodology traceable at source URL, false otherwise
+
+For each ANGLE:
+- angle_name: short descriptor
+- contrarian_take: the non-obvious practitioner insight
+- pillar_connection: one of "Production Failure Taxonomy" | "STATE Framework Applied" | "Defensive Architecture" | "The Meta Layer" | "Regulated AI & Law 25"
+- brand_specific_angle: true only if this angle depends on Simon's specific positioning or STATE framework
+
+Self-check per angle (cut any that fail):
+✓ Can you quote a specific sentence from a source that directly supports this? If not → cut it.
+✓ Does the contrarian_take name a specific mechanism, failure mode, or production reality?
+✓ Would this practitioner read it and think "yes, exactly — that's the thing nobody says"?
+✗ Restatements of the topic title → cut
+✗ Generic LLMOps 101 observations → cut
+✗ No connection to state, observability, compliance, or architectural control → cut
+
+Aim for diversity: diagnostic/teardown, framework/architecture, resonance/story, contrarian, tactical, regulatory.
+At least 1 angle must have brand_specific_angle=true.
+Stop at 4 angles if the source cannot support a strong 5th — quality over quota.
+
+Output JSON only:
+{
+  "facts": [...],
+  "angles": [...]
+}
+```
+
+**3. Call Claude — build full UIF from NLM answer**
+```javascript
+// Input: nlmQueryResult.answer + strategistOutput + brand
+// Use the UIF Compiler prompt from researcher.md (Stage 3)
+// Output: deepUIF (full UIF v3.0 object)
+const deepUIF = await compileUIF({ nlmAnswer: nlmQueryResult.answer, contentBrief: strategistOutput, brand });
 ```
 
 **E — Explicit Gate**:
 ```javascript
-const uifValidation = validateUIF(shallowUIF);
-if (!uifValidation.valid) throw new Error(`Shallow UIF validation: ${uifValidation.errors.join("; ")}`);
+const uifValidation = validateUIF(deepUIF);
+if (!uifValidation.valid) throw new Error(`UIF validation: ${uifValidation.errors.join("; ")}`);
 ```
 
 Log Claude call:
 ```javascript
-// MCP: mcp__claude_ai_Airtable__create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
 await createRecord(LOGS, {
-  workflow_id: state.workflowId,
-  entity_id: state.entityId,
-  step_name: "angle_extractor",
-  stage: "shallow_research",
+  workflow_id: state.workflowId, entity_id: state.entityId,
+  step_name: "uif_compiler", stage: "deep_research",
   timestamp: new Date().toISOString(),
-  output_summary: `Angle extraction complete. ${shallowUIF.angles.length} angles generated.`,
-  model_version: "claude-sonnet-4-6",
-  status: "success"
+  output_summary: `UIF compiled. ${deepUIF.angles.length} angles, ${deepUIF.core_knowledge.facts.length} facts.`,
+  model_version: "claude-sonnet-4-6", status: "success"
 });
 ```
 
@@ -259,8 +418,9 @@ await patchRecord(IDEAS, state.entityId, {
   // but never written to Airtable — it's buried in score_rationales JSON and invisible to the planner.
   // Either: (a) add a dedicated number field "score_audience_relevance" to ideas and write it here,
   // or (b) remove it from the scorer prompt entirely to reduce noise. Decision pending.
-  "Intelligence File": JSON.stringify(shallowUIF),
-  research_depth: "shallow",
+  "Intelligence File": JSON.stringify(deepUIF),
+  notebook_id: notebook_id,             // fld6IEXqxWqwZtHow — reused by /research for fast targeted query
+  research_depth: "deep",
   captured_at: new Date().toISOString()
 });
 ```
@@ -271,7 +431,8 @@ await patchRecord(IDEAS, state.entityId, {
    {working_title}
    Intent: {intent}
    Overall Score: {score_overall}/10
-   Angles: {shallowUIF.angles.length} generated
+   Angles: {deepUIF.angles.length} generated | Facts: {deepUIF.core_knowledge.facts.length} grounded
+   Notebook: {notebook_id}
    Next step: {recommended_next_action}
 ```
 

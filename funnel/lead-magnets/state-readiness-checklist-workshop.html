@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STATE Readiness Checklist — The Meta Architect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:wght@400;700&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg-primary:    #0F0F0F;
+    --bg-surface:    #1A1A1A;
+    --bg-elevated:   #1F1F1F;
+    --border:        #2A2A2A;
+    --border-strong: #333333;
+    --text-primary:  #EAEAEA;
+    --text-secondary:#B4B4B4;
+    --text-muted:    #666666;
+    --accent:        #E04500;
+    --accent-hover:  #FF5A1A;
+    --accent-link:   #C97A1A;
+    --accent-warn:   #E85A3A;
+    --font-serif: 'Merriweather', Georgia, serif;
+    --font-sans:  'Inter', -apple-system, sans-serif;
+    --font-mono:  'Roboto Mono', ui-monospace, monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    width: 816px;
+    min-height: 1056px;
+    margin: 0 auto;
+    background: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOP ACCENT ── */
+  .accent-bar { height: 3px; background: var(--accent); flex-shrink: 0; }
+
+  /* ── HEADER ── */
+  .header {
+    padding: 18px 40px 14px;
+    border-bottom: 1px solid var(--border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .framework-name {
+    font-family: var(--font-serif);
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .framework-name .s { color: var(--accent); }
+
+  .framework-sub {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .header-right { text-align: right; }
+
+  .state-pill {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-muted);
+    border: 1px solid var(--border-strong);
+    padding: 3px 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .brand-line {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+
+  /* ── THESIS BANNER ── */
+  .thesis-banner {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-strong);
+    padding: 11px 40px;
+    flex-shrink: 0;
+  }
+  .thesis-banner p {
+    font-family: var(--font-serif);
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+  .thesis-banner strong { color: var(--text-primary); font-weight: 700; }
+
+  /* ── BODY ── */
+  .body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .col-left  { padding: 20px 26px 18px 40px; border-right: 1px solid var(--border-strong); display: flex; flex-direction: column; }
+  .col-right { padding: 20px 40px 18px 26px; display: flex; flex-direction: column; }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* ── SCORING INSTRUCTION ── */
+  .score-instruction {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-secondary);
+    letter-spacing: 0.04em;
+    margin-bottom: 14px;
+    padding: 6px 10px;
+    border-left: 2px solid var(--border-strong);
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* ── PILLARS ── */
+  .pillar {
+    display: grid;
+    grid-template-columns: 16px 1fr auto;
+    gap: 0 11px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+  .pillar:last-of-type { border-bottom: none; }
+
+  .p-letter {
+    font-family: var(--font-serif);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1.1;
+    align-self: start;
+    padding-top: 2px;
+  }
+
+  .p-body { align-self: start; }
+
+  .p-name {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .p-name em {
+    font-style: normal;
+    font-weight: 400;
+    color: var(--text-muted);
+    font-size: 8.5px;
+    letter-spacing: 0;
+    text-transform: none;
+    margin-left: 5px;
+  }
+
+  .p-question {
+    font-family: var(--font-sans);
+    font-size: 10.5px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    font-style: italic;
+  }
+  .p-question .sting {
+    color: var(--accent-warn);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  /* ── SCORE BOXES ── */
+  .score-boxes {
+    display: flex;
+    flex-direction: column;
+    align-self: center;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+  }
+  .sbox-label {
+    font-family: var(--font-mono);
+    font-size: 7px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-align: center;
+  }
+  .sbox-row { display: flex; gap: 3px; }
+  .sbox {
+    width: 19px;
+    height: 19px;
+    border: 1px solid var(--border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  /* ── TALLY ── */
+  .tally {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-strong);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .tally-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    flex: 1;
+  }
+  .tally-box {
+    width: 44px;
+    height: 28px;
+    border: 1px solid var(--border-strong);
+    border-bottom: 2px solid var(--accent);
+  }
+  .tally-of {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  /* ── RIGHT: SCORE INTERPRETATION ── */
+  .interp-block {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  .interp-row {
+    display: grid;
+    grid-template-columns: 28px 80px 1fr;
+    gap: 0 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+  .interp-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+  .i-score {
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding-top: 2px;
+  }
+  .i-badge {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding-top: 2px;
+  }
+  .i-badge.critical { color: #E85A3A; }
+  .i-badge.high     { color: #E04500; }
+  .i-badge.dev      { color: #CC8830; }
+  .i-badge.prod     { color: #8BAA60; }
+  .i-badge.full     { color: #6BAA80; }
+
+  .i-detail {
+    font-family: var(--font-sans);
+    font-size: 9px;
+    color: var(--text-muted);
+    line-height: 1.45;
+  }
+  .i-detail strong {
+    color: var(--text-secondary);
+    font-weight: 500;
+    display: block;
+    margin-bottom: 1px;
+  }
+
+  /* ── RIGHT: REBOOT TEST ── */
+  .reboot-block {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  .reboot-rows { display: flex; flex-direction: column; gap: 6px; }
+
+  .reboot-row {
+    display: grid;
+    grid-template-columns: 16px 1fr;
+    gap: 0 8px;
+    align-items: start;
+  }
+
+  .r-num {
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding-top: 1px;
+  }
+
+  .r-text {
+    font-family: var(--font-sans);
+    font-size: 9.5px;
+    color: var(--text-muted);
+    line-height: 1.45;
+  }
+  .r-text strong { color: var(--text-secondary); font-weight: 500; }
+
+  /* ── RIGHT: CTA BLOCK ── */
+  .cta-block {
+    margin-top: auto;
+    padding: 14px 16px;
+    background: #140A00;
+    border: 1px solid var(--border-strong);
+    border-left: 3px solid var(--accent);
+  }
+
+  .cta-pre {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin-bottom: 7px;
+  }
+
+  .cta-link {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-link);
+    letter-spacing: 0.02em;
+  }
+  .cta-link::before { content: "→ "; }
+
+  /* ── BOTTOM STRIP ── */
+  .bottom-strip {
+    padding: 10px 40px;
+    border-top: 1px solid var(--border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    background: var(--bg-surface);
+  }
+
+  .bs-left {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+
+  .bs-right {
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--text-muted);
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    line-height: 1.7;
+  }
+
+  @media print {
+    html, body { background: #0F0F0F; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page { width: 100%; min-height: 100vh; margin: 0; }
+    @page { size: letter; margin: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="accent-bar"></div>
+
+  <div class="header">
+    <div class="header-left">
+      <div class="framework-name"><span class="s">STATE</span> Readiness Checklist</div>
+      <div class="framework-sub">A diagnostic for production AI systems</div>
+    </div>
+    <div class="header-right">
+      <div class="state-pill">State Beats Intelligence</div>
+      <span class="brand-line">The Meta Architect · simonparis.ca</span>
+    </div>
+  </div>
+
+  <div class="thesis-banner">
+    <p>Production AI systems fail not because <strong>models are too weak</strong> — but because they lack <strong>proper state management, checkpointing, observability, and deterministic boundaries.</strong> Score your system below. Find out where it will break before production does.</p>
+  </div>
+
+  <div class="body">
+
+    <div class="col-left">
+
+      <div class="section-label">The Five Pillars — Score each 0, 1, or 2</div>
+
+      <div class="score-instruction">
+        <span>2 = yes, confidently</span>
+        <span>1 = partially / in progress</span>
+        <span>0 = no, or not sure</span>
+      </div>
+
+      <div class="pillar">
+        <div class="p-letter">S</div>
+        <div class="p-body">
+          <div class="p-name">Structured <em>explicit state schemas</em></div>
+          <div class="p-question">If this system crashes mid-run, can you look at the last saved state and know <span class="sting">exactly where it stopped</span> — without reading any logs or conversation history?</div>
+        </div>
+        <div class="score-boxes">
+          <div class="sbox-label">score</div>
+          <div class="sbox-row">
+            <div class="sbox">0</div>
+            <div class="sbox">1</div>
+            <div class="sbox">2</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pillar">
+        <div class="p-letter">T</div>
+        <div class="p-body">
+          <div class="p-name">Traceable <em>every step logged</em></div>
+          <div class="p-question">Can you pull a complete trace for any session from last week — <span class="sting">every LLM call, every tool call, every input and output</span> — right now, in under 5 minutes?</div>
+        </div>
+        <div class="score-boxes">
+          <div class="sbox-label">score</div>
+          <div class="sbox-row">
+            <div class="sbox">0</div>
+            <div class="sbox">1</div>
+            <div class="sbox">2</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pillar">
+        <div class="p-letter">A</div>
+        <div class="p-body">
+          <div class="p-name">Auditable <em>governance-ready</em></div>
+          <div class="p-question">If a regulator asks today what data your system used for a specific decision last month — <span class="sting">can you answer in under 30 minutes?</span></div>
+        </div>
+        <div class="score-boxes">
+          <div class="sbox-label">score</div>
+          <div class="sbox-row">
+            <div class="sbox">0</div>
+            <div class="sbox">1</div>
+            <div class="sbox">2</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pillar">
+        <div class="p-letter">T</div>
+        <div class="p-body">
+          <div class="p-name">Tolerant <em>resumable after failure</em></div>
+          <div class="p-question">If this workflow fails at step 6 of 10 right now — does it <span class="sting">resume from step 6, or restart from step 1?</span></div>
+        </div>
+        <div class="score-boxes">
+          <div class="sbox-label">score</div>
+          <div class="sbox-row">
+            <div class="sbox">0</div>
+            <div class="sbox">1</div>
+            <div class="sbox">2</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pillar">
+        <div class="p-letter">E</div>
+        <div class="p-body">
+          <div class="p-name">Explicit <em>deterministic boundaries</em></div>
+          <div class="p-question">For every LLM call in this system — <span class="sting">what stops a wrong output from becoming a real-world action?</span> If the answer is "nothing," that's your gap.</div>
+        </div>
+        <div class="score-boxes">
+          <div class="sbox-label">score</div>
+          <div class="sbox-row">
+            <div class="sbox">0</div>
+            <div class="sbox">1</div>
+            <div class="sbox">2</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tally">
+        <span class="tally-label">My total score</span>
+        <div class="tally-box"></div>
+        <span class="tally-of">/ 10</span>
+      </div>
+
+    </div>
+
+    <div class="col-right">
+
+      <div class="section-label">What your score means — and where to start</div>
+
+      <div class="interp-block">
+        <div class="interp-row">
+          <div class="i-score">0–3</div>
+          <div class="i-badge critical">Critical Risk</div>
+          <div class="i-detail">
+            <strong>One incident away from a rebuild.</strong>
+            Start with S — define your state schema before anything else moves.
+          </div>
+        </div>
+        <div class="interp-row">
+          <div class="i-score">4–5</div>
+          <div class="i-badge high">High Risk</div>
+          <div class="i-detail">
+            <strong>Failures are happening — you can't see them yet.</strong>
+            Add T logging to one workflow this week. Visibility before fixes.
+          </div>
+        </div>
+        <div class="interp-row">
+          <div class="i-score">6–7</div>
+          <div class="i-badge dev">Developing</div>
+          <div class="i-detail">
+            <strong>Survives demos. A is where regulation finds you.</strong>
+            Write a decision record for one automated output before you ship.
+          </div>
+        </div>
+        <div class="interp-row">
+          <div class="i-score">8–9</div>
+          <div class="i-badge prod">Prod-Ready</div>
+          <div class="i-detail">
+            <strong>Shippable. Close the last gap.</strong>
+            Run the Reboot Test below before you call it production-ready.
+          </div>
+        </div>
+        <div class="interp-row">
+          <div class="i-score">10</div>
+          <div class="i-badge full">STATE ✓</div>
+          <div class="i-detail">
+            <strong>Auditable, resumable, observable.</strong>
+            Verify quarterly. New workflows reset the score.
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">The Reboot Test — before you call it production-ready</div>
+      <div class="reboot-block">
+        <div class="reboot-rows">
+          <div class="reboot-row">
+            <div class="r-num">1.</div>
+            <div class="r-text"><strong>Restart the service mid-run.</strong> Does it resume from where it stopped?</div>
+          </div>
+          <div class="reboot-row">
+            <div class="r-num">2.</div>
+            <div class="r-text"><strong>Inject a failure at step 6 of 10.</strong> Does the error path clear the lock and report cleanly?</div>
+          </div>
+          <div class="reboot-row">
+            <div class="r-num">3.</div>
+            <div class="r-text"><strong>Take a dependency offline for 2 minutes.</strong> Does the system degrade gracefully or fail silently?</div>
+          </div>
+          <div class="reboot-row">
+            <div class="r-num">4.</div>
+            <div class="r-text"><strong>Mock the LLM node with a worst-case output.</strong> Does it reach a real-world action, or does the validation gate catch it?</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cta-block">
+        <div class="cta-pre">Most teams score 4–6. The workshop walks through closing each gap on a real production system — live teardown, no slides.</div>
+        <div class="cta-link">simonparis.ca/workshop — next session: [DATE]</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="bottom-strip">
+    <div class="bs-left">The Meta Architect · simonparis.ca · AI Reliability Engineering</div>
+    <div class="bs-right">State Beats Intelligence</div>
+  </div>
+
+</div>
+</body>
+</html>

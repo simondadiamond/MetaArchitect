@@ -25,9 +25,10 @@ You are operating within the **WAT framework** (Workflows, Agents, Tools) enforc
 | 1. Idea Capture | `/capture` | None |
 | 2. Editorial Planning | `/editorial-planner` | ≥3 ideas with `Status = "New"` + UIF exists (shallow research runs at capture) |
 | 2b. Backlog View | `/ideas` (deprecated) | Read-only display only |
-| 3. Research | `/research` | Post stub `status = "planned"` + `research_started_at` empty |
+| 3. Research | `/research` | Post stub `status = "planned"` + `research_started_at` empty. For ideas with `notebook_id` (manually captured), fast path: single targeted `notebook_query` (~30 sec). For harvest ideas (no `notebook_id`), full NLM crawl (~5 min). |
 | 4. Draft | `/draft` | Post stub `status = "research_ready"` |
 | 5. Review | `/review` | Post `status = "drafted"` |
+| **2–5 (consolidated)** | **`/week`** | **≥3 ideas at `Status = "New"`. Runs plan → research → draft → review in one session. Supports `/week YYYY-WNN` for a specific week. Resumes from current phase if stubs already exist.** |
 | 6. Publish | `/publish` | Post `status = "approved"` |
 | 7. Score | `/score` | Post `status = "published"` + `performance_score IS NULL` |
 
@@ -74,7 +75,8 @@ All tools live in `projects/Content-Engine/tools/`. Run from repo root.
 |-------|--------|
 | `ideas` | `Topic` (not "title"), `Status` (not "status"), `Intelligence File` (not "intelligence_file") |
 | `ideas` | `research_started_at`, `research_completed_at` (lowercase, underscore) |
-| `ideas` | `research_depth` — single select: `shallow` (capture) or `deep` (after /research) |
+| `ideas` | `research_depth` — single select: `deep` (set at /capture) or `shallow` (harvest-sourced ideas, upgraded to `deep` after /research) |
+| `ideas` | `notebook_id` — NLM notebook ID stored at /capture; read by /research to skip full crawl |
 | `ideas` | `score_audience_relevance` exists — **never read or write it** |
 | `ideas` | `Summary (AI)`, `Next Best Action (AI)` — **Airtable-managed, never write** |
 | `posts` | `status` (lowercase), `idea_id` (linked record — write as array `["recXXX"]`) |

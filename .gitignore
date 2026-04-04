@@ -47,3 +47,6 @@ projects/Content-Engine/.tmp/*.json
 
 # Agent runtime state
 .agents/
+
+# simonparis-website — own git repo (nested)
+projects/simonparis-website/

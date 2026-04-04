@@ -81,8 +81,14 @@ Framework template: {framework.template}
 Opening hook to adapt (do not copy verbatim — adapt it naturally to this draft):
 "{hook.hook_text}"
 
-{snippet ? `Humanity snippet to weave in organically (one snippet max, do NOT announce it):
-"${snippet.snippet_text}"` : "No humanity snippet available for this angle."}
+{snippet ? `Humanity snippet to adapt and weave in (one snippet max):
+"${snippet.snippet_text}"
+
+Rules for this snippet:
+- DO NOT reproduce this text verbatim. Rephrase, compress, or shift tense to fit naturally into the post.
+- Integrate it into Lines 4 or 7 — evidence or elaboration, never the close.
+- Do NOT announce it ("here's a personal example", "as I experienced...") — it must read as part of the narrative.
+- The raw snippet string must not appear word-for-word anywhere in the final draft.` : "No humanity snippet available for this angle."}
 
 Write the LinkedIn post.
 ```
@@ -124,10 +130,11 @@ A humanity snippet is a specific personal/operational moment from Simon's experi
 
 Rules:
 1. **One snippet maximum per post** — never stack multiple
-2. **Weave organically** — never announce it ("as I experienced last week...", "here's a personal example:")
-3. **Specific not generic** — "The pipeline logged success for 3 hours while returning empty results" beats "I once had a buggy pipeline"
-4. **NEVER fabricate** — if `humanity_snippets` query returns no match, flag `needs_snippet = true` and draft without a snippet. Do not invent a moment.
-5. **Integrate into Lines 7 or 4** — evidence or elaboration, not the close
+2. **Adapt, never copy** — the raw snippet text must not appear word-for-word in the final draft. Rephrase, compress, or shift tense to fit the post's voice and context naturally.
+3. **Weave organically** — never announce it ("as I experienced last week...", "here's a personal example:"). It must read as part of the narrative, not a labeled insert.
+4. **Specific not generic** — "The pipeline logged success for 3 hours while returning empty results" beats "I once had a buggy pipeline"
+5. **NEVER fabricate** — if `humanity_snippets` query returns no match, flag `needs_snippet = true` and draft without a snippet. Do not invent a moment.
+6. **Integrate into Lines 4 or 7** — evidence or elaboration only, never the close
 
 If `needs_snippet = true`:
 - Draft is created without the snippet
