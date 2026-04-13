@@ -84,15 +84,18 @@ const ideaRecord = // result.records[0]
 state.entityId = ideaRecord.id;
 ```
 
-### 4. Fetch Brand Context
+### 4. Brand Context
+Brand context is already available in CLAUDE.md (brand-summary.md) and the command system prompt —
+no Airtable fetch needed. Use the inline brand context directly in Steps 5 and 6.
+
+> **Why skipped**: The Airtable brand record (~3,500 tokens) duplicates what's already in the
+> conversation context via CLAUDE.md. Fetching it adds latency and token cost with no quality gain.
+> Only restore this fetch if brand fields in Airtable have diverged from CLAUDE.md and a sync hasn't happened.
+
 ```javascript
-// MCP: mcp__claude_ai_Airtable__list_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblwfU5EpDgOKUF7f"
-//   fieldIds: all brand fields (fldsP8FwcTxJdkac8 through fldBtXwgSegiYP2pB)
-//   filters: { operator: "=", operands: ["fldsP8FwcTxJdkac8", "metaArchitect"] }
-const brands = // result.records
-const brand = brands.length > 0 ? brands[0] : null;
-if (!brand) throw new Error("Brand record 'metaArchitect' not found in Airtable");
+// No fetch required. Brand context = CLAUDE.md brand-summary.md (already in context).
+// Steps 5 and 6 use this directly. Remove `brand.fields?.main_guidelines` references
+// from scorer prompt — substitute the inline brand guidelines from CLAUDE.md instead.
 ```
 
 ### 5. Brand Strategist (Refinement)
@@ -195,8 +198,6 @@ Scoring dimensions:
 **User prompt:**
 ```
 Content brief: {JSON.stringify(contentBrief)}
-Brand guidelines: {brand.fields?.main_guidelines}
-ICP: {brand.fields?.icp_short}
 
 Score this idea. Output JSON only:
 {
@@ -274,7 +275,9 @@ await createRecord(LOGS, {
 
 // 2b. Poll until complete (max 6 min)
 // MCP: mcp__notebooklm-mcp__research_status
-//   notebook_id, task_id, poll_interval: 30, max_wait: 360, compact: false
+//   notebook_id, task_id, poll_interval: 30, max_wait: 360, compact: true
+//   NOTE: compact:true — we only need status + sources_found. The report text is never used;
+//   all content extraction happens via notebook_query below. Saves ~7,500 tokens per run.
 const researchResult = // research_status result
 if (researchResult.status !== "completed") {
   throw new Error(`NLM research did not complete in time. Status: ${researchResult.status}`);
