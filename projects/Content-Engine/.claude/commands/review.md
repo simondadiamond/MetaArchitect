@@ -96,6 +96,13 @@ if (!optimization) {
   // ALSO check: em dashes — flag any remaining em dashes as a repair target.
   //   Em dashes are an AI writing tell. Remove or replace with period/comma unless
   //   a specific instance is structurally irreplaceable (rare — default to removing).
+  // Engagement checks — flag as repair targets if failing:
+  //   Hook (Line 1): Does it make an ICP practitioner think "this is about my problem"?
+  //     Test: could this hook apply to any industry/profession? If yes → too generic, flag.
+  //   Closing line (Line 10 if question): Is it specific enough that someone paged at 2am has a direct answer?
+  //     Test: is it answerable with "yes", "no", or "it depends"? If yes → too vague, flag.
+  //     Generic fails: "Have you run into this?" "What do you think?" "Do you agree?"
+  //     Strong passes: names a specific tool, failure mode, or architectural decision.
   // Output a fidelityReport object:
   let fidelityReport = null;
   if (humanizedCandidate) {
@@ -106,8 +113,10 @@ if (!optimization) {
       platform_fit_score: 0-10,
       improved_aspects: [],   // what the humanizer actually fixed
       preserved_aspects: [],  // what was correctly kept
-      repair_targets: []      // only populated if recommendation = "repair_needed"
+      repair_targets: [],     // only populated if recommendation = "repair_needed"
                               // each entry is a specific element to restore or fix
+      engagement_flags: []    // "hook_too_generic" | "closing_question_too_vague"
+                              // each is added as a repair_target if populated
     };
     // If humanizer made no meaningful improvement → prefer_original
     // If humanizer improved but lost something essential → repair_needed + list targets

@@ -1,5 +1,5 @@
 {
-  "run_count": 3,
+  "run_count": 4,
   "query_log": [
     {
       "query": "LLM agent context window overflow silent truncation production failures 2025",
@@ -90,6 +90,41 @@
       "pillar": "Regulated AI & Law 25",
       "run_date": "2026-03-22",
       "ideas_generated": 1
+    },
+    {
+      "query": "OpenAI Realtime API production failure modes latency timeout error handling enterprise 2025",
+      "pillar": "Production Failure Taxonomy",
+      "run_date": "2026-04-05",
+      "ideas_generated": 0,
+      "source": "nlm_research"
+    },
+    {
+      "query": "Google Vertex AI Agent Builder stateful session checkpoint production deployment findings 2025",
+      "pillar": "STATE Framework Applied",
+      "run_date": "2026-04-05",
+      "ideas_generated": 0,
+      "source": "nlm_research"
+    },
+    {
+      "query": "Pydantic AI validation guardrails LLM structured output production failure enterprise patterns 2025",
+      "pillar": "Defensive Architecture",
+      "run_date": "2026-04-05",
+      "ideas_generated": 0,
+      "source": "nlm_research"
+    },
+    {
+      "query": "GitHub Copilot 2025 developer productivity survey code review quality enterprise adoption rates",
+      "pillar": "The Meta Layer",
+      "run_date": "2026-04-05",
+      "ideas_generated": 0,
+      "source": "nlm_research"
+    },
+    {
+      "query": "FINRA SEC AI model governance automated decision audit trail financial services enforcement 2025",
+      "pillar": "Regulated AI & Law 25",
+      "run_date": "2026-04-05",
+      "ideas_generated": 0,
+      "source": "nlm_research"
     }
   ]
 }

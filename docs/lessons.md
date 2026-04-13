@@ -77,6 +77,23 @@
 
 ---
 
+## 2026-04-05 — NLM `research_start`/`research_status` returns source metadata, not synthesized text
+
+**What happened:** `/harvest` Step 6 (`callNLMResearch`) called `research_start` → polled `research_status` until `status === "completed"` → tried to extract content from `statusResult?.result ?? statusResult?.content ?? statusResult?.answer`. All three fields are absent — `research_status` returns `sources` (list of URLs) and an empty `report` field. The message literally reads: "Use research_import to add sources to notebook." Content was empty for all 5 slots → `session_verified = false` → all 5 slots write-blocked → 0 ideas written.
+
+**Root cause:** `callNLMResearch` in `harvest.md` Step 6 was written without the `research_import` step. NLM's research flow is: `research_start` (find sources) → `research_status` (wait) → **`research_import`** (add to notebook) → **`notebook_query`** (synthesize). The SOP only does the first two steps.
+
+**Fix required:** Update `callNLMResearch` in `harvest.md` Step 6 to:
+1. After `research_status` completes: call `mcp__notebooklm_mcp__research_import` to add sources to the notebook
+2. Then call `mcp__notebooklm_mcp__notebook_query` with the original query to get synthesized content
+3. Return `{ content: queryResult.answer, citations: sources }`
+
+**Side effect on `session_verified`:** The flag should be set `true` only after `notebook_query` returns non-empty `answer`. The `callNLMResearch` implementation in Step 6 needs this update — also update the Session Integrity Rule section to reference NLM (not Perplexity) as the live call.
+
+**Where to fix:** `.claude/commands/harvest.md` — Step 6 `callNLMResearch` function + Session Integrity Rule section preamble (still references Perplexity).
+
+---
+
 ## Template for new entries
 
 ```

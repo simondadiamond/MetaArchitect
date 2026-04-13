@@ -7,15 +7,9 @@
       "env": {}
     },
     "n8n-native": {
-      "command": "C:\\Program Files\\nodejs\\npx.cmd",
-      "args": [
-        "-y",
-        "supergateway",
-        "--streamableHttp",
-        "http://localhost:5678/mcp-server/http",
-        "--header",
-        "authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiNjFjNjMxZi00Njk5LTRjNDItYmM4MS03ZGMyOGM0MTg5YzkiLCJpc3MiOiJuOG4iLCJhdWQiOiJtY3Atc2VydmVyLWFwaSIsImp0aSI6IjViNzZmNjQwLTJkNDYtNDcxOS1iZjc3LTdiZDIzYTM4NDEzYiIsImlhdCI6MTc3MjAxNDc4Nn0.nAqVC_NfnVaeE4QaoSrHyZANd9IQXKvLUvOTXDeBZaM"
-      ]
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "supergateway", "--streamableHttp", "http://localhost:5678/mcp-server/http", "--header", "authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiNjFjNjMxZi00Njk5LTRjNDItYmM4MS03ZGMyOGM0MTg5YzkiLCJpc3MiOiJuOG4iLCJhdWQiOiJtY3Atc2VydmVyLWFwaSIsImp0aSI6IjViNzZmNjQwLTJkNDYtNDcxOS1iZjc3LTdiZDIzYTM4NDEzYiIsImlhdCI6MTc3MjAxNDc4Nn0.nAqVC_NfnVaeE4QaoSrHyZANd9IQXKvLUvOTXDeBZaM"],
+      "env": {}
     },
     "n8n-mcp": {
       "command": "C:\\Program Files\\nodejs\\npx.cmd",

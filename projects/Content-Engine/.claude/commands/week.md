@@ -58,7 +58,10 @@ const weekState = {
 
   researchResults: {},            // { [stubId]: { status: "ok"|"failed", error? } }
   draftResults: {},               // { [stubId]: { status: "ok"|"failed", error? } }
-  reviewResults: {}               // { [stubId]: { status: "approved"|"rejected" } }
+  reviewResults: {},              // { [stubId]: { status: "approved"|"rejected" } }
+
+  cache: {}                       // session-level cache: { brand, frameworks, hooks, snippets }
+                                  // brand loaded in Phase 0; libraries loaded before Phase 3 loop
 };
 
 function updateStage(newStage) {
@@ -69,9 +72,33 @@ function updateStage(newStage) {
 
 ---
 
+## Phase 0 — Session Cache Preload
+
+Run immediately after STATE init, before Resume check and before any other work.
+Loads brand once for the entire session — all phases (research, draft) read from `weekState.cache.brand`
+instead of making separate Airtable calls.
+
+```javascript
+updateStage("cache_preload");
+
+// Load brand record once — used by Phase 2 (research) and Phase 3 (draft)
+// MCP: mcp__claude_ai_Airtable__list_records_for_table
+//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblwfU5EpDgOKUF7f"
+//   fieldIds: [fldsP8FwcTxJdkac8, fld7N55IwEM8CQYW0, fldLYt1DMS1Fwd5Vy, fldBtXwgSegiYP2pB]
+//   filters: name = "metaArchitect"
+const brandRecords = // result.records
+if (!brandRecords[0]) throw new Error("Brand record 'metaArchitect' not found — aborting /week");
+weekState.cache.brand = brandRecords[0];
+
+// Note: frameworks, hooks, snippets are loaded just before Phase 3 (only needed for drafting)
+// See Phase 3 preamble in runPhase3Draft()
+```
+
+---
+
 ## Resume / Recovery Check
 
-Run immediately after STATE init — before Phase 1. Detects in-flight or partially complete weeks and jumps to the correct phase.
+Run immediately after Phase 0 cache preload. Detects in-flight or partially complete weeks and jumps to the correct phase.
 
 ```javascript
 updateStage("resume_check");
@@ -226,13 +253,22 @@ for (const post of plan.posts) {
 
     // ← KEY DIFFERENCE FROM /editorial-planner: populate manifest immediately
     weekState.postStubIds.push(postStub.id);
+
+    // Cache UIF + contentBrief from the candidate record — already loaded in Step 2 fetch_candidates.
+    // This prevents research and draft from re-fetching the same data from Airtable.
+    // After research completes, the UIF entry is overwritten with the deepened version.
+    const rawUIF = candidateRecord?.fields?.["Intelligence File"];
+    const rawBrief = candidateRecord?.fields?.content_brief;
+
     weekState.postStubMap[postStub.id] = {
       ideaId:       post.idea_id,
       plannedOrder: post.order,
       narrativeRole: post.narrative_role,
       angleIndex:   post.angle_index,
       status:       "planned",
-      topic:        post.topic ?? candidateRecord?.topic ?? ""
+      topic:        post.topic ?? candidateRecord?.topic ?? "",
+      uif:          rawUIF ? JSON.parse(rawUIF) : null,          // shallow UIF from planning phase
+      contentBrief: rawBrief ? JSON.parse(rawBrief) : null       // overwritten by research if deep
     };
     written.push(postStub.id);
 
@@ -403,11 +439,9 @@ async function runResearchForStub(stubId, weekState) {
   };
 
   try {
-    // Step 1: Brand context
-    // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblwfU5EpDgOKUF7f)
-    //   fieldIds: [fldsP8FwcTxJdkac8, fld7N55IwEM8CQYW0, fldLYt1DMS1Fwd5Vy, fldBtXwgSegiYP2pB]
-    //   filters: name = "metaArchitect"
-    const brand = // brands[0]
+    // Step 1: Brand context — use session cache (loaded in Phase 0, never re-fetch)
+    const brand = weekState.cache.brand;
+    if (!brand) throw new Error("weekState.cache.brand is empty — Phase 0 cache preload may have failed");
 
     // Step 2: Load target stub by ID (not "oldest planned" filter)
     // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs)
@@ -435,14 +469,23 @@ async function runResearchForStub(stubId, weekState) {
     // All log calls use subState.workflowId = weekState.workflowId.
     //
     // Step 3: Load idea + UIF
+    //         Note: weekState.postStubMap[stubId].uif has the shallow UIF from Phase 1 —
+    //         /research still fetches fresh from Airtable here (stub might have been pre-existing
+    //         from a resume, with no cached UIF). Use the Airtable fetch as source of truth.
     // Step 4: Set LOCK — research_started_at = now(), status = "researching"
     // Step 5: Research Architect LLM call (researcher.md system prompt)
-    // Step 6: Perplexity Q1
-    // Step 7: Perplexity Q2
-    // Step 8: UIF Merger LLM call + validateUIF() gate
-    // Step 9: Write updated UIF to ideas table + mark stub research_ready
-    // Step 10: Hook extraction + write to hooks_library
-    // Step 11: Log completion
+    // Step 6: NLM research (fast path or full path — see research.md Step 6)
+    // Step 7: UIF Merger LLM call + validateUIF() gate
+    // Step 8: Write updated UIF to ideas table + mark stub research_ready
+    // Step 9: Hook extraction + write to hooks_library
+    // Step 10: Log completion
+
+    // ── CACHE UPDATE: write deepened UIF back to weekState for draft phase ──
+    // updatedUIF is the result from the UIF Merger (Step 7 above).
+    // Draft phase reads weekState.postStubMap[stubId].uif instead of re-fetching from Airtable.
+    if (updatedUIF && weekState.postStubMap[stubId]) {
+      weekState.postStubMap[stubId].uif = updatedUIF;
+    }
 
     return { status: "ok" };
 
@@ -489,6 +532,41 @@ async function runPhase3Draft(weekState) {
   console.log(`\n${"━".repeat(52)}`);
   console.log(`PHASE 3 — DRAFT                                 /week`);
   console.log(`${"━".repeat(52)}`);
+
+  // ── LIBRARY PRELOAD ────────────────────────────────────────────────────────
+  // Load frameworks, hooks, and snippets ONCE before the draft loop.
+  // Each runDraftForStub() reads from weekState.cache instead of querying Airtable per post.
+  updateStage("library_preload");
+
+  // Frameworks — all non-retired
+  // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblYsys2ydvryVtmf)
+  //   fieldIds: [fldcFJnXRemmm2PqU, fld92B4yioAGqEbfL, fldMPkk9oVvbqvTv5, fldlCsQrc9GWIT1yg,
+  //              fldoAs2QC066Th0x9, fldtVJ6vuENyFgz8A, fldBhDdj55AxwLEUl, fldiGWr8FwZMQjqfe, fldAQX51YZ6YsIAE7]
+  //   filters: status != "retired"
+  weekState.cache.frameworks = // result.records
+
+  // Hooks — all non-retired, sorted by avg_score desc (intent filtering done in-memory per post)
+  // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblWuQNSJ25bs18DZ)
+  //   fieldIds: [fldSIjqzsFuxWOaYb, fldOvWxj7O0x51aIX, fld6UZ8Fy7q2cZQyF, fldVKrSnP34sofwZ7,
+  //              fld0b1nWNg3ZXT21f, fldfckbIwaSSebctW, fld6RgXuUNgyMBuFe, flddxiv4RPE8IEwvm]
+  //   filters: status != "retired"
+  //   maxRecords: 60  ← sorted by avg_score desc; covers all quality hooks
+  weekState.cache.hooks = // result.records
+
+  // Snippets — eligible only (cooldown filter pre-applied)
+  // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblk8QpMOBOs6BMbF)
+  //   fieldIds: [fldaWegy2OyWpA28D, fldZFO5xKMiqBuUMY, fldiAFNJJZUcqhr7C, fldZ6ifFD4OW0PDOt,
+  //              fld90hLmFbyPWvy59, fldvIYK5Xh9v7BwOl, fldfqHyUlwn7JqBFn]
+  //   filters: last_used_at < [now - 28 days] OR last_used_at isEmpty
+  //   maxRecords: 50
+  weekState.cache.snippets = // result.records
+
+  await logEntry({ workflow_id: weekState.workflowId, entity_id: targetWeek,
+    step_name: "library_preload", stage: "library_preload",
+    timestamp: new Date().toISOString(),
+    output_summary: `Library cache loaded: ${weekState.cache.frameworks?.length ?? 0} frameworks, ${weekState.cache.hooks?.length ?? 0} hooks, ${weekState.cache.snippets?.length ?? 0} snippets`,
+    model_version: "n/a", status: "success" });
+  // ── END LIBRARY PRELOAD ───────────────────────────────────────────────────
 
   await logEntry({ workflow_id: weekState.workflowId, entity_id: targetWeek,
     step_name: "phase_3_start", stage: "draft_start",
@@ -542,13 +620,17 @@ Full `/draft` SOP for one stub. Key differences:
 
 ```javascript
 async function runDraftForStub(stubId, weekState) {
-  // Step 1: Brand context (MCP query)
+  // Step 1: Brand context — use weekState.cache.brand (loaded in Phase 0, never re-fetch)
   // Step 2: Load stub by ID (recordIds: [stubId]) — not "oldest research_ready" filter
-  // Step 3: Load idea + parse UIF (Intelligence File)
+  // Step 3: Load idea + parse UIF — use weekState.postStubMap[stubId].uif (deepened by research)
+  //         Falls back to Airtable fetch only if cache miss (e.g. resume from partial state)
   // Step 4: Platform default: "linkedin"
-  // Step 5: Query framework_library (improver.md scoreFramework — weighted by avg_score, use_count, status)
-  // Step 6: Query hooks_library (scoreHook — filter: status != "retired", intent = idea.intent)
-  // Step 7: Query humanity_snippets (scoreSnippet — cooldown: last_used_at > 28 days ago; top 3 candidates)
+  // Step 5: Query framework_library — use weekState.cache.frameworks (loaded in Phase 3 preamble)
+  //         Falls back to Airtable fetch (maxRecords: 40) if cache miss
+  // Step 6: Query hooks_library — use weekState.cache.hooks, filter in-memory by intent
+  //         Falls back to Airtable fetch (maxRecords: 60, intent filter) if cache miss
+  // Step 7: Query humanity_snippets — use weekState.cache.snippets (cooldown pre-filtered)
+  //         Falls back to Airtable fetch (maxRecords: 50, date filter) if cache miss
   // Step 8: Call claude-sonnet-4-6 with writer.md system prompt
   //         validatePost() gate — word count 150–250, structure valid
   // Step 9: Patch post stub:

@@ -18,7 +18,8 @@ Line 6:  The reframe or insight (STATE-aligned diagnosis)
 Line 7:  Evidence/example — specific, concrete
 Line 8:  Mechanism — why this is architecturally true
 Line 9:  (blank)
-Line 10: Close — implication, principle, or question
+Line 10: Close — implication, principle, or specific practitioner question
+         (If a question: must NOT be answerable with "yes", "no", or "it depends" — rewrite as what/how/when and name a specific tool, failure mode, or scenario)
 ```
 
 Followed by 3–5 hashtags on a separate line (e.g., `#AIEngineering #LLMReliability #MLOps`).
@@ -57,7 +58,7 @@ Line 6: Reframe/insight
 Line 7: Specific evidence or example
 Line 8: Mechanism
 Line 9: (blank)
-Line 10: Close
+Line 10: Close — if a question, it must name a specific scenario, tool, or failure mode; must NOT be answerable with "yes", "no", or "it depends"
 
 Word count: 150–250 words.
 End with 3–5 hashtags on a new line.
@@ -167,5 +168,11 @@ Before finalizing any draft, run the ICP test:
 2. **Specificity test**: Could you replace the concrete detail with a generic placeholder? If yes, add specificity.
 3. **Thesis alignment test**: Does this post connect to "state beats intelligence"?
 4. **Pillar alignment**: Which of the 5 content pillars does this serve? (It should be clear.)
+
+5. **Closing question test** (applies only if Line 10 is a question): Can it be answered "yes", "no", or "it depends"? If so, it's too vague — rewrite as what/how/when and name a specific tool, failure mode, or scenario that an ICP engineer has a direct opinion on.
+   - ❌ "Have you run into this?" / "What do you think?" / "Do you agree?"
+   - ✅ "What's your fallback when the LLM ignores your retry count?"
+   - ✅ "How do you reproduce a hallucination that only happens under load?"
+   - ✅ "What broke the first time you pushed an agent to prod?"
 
 If the answer to any test fails, revise before creating the post record.

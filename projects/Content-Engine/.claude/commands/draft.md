@@ -13,6 +13,23 @@ With argument: `/draft [post_stub_id]` — draft a specific post stub.
 
 Risk tier: medium → S + T + E required.
 
+---
+
+## Shared Session Cache
+
+When invoked from `/week`, a `weekState.cache` object is available containing data pre-loaded
+once for the whole week. Reference it at each step before making an Airtable call. This avoids
+re-fetching the same reference data (brand, frameworks, hooks, snippets) for every post.
+
+**Cache keys:**
+- `weekState.cache.brand` — brand record (loaded in /week Phase 0)
+- `weekState.cache.frameworks` — all non-retired framework records (loaded before Phase 3 loop)
+- `weekState.cache.hooks` — all non-retired hook records, unfiltered by intent (filter in-memory)
+- `weekState.cache.snippets` — eligible snippet records with cooldown filter applied (maxRecords: 50)
+- `weekState.postStubMap[stubId].uif` — deepened UIF written back after research completes
+
+**Fallback**: If no `weekState` (standalone `/draft` run), fetch from Airtable as normal.
+
 > **Airtable**: Use MCP tools directly — no node scripts. All table IDs and field IDs are in `.claude/skills/airtable.md`. Always `typecast: true` on writes.
 
 ---
@@ -33,13 +50,15 @@ const state = buildStateObject({
 
 ### 1. Find brand context
 ```javascript
-// MCP: mcp__claude_ai_Airtable__list_records_for_table
+// SESSION CACHE: use weekState.cache.brand if available (pre-loaded in /week Phase 0).
+// Standalone /draft: fetch from Airtable.
+//
+// MCP (fallback only): mcp__claude_ai_Airtable__list_records_for_table
 //   baseId: "appgvQDqiFZ3ESigA", tableId: "tblwfU5EpDgOKUF7f"
 //   fieldIds: [fldsP8FwcTxJdkac8, fld7N55IwEM8CQYW0, fldLYt1DMS1Fwd5Vy, fldBtXwgSegiYP2pB]
 //   (name, goals, icp_short, main_guidelines — colors/typography/icp_long not needed for drafting)
 //   filters: name = "metaArchitect"
-const brands = // result.records
-const brand = brands.length > 0 ? brands[0] : null;
+const brand = weekState?.cache?.brand ?? /* MCP fetch result */ brands[0];
 if (!brand) throw new Error("Brand record 'metaArchitect' not found in Airtable");
 ```
 
@@ -65,21 +84,23 @@ if (!ideaId) throw new Error("Post stub is missing idea_id — check Airtable da
 
 ### 3. Load idea + parse UIF
 ```javascript
-// MCP: mcp__claude_ai_Airtable__list_records_for_table
+// SESSION CACHE: use weekState.postStubMap[stubId].uif if available.
+// This is the deepened UIF written back by /research after it completes — no re-fetch needed.
+// Standalone /draft or cache miss: fetch from Airtable as normal.
+//
+// MCP (fallback only): mcp__claude_ai_Airtable__list_records_for_table
 //   baseId: "appgvQDqiFZ3ESigA", tableId: "tblVKVojZscMG6gDk"
 //   recordIds: [ideaId]
 //   fieldIds: [fldMtlpG32VKE0WkN, fldQMArYmpP8s6VKb, fldBvV1FgpD1l2PG1, fldF8BxXjbUiHCWIa]
-const idea = // result.records[0]
-if (!idea) throw new Error(`Idea ${ideaId} not found`);
+const idea = // result.records[0] (only fetched if no cache hit)
+if (!idea && !weekState?.postStubMap?.[postStub.id]?.uif) throw new Error(`Idea ${ideaId} not found`);
 
-const uif = idea.fields?.["Intelligence File"]
-  ? JSON.parse(idea.fields["Intelligence File"])
-  : null;
+const uif = weekState?.postStubMap?.[postStub.id]?.uif
+  ?? (idea.fields?.["Intelligence File"] ? JSON.parse(idea.fields["Intelligence File"]) : null);
 if (!uif) throw new Error("Intelligence File is null — research may not have completed");
 
-const contentBrief = idea.fields?.content_brief
-  ? JSON.parse(idea.fields.content_brief)
-  : null;
+const contentBrief = weekState?.postStubMap?.[postStub.id]?.contentBrief
+  ?? (idea?.fields?.content_brief ? JSON.parse(idea.fields.content_brief) : null);
 
 // Select the assigned angle
 const angle = uif.angles?.[angleIndex];
@@ -97,42 +118,63 @@ const platform = "linkedin";
 ### 5. Query framework_library
 ```javascript
 updateStage(state, "framework_query");
-// MCP: get_table_schema for status choice IDs, then list_records_for_table
+// SESSION CACHE: use weekState.cache.frameworks if available (pre-loaded before Phase 3 loop).
+// Standalone /draft: fetch from Airtable with maxRecords: 40 as a reasonable cap.
+//
+// MCP (fallback only): get_table_schema for status choice IDs, then list_records_for_table
 //   baseId: "appgvQDqiFZ3ESigA", tableId: "tblYsys2ydvryVtmf"
 //   fieldIds: [fldcFJnXRemmm2PqU, fld92B4yioAGqEbfL, fldMPkk9oVvbqvTv5,
 //              fldlCsQrc9GWIT1yg, fldoAs2QC066Th0x9, fldtVJ6vuENyFgz8A, fldBhDdj55AxwLEUl,
 //              fldiGWr8FwZMQjqfe, fldAQX51YZ6YsIAE7]
 //   filters: status != "retired"
+//   maxRecords: 40  ← cap response size; library is small, top 40 is sufficient
+const allFrameworks = weekState?.cache?.frameworks ?? /* MCP fetch result */ frameworks;
 // Selection: multi-dimensional weighted scoring — see scoreFramework() in improver.md
-const framework = await queryFramework(angle, idea);
+const framework = scoreFramework(allFrameworks, angle, idea);
 ```
 
 ### 6. Query hooks_library
 ```javascript
 updateStage(state, "hook_query");
-// MCP: list_records_for_table
+// SESSION CACHE: use weekState.cache.hooks if available (all non-retired hooks, unfiltered).
+// Filter by intent in-memory after retrieving from cache — same result, no extra round-trip.
+// Standalone /draft: fetch from Airtable with intent filter + maxRecords: 60.
+//
+// MCP (fallback only): list_records_for_table
 //   baseId: "appgvQDqiFZ3ESigA", tableId: "tblWuQNSJ25bs18DZ"
 //   fieldIds: [fldSIjqzsFuxWOaYb, fldOvWxj7O0x51aIX, fld6UZ8Fy7q2cZQyF,
 //              fldVKrSnP34sofwZ7, fld0b1nWNg3ZXT21f, fldfckbIwaSSebctW,
 //              fld6RgXuUNgyMBuFe, flddxiv4RPE8IEwvm]
 //   filters: status != "retired", intent = idea.intent
-// Selection: multi-dimensional weighted scoring by postIntent — see scoreHook() in improver.md
-// Fallback: if no intent-matched hooks, broaden to all non-retired
-const hook = await queryHook(idea.fields?.intent);
+//   maxRecords: 60  ← sorted by avg_score desc; top 60 covers all quality hooks
+const allHooks = weekState?.cache?.hooks ?? /* MCP fetch result */ hooks;
+// Filter in-memory by intent; fall back to all non-retired if no intent match
+const intentHooks = allHooks.filter(h => h.fields?.intent === idea.fields?.intent);
+const hookPool = intentHooks.length > 0 ? intentHooks : allHooks;
+// Selection: multi-dimensional weighted scoring — see scoreHook() in improver.md
+const hook = scoreHook(hookPool, idea.fields?.intent);
 ```
 
 ### 7. Query humanity_snippets
 ```javascript
 updateStage(state, "snippet_query");
+// SESSION CACHE: use weekState.cache.snippets if available (pre-loaded with cooldown filter).
+// Standalone /draft: fetch from Airtable with date filter + maxRecords: 50.
+//
+// MCP (fallback only): list_records_for_table
+//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblk8QpMOBOs6BMbF"
+//   fieldIds: [fldaWegy2OyWpA28D, fldZFO5xKMiqBuUMY, fldiAFNJJZUcqhr7C,
+//              fldZ6ifFD4OW0PDOt, fld90hLmFbyPWvy59, fldvIYK5Xh9v7BwOl,
+//              fldfqHyUlwn7JqBFn]  ← last_used_at required for 28-day cooldown gate
+//   filters: last_used_at < [28 days ago] OR last_used_at isEmpty
+//   maxRecords: 50  ← cooldown filter pre-narrows; 50 is enough for weighted scoring
 // Fetch top 3 candidates using weighted scoring (see querySnippets in improver.md).
 // snippet = best match; alternateSnippets = next 2 for /review to offer.
-const snippetCandidates = await querySnippets(angle, 3);
+const allSnippets = weekState?.cache?.snippets ?? /* MCP fetch result */ snippets;
+const snippetCandidates = scoreSnippets(allSnippets, angle, 3);
 const snippet = snippetCandidates[0] ?? null;
 const alternateSnippets = snippetCandidates.slice(1);
 const needsSnippet = snippet === null;
-// MCP fieldIds: [fldaWegy2OyWpA28D, fldZFO5xKMiqBuUMY, fldiAFNJJZUcqhr7C,
-//               fldZ6ifFD4OW0PDOt, fld90hLmFbyPWvy59, fldvIYK5Xh9v7BwOl,
-//               fldfqHyUlwn7JqBFn]  ← last_used_at required for 28-day cooldown gate
 // Weighted formula: (tagOverlap*4) + (textOverlap*2) + (avgScore*1.0) + (erScore*0.5) - (usedCount*0.25)
 ```
 

@@ -129,6 +129,7 @@ filters: { operator: "=", operands: ["fldsP8FwcTxJdkac8", "metaArchitect"] }
 | selection_reason | `fld5Q97Lwm8ZzHpAK` | multilineText | |
 | research_depth | `fldAwyDJrDdoyPmtR` | singleSelect | shallow / deep |
 | notebook_id | `fld6IEXqxWqwZtHow` | singleLineText | NLM notebook ID from /capture — used by /research for fast targeted query |
+| mined_at | `fld0NPFHykN4NywgT` | dateTime | Set by /harvest corpus mining phase; NULL = unmined, populated = already mined |
 | score_audience_relevance | — | — | **NEVER READ OR WRITE** |
 
 ---

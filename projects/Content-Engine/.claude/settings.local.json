@@ -64,12 +64,18 @@
       "mcp__notebooklm-mcp__refresh_auth",
       "mcp__notebooklm-mcp__server_info",
       "mcp__notebooklm-mcp__research_import",
-      "mcp__notebooklm-mcp__notebook_query"
+      "mcp__notebooklm-mcp__notebook_query",
+      "mcp__notebooklm-mcp__research_status",
+      "mcp__notebooklm-mcp__source_get_content",
+      "Bash(python3 -c ':*)",
+      "Bash(wc:*)"
     ]
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "n8n-native",
-    "n8n-mcp"
+    "n8n-mcp",
+    "notebooklm-mcp"
   ],
   "outputStyle": "Learning"
 }

@@ -35,13 +35,20 @@ const state = buildStateObject({
 
 ### 1. Find brand context
 ```javascript
-// MCP: mcp__claude_ai_Airtable__list_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblwfU5EpDgOKUF7f"
-//   fieldIds: [fldsP8FwcTxJdkac8, fld7N55IwEM8CQYW0, fldLYt1DMS1Fwd5Vy, fldBtXwgSegiYP2pB]
-//   (name, goals, icp_short, main_guidelines — colors/typography/icp_long not needed for research)
-//   filters: name = "metaArchitect" (text field, no schema lookup)
-const brands = // result.records
-const brand = brands.length > 0 ? brands[0] : null;
+// SESSION CACHE: When called from /week, weekState.cache.brand is pre-loaded.
+// Use it directly — skip the Airtable fetch.
+// Standalone /research (no weekState): fetch from Airtable as normal.
+//
+// if (weekState?.cache?.brand) {
+//   brand = weekState.cache.brand;
+// } else {
+//   MCP: mcp__claude_ai_Airtable__list_records_for_table
+//     baseId: "appgvQDqiFZ3ESigA", tableId: "tblwfU5EpDgOKUF7f"
+//     fieldIds: [fldsP8FwcTxJdkac8, fld7N55IwEM8CQYW0, fldLYt1DMS1Fwd5Vy, fldBtXwgSegiYP2pB]
+//     (name, goals, icp_short, main_guidelines — colors/typography/icp_long not needed for research)
+//     filters: name = "metaArchitect" (text field, no schema lookup)
+// }
+const brand = weekState?.cache?.brand ?? /* MCP fetch result */ brands[0];
 if (!brand) throw new Error("Brand record 'metaArchitect' not found in Airtable");
 ```
 
@@ -267,6 +274,12 @@ await patchRecord(POSTS, postStub.id, {
   status: "research_ready",
   research_completed_at: new Date().toISOString()
 });
+
+// SESSION CACHE UPDATE: When called from /week, write the deepened UIF back to weekState
+// so the draft phase can use it without re-fetching from Airtable.
+// if (weekState?.postStubMap?.[postStub.id]) {
+//   weekState.postStubMap[postStub.id].uif = updatedUIF;
+// }
 ```
 
 ### 10. Extract hooks → write to hooks_library
