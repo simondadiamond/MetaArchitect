@@ -2,6 +2,7 @@
   "name": "meta-architect",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
+    "@supabase/supabase-js": "^2.104.1",
     "dotenv": "^17.3.1"
   },
   "devDependencies": {

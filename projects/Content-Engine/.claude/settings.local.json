@@ -68,7 +68,13 @@
       "mcp__notebooklm-mcp__research_status",
       "mcp__notebooklm-mcp__source_get_content",
       "Bash(python3 -c ':*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "mcp__notebooklm-mcp__notebook_create",
+      "Skill(claude-api)",
+      "mcp__airtable-mcp__describe_table",
+      "Bash(npm list *)",
+      "Bash(pip show *)",
+      "Bash(find /c /d -name \"nlm*\" -maxdepth 6)"
     ]
   },
   "enableAllProjectMcpServers": true,

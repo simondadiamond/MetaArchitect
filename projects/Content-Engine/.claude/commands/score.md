@@ -10,7 +10,14 @@ Posts with `status = published` AND `performance_score IS NULL`.
 
 Risk tier: medium → S + T + E.
 
-> **Airtable**: Use MCP tools directly — no node scripts. See `.claude/skills/airtable.md` for field IDs. Always `typecast: true` on writes.
+> **Supabase**: All reads/writes go through `tools/supabase.mjs` — never call Supabase MCP from inside this command (token-conscious rule). Column registry: `.claude/skills/supabase.md`. All columns are snake_case.
+
+```javascript
+import {
+  getRecords, getRecord, patchRecord,
+  logEntry, TABLES,
+} from './tools/supabase.mjs';
+```
 
 ---
 
@@ -73,15 +80,16 @@ function shouldRetire(avg, count)  { return count >= 3 && avg < 4.0; }
 
 ### 1. Load scorable posts
 ```javascript
-// MCP: get_table_schema for status "published" choice ID, then:
-//   mcp__claude_ai_Airtable__list_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblz0nikoZ89MHHTs"
-//   fieldIds: [fldlC1PMzRw0z6cTR, fldgVwvcXFDA7RCxf, fldztvQenFV0pW44l,
-//              fldphmqLqRe5j2m7m, fldRHUQer2GFyLieS, fldk046kLs4yG2p1Y,
-//              fldNQw5L5KBFpFt5a, fldIjahm90oqJEqHx, fldr6w1R6fRiGXyXp, fld9OwHI6Z2Al3p7T]
-//   filters: status = "published" (choice ID) AND performance_score isEmpty
-//   sort: fldr6w1R6fRiGXyXp asc
-const posts = // result.records
+// Filter syntax: status = 'published' AND performance_score IS NULL.
+// supabase.mjs maps null filter values to .is(col, null) — exactly the IS NULL check.
+const posts = await getRecords(TABLES.POSTS,
+  { status: 'published', performance_score: null },
+  {
+    fields: ['id','status','draft_content','platform','published_at','post_url',
+             'hook_id','framework_id','humanity_snippet_id','snippet_fit_score'],
+    orderBy: { col: 'published_at', dir: 'asc' },
+    limit: 50,
+  });
 
 if (posts.length === 0) {
   return "No published posts with performance_score empty. Nothing to score.";
@@ -154,28 +162,25 @@ if (input.trim() === "") {
 ### 4. Write post metrics + score (atomic)
 ```javascript
 updateStage(state, "scoring");
-// MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs, typecast: true)
-records: [{ id: post.id, fields: {
-  fldRyYfmhccOoey4l: impressions,        // impressions
-  fldCOE7QjPrgWhbbk: likes,              // likes
-  fld4oisT7v4LXXi9C: comments,           // comments
-  fldn7UrJDVcSLCgob: shares,             // shares
-  fld9VHOO3Buk7NVwN: saves,              // saves
-  fldIjahm90oqJEqHx: finalScore,         // performance_score
-  fldHUA73iAythfRsQ: scoreSource,        // "metrics" | "metrics_override"
-  fldlC1PMzRw0z6cTR: "scored"            // status
-}}]
+await patchRecord(TABLES.POSTS, post.id, {
+  impressions,
+  likes,
+  comments,
+  shares,
+  saves,
+  performance_score: finalScore,
+  score_source:      scoreSource,            // "metrics" | "metrics_override"
+  status:            "scored",
+});
 
-// Log the score
-await createRecord(LOGS, {
-  workflow_id: state.workflowId,
-  entity_id: post.id,
-  step_name: "score",
-  stage: "scoring",
-  timestamp: new Date().toISOString(),
+await logEntry({
+  workflow_id:    state.workflowId,
+  entity_id:      post.id,
+  step_name:      "score",
+  stage:          "scoring",
   output_summary: `post scored: impressions=${impressions}, er=${(er*100).toFixed(1)}%, computed=${computedScore}, final=${finalScore}, source=${scoreSource}`,
-  model_version: "n/a",
-  status: "success"
+  model_version:  "n/a",
+  status:         "success",
 });
 ```
 
@@ -183,21 +188,20 @@ await createRecord(LOGS, {
 
 #### Update hook (if hook_id set)
 ```javascript
-if (post.fields?.hook_id?.length > 0) {
-  const hookId = post.fields.hook_id[0];
-  // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblWuQNSJ25bs18DZ, recordIds: [hookId])
-  //   fieldIds: [fld0b1nWNg3ZXT21f, fldfckbIwaSSebctW, fldVKrSnP34sofwZ7,
-  //              fld6RgXuUNgyMBuFe, flddxiv4RPE8IEwvm]
-  const hook = // result.records[0]
+// hook_id is now a single uuid FK (not an array of Airtable record IDs).
+if (post.hook_id) {
+  const hookId = post.hook_id;
+  const hook = await getRecord(TABLES.HOOKS, hookId,
+    ['id','avg_score','use_count','status','avg_impressions','avg_engagement_rate']);
 
-  const oldAvg    = hook.fields?.avg_score ?? null;
-  const oldCount  = hook.fields?.use_count ?? 0;
+  const oldAvg    = hook.avg_score ?? null;
+  const oldCount  = hook.use_count ?? 0;
   const newCount  = oldCount + 1;
   const newAvg    = updateRunningAverage(oldAvg, newCount, finalScore);
-  const newAvgImp = updateEMA(hook.fields?.avg_impressions ?? null, impressions);
-  const newAvgER  = updateEMA(hook.fields?.avg_engagement_rate ?? null, er);
+  const newAvgImp = updateEMA(hook.avg_impressions ?? null, impressions);
+  const newAvgER  = updateEMA(hook.avg_engagement_rate ?? null, er);
 
-  let newStatus = hook.fields?.status;
+  let newStatus = hook.status;
   let statusChanged = false;
   if (shouldPromote(newAvg, newCount) && newStatus !== "proven") {
     newStatus = "proven"; statusChanged = true; promotedCount++;
@@ -205,46 +209,42 @@ if (post.fields?.hook_id?.length > 0) {
     newStatus = "retired"; statusChanged = true; retiredCount++;
   }
 
-  // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblWuQNSJ25bs18DZ, typecast: true)
-  records: [{ id: hookId, fields: {
-    fld0b1nWNg3ZXT21f: newAvg,       // avg_score
-    fldfckbIwaSSebctW: newCount,      // use_count
-    fldVKrSnP34sofwZ7: newStatus,     // status
-    fld6RgXuUNgyMBuFe: newAvgImp,    // avg_impressions (EMA)
-    flddxiv4RPE8IEwvm: newAvgER      // avg_engagement_rate (EMA)
-  }}]
+  await patchRecord(TABLES.HOOKS, hookId, {
+    avg_score:           newAvg,
+    use_count:           newCount,
+    status:              newStatus,
+    avg_impressions:     newAvgImp,
+    avg_engagement_rate: newAvgER,
+  });
   hooksUpdated++;
 
-  await createRecord(LOGS, {
-    workflow_id: state.workflowId,
-    entity_id: hookId,
-    step_name: "improver",
-    stage: "score_propagation",
-    timestamp: new Date().toISOString(),
+  await logEntry({
+    workflow_id:    state.workflowId,
+    entity_id:      hookId,
+    step_name:      "improver",
+    stage:          "score_propagation",
     output_summary: `hook [${hookId}] avg_score: ${newAvg.toFixed(2)}, avg_imp: ${Math.round(newAvgImp)}, avg_er: ${(newAvgER*100).toFixed(1)}%, use_count: ${newCount}, status: ${newStatus}${statusChanged ? " (changed)" : ""}`,
-    model_version: "n/a",
-    status: "success"
+    model_version:  "n/a",
+    status:         "success",
   });
 }
 ```
 
 #### Update framework (if framework_id set)
 ```javascript
-if (post.fields?.framework_id?.length > 0) {
-  const frameworkId = post.fields.framework_id[0];
-  // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblYsys2ydvryVtmf, recordIds: [frameworkId])
-  //   fieldIds: [fldoAs2QC066Th0x9, fldtVJ6vuENyFgz8A, fldBhDdj55AxwLEUl,
-  //              fldiGWr8FwZMQjqfe, fldAQX51YZ6YsIAE7]
-  const framework = // result.records[0]
+if (post.framework_id) {
+  const frameworkId = post.framework_id;
+  const framework = await getRecord(TABLES.FRAMEWORKS, frameworkId,
+    ['id','avg_score','use_count','status','avg_impressions','avg_engagement_rate']);
 
-  const oldAvg    = framework.fields?.avg_score ?? null;
-  const oldCount  = framework.fields?.use_count ?? 0;
+  const oldAvg    = framework.avg_score ?? null;
+  const oldCount  = framework.use_count ?? 0;
   const newCount  = oldCount + 1;
   const newAvg    = updateRunningAverage(oldAvg, newCount, finalScore);
-  const newAvgImp = updateEMA(framework.fields?.avg_impressions ?? null, impressions);
-  const newAvgER  = updateEMA(framework.fields?.avg_engagement_rate ?? null, er);
+  const newAvgImp = updateEMA(framework.avg_impressions ?? null, impressions);
+  const newAvgER  = updateEMA(framework.avg_engagement_rate ?? null, er);
 
-  let newStatus = framework.fields?.status;
+  let newStatus = framework.status;
   let statusChanged = false;
   if (shouldPromote(newAvg, newCount) && newStatus !== "proven") {
     newStatus = "proven"; statusChanged = true; promotedCount++;
@@ -252,55 +252,51 @@ if (post.fields?.framework_id?.length > 0) {
     newStatus = "retired"; statusChanged = true; retiredCount++;
   }
 
-  // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblYsys2ydvryVtmf, typecast: true)
-  records: [{ id: frameworkId, fields: {
-    fldoAs2QC066Th0x9: newAvg,       // avg_score
-    fldtVJ6vuENyFgz8A: newCount,      // use_count
-    fldBhDdj55AxwLEUl: newStatus,     // status
-    fldiGWr8FwZMQjqfe: newAvgImp,    // avg_impressions (EMA)
-    fldAQX51YZ6YsIAE7: newAvgER      // avg_engagement_rate (EMA)
-  }}]
+  await patchRecord(TABLES.FRAMEWORKS, frameworkId, {
+    avg_score:           newAvg,
+    use_count:           newCount,
+    status:              newStatus,
+    avg_impressions:     newAvgImp,
+    avg_engagement_rate: newAvgER,
+  });
   frameworksUpdated++;
 
-  await createRecord(LOGS, {
-    workflow_id: state.workflowId,
-    entity_id: frameworkId,
-    step_name: "improver",
-    stage: "score_propagation",
-    timestamp: new Date().toISOString(),
+  await logEntry({
+    workflow_id:    state.workflowId,
+    entity_id:      frameworkId,
+    step_name:      "improver",
+    stage:          "score_propagation",
     output_summary: `framework [${frameworkId}] avg_score: ${newAvg.toFixed(2)}, avg_imp: ${Math.round(newAvgImp)}, avg_er: ${(newAvgER*100).toFixed(1)}%, use_count: ${newCount}, status: ${newStatus}${statusChanged ? " (changed)" : ""}`,
-    model_version: "n/a",
-    status: "success"
+    model_version:  "n/a",
+    status:         "success",
   });
 }
 ```
 
 #### Update humanity_snippet quality (if humanity_snippet_id set)
 ```javascript
-if (post.fields?.humanity_snippet_id?.length > 0) {
-  const snippetId = post.fields.humanity_snippet_id[0];
-  // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblk8QpMOBOs6BMbF, recordIds: [snippetId])
-  //   fieldIds: [fldiAFNJJZUcqhr7C, fldZ6ifFD4OW0PDOt, fld90hLmFbyPWvy59,
-  //              fldBP8uxBquYhZHbJ, fldvIYK5Xh9v7BwOl]
-  const snippet = // result.records[0]
+if (post.humanity_snippet_id) {
+  const snippetId = post.humanity_snippet_id;
+  const snippet = await getRecord(TABLES.SNIPPETS, snippetId,
+    ['id','avg_score','used_count','status','avg_impressions','avg_engagement_rate']);
 
-  const oldAvg   = snippet.fields?.avg_score ?? null;
-  const oldCount = Number(snippet.fields?.used_count ?? 0);
+  const oldAvg   = snippet.avg_score ?? null;
+  const oldCount = Number(snippet.used_count ?? 0);
   const newCount = oldCount + 1;
 
   // Blend post performance_score with review-stage snippet_fit_score (if present).
   // snippet_fit_score is 1–5; normalize to 0–10 scale before blending.
-  const fitScore      = Number(post.fields?.snippet_fit_score ?? 0);  // 1-5 or 0 if not rated
+  const fitScore      = Number(post.snippet_fit_score ?? 0);  // 1-5 or 0 if not rated
   const normalizedFit = fitScore > 0 ? fitScore * 2 : finalScore;
   const blendedScore  = fitScore > 0
     ? (finalScore * 0.7) + (normalizedFit * 0.3)
     : finalScore;
 
   const newAvg    = updateRunningAverage(oldAvg, newCount, blendedScore);
-  const newAvgImp = updateEMA(snippet.fields?.avg_impressions ?? null, impressions);
-  const newAvgER  = updateEMA(snippet.fields?.avg_engagement_rate ?? null, er);
+  const newAvgImp = updateEMA(snippet.avg_impressions ?? null, impressions);
+  const newAvgER  = updateEMA(snippet.avg_engagement_rate ?? null, er);
 
-  let newStatus = snippet.fields?.status ?? "candidate";
+  let newStatus = snippet.status ?? "candidate";
   let statusChanged = false;
   if (shouldPromote(newAvg, newCount) && newStatus !== "proven") {
     newStatus = "proven"; statusChanged = true; promotedCount++;
@@ -312,26 +308,24 @@ if (post.fields?.humanity_snippet_id?.length > 0) {
   // Note: candidate → retired (skipping active) is intentional.
   // If shouldRetire fires at count >= 3, the snippet has enough data to retire regardless of active state.
 
-  // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblk8QpMOBOs6BMbF, typecast: true)
-  records: [{ id: snippetId, fields: {
-    fldiAFNJJZUcqhr7C: newAvg,       // avg_score
-    fldZ6ifFD4OW0PDOt: newCount,      // used_count
-    fld90hLmFbyPWvy59: newStatus,     // status
-    fldfqHyUlwn7JqBFn: new Date().toISOString(), // last_used_at
-    fldBP8uxBquYhZHbJ: newAvgImp,    // avg_impressions (EMA)
-    fldvIYK5Xh9v7BwOl: newAvgER      // avg_engagement_rate (EMA)
-  }}]
+  await patchRecord(TABLES.SNIPPETS, snippetId, {
+    avg_score:           newAvg,
+    used_count:          newCount,
+    status:              newStatus,
+    last_used_at:        new Date().toISOString(),
+    avg_impressions:     newAvgImp,
+    avg_engagement_rate: newAvgER,
+  });
   snippetsUpdated++;
 
-  await createRecord(LOGS, {
-    workflow_id: state.workflowId,
-    entity_id: snippetId,
-    step_name: "improver",
-    stage: "score_propagation",
-    timestamp: new Date().toISOString(),
+  await logEntry({
+    workflow_id:    state.workflowId,
+    entity_id:      snippetId,
+    step_name:      "improver",
+    stage:          "score_propagation",
     output_summary: `snippet [${snippetId}] avg_score: ${newAvg.toFixed(2)}, avg_imp: ${Math.round(newAvgImp)}, avg_er: ${(newAvgER*100).toFixed(1)}%, use_count: ${newCount}, status: ${newStatus}${statusChanged ? " (changed)" : ""}${fitScore > 0 ? `, fit_score: ${fitScore}/5` : ""}`,
-    model_version: "n/a",
-    status: "success"
+    model_version:  "n/a",
+    status:         "success",
   });
 }
 ```
@@ -365,19 +359,19 @@ Avg engagement rate: [X.X]%  |  Avg computed score: [X.X]
 
 ## Writes
 
-| Table | Field | Value |
+| Table | Column | Value |
 |---|---|---|
-| `posts` | `impressions`, `likes`, `comments`, `shares`, `saves` | raw LinkedIn metrics |
-| `posts` | `performance_score` | computed from ER formula (or override) |
-| `posts` | `score_source` | `"metrics"` or `"metrics_override"` |
-| `posts` | `status` | `"scored"` |
-| `hooks_library` | `avg_score`, `use_count`, `status` | running average + promote/retire |
-| `hooks_library` | `avg_impressions`, `avg_engagement_rate` | EMA — scale-aware |
-| `framework_library` | `avg_score`, `use_count`, `status` | running average + promote/retire |
-| `framework_library` | `avg_impressions`, `avg_engagement_rate` | EMA — scale-aware |
-| `humanity_snippets` | `avg_score`, `used_count`, `status`, `last_used_at` | running average + promote/retire |
-| `humanity_snippets` | `avg_impressions`, `avg_engagement_rate` | EMA — scale-aware |
-| `logs` | multiple | one per post scored, one per hook/framework/snippet updated |
+| `pipeline.posts` | `impressions`, `likes`, `comments`, `shares`, `saves` | raw LinkedIn metrics |
+| `pipeline.posts` | `performance_score` | computed from ER formula (or override) |
+| `pipeline.posts` | `score_source` | `"metrics"` or `"metrics_override"` |
+| `pipeline.posts` | `status` | `"scored"` |
+| `pipeline.hooks_library` | `avg_score`, `use_count`, `status` | running average + promote/retire |
+| `pipeline.hooks_library` | `avg_impressions`, `avg_engagement_rate` | EMA — scale-aware |
+| `pipeline.framework_library` | `avg_score`, `use_count`, `status` | running average + promote/retire |
+| `pipeline.framework_library` | `avg_impressions`, `avg_engagement_rate` | EMA — scale-aware |
+| `pipeline.humanity_snippets` | `avg_score`, `used_count`, `status`, `last_used_at` | running average + promote/retire |
+| `pipeline.humanity_snippets` | `avg_impressions`, `avg_engagement_rate` | EMA — scale-aware |
+| `pipeline.logs` | multiple | one per post scored, one per hook/framework/snippet updated |
 
 ---
 

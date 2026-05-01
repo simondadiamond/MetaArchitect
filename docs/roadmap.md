@@ -239,3 +239,6 @@
 | 2026-03-19 | Airtable `typecast` in query param silently ignored | Must be in JSON body — documented in lessons.md |
 | 2026-03-19 | PAT "all permissions" ≠ having `schema.bases:write` scope | Scopes and access are separate axes — documented in lessons.md |
 | 2026-03-20 | Cohort confidence is not a feeling problem | It's a preparation problem — fix is written curriculum + dry run, not more thinking |
+| 2026-04-26 | Docker Desktop credential blob corruption blocked all CLI ops in Plan 0 | Plan specs that say "Docker" should be read as "container or process — pick what runs locally." Pivoted to npm n8n; 20-min cap on Docker yak-shaving |
+| 2026-04-26 | Disabled n8n secure cookie when Tailscale Serve was one command away | When choosing between "drop a security default" and "front with TLS via existing infra," default to TLS. Tailscale Serve / Caddy / nginx are 1–2 commands; security tradeoffs deserve user-explicit consent |
+| 2026-04-26 | Suppressing a security warning is not the same as closing the unsafe path | Before claiming "secure," run the three-way smoke test: intended path works, unintended path refused, alternate intended path works. n8n needed `N8N_LISTEN_ADDRESS=127.0.0.1`, not just `N8N_PROXY_HOPS=1` |

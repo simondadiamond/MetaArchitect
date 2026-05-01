@@ -8,9 +8,16 @@ Format approved posts for copy-paste and record the live URL once published.
 
 Posts with `status = approved`.
 
-Risk tier: medium (Airtable writes) → S + T + E.
+Risk tier: medium (Supabase writes) → S + T + E.
 
-> **Airtable**: Use MCP tools directly — no node scripts. See `.claude/skills/airtable.md` for field IDs. Always `typecast: true` on writes.
+> **Supabase**: All reads/writes go through `tools/supabase.mjs` — never call Supabase MCP from inside this command (token-conscious rule). Column registry: `.claude/skills/supabase.md`. All columns are snake_case.
+
+```javascript
+import {
+  getRecords, patchRecord,
+  logEntry, TABLES,
+} from './tools/supabase.mjs';
+```
 
 ---
 
@@ -30,13 +37,13 @@ const state = buildStateObject({
 
 ### 1. Load approved posts
 ```javascript
-// MCP: get_table_schema for status choice ID "approved", then:
-//   mcp__claude_ai_Airtable__list_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblz0nikoZ89MHHTs"
-//   fieldIds: [fldlC1PMzRw0z6cTR, fldgVwvcXFDA7RCxf, fldztvQenFV0pW44l, fldT83d0w0fpnPSLj]
-//   filters: status = "approved" (choice ID)
-//   sort: fldT83d0w0fpnPSLj asc
-const posts = // result.records
+const posts = await getRecords(TABLES.POSTS,
+  { status: 'approved' },
+  {
+    fields: ['id','status','platform','draft_content','approved_at'],
+    orderBy: { col: 'approved_at', dir: 'asc' },
+    limit: 50,
+  });
 
 if (posts.length === 0) {
   return "No posts with status = approved. Run /review first.";
@@ -100,25 +107,20 @@ if (!url.startsWith("http")) {
 ### 4. Write
 ```javascript
 updateStage(state, "publishing");
-// MCP: mcp__claude_ai_Airtable__update_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblz0nikoZ89MHHTs", typecast: true
-//   fields: fldphmqLqRe5j2m7m (post_url), fldlC1PMzRw0z6cTR (status), fldr6w1R6fRiGXyXp (published_at)
-await patchRecord(POSTS, post.id, {
-  post_url: url.trim(),
-  status: "published",
-  published_at: new Date().toISOString()
+await patchRecord(TABLES.POSTS, post.id, {
+  post_url:     url.trim(),
+  status:       "published",
+  published_at: new Date().toISOString(),
 });
 
-// MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
-await createRecord(LOGS, {
-  workflow_id: state.workflowId,
-  entity_id: post.id,
-  step_name: "published",
-  stage: "publishing",
-  timestamp: new Date().toISOString(),
-  output_summary: `Published: ${post.fields?.platform} — ${url.trim()}`,
-  model_version: "n/a",
-  status: "success"
+await logEntry({
+  workflow_id:    state.workflowId,
+  entity_id:      post.id,
+  step_name:      "published",
+  stage:          "publishing",
+  output_summary: `Published: ${post.platform} — ${url.trim()}`,
+  model_version:  "n/a",
+  status:         "success",
 });
 
 console.log(`✅ Published. Run /score when you have performance data.`);
@@ -135,12 +137,12 @@ After all posts:
 
 ## Writes
 
-| Table | Field | Value |
+| Table | Column | Value |
 |---|---|---|
-| `posts` | `post_url` | URL entered by Simon (required, never empty) |
-| `posts` | `status` | `published` |
-| `posts` | `published_at` | `now()` |
-| `logs` | one entry | per post published |
+| `pipeline.posts` | `post_url` | URL entered by Simon (required, never empty) |
+| `pipeline.posts` | `status` | `published` |
+| `pipeline.posts` | `published_at` | `now()` |
+| `pipeline.logs` | one entry | per post published |
 
 ---
 
@@ -148,7 +150,7 @@ After all posts:
 
 If write fails:
 ```
-❌ Failed to save publish data for post [id] — [error]. URL: [url]. Try again or update Airtable manually.
+❌ Failed to save publish data for post [id] — [error]. URL: [url]. Try again or update pipeline.posts manually.
 ```
 
 Never proceed to next post if URL is not saved. This field is required for the metrics pipeline.

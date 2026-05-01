@@ -2,5 +2,12 @@
   "enabledPlugins": {
     "code-simplifier@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true
+  },
+  "permissions": {
+    "allow": [
+      "mcp__notebooklm-mcp__research_status",
+      "mcp__notebooklm-mcp__notebook_query",
+      "mcp__supabase__list_projects"
+    ]
   }
 }

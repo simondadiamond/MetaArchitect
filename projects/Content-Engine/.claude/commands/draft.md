@@ -18,19 +18,26 @@ Risk tier: medium → S + T + E required.
 ## Shared Session Cache
 
 When invoked from `/week`, a `weekState.cache` object is available containing data pre-loaded
-once for the whole week. Reference it at each step before making an Airtable call. This avoids
+once for the whole week. Reference it at each step before making a Supabase call. This avoids
 re-fetching the same reference data (brand, frameworks, hooks, snippets) for every post.
 
 **Cache keys:**
 - `weekState.cache.brand` — brand record (loaded in /week Phase 0)
 - `weekState.cache.frameworks` — all non-retired framework records (loaded before Phase 3 loop)
 - `weekState.cache.hooks` — all non-retired hook records, unfiltered by intent (filter in-memory)
-- `weekState.cache.snippets` — eligible snippet records with cooldown filter applied (maxRecords: 50)
+- `weekState.cache.snippets` — eligible snippet records with cooldown filter applied (≤50)
 - `weekState.postStubMap[stubId].uif` — deepened UIF written back after research completes
 
-**Fallback**: If no `weekState` (standalone `/draft` run), fetch from Airtable as normal.
+**Fallback**: If no `weekState` (standalone `/draft` run), fetch from Supabase as normal.
 
-> **Airtable**: Use MCP tools directly — no node scripts. All table IDs and field IDs are in `.claude/skills/airtable.md`. Always `typecast: true` on writes.
+> **Supabase**: All reads/writes go through `tools/supabase.mjs` — never call Supabase MCP from inside this command (token-conscious rule). Column registry: `.claude/skills/supabase.md`. All columns are snake_case.
+
+```javascript
+import {
+  getRecords, getRecord, createRecord, patchRecord,
+  logEntry, TABLES,
+} from './tools/supabase.mjs';
+```
 
 ---
 
@@ -51,56 +58,70 @@ const state = buildStateObject({
 ### 1. Find brand context
 ```javascript
 // SESSION CACHE: use weekState.cache.brand if available (pre-loaded in /week Phase 0).
-// Standalone /draft: fetch from Airtable.
-//
-// MCP (fallback only): mcp__claude_ai_Airtable__list_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblwfU5EpDgOKUF7f"
-//   fieldIds: [fldsP8FwcTxJdkac8, fld7N55IwEM8CQYW0, fldLYt1DMS1Fwd5Vy, fldBtXwgSegiYP2pB]
-//   (name, goals, icp_short, main_guidelines — colors/typography/icp_long not needed for drafting)
-//   filters: name = "metaArchitect"
-const brand = weekState?.cache?.brand ?? /* MCP fetch result */ brands[0];
-if (!brand) throw new Error("Brand record 'metaArchitect' not found in Airtable");
+// Standalone /draft: fetch from Supabase.
+let brand;
+if (weekState?.cache?.brand) {
+  brand = weekState.cache.brand;
+} else {
+  const rows = await getRecords(TABLES.BRAND,
+    { name: 'metaArchitect' },
+    { fields: ['name','goals','icp_short','main_guidelines'], limit: 1 });
+  brand = rows[0];
+}
+if (!brand) throw new Error("Brand row 'metaArchitect' not found in pipeline.brand");
 ```
 
 ### 2. Find target post stub
 ```javascript
-// MCP: get_table_schema for status choice ID "research_ready", then:
-//   mcp__claude_ai_Airtable__list_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblz0nikoZ89MHHTs"
-//   fieldIds: [fldlC1PMzRw0z6cTR, fldlGGDwqp6Hy17jT, fldwDOdJgmbf2IZKv,
-//              fldViXirsiFl1j1w4, fldIqhg3WzB4vZfhl, fldps8GeW62IjxTze]
-//   filters: status = "research_ready" (choice ID)
-//   sort: fldViXirsiFl1j1w4 asc, fldIqhg3WzB4vZfhl asc
-const posts = // result.records
-if (posts.length === 0) {
-  return "No post stubs with status = research_ready. Run /research first.";
+// If a specific post_stub_id was passed via the slash command argument, fetch it directly.
+// Otherwise: oldest research_ready stub by planned_week asc, planned_order asc.
+let postStub;
+if (typeof argument === 'string' && argument.length > 0) {
+  postStub = await getRecord(TABLES.POSTS, argument,
+    ['id','status','idea_id','angle_index','planned_week','planned_order','intent']);
+  if (!postStub) throw new Error(`Post stub ${argument} not found`);
+} else {
+  const candidates = await getRecords(TABLES.POSTS,
+    { status: 'research_ready' },
+    {
+      fields: ['id','status','idea_id','angle_index','planned_week','planned_order','intent'],
+      orderBy: { col: 'planned_week', dir: 'asc' },
+      limit: 50,
+    });
+  // Secondary in-memory sort by planned_order asc (PostgREST single-key order is enforced above).
+  candidates.sort((a, b) => (a.planned_order ?? 9999) - (b.planned_order ?? 9999));
+  if (candidates.length === 0) {
+    return "No post stubs with status = research_ready. Run /research first.";
+  }
+  postStub = candidates[0];
 }
-const postStub = posts[0];
-const angleIndex = postStub.fields?.angle_index ?? 0;
-const ideaId = postStub.fields?.idea_id?.[0];
 
-if (!ideaId) throw new Error("Post stub is missing idea_id — check Airtable data");
+const angleIndex = postStub.angle_index ?? 0;
+const ideaId     = postStub.idea_id;            // UUID FK (not an array)
+if (!ideaId) throw new Error("Post stub is missing idea_id — check pipeline.posts row");
 ```
 
 ### 3. Load idea + parse UIF
 ```javascript
 // SESSION CACHE: use weekState.postStubMap[stubId].uif if available.
 // This is the deepened UIF written back by /research after it completes — no re-fetch needed.
-// Standalone /draft or cache miss: fetch from Airtable as normal.
-//
-// MCP (fallback only): mcp__claude_ai_Airtable__list_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblVKVojZscMG6gDk"
-//   recordIds: [ideaId]
-//   fieldIds: [fldMtlpG32VKE0WkN, fldQMArYmpP8s6VKb, fldBvV1FgpD1l2PG1, fldF8BxXjbUiHCWIa]
-const idea = // result.records[0] (only fetched if no cache hit)
-if (!idea && !weekState?.postStubMap?.[postStub.id]?.uif) throw new Error(`Idea ${ideaId} not found`);
+// Standalone /draft or cache miss: fetch from Supabase.
+let idea = null;
+if (!weekState?.postStubMap?.[postStub.id]?.uif) {
+  idea = await getRecord(TABLES.IDEAS, ideaId,
+    ['id','topic','intelligence_file','content_brief','intent']);
+  if (!idea) throw new Error(`Idea ${ideaId} not found in pipeline.ideas`);
+}
 
 const uif = weekState?.postStubMap?.[postStub.id]?.uif
-  ?? (idea.fields?.["Intelligence File"] ? JSON.parse(idea.fields["Intelligence File"]) : null);
-if (!uif) throw new Error("Intelligence File is null — research may not have completed");
+  ?? (idea.intelligence_file ? JSON.parse(idea.intelligence_file) : null);
+if (!uif) throw new Error("intelligence_file is null — research may not have completed");
 
 const contentBrief = weekState?.postStubMap?.[postStub.id]?.contentBrief
-  ?? (idea?.fields?.content_brief ? JSON.parse(idea.fields.content_brief) : null);
+  ?? (idea?.content_brief ? JSON.parse(idea.content_brief) : null);
+
+// Resolve the post's intent — prefer post stub, fall back to idea
+const ideaIntent = postStub.intent ?? idea?.intent ?? null;
 
 // Select the assigned angle
 const angle = uif.angles?.[angleIndex];
@@ -119,16 +140,15 @@ const platform = "linkedin";
 ```javascript
 updateStage(state, "framework_query");
 // SESSION CACHE: use weekState.cache.frameworks if available (pre-loaded before Phase 3 loop).
-// Standalone /draft: fetch from Airtable with maxRecords: 40 as a reasonable cap.
-//
-// MCP (fallback only): get_table_schema for status choice IDs, then list_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblYsys2ydvryVtmf"
-//   fieldIds: [fldcFJnXRemmm2PqU, fld92B4yioAGqEbfL, fldMPkk9oVvbqvTv5,
-//              fldlCsQrc9GWIT1yg, fldoAs2QC066Th0x9, fldtVJ6vuENyFgz8A, fldBhDdj55AxwLEUl,
-//              fldiGWr8FwZMQjqfe, fldAQX51YZ6YsIAE7]
-//   filters: status != "retired"
-//   maxRecords: 40  ← cap response size; library is small, top 40 is sufficient
-const allFrameworks = weekState?.cache?.frameworks ?? /* MCP fetch result */ frameworks;
+// Standalone /draft: fetch from Supabase, in-memory filter for non-retired.
+let allFrameworks;
+if (weekState?.cache?.frameworks) {
+  allFrameworks = weekState.cache.frameworks;
+} else {
+  const rows = await getRecords(TABLES.FRAMEWORKS, null,
+    { fields: ['id','framework_name','description','one_liner','use_when','example','status','source_link','avg_score','pattern_type'], limit: 200 });
+  allFrameworks = rows.filter(f => f.status !== 'retired');
+}
 // Selection: multi-dimensional weighted scoring — see scoreFramework() in improver.md
 const framework = scoreFramework(allFrameworks, angle, idea);
 ```
@@ -138,39 +158,40 @@ const framework = scoreFramework(allFrameworks, angle, idea);
 updateStage(state, "hook_query");
 // SESSION CACHE: use weekState.cache.hooks if available (all non-retired hooks, unfiltered).
 // Filter by intent in-memory after retrieving from cache — same result, no extra round-trip.
-// Standalone /draft: fetch from Airtable with intent filter + maxRecords: 60.
-//
-// MCP (fallback only): list_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblWuQNSJ25bs18DZ"
-//   fieldIds: [fldSIjqzsFuxWOaYb, fldOvWxj7O0x51aIX, fld6UZ8Fy7q2cZQyF,
-//              fldVKrSnP34sofwZ7, fld0b1nWNg3ZXT21f, fldfckbIwaSSebctW,
-//              fld6RgXuUNgyMBuFe, flddxiv4RPE8IEwvm]
-//   filters: status != "retired", intent = idea.intent
-//   maxRecords: 60  ← sorted by avg_score desc; top 60 covers all quality hooks
-const allHooks = weekState?.cache?.hooks ?? /* MCP fetch result */ hooks;
+let allHooks;
+if (weekState?.cache?.hooks) {
+  allHooks = weekState.cache.hooks;
+} else {
+  const rows = await getRecords(TABLES.HOOKS, null,
+    { fields: ['id','hook_text','hook_type','intent','status','avg_score','source_idea_id','angle_name'],
+      orderBy: { col: 'avg_score', dir: 'desc' }, limit: 200 });
+  allHooks = rows.filter(h => h.status !== 'retired').slice(0, 60);
+}
 // Filter in-memory by intent; fall back to all non-retired if no intent match
-const intentHooks = allHooks.filter(h => h.fields?.intent === idea.fields?.intent);
+const intentHooks = allHooks.filter(h => h.intent === ideaIntent);
 const hookPool = intentHooks.length > 0 ? intentHooks : allHooks;
 // Selection: multi-dimensional weighted scoring — see scoreHook() in improver.md
-const hook = scoreHook(hookPool, idea.fields?.intent);
+const hook = scoreHook(hookPool, ideaIntent);
 ```
 
 ### 7. Query humanity_snippets
 ```javascript
 updateStage(state, "snippet_query");
 // SESSION CACHE: use weekState.cache.snippets if available (pre-loaded with cooldown filter).
-// Standalone /draft: fetch from Airtable with date filter + maxRecords: 50.
-//
-// MCP (fallback only): list_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblk8QpMOBOs6BMbF"
-//   fieldIds: [fldaWegy2OyWpA28D, fldZFO5xKMiqBuUMY, fldiAFNJJZUcqhr7C,
-//              fldZ6ifFD4OW0PDOt, fld90hLmFbyPWvy59, fldvIYK5Xh9v7BwOl,
-//              fldfqHyUlwn7JqBFn]  ← last_used_at required for 28-day cooldown gate
-//   filters: last_used_at < [28 days ago] OR last_used_at isEmpty
-//   maxRecords: 50  ← cooldown filter pre-narrows; 50 is enough for weighted scoring
-// Fetch top 3 candidates using weighted scoring (see querySnippets in improver.md).
+// Standalone /draft: fetch from Supabase, apply 28-day cooldown filter in-memory.
+let allSnippets;
+if (weekState?.cache?.snippets) {
+  allSnippets = weekState.cache.snippets;
+} else {
+  const cutoff = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString();
+  const rows = await getRecords(TABLES.SNIPPETS, null,
+    { fields: ['id','snippet_text','category','tags','last_used_at','status','snippet_fit_avg'], limit: 300 });
+  allSnippets = rows
+    .filter(s => !s.last_used_at || s.last_used_at < cutoff)
+    .slice(0, 50);
+}
+// Top 3 candidates via weighted scoring (see querySnippets in improver.md).
 // snippet = best match; alternateSnippets = next 2 for /review to offer.
-const allSnippets = weekState?.cache?.snippets ?? /* MCP fetch result */ snippets;
 const snippetCandidates = scoreSnippets(allSnippets, angle, 3);
 const snippet = snippetCandidates[0] ?? null;
 const alternateSnippets = snippetCandidates.slice(1);
@@ -208,48 +229,43 @@ const draftContent = await generateDraft({ uif, angle, supporting_facts, framewo
 ### 9. Patch post stub in place
 ```javascript
 updateStage(state, "writing");
-// MCP: mcp__claude_ai_Airtable__update_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblz0nikoZ89MHHTs", typecast: true
-//   records: [{ id: postStub.id, fields: { ... } }] — see field IDs in airtable.md
-// Do NOT create a new record — update the existing post stub.
-await patchRecord(POSTS, postStub.id, {
+// Do NOT create a new row — update the existing post stub.
+// FK columns: hook_id / framework_id / humanity_snippet_id are uuid (single value, not arrays).
+// alt_snippet_ids is uuid[] — write as a JS array of UUIDs.
+await patchRecord(TABLES.POSTS, postStub.id, {
   platform,
-  intent: idea.fields?.intent,
-  format: framework?.fields?.pattern_type ?? "none",
-  draft_content: draftContent,
-  hook_id: hook ? [hook.id] : [],
-  framework_id: framework ? [framework.id] : [],
-  humanity_snippet_id: snippet ? [snippet.id] : [],
-  alt_snippet_ids: alternateSnippets.map(s => s.id),
-  needs_snippet: needsSnippet,
-  status: "drafted",
-  drafted_at: new Date().toISOString()
+  intent:              ideaIntent,
+  format:              framework?.pattern_type ?? "none",
+  draft_content:       draftContent,
+  hook_id:             hook?.id ?? null,
+  framework_id:        framework?.id ?? null,
+  humanity_snippet_id: snippet?.id ?? null,
+  alt_snippet_ids:     alternateSnippets.map(s => s.id),
+  needs_snippet:       needsSnippet,
+  status:              "drafted",
+  drafted_at:          new Date().toISOString(),
 });
 
 // Set cooldown on selected snippet immediately — at draft time, not score time.
 // This prevents the same snippet from being picked again within 28 days even if
 // /score hasn't run yet (which would be 7+ days after publish).
 if (snippet) {
-  // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblk8QpMOBOs6BMbF, typecast: true)
-  //   records: [{ id: snippet.id, fields: { fldfqHyUlwn7JqBFn: now() } }]
-  await patchRecord(SNIPPETS, snippet.id, {
-    last_used_at: new Date().toISOString()
+  await patchRecord(TABLES.SNIPPETS, snippet.id, {
+    last_used_at: new Date().toISOString(),
   });
 }
 ```
 
 ### 10. Log completion
 ```javascript
-// MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
-await createRecord(LOGS, {
-  workflow_id: state.workflowId,
-  entity_id: postStub.id,
-  step_name: "draft_created",
-  stage: "complete",
-  timestamp: new Date().toISOString(),
-  output_summary: `Draft written to post stub ${postStub.id}: ${platform} / ${angle.angle_name} / framework: ${framework?.fields?.framework_name ?? "none"} / hook: ${hook?.id ?? "none"}`,
-  model_version: "claude-sonnet-4-6",
-  status: "success"
+await logEntry({
+  workflow_id:    state.workflowId,
+  entity_id:      postStub.id,
+  step_name:      "draft_created",
+  stage:          "complete",
+  output_summary: `Draft written to post stub ${postStub.id}: ${platform} / ${angle.angle_name} / framework: ${framework?.framework_name ?? "none"} / hook: ${hook?.id ?? "none"}`,
+  model_version:  "claude-sonnet-4-6",
+  status:         "success",
 });
 ```
 
@@ -276,35 +292,34 @@ Draft written to post stub. Run /review to approve.
 
 ## Writes
 
-| Table | Field | Value |
+| Table | Column | Value |
 |---|---|---|
-| `posts` | `platform` | `"linkedin"` |
-| `posts` | `intent` | from idea.intent |
-| `posts` | `format` | framework pattern_type |
-| `posts` | `draft_content` | generated post text |
-| `posts` | `hook_id` | linked to hook record (if matched) |
-| `posts` | `framework_id` | linked to framework record (if matched) |
-| `posts` | `humanity_snippet_id` | linked to snippet (if matched) |
-| `posts` | `alt_snippet_ids` | linked to up to 2 alternate snippet candidates |
-| `posts` | `needs_snippet` | true/false |
-| `posts` | `status` | `"drafted"` |
-| `posts` | `drafted_at` | `now()` |
-| `humanity_snippets` | `last_used_at` | `now()` — written immediately on snippet selection to start the 28-day cooldown |
-| `logs` | one entry | draft_created |
+| `pipeline.posts` | `platform` | `"linkedin"` |
+| `pipeline.posts` | `intent` | from idea.intent (or post stub's pre-set intent) |
+| `pipeline.posts` | `format` | framework `pattern_type` |
+| `pipeline.posts` | `draft_content` | generated post text |
+| `pipeline.posts` | `hook_id` | uuid FK (single value, nullable) |
+| `pipeline.posts` | `framework_id` | uuid FK (single value, nullable) |
+| `pipeline.posts` | `humanity_snippet_id` | uuid FK (single value, nullable) |
+| `pipeline.posts` | `alt_snippet_ids` | uuid[] — up to 2 alternate snippet candidates |
+| `pipeline.posts` | `needs_snippet` | true/false |
+| `pipeline.posts` | `status` | `"drafted"` |
+| `pipeline.posts` | `drafted_at` | `now()` |
+| `pipeline.humanity_snippets` | `last_used_at` | `now()` — written immediately on snippet selection to start the 28-day cooldown |
+| `pipeline.logs` | one entry | draft_created |
 
 ---
 
 ## Rules
 
 - **Single angle per run** — draft the post stub's assigned `angle_index` only. No iteration over all angles.
-- **Patch, don't create** — the post stub already exists; update it in place. Never `createRecord` a new posts record.
+- **Patch, don't create** — the post stub already exists; update it in place. Never `createRecord` a new posts row.
 - **Never block on missing snippet** — draft without, flag `needs_snippet = true`
-- **Never fabricate a humanity snippet** — only use verified records from `humanity_snippets` table
+- **Never fabricate a humanity snippet** — only use verified rows from `pipeline.humanity_snippets`
 - `needs_snippet` is reported to Simon with a description of what kind of moment would fit
 - `score_audience_relevance` is never read or used in any draft decision
 - **`needs_snippet` must be derived, not hardcoded**: always `snippet === null` — never `false` as a literal
-- **`alt_snippet_ids` must always be present in the payload**: `alternateSnippets.map(s => s.id)` (empty array `[]` if no alternates) — Airtable silently ignores missing fields; omitting it is invisible at write time but breaks `/review`
-- **Airtable checkbox read-back**: `needs_snippet = false` (unchecked) does NOT appear in the API response — the field is absent, not `false`. This is correct Airtable behavior.
+- **`alt_snippet_ids` must always be present in the payload**: `alternateSnippets.map(s => s.id)` (empty array `[]` if no alternates) — `/review` reads it directly
 
 ---
 
@@ -314,16 +329,14 @@ No persistent lock for `/draft`. If draft generation fails:
 
 ```javascript
 } catch (error) {
-  // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
-  await createRecord(LOGS, {
-    workflow_id: state.workflowId,
-    entity_id: postStub.id,
-    step_name: "error",
-    stage: state.stage,
-    timestamp: new Date().toISOString(),
+  await logEntry({
+    workflow_id:    state.workflowId,
+    entity_id:      postStub.id,
+    step_name:      "error",
+    stage:          state.stage,
     output_summary: `Error: ${error.message}`,
-    model_version: "n/a",
-    status: "error"
+    model_version:  "n/a",
+    status:         "error",
   });
   return formatError("/draft", state.stage, error.message, false);
   // Output: ❌ /draft failed at [stage] — [error]

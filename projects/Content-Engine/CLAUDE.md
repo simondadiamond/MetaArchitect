@@ -42,13 +42,15 @@ All stages are Claude Code slash commands. See [workflows/README.md](workflows/R
 
 All tools live in `tools/` (relative to this folder).
 
-> **Airtable operations use MCP tools directly** — no node scripts for Airtable reads/writes. See `.claude/skills/airtable.md` for the field ID registry and MCP tool reference.
+> **Pipeline data ops go through `tools/supabase.mjs`** — never call Supabase MCP from inside slash commands (token-conscious rule). MCP is reserved for one-shot DDL or interactive diagnostics. See `.claude/skills/supabase.md` for the column registry and helper API reference.
 
 | Tool | Purpose | Invoke |
 |------|---------|--------|
-| `airtable.mjs` | Reusable Airtable REST client — still used by `research-perplexity.mjs` for logging | `import { getRecords, patchRecord, createRecord, TABLES } from './tools/airtable.mjs'` |
-| `research-perplexity.mjs` | Run Perplexity queries (sonar-pro) + log to Airtable | Called by `/harvest` command |
-| `_draft_check.mjs` | Dev utility — probe Airtable field names | `node tools/_draft_check.mjs` |
+| `supabase.mjs` | Pipeline data layer — reads/writes the `pipeline.*` schema; STATE log/lock helpers | `import { getRecords, patchRecord, createRecord, logEntry, setLock, clearLock, TABLES, db } from './tools/supabase.mjs'` |
+| `supabase-migrate.mjs` | One-time Airtable → Supabase migration; idempotent, supports `--dry-run` and `--table=<name>` | `node tools/supabase-migrate.mjs` |
+| `airtable.mjs` | **Deprecated** — kept only during 1-week fallback window after migration; will be deleted | — |
+| `research-perplexity.mjs` | Run Perplexity queries (sonar-pro) + log via `supabase.mjs` | Called by `/harvest` command |
+| `_draft_check.mjs` | **Deprecated** — legacy Airtable field probe | — |
 
 **Before building anything new**: check `tools/` first. Only create new scripts when nothing exists for the task.
 
@@ -104,17 +106,14 @@ Valid `pillar_connection` values:
 
 | Variable | Purpose |
 |----------|---------|
-| `AIRTABLE_PAT` | Personal Access Token |
-| `AIRTABLE_BASE_ID` | Base ID (starts with `app`) |
-| `AIRTABLE_TABLE_IDEAS` | ideas table ID |
-| `AIRTABLE_TABLE_POSTS` | posts table ID |
-| `AIRTABLE_TABLE_HOOKS` | hooks_library table ID |
-| `AIRTABLE_TABLE_FRAMEWORKS` | framework_library table ID |
-| `AIRTABLE_TABLE_SNIPPETS` | humanity_snippets table ID |
-| `AIRTABLE_TABLE_LOGS` | logs table ID |
-| `AIRTABLE_TABLE_BRAND` | brand table ID |
+| `SUPABASE_URL` | Supabase project URL (e.g. `https://ashwrqkoijzvakdmfskj.supabase.co`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service-role JWT — bypasses RLS, used by `tools/supabase.mjs` |
+| `SUPABASE_ANON_KEY` | Anon key (for clients that should respect RLS — currently unused server-side) |
 | `PERPLEXITY_API_KEY` | Perplexity API (sonar-pro, used in research phase) |
-| `ANTHROPIC_API_KEY` | Claude API (all LLM calls) |
+| `AIRTABLE_PAT` | **Deprecated** — kept during 1-week fallback window for `supabase-migrate.mjs` re-runs |
+| `AIRTABLE_BASE_ID` + `AIRTABLE_TABLE_*` | **Deprecated** — same fallback window as above |
+
+LLM calls run via the Claude Max subscription (Claude Code in-session, or `claude -p` headless for cron/n8n). **No `ANTHROPIC_API_KEY` — never call the SDK directly.**
 
 Load from `.env` at repo root. Never hardcode values.
 
@@ -130,7 +129,7 @@ const state = {
   workflowId: randomUUID(),
   stage: "init",
   entityType: "idea" | "post" | "hook",
-  entityId: "<airtable record ID>",
+  entityId: "<supabase uuid OR legacy airtable rec id — supabase.mjs accepts either>",
   startedAt: new Date().toISOString(),
   lastUpdatedAt: new Date().toISOString()
 };

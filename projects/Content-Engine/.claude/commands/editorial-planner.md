@@ -2,10 +2,17 @@
 
 Compose the optimal 3–4 post lineup for the current ISO week. Answers: "What should I draft this week, in what order, and why?"
 
-**Risk tier**: medium (LLM call + Airtable batch writes) → S + T + E required.
+**Risk tier**: medium (LLM call + Supabase batch writes) → S + T + E required.
 **No lock needed**: no single expensive operation to gate — the whole command is the unit.
 
-> **Airtable**: Use MCP tools directly — no node scripts. All table IDs and field IDs are in `.claude/skills/airtable.md`. Always `typecast: true` on writes.
+> **Supabase**: All reads/writes go through `tools/supabase.mjs` — never call Supabase MCP from inside this command (token-conscious rule). Column registry: `.claude/skills/supabase.md`. All columns are snake_case.
+
+```javascript
+import {
+  getRecords, getRecord, createRecord, patchRecord,
+  logEntry, TABLES,
+} from './tools/supabase.mjs';
+```
 
 ---
 
@@ -52,11 +59,11 @@ Check the **posts** table (not ideas) — post stubs are the canonical record of
 
 ```javascript
 state.stage = "idempotency_check";
-// MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs)
-//   fieldIds: [fldViXirsiFl1j1w4] — filters: planned_week = plannedWeek (text field)
-const existing = // result.records
+const existing = await getRecords(TABLES.POSTS,
+  { planned_week: plannedWeek },
+  { fields: ['id'], limit: 10 });
 if (existing.length > 0) {
-  return `⚠ Editorial plan for ${plannedWeek} already exists (${existing.length} post stubs). Check Airtable before re-running.`;
+  return `⚠ Editorial plan for ${plannedWeek} already exists (${existing.length} post stubs). Check pipeline.posts before re-running.`;
 }
 ```
 
@@ -66,14 +73,15 @@ if (existing.length > 0) {
 
 ```javascript
 state.stage = "fetch_candidates";
-// MCP: get_table_schema for Status "New" choice ID, then:
-//   list_records_for_table(appgvQDqiFZ3ESigA, tblVKVojZscMG6gDk)
-//   fieldIds: [fldMtlpG32VKE0WkN, fld9frOZF4oaf3r6V, fldQMArYmpP8s6VKb, fldBvV1FgpD1l2PG1,
-//              fldF8BxXjbUiHCWIa, fldJatmYz453YGTyV, fldeYByfFx9xjFnnK, fldquN4wVbd6eLKYF, fldvw93lwpYEqD5nX]
-//   filters: Status = "New" (choice ID) — sort: fldJatmYz453YGTyV desc
-const candidates = // result.records
+const candidates = await getRecords(TABLES.IDEAS,
+  { status: 'New' },
+  {
+    fields: ['id','topic','status','intelligence_file','content_brief','intent','score_overall','score_brand_fit','score_originality','score_virality'],
+    orderBy: { col: 'score_overall', dir: 'desc' },
+    limit: 100,
+  });
 if (candidates.length < 3) {
-  return `⚠ Only ${candidates.length} ideas with Status = "New" — need at least 3. Run /capture to add more.`;
+  return `⚠ Only ${candidates.length} ideas with status = "New" — need at least 3. Run /capture to add more.`;
 }
 ```
 
@@ -85,14 +93,13 @@ This data is passed to the composer as awareness context. It is NOT the primary 
 
 ```javascript
 state.stage = "fetch_pipeline_context";
-// MCP: get_table_schema for Status choice IDs (Selected, Ready), then:
-//   list_records_for_table(appgvQDqiFZ3ESigA, tblVKVojZscMG6gDk)
-//   fieldIds: [fld9frOZF4oaf3r6V, fldF8BxXjbUiHCWIa]
-//   filters: Status isAnyOf ["Selected", "Ready"] (choice IDs)
-const inFlight = // result.records
+// Array filter → .in() query: status IN ('Selected', 'Ready')
+const inFlight = await getRecords(TABLES.IDEAS,
+  { status: ['Selected', 'Ready'] },
+  { fields: ['id','status','intent'], limit: 200 });
 const inFlightCounts = { authority: 0, education: 0, community: 0, virality: 0 };
 inFlight.forEach(r => {
-  const intent = r.fields?.intent;
+  const intent = r.intent;
   if (intent && inFlightCounts[intent] !== undefined) inFlightCounts[intent]++;
 });
 ```
@@ -139,18 +146,17 @@ function getPriorWeeks(currentWeek, count) {
 }
 
 const priorWeeks = getPriorWeeks(plannedWeek, 4);
-// MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs)
-//   fieldIds: [fldViXirsiFl1j1w4, fldoszwWyI2UBIIzu, fldDNwByEQkXdq4lV, fldlGGDwqp6Hy17jT,
-//              fldw3GtLHQeFtN9xl, fldrhO25vUB5CDjgt, fldps8GeW62IjxTze]
-//   filters: planned_week isAnyOf priorWeeks (text field — use OR with multiple "=" operands)
-const recentPosts = // result.records
+// Array filter → .in() query: planned_week IN priorWeeks
+const recentPosts = await getRecords(TABLES.POSTS,
+  { planned_week: priorWeeks },
+  { fields: ['id','planned_week','pillar','narrative_role','idea_id','post_class','territory_key'], limit: 100 });
 
 // Group by week for consecutive-week checks
 const recentByWeek = {};
 recentPosts.forEach(p => {
-  const w = p.fields?.planned_week ?? "unknown";
+  const w = p.planned_week ?? "unknown";
   if (!recentByWeek[w]) recentByWeek[w] = [];
-  recentByWeek[w].push(p.fields);
+  recentByWeek[w].push(p);
 });
 
 const priorWeekPosts = recentByWeek[priorWeeks[0]] ?? [];
@@ -229,18 +235,18 @@ const recentHistory = {
   weeks_sampled:        priorWeeks,
   total_posts:          recentPosts.length,
   // Distinct arrays — for set-membership checks
-  pillars_used:         [...new Set(recentPosts.map(p => p.fields?.pillar).filter(Boolean))],
-  narrative_roles_used: [...new Set(recentPosts.map(p => p.fields?.narrative_role).filter(Boolean))],
-  idea_ids_used:        [...new Set(recentPosts.map(p => p.fields?.idea_id?.[0]).filter(Boolean))],
-  post_classes_used:    [...new Set(recentPosts.map(p => p.fields?.post_class).filter(Boolean))],
-  territory_keys_used:  [...new Set(recentPosts.map(p => p.fields?.territory_key).filter(Boolean))],
+  pillars_used:         [...new Set(recentPosts.map(p => p.pillar).filter(Boolean))],
+  narrative_roles_used: [...new Set(recentPosts.map(p => p.narrative_role).filter(Boolean))],
+  idea_ids_used:        [...new Set(recentPosts.map(p => p.idea_id).filter(Boolean))],
+  post_classes_used:    [...new Set(recentPosts.map(p => p.post_class).filter(Boolean))],
+  territory_keys_used:  [...new Set(recentPosts.map(p => p.territory_key).filter(Boolean))],
   // Counts — required for percentage and frequency rules
-  pillar_counts:         buildCounts(recentPosts.map(p => p.fields?.pillar)),
-  narrative_role_counts: buildCounts(recentPosts.map(p => p.fields?.narrative_role)),
-  post_class_counts:     buildCounts(recentPosts.map(p => p.fields?.post_class)),
-  territory_key_counts:  aggregateTerritories(recentPosts.map(p => p.fields?.territory_key)),
+  pillar_counts:         buildCounts(recentPosts.map(p => p.pillar)),
+  narrative_role_counts: buildCounts(recentPosts.map(p => p.narrative_role)),
+  post_class_counts:     buildCounts(recentPosts.map(p => p.post_class)),
+  territory_key_counts:  aggregateTerritories(recentPosts.map(p => p.territory_key)),
   // Prior week only — for back-to-back checks
-  prior_week_idea_ids:       priorWeekPosts.map(p => p.idea_id?.[0]).filter(Boolean),
+  prior_week_idea_ids:       priorWeekPosts.map(p => p.idea_id).filter(Boolean),
   prior_week_post_classes:   priorWeekPosts.map(p => p.post_class).filter(Boolean),
   prior_week_territory_keys: priorWeekPosts.map(p => p.territory_key).filter(Boolean),
 };
@@ -254,12 +260,10 @@ const recentHistory = {
 
 ```javascript
 state.stage = "fetch_brand";
-// MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblwfU5EpDgOKUF7f)
-//   fieldIds: [fldsP8FwcTxJdkac8, fld7N55IwEM8CQYW0, fldLYt1DMS1Fwd5Vy, fldBtXwgSegiYP2pB]
-//   (name, goals, icp_short, main_guidelines — colors/typography/icp_long not needed for planning)
-//   filters: name = "metaArchitect"
-const brandRecords = // result.records
-const brand = brandRecords[0]?.fields ?? {};
+const brandRows = await getRecords(TABLES.BRAND,
+  { name: 'metaArchitect' },
+  { fields: ['name','goals','icp_short','main_guidelines'], limit: 1 });
+const brand = brandRows[0] ?? {};
 ```
 
 ---
@@ -278,7 +282,7 @@ const composerInput = {
   candidates: candidates.map(r => {
     let angles = [];
     try {
-      const uif = JSON.parse(r.fields?.["Intelligence File"] ?? "{}");
+      const uif = JSON.parse(r.intelligence_file ?? "{}");
       angles = (uif.angles ?? []).map((a, i) => ({
         index: i,
         angle_name: a.angle_name,
@@ -292,12 +296,12 @@ const composerInput = {
     if (angles.length === 0) {
       let fallbackAngle = null;
       try {
-        const brief = JSON.parse(r.fields?.content_brief ?? "{}");
+        const brief = JSON.parse(r.content_brief ?? "{}");
         fallbackAngle = brief.core_angle ?? null;
       } catch (_) {}
       angles = [{
         index: 0,
-        angle_name: fallbackAngle ?? r.fields?.Topic ?? "unknown",
+        angle_name: fallbackAngle ?? r.topic ?? "unknown",
         contrarian_take: "",
         pillar_connection: null,
         brand_specific_angle: false
@@ -312,12 +316,12 @@ const composerInput = {
     // This map provides all available angles as raw material only.
     return {
       idea_id: r.id,
-      topic: r.fields?.Topic ?? "",
-      score_overall: r.fields?.score_overall ?? null,
-      score_brand_fit: r.fields?.score_brand_fit ?? null,
-      score_originality: r.fields?.score_originality ?? null,
-      score_virality: r.fields?.score_virality ?? null,
-      intent: r.fields?.intent ?? null,
+      topic: r.topic ?? "",
+      score_overall: r.score_overall ?? null,
+      score_brand_fit: r.score_brand_fit ?? null,
+      score_originality: r.score_originality ?? null,
+      score_virality: r.score_virality ?? null,
+      intent: r.intent ?? null,
       angles
     };
   })
@@ -333,13 +337,12 @@ Load the `planner.md` skill as the system prompt. Call `claude-sonnet-4-6`.
 ```javascript
 state.stage = "composer_call";
 
-const response = await anthropic.messages.create({
-  model: "claude-sonnet-4-6",
-  max_tokens: 2048,
-  system: PLANNER_SYSTEM_PROMPT,  // loaded from .claude/skills/planner.md
-  messages: [{ role: "user", content: JSON.stringify(composerInput) }]
-});
-const rawOutput = response.content[0].text;
+// In-session LLM call (Max subscription, NOT the Anthropic SDK).
+// System prompt: load .claude/skills/planner.md as PLANNER_SYSTEM_PROMPT.
+// User content: JSON.stringify(composerInput).
+// Model: claude-sonnet-4-6.
+// Output: rawOutput — the JSON plan as a string (parsed in step 8).
+const rawOutput = // result of in-session generation
 ```
 
 ---
@@ -355,15 +358,13 @@ let plan;
 try {
   plan = JSON.parse(rawOutput);
 } catch (e) {
-  // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
-await logEntry({ workflow_id: state.workflowId, entity_id: "batch", step_name: "editorial_composer", stage: state.stage, output_summary: `JSON parse failed: ${e.message}`, model_version: "claude-sonnet-4-6", status: "error" });
+  await logEntry({ workflow_id: state.workflowId, entity_id: "batch", step_name: "editorial_composer", stage: state.stage, output_summary: `JSON parse failed: ${e.message}`, model_version: "claude-sonnet-4-6", status: "error" });
   return `❌ /editorial-planner failed at validation — JSON parse error: ${e.message} — safe to retry`;
 }
 
 const validation = validateEditorialPlan(plan, candidates);
 if (!validation.valid) {
-  // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
-await logEntry({ workflow_id: state.workflowId, entity_id: "batch", step_name: "editorial_composer", stage: state.stage, output_summary: `Validation failed: ${validation.errors.join("; ")}`, model_version: "claude-sonnet-4-6", status: "error" });
+  await logEntry({ workflow_id: state.workflowId, entity_id: "batch", step_name: "editorial_composer", stage: state.stage, output_summary: `Validation failed: ${validation.errors.join("; ")}`, model_version: "claude-sonnet-4-6", status: "error" });
   return `❌ /editorial-planner failed at validation — ${validation.errors.join("; ")} — safe to retry`;
 }
 ```
@@ -373,7 +374,6 @@ await logEntry({ workflow_id: state.workflowId, entity_id: "batch", step_name: "
 ### 9. Log LLM call
 
 ```javascript
-// MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
 await logEntry({
   workflow_id: state.workflowId,
   entity_id: "batch",
@@ -388,9 +388,9 @@ await logEntry({
 
 ---
 
-### 10. Write to Airtable
+### 10. Write to Supabase
 
-Create a **post stub** in the posts table for each planned post, then mark the idea `Selected` on the ideas table (for human visibility in Airtable). Posts table is canonical for pipeline operations.
+Create a **post stub** in `pipeline.posts` for each planned post, then mark the idea `Selected` on `pipeline.ideas` (for human visibility in dashboard views). Posts table is canonical for pipeline operations.
 
 Track written stubs for partial-failure reporting.
 
@@ -445,46 +445,40 @@ for (const post of plan.posts) {
     }
     const postClass = inferPostClass(post, sourceAngleName, territoryKey, recentHistory);
 
-    // MCP: mcp__claude_ai_Airtable__create_records_for_table
-    //   baseId: "appgvQDqiFZ3ESigA", tableId: "tblz0nikoZ89MHHTs", typecast: true
-    //   Use field IDs from airtable.md for all fields below
-    const postStub = await createRecord(POSTS, {
-      idea_id: [post.idea_id],
-      planned_week: plannedWeek,
-      planned_order: post.order,
-      narrative_role: post.narrative_role,
-      angle_index: post.angle_index,
-      series_id: post.series_id ?? null,
-      series_part: post.series_part ?? null,
-      series_total: post.series_total ?? null,
+    const postStub = await createRecord(TABLES.POSTS, {
+      idea_id:          post.idea_id,        // UUID FK (single value, no longer an array)
+      planned_week:     plannedWeek,
+      planned_order:    post.order,
+      narrative_role:   post.narrative_role,
+      angle_index:      post.angle_index,
+      series_id:        post.series_id ?? null,
+      series_part:      post.series_part ?? null,
+      series_total:     post.series_total ?? null,
       selection_reason: post.why_selected,
-      status: "planned",
+      status:           "planned",
       // editorial memory fields
       pillar:            post.pillar,
       thesis_angle:      post.thesis_angle,
       source_angle_name: sourceAngleName,
       territory_key:     territoryKey,
       post_class:        postClass,
-    });
+    }, ['id']);
 
-    // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblVKVojZscMG6gDk, typecast: true)
-    //   fields: fld9frOZF4oaf3r6V (Status), fldx3QLe3tKPmU88U (selected_at), etc.
-    await patchRecord(IDEAS, post.idea_id, {
-      Status: "Selected",
+    await patchRecord(TABLES.IDEAS, post.idea_id, {
+      status:           "Selected",
       selected_at,
-      planned_week: plannedWeek,
-      planned_order: post.order,      // last-write wins if multi-post — acceptable for display
-      narrative_role: post.narrative_role,
-      series_id: post.series_id ?? null,
-      series_part: post.series_part ?? null,
-      series_total: post.series_total ?? null,
-      selection_reason: post.why_selected
+      planned_week:     plannedWeek,
+      planned_order:    post.order,      // last-write wins if multi-post — acceptable for display
+      narrative_role:   post.narrative_role,
+      series_id:        post.series_id ?? null,
+      series_part:      post.series_part ?? null,
+      series_total:     post.series_total ?? null,
+      selection_reason: post.why_selected,
     });
 
     written.push(postStub.id);
 
-    // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
-await logEntry({
+    await logEntry({
       workflow_id: state.workflowId,
       entity_id: postStub.id,
       step_name: "post_stub_created",
@@ -496,7 +490,7 @@ await logEntry({
     });
   } catch (e) {
     const writtenList = written.length > 0 ? ` Already written stubs: ${written.join(", ")}` : "";
-    return `❌ /editorial-planner failed at writing (idea ${post.idea_id}) — ${e.message}${writtenList} — check Airtable before retrying`;
+    return `❌ /editorial-planner failed at writing (idea ${post.idea_id}) — ${e.message}${writtenList} — check pipeline.posts before retrying`;
   }
 }
 ```
@@ -543,33 +537,33 @@ Narrative role display labels:
 
 ## Writes
 
-| Table | Field | Value |
-|-------|-------|-------|
-| `posts` | `idea_id` | linked record array `["recXXX"]` |
-| `posts` | `planned_week` | `"YYYY-WNN"` |
-| `posts` | `planned_order` | `1–4` |
-| `posts` | `narrative_role` | single select value |
-| `posts` | `angle_index` | 0-based index into UIF angles array |
-| `posts` | `series_id` | text or null |
-| `posts` | `series_part` | number or null |
-| `posts` | `series_total` | number or null |
-| `posts` | `selection_reason` | long text |
-| `posts` | `status` | `"planned"` |
-| `posts` | `pillar` | from planner output |
-| `posts` | `thesis_angle` | from planner output |
-| `posts` | `source_angle_name` | looked up from candidates array via `idea_id` + `angle_index` |
-| `posts` | `territory_key` | derived slug: angle name → thesis → topic |
-| `posts` | `post_class` | inferred: `practitioner_core` / `territory_deepening` / `trend_commentary` / `product_commentary` |
-| `ideas` | `Status` | `"Selected"` |
-| `ideas` | `selected_at` | `now()` |
-| `ideas` | `planned_week` | `"YYYY-WNN"` (display only) |
-| `ideas` | `planned_order` | `1–4` (display only, last-write wins) |
-| `ideas` | `narrative_role` | single select (display only) |
-| `ideas` | `series_id` | text or null (display only) |
-| `ideas` | `series_part` | number or null (display only) |
-| `ideas` | `series_total` | number or null (display only) |
-| `ideas` | `selection_reason` | long text (display only) |
-| `logs` | all fields | per LLM call + per post stub written |
+| Table | Column | Value |
+|-------|--------|-------|
+| `pipeline.posts` | `idea_id` | UUID FK (single value, not an array) |
+| `pipeline.posts` | `planned_week` | `"YYYY-WNN"` |
+| `pipeline.posts` | `planned_order` | `1–4` |
+| `pipeline.posts` | `narrative_role` | single select value |
+| `pipeline.posts` | `angle_index` | 0-based index into UIF angles array |
+| `pipeline.posts` | `series_id` | text or null |
+| `pipeline.posts` | `series_part` | number or null |
+| `pipeline.posts` | `series_total` | number or null |
+| `pipeline.posts` | `selection_reason` | long text |
+| `pipeline.posts` | `status` | `"planned"` |
+| `pipeline.posts` | `pillar` | from planner output |
+| `pipeline.posts` | `thesis_angle` | from planner output |
+| `pipeline.posts` | `source_angle_name` | looked up from candidates array via `idea_id` + `angle_index` |
+| `pipeline.posts` | `territory_key` | derived slug: angle name → thesis → topic |
+| `pipeline.posts` | `post_class` | inferred: `practitioner_core` / `territory_deepening` / `trend_commentary` / `product_commentary` |
+| `pipeline.ideas` | `status` | `"Selected"` |
+| `pipeline.ideas` | `selected_at` | `now()` |
+| `pipeline.ideas` | `planned_week` | `"YYYY-WNN"` (display only) |
+| `pipeline.ideas` | `planned_order` | `1–4` (display only, last-write wins) |
+| `pipeline.ideas` | `narrative_role` | single select (display only) |
+| `pipeline.ideas` | `series_id` | text or null (display only) |
+| `pipeline.ideas` | `series_part` | number or null (display only) |
+| `pipeline.ideas` | `series_total` | number or null (display only) |
+| `pipeline.ideas` | `selection_reason` | long text (display only) |
+| `pipeline.logs` | all fields | per LLM call + per post stub written |
 
 ---
 
@@ -580,30 +574,10 @@ No lock to clear. On any failure:
 2. If failure occurs mid-write (step 10), include already-written stub IDs in error message
 3. Return formatted error: `❌ /editorial-planner failed at [stage] — [message] — safe to retry`
 
-Manual recovery: inspect Airtable posts table for partially-written stubs and delete them, then reset idea `Status` back to `"New"` before retrying.
+Manual recovery: query `pipeline.posts` for partially-written stubs (`planned_week = '<week>'`) and delete them, then reset idea `status` back to `"New"` before retrying.
 
 ---
 
-## Airtable Schema Requirements
+## Schema Requirements
 
-### `posts` table — new fields required before running:
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `planned_week` | text | e.g. `"2026-W11"` |
-| `planned_order` | number | 1–4 |
-| `narrative_role` | single select | same 7 options as ideas table |
-| `angle_index` | number | 0-based index into UIF angles array |
-| `series_id` | text | nullable |
-| `series_part` | number | nullable |
-| `series_total` | number | nullable |
-| `selection_reason` | long text | — |
-| `research_started_at` | text | ISO datetime, used as lock by /research |
-| `research_completed_at` | text | ISO datetime |
-| `status` options | single select | add `planned`, `researching`, `research_ready` to existing options |
-
-### `ideas` table — 1 new field required:
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `research_depth` | single select | options: `shallow`, `deep` |
+All required columns exist in `pipeline.posts` and `pipeline.ideas` (set up by `infra/supabase/schema.sql`). Column registry: `.claude/skills/supabase.md`.

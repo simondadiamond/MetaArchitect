@@ -13,8 +13,15 @@ With argument: `/research [post_stub_id]` — research a specific post stub.
 
 Risk tier: medium → S + T + E required.
 
-> **Airtable**: Use MCP tools directly — no node scripts. All table IDs and field IDs are in `.claude/skills/airtable.md`. Always `typecast: true` on writes.
+> **Supabase**: All reads/writes go through `tools/supabase.mjs` — never call Supabase MCP from inside this command (token-conscious rule). Column registry: `.claude/skills/supabase.md`. All columns are snake_case.
 > **NotebookLM**: Deep research uses `mcp__notebooklm-mcp__research_start/status/import/notebook_query` — no Perplexity, no node scripts.
+
+```javascript
+import {
+  getRecords, getRecord, createRecord, patchRecord,
+  logEntry, setLock, clearLock, TABLES,
+} from './tools/supabase.mjs';
+```
 
 ---
 
@@ -36,67 +43,77 @@ const state = buildStateObject({
 ### 1. Find brand context
 ```javascript
 // SESSION CACHE: When called from /week, weekState.cache.brand is pre-loaded.
-// Use it directly — skip the Airtable fetch.
-// Standalone /research (no weekState): fetch from Airtable as normal.
-//
-// if (weekState?.cache?.brand) {
-//   brand = weekState.cache.brand;
-// } else {
-//   MCP: mcp__claude_ai_Airtable__list_records_for_table
-//     baseId: "appgvQDqiFZ3ESigA", tableId: "tblwfU5EpDgOKUF7f"
-//     fieldIds: [fldsP8FwcTxJdkac8, fld7N55IwEM8CQYW0, fldLYt1DMS1Fwd5Vy, fldBtXwgSegiYP2pB]
-//     (name, goals, icp_short, main_guidelines — colors/typography/icp_long not needed for research)
-//     filters: name = "metaArchitect" (text field, no schema lookup)
-// }
-const brand = weekState?.cache?.brand ?? /* MCP fetch result */ brands[0];
-if (!brand) throw new Error("Brand record 'metaArchitect' not found in Airtable");
+// Use it directly — skip the DB fetch.
+// Standalone /research (no weekState): fetch from Supabase.
+let brand;
+if (weekState?.cache?.brand) {
+  brand = weekState.cache.brand;
+} else {
+  const rows = await getRecords(TABLES.BRAND,
+    { name: 'metaArchitect' },
+    { fields: ['name','goals','icp_short','main_guidelines'], limit: 1 });
+  brand = rows[0];
+}
+if (!brand) throw new Error("Brand row 'metaArchitect' not found in pipeline.brand");
 ```
 
 ### 2. Find target post stub
 ```javascript
-// MCP: mcp__claude_ai_Airtable__get_table_schema to get choice IDs for status = "planned"
-//   Then: mcp__claude_ai_Airtable__list_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblz0nikoZ89MHHTs"
-//   fieldIds: [fldlC1PMzRw0z6cTR, fldlGGDwqp6Hy17jT, fldwDOdJgmbf2IZKv, fldViXirsiFl1j1w4, fldIqhg3WzB4vZfhl, fldC2PIfrupZA2Ohk]
-//   filters: status = "planned" (choice ID) AND research_started_at isEmpty
-//   sort: fldViXirsiFl1j1w4 asc, fldIqhg3WzB4vZfhl asc
-const posts = // result.records
-if (posts.length === 0) {
-  return "No post stubs with status = planned and research_started_at empty. Run /editorial-planner first.";
+// If a specific post_stub_id was passed via the slash command argument, fetch it directly.
+// Otherwise: oldest planned, unlocked stub.
+let postStub;
+if (typeof argument === 'string' && argument.length > 0) {
+  postStub = await getRecord(TABLES.POSTS, argument,
+    ['id','status','idea_id','angle_index','planned_week','planned_order','research_started_at']);
+  if (!postStub) throw new Error(`Post stub ${argument} not found`);
+} else {
+  const candidates = await getRecords(TABLES.POSTS,
+    { status: 'planned', research_started_at: null },
+    {
+      fields: ['id','status','idea_id','angle_index','planned_week','planned_order'],
+      orderBy: { col: 'planned_week', dir: 'asc' },
+      limit: 50,
+    });
+  // Secondary in-memory sort by planned_order asc (PostgREST single-key order is enforced above).
+  candidates.sort((a, b) => (a.planned_order ?? 9999) - (b.planned_order ?? 9999));
+  if (candidates.length === 0) {
+    return "No post stubs with status = planned and research_started_at empty. Run /editorial-planner first.";
+  }
+  postStub = candidates[0];
 }
-const postStub = posts[0];
-const ideaId = postStub.fields?.idea_id?.[0];
-const angleIndex = postStub.fields?.angle_index ?? 0;
 
-if (!ideaId) throw new Error("Post stub is missing idea_id — check Airtable data");
+const ideaId     = postStub.idea_id;            // already a UUID (FK column), not an array
+const angleIndex = postStub.angle_index ?? 0;
+if (!ideaId) throw new Error("Post stub is missing idea_id — check pipeline.posts row");
 ```
 
 ### 3. Load idea + UIF
 ```javascript
-// MCP: mcp__claude_ai_Airtable__list_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblVKVojZscMG6gDk"
-//   recordIds: [ideaId]
-//   fieldIds: [fldMtlpG32VKE0WkN, fldQMArYmpP8s6VKb, fldBvV1FgpD1l2PG1, fldF8BxXjbUiHCWIa, fld6IEXqxWqwZtHow]
-//             (Topic, Intelligence File, content_brief, intent, notebook_id)
-const idea = // result.records[0];
-if (!idea) throw new Error(`Idea ${ideaId} not found`);
+const idea = await getRecord(TABLES.IDEAS, ideaId,
+  ['id','topic','intelligence_file','content_brief','intent','notebook_id']);
+if (!idea) throw new Error(`Idea ${ideaId} not found in pipeline.ideas`);
 
-const notebookId = idea.fields?.notebook_id ?? null;
+const notebookId = idea.notebook_id ?? null;
 const hasExistingNotebook = !!notebookId;
 // hasExistingNotebook = true  → idea was captured via /capture (NLM deep already done)
 //                               → fast path: skip crawl, run targeted notebook_query only
 // hasExistingNotebook = false → harvest-sourced idea (shallow Perplexity UIF)
 //                               → full path: run complete NLM deep research sequence
 
-const contentBrief = idea.fields?.content_brief
-  ? JSON.parse(idea.fields.content_brief)
-  : null;
-if (!contentBrief) throw new Error("content_brief is null or unparseable");
+// Lenient parse: fix \_  → _ before JSON.parse (migrated data may have invalid escape sequences)
+function parseUIF(raw) {
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch(_) {}
+  try { return JSON.parse(raw.replace(/\\\_/g, '_')); } catch(e) {
+    throw new Error(`intelligence_file is not valid JSON after repair attempt: ${e.message}`);
+  }
+}
 
-const existingUIF = idea.fields?.["Intelligence File"]
-  ? JSON.parse(idea.fields["Intelligence File"])
-  : null;
-if (!existingUIF) throw new Error("Intelligence File is null — run /capture first to generate shallow UIF");
+const contentBrief = idea.content_brief ? JSON.parse(idea.content_brief) : null;
+// content_brief is optional for pre-capture ideas (harvest/migration). query_derivation falls back to UIF fields.
+
+const existingUIF = parseUIF(idea.intelligence_file);
+if (!existingUIF) throw new Error("intelligence_file is null — run /capture first to generate shallow UIF");
 
 const targetAngle = existingUIF.angles?.[angleIndex];
 if (!targetAngle) throw new Error(`angle_index ${angleIndex} not found in UIF (${existingUIF.angles?.length ?? 0} angles)`);
@@ -105,23 +122,15 @@ if (!targetAngle) throw new Error(`angle_index ${angleIndex} not found in UIF ($
 ### 4. Lock on post stub — BEFORE any API call
 ```javascript
 updateStage(state, "locking");
-// MCP: mcp__claude_ai_Airtable__update_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblz0nikoZ89MHHTs", typecast: true
-//   records: [{ id: postStub.id, fields: { fldC2PIfrupZA2Ohk: now, fldlC1PMzRw0z6cTR: "researching" } }]
-await patchRecord(POSTS, postStub.id, {
-  research_started_at: new Date().toISOString(),
-  status: "researching"
-});
-// MCP: mcp__claude_ai_Airtable__create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
-await createRecord(LOGS, {
+await setLock(TABLES.POSTS, postStub.id, 'research_started_at', 'researching');
+await logEntry({
   workflow_id: state.workflowId,
-  entity_id: postStub.id,
-  step_name: "lock",
-  stage: "locking",
-  timestamp: new Date().toISOString(),
+  entity_id:   postStub.id,
+  step_name:   "lock",
+  stage:       "locking",
   output_summary: `Research locked for post stub ${postStub.id} — angle_index ${angleIndex}: "${targetAngle.angle_name}"`,
   model_version: "n/a",
-  status: "success"
+  status: "success",
 });
 ```
 
@@ -129,7 +138,11 @@ await createRecord(LOGS, {
 ```javascript
 updateStage(state, "query_derivation");
 const currentYear = new Date().getFullYear();
-const researchQuery = `${contentBrief.topic} — ${targetAngle.contrarian_take} — ${currentYear}`;
+
+// Prefer content_brief fields; fall back to UIF top-level fields for pre-capture ideas (no content_brief)
+const queryTopic = contentBrief?.topic ?? existingUIF.topic ?? idea.topic;
+const queryAngle = targetAngle.contrarian_take ?? targetAngle.angle_name ?? existingUIF.core_angle ?? "";
+const researchQuery = `${queryTopic} — ${queryAngle} — ${currentYear}`;
 
 // Year-anchor gate
 if (!researchQuery.includes(String(currentYear))) {
@@ -155,12 +168,11 @@ if (hasExistingNotebook) {
   //   Input to prompt: brand, contentBrief, targetAngle, existingUIF
   nlmQueryResult = // notebook_query result
 
-  await createRecord(LOGS, {
+  await logEntry({
     workflow_id: state.workflowId, entity_id: postStub.id,
     step_name: "nlm_angle_query", stage: "nlm_angle_query",
-    timestamp: new Date().toISOString(),
     output_summary: `NLM targeted query (fast path). notebook_id: ${notebookId}. conversation_id: ${nlmQueryResult.conversation_id}. Sources used: ${nlmQueryResult.sources_used?.length ?? 0}`,
-    model_version: "notebooklm-deep", status: "success"
+    model_version: "notebooklm-deep", status: "success",
   });
 
 } else {
@@ -174,12 +186,11 @@ if (hasExistingNotebook) {
   //   title: `Research: ${contentBrief.topic} — ${new Date().toISOString().slice(0,10)}`
   const { task_id, notebook_id } = // research_start result
 
-  await createRecord(LOGS, {
+  await logEntry({
     workflow_id: state.workflowId, entity_id: postStub.id,
     step_name: "nlm_research_start", stage: "nlm_research_start",
-    timestamp: new Date().toISOString(),
     output_summary: `NLM research started (full path). notebook_id: ${notebook_id} query: "${researchQuery}"`,
-    model_version: "notebooklm-deep", status: "success"
+    model_version: "notebooklm-deep", status: "success",
   });
 
   // 6b. Poll until complete (max 6 min)
@@ -197,12 +208,11 @@ if (hasExistingNotebook) {
   //   notebook_id, task_id, source_indices: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
   const importResult = // research_import result
 
-  await createRecord(LOGS, {
+  await logEntry({
     workflow_id: state.workflowId, entity_id: postStub.id,
     step_name: "nlm_research_import", stage: "nlm_research_import",
-    timestamp: new Date().toISOString(),
     output_summary: `NLM import complete. ${importResult.imported_count} sources imported. Sources found: ${researchResult.sources_found}`,
-    model_version: "notebooklm-deep", status: "success"
+    model_version: "notebooklm-deep", status: "success",
   });
 
   // 6d. Query notebook — extract grounded facts for target angle
@@ -212,12 +222,11 @@ if (hasExistingNotebook) {
   //   Input to prompt: brand, contentBrief, targetAngle, existingUIF
   nlmQueryResult = // notebook_query result
 
-  await createRecord(LOGS, {
+  await logEntry({
     workflow_id: state.workflowId, entity_id: postStub.id,
     step_name: "nlm_angle_query", stage: "nlm_angle_query",
-    timestamp: new Date().toISOString(),
     output_summary: `NLM query complete (full path). conversation_id: ${nlmQueryResult.conversation_id}. Sources used: ${nlmQueryResult.sources_used?.length ?? 0}`,
-    model_version: "notebooklm-deep", status: "success"
+    model_version: "notebooklm-deep", status: "success",
   });
 }
 ```
@@ -247,36 +256,28 @@ if (!uifResult.valid) {
 **E — Explicit gate**: validateUIF must pass before any write.
 
 ### 9. Write UIF + complete research
-```javascript
-updateStage(state, "writing");
 
-// Set provenance_log to include NLM notebook reference
-// Use notebookId (fast path) or notebook_id (full path) — whichever is defined
-const activeNotebookId = notebookId ?? notebook_id;
-updatedUIF.meta.provenance_log = [
-  existingUIF.meta.provenance_log ?? "",
-  `nlm:${activeNotebookId}`
-].filter(Boolean).join(",");
+Use `tools/research-complete.mjs` — pipe JSON payload to stdin. This is the canonical write path; never write one-off scripts.
 
-// MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblVKVojZscMG6gDk, typecast: true)
-//   fields: fldQMArYmpP8s6VKb (Intelligence File), fldAwyDJrDdoyPmtR (research_depth),
-//           fldvnK9lQWpoJaL30 (research_completed_at), fld9frOZF4oaf3r6V (Status)
-await patchRecord(IDEAS, ideaId, {
-  "Intelligence File": JSON.stringify(updatedUIF),
-  research_depth: "deep",
-  research_completed_at: new Date().toISOString(),
-  Status: "Ready"
-});
+```bash
+echo '{
+  "workflowId": "<workflowId>",
+  "stubs": [{
+    "stubId": "<postStub.id>",
+    "ideaId": "<ideaId>",
+    "notebookId": "<activeNotebookId>",
+    "uif": <updatedUIF>,
+    "hooks": <generatedHooks>
+  }]
+}' | node tools/research-complete.mjs
+```
 
-// MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs, typecast: true)
-//   fields: fldlC1PMzRw0z6cTR (status), fldzTm7FfPo9FtEYX (research_completed_at)
-await patchRecord(POSTS, postStub.id, {
-  status: "research_ready",
-  research_completed_at: new Date().toISOString()
-});
+The tool validates the UIF, writes ideas + posts, creates hook records, and logs completion in one call. JSON has no single quotes so heredoc quoting works cleanly.
+
+> **Note for /week parallel research**: when called from runResearchForStub(), build the payload in memory and pipe it after all NLM calls complete. The tool handles one or many stubs per call.
 
 // SESSION CACHE UPDATE: When called from /week, write the deepened UIF back to weekState
-// so the draft phase can use it without re-fetching from Airtable.
+// so the draft phase can use it without re-fetching from Supabase.
 // if (weekState?.postStubMap?.[postStub.id]) {
 //   weekState.postStubMap[postStub.id].uif = updatedUIF;
 // }
@@ -285,26 +286,30 @@ await patchRecord(POSTS, postStub.id, {
 ### 10. Extract hooks → write to hooks_library
 ```javascript
 updateStage(state, "hook_extraction");
-// For the deepened angle (targetAngle after merge):
-//   Call hook generation prompt (see researcher.md Stage 4)
-//   MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblWuQNSJ25bs18DZ, typecast: true)
-//   fields: fldSIjqzsFuxWOaYb (hook_text), fldOvWxj7O0x51aIX (hook_type),
-//           fld3aBVety5oSAxKu (source_idea: [ideaId]), fldnuhK79wUIKnrw4 (angle_name),
-//           fld6UZ8Fy7q2cZQyF (intent), fldVKrSnP34sofwZ7 (status: "candidate")
+// For the deepened angle (targetAngle after merge), call hook generation prompt
+// (see researcher.md Stage 4) → array of {hook_text, hook_type, intent}.
+for (const h of generatedHooks) {
+  await createRecord(TABLES.HOOKS, {
+    hook_text:      h.hook_text,
+    hook_type:      h.hook_type,             // contrarian | stat_lead | question | story_open | provocative_claim
+    source_idea_id: ideaId,                  // UUID FK (was Airtable linked record array)
+    angle_name:     targetAngle.angle_name,
+    intent:         h.intent,
+    status:         'candidate',
+  }, ['id']);
+}
 ```
 
 ### 11. Log completion
 ```javascript
-// MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
-await createRecord(LOGS, {
+await logEntry({
   workflow_id: state.workflowId,
-  entity_id: postStub.id,
-  step_name: "complete",
-  stage: "complete",
-  timestamp: new Date().toISOString(),
+  entity_id:   postStub.id,
+  step_name:   "complete",
+  stage:       "complete",
   output_summary: `Research complete: angle "${targetAngle.angle_name}" deepened — ${updatedUIF.core_knowledge.facts.length} total facts`,
   model_version: "n/a",
-  status: "success"
+  status: "success",
 });
 ```
 
@@ -319,17 +324,17 @@ await createRecord(LOGS, {
 
 ## Writes
 
-| Table | Field | Value |
+| Table | Column | Value |
 |---|---|---|
-| `posts` | `research_started_at` | `now()` (set at step 4, BEFORE API calls) |
-| `posts` | `status` | `"researching"` → `"research_ready"` (or reverted to `"planned"` on error) |
-| `posts` | `research_completed_at` | `now()` |
-| `ideas` | `Intelligence File` | updated UIF v3.0 JSON string (target angle deepened) |
-| `ideas` | `research_depth` | `"deep"` |
-| `ideas` | `research_completed_at` | `now()` |
-| `ideas` | `Status` | `"Ready"` |
-| `hooks_library` | (new records) | hooks from deepened angle as `status = candidate` |
-| `logs` | (multiple entries) | one per stage |
+| `pipeline.posts` | `research_started_at` | `now()` (set at step 4, BEFORE API calls) |
+| `pipeline.posts` | `status` | `"researching"` → `"research_ready"` (or reverted to `"planned"` on error) |
+| `pipeline.posts` | `research_completed_at` | `now()` |
+| `pipeline.ideas` | `intelligence_file` | updated UIF v3.0 JSON string (target angle deepened) |
+| `pipeline.ideas` | `research_depth` | `"deep"` |
+| `pipeline.ideas` | `research_completed_at` | `now()` |
+| `pipeline.ideas` | `status` | `"Ready"` |
+| `pipeline.hooks_library` | (new rows) | hooks from deepened angle as `status = candidate` |
+| `pipeline.logs` | (multiple entries) | one per stage |
 
 ---
 
@@ -337,23 +342,17 @@ await createRecord(LOGS, {
 
 ```javascript
 } catch (error) {
-  // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs, typecast: true)
-  //   Clear lock — research_started_at: null, status: "planned"
-  await patchRecord(POSTS, postStub.id, {
-    research_started_at: null,
-    status: "planned"
-  });
+  // Clear lock + revert status (uses helper)
+  await clearLock(TABLES.POSTS, postStub.id, 'research_started_at', 'planned');
 
-  // MCP: create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
-  await createRecord(LOGS, {
+  await logEntry({
     workflow_id: state.workflowId,
-    entity_id: postStub.id,
-    step_name: "error",
-    stage: state.stage,
-    timestamp: new Date().toISOString(),
+    entity_id:   postStub.id,
+    step_name:   "error",
+    stage:       state.stage,
     output_summary: `Error: ${error.message}`,
     model_version: "n/a",
-    status: "error"
+    status: "error",
   });
 
   return formatError("/research", state.stage, error.message, true);

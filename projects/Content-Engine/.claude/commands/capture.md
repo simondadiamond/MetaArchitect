@@ -1,6 +1,6 @@
 # /capture — Idea Capture Command
 
-Replaces the Telegram/n8n pipeline. Captures raw ideas, fetches external content (YouTube/blogs), refines them using the Brand Strategist, scores them using the Brand Scorer, and saves them to Airtable.
+Replaces the Telegram/n8n pipeline. Captures raw ideas, fetches external content (YouTube/blogs), refines them using the Brand Strategist, scores them using the Brand Scorer, and saves them to Supabase (`pipeline.ideas`).
 
 ---
 
@@ -9,7 +9,14 @@ Replaces the Telegram/n8n pipeline. Captures raw ideas, fetches external content
 None. This is the top-of-funnel entry point.
 Risk tier: medium → S + T + E required.
 
-> **Airtable**: Use MCP tools directly — no node scripts. All table IDs and field IDs are in `.claude/skills/airtable.md`. Always `typecast: true` on any create or update call.
+> **Supabase**: All reads/writes go through `tools/supabase.mjs` — never call Supabase MCP from inside this command (token-conscious rule). Column registry: `.claude/skills/supabase.md`. All columns are snake_case.
+
+```javascript
+import {
+  getRecords, getRecord, createRecord, patchRecord,
+  logEntry, TABLES,
+} from './tools/supabase.mjs';
+```
 
 ---
 
@@ -70,31 +77,32 @@ if (ytRe.test(rawInput)) {
 ```
 
 ### 3. Create Draft Record (Tolerant Pillar)
-Create the record *before* the expensive LLM calls so we have an entityId to log against.
+Create the row *before* the expensive LLM calls so we have an entityId to log against.
 ```javascript
 updateStage(state, "creating_draft");
-// MCP: mcp__claude_ai_Airtable__create_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblVKVojZscMG6gDk", typecast: true
-//   fields: { Topic: "Processing...", Status: "New", workflow_id, source_type, raw_input }
-//   field IDs: fldMtlpG32VKE0WkN (Topic), fld9frOZF4oaf3r6V (Status),
-//              fldoREHCHsCU6pXuE (workflow_id), fldBkIqNugXb4M5Fk (source_type),
-//              fld7FkHIuCaZ47SyA (Source/url), fldrQ3CDTEDuIhEsy (raw_input)
-const ideaRecord = // result.records[0]
-
-state.entityId = ideaRecord.id;
+const ideaRecord = await createRecord(TABLES.IDEAS, {
+  topic:        "Processing...",
+  status:       "New",
+  workflow_id:  state.workflowId,
+  source_type:  sourceType,           // text | youtube | blog
+  source:       sourceUrl,            // null for source_type='text'
+  raw_input:    rawInput,
+}, ['id']);
+state.entityId = ideaRecord.id;       // UUID — replaces the Airtable recXXX id
 ```
 
 ### 4. Brand Context
 Brand context is already available in CLAUDE.md (brand-summary.md) and the command system prompt —
-no Airtable fetch needed. Use the inline brand context directly in Steps 5 and 6.
+no DB fetch needed. Use the inline brand context directly in Steps 5 and 6.
 
-> **Why skipped**: The Airtable brand record (~3,500 tokens) duplicates what's already in the
+> **Why skipped**: The `pipeline.brand` row (~3,500 tokens) duplicates what's already in the
 > conversation context via CLAUDE.md. Fetching it adds latency and token cost with no quality gain.
-> Only restore this fetch if brand fields in Airtable have diverged from CLAUDE.md and a sync hasn't happened.
+> Only restore this fetch (via `getRecords(TABLES.BRAND, { name: 'metaArchitect' }, …)`) if the
+> Supabase brand row has diverged from CLAUDE.md and a sync hasn't happened.
 
 ```javascript
 // No fetch required. Brand context = CLAUDE.md brand-summary.md (already in context).
-// Steps 5 and 6 use this directly. Remove `brand.fields?.main_guidelines` references
+// Steps 5 and 6 use this directly. Remove `brand?.main_guidelines` references
 // from scorer prompt — substitute the inline brand guidelines from CLAUDE.md instead.
 ```
 
@@ -159,16 +167,14 @@ if (!briefValidation.valid) throw new Error(`Brief Validation Failed: ${briefVal
 ```
 Log success:
 ```javascript
-// MCP: mcp__claude_ai_Airtable__create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
-await createRecord(LOGS, {
+await logEntry({
   workflow_id: state.workflowId,
   entity_id: state.entityId,
   step_name: "brand_strategist",
   stage: "refined",
-  timestamp: new Date().toISOString(),
   output_summary: `Strategist complete. Topic: ${strategistOutput.topic}`,
   model_version: "claude-sonnet-4-6",
-  status: "success"
+  status: "success",
 });
 ```
 
@@ -228,16 +234,14 @@ if (!scoreValidation.valid) throw new Error(`Score Validation Failed: ${scoreVal
 ```
 Log success:
 ```javascript
-// MCP: mcp__claude_ai_Airtable__create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
-await createRecord(LOGS, {
+await logEntry({
   workflow_id: state.workflowId,
   entity_id: state.entityId,
   step_name: "brand_scorer",
   stage: "scored",
-  timestamp: new Date().toISOString(),
   output_summary: `Scorer complete. Overall: ${scorerOutput.score_overall}/10`,
   model_version: "claude-sonnet-4-6",
-  status: "success"
+  status: "success",
 });
 ```
 
@@ -265,12 +269,11 @@ if (!researchQuery.includes(String(currentYear))) {
 const { task_id, notebook_id } = // research_start result
 
 // Log start
-await createRecord(LOGS, {
+await logEntry({
   workflow_id: state.workflowId, entity_id: state.entityId,
   step_name: "nlm_research_start", stage: "deep_research",
-  timestamp: new Date().toISOString(),
   output_summary: `NLM research started. notebook_id: ${notebook_id}. query: "${researchQuery}"`,
-  model_version: "notebooklm-deep", status: "success"
+  model_version: "notebooklm-deep", status: "success",
 });
 
 // 2b. Poll until complete (max 6 min)
@@ -288,12 +291,11 @@ if (researchResult.status !== "completed") {
 //   notebook_id, task_id, source_indices: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
 const importResult = // research_import result
 
-await createRecord(LOGS, {
+await logEntry({
   workflow_id: state.workflowId, entity_id: state.entityId,
   step_name: "nlm_research_import", stage: "deep_research",
-  timestamp: new Date().toISOString(),
   output_summary: `NLM import complete. ${importResult.imported_count} sources. Sources found: ${researchResult.sources_found}`,
-  model_version: "notebooklm-deep", status: "success"
+  model_version: "notebooklm-deep", status: "success",
 });
 
 // 2d. Query notebook — extract grounded angles across the full topic
@@ -303,12 +305,11 @@ await createRecord(LOGS, {
 const nlmQueryResult = // notebook_query result
 if (!nlmQueryResult.answer) throw new Error("NLM notebook_query returned empty answer");
 
-await createRecord(LOGS, {
+await logEntry({
   workflow_id: state.workflowId, entity_id: state.entityId,
   step_name: "nlm_angle_query", stage: "deep_research",
-  timestamp: new Date().toISOString(),
   output_summary: `NLM query complete. conversation_id: ${nlmQueryResult.conversation_id}. Sources used: ${nlmQueryResult.sources_used?.length ?? 0}`,
-  model_version: "notebooklm-deep", status: "success"
+  model_version: "notebooklm-deep", status: "success",
 });
 ```
 
@@ -379,52 +380,47 @@ if (!uifValidation.valid) throw new Error(`UIF validation: ${uifValidation.error
 
 Log Claude call:
 ```javascript
-await createRecord(LOGS, {
+await logEntry({
   workflow_id: state.workflowId, entity_id: state.entityId,
   step_name: "uif_compiler", stage: "deep_research",
-  timestamp: new Date().toISOString(),
   output_summary: `UIF compiled. ${deepUIF.angles.length} angles, ${deepUIF.core_knowledge.facts.length} facts.`,
-  model_version: "claude-sonnet-4-6", status: "success"
+  model_version: "claude-sonnet-4-6", status: "success",
 });
 ```
 
-### 7. Final Airtable Write
+### 7. Final Supabase Write
 ```javascript
 updateStage(state, "saving");
-// MCP: mcp__claude_ai_Airtable__update_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblVKVojZscMG6gDk", typecast: true
-//   records: [{ id: state.entityId, fields: { ... } }]
-//   Use field IDs from airtable.md (Intelligence File = fldQMArYmpP8s6VKb, etc.)
-await patchRecord(IDEAS, state.entityId, {
-  Topic: strategistOutput.working_title,
-  Status: "New",
-  intent: strategistOutput.intent,
-  content_brief: JSON.stringify(strategistOutput),
-  score_brand_fit: scorerOutput.score_brand_fit,
-  score_originality: scorerOutput.score_originality,
-  score_monetization: scorerOutput.score_monetization,
+await patchRecord(TABLES.IDEAS, state.entityId, {
+  topic:                   strategistOutput.working_title,
+  status:                  "New",
+  intent:                  strategistOutput.intent,
+  content_brief:           JSON.stringify(strategistOutput),
+  score_brand_fit:         scorerOutput.score_brand_fit,
+  score_originality:       scorerOutput.score_originality,
+  score_monetization:      scorerOutput.score_monetization,
   score_production_effort: scorerOutput.score_production_effort,
-  score_virality: scorerOutput.score_virality,
-  score_authority: scorerOutput.score_authority,
-  score_overall: scorerOutput.score_overall,
+  score_virality:          scorerOutput.score_virality,
+  score_authority:         scorerOutput.score_authority,
+  score_overall:           scorerOutput.score_overall,
   score_rationales: JSON.stringify({
-    brand_fit: scorerOutput.rationale_brand_fit,
+    brand_fit:          scorerOutput.rationale_brand_fit,
     audience_relevance: scorerOutput.rationale_audience_relevance,
-    originality: scorerOutput.rationale_originality,
-    monetization: scorerOutput.rationale_monetization,
-    production_effort: scorerOutput.rationale_production_effort,
-    virality: scorerOutput.rationale_virality,
-    authority: scorerOutput.rationale_authority
+    originality:        scorerOutput.rationale_originality,
+    monetization:       scorerOutput.rationale_monetization,
+    production_effort:  scorerOutput.rationale_production_effort,
+    virality:           scorerOutput.rationale_virality,
+    authority:          scorerOutput.rationale_authority,
   }),
   recommended_next_action: scorerOutput.recommended_next_action,
-  // TODO: score_audience_relevance is computed by the Brand Scorer (scorerOutput.score_audience_relevance)
-  // but never written to Airtable — it's buried in score_rationales JSON and invisible to the planner.
-  // Either: (a) add a dedicated number field "score_audience_relevance" to ideas and write it here,
-  // or (b) remove it from the scorer prompt entirely to reduce noise. Decision pending.
-  "Intelligence File": JSON.stringify(deepUIF),
-  notebook_id: notebook_id,             // fld6IEXqxWqwZtHow — reused by /research for fast targeted query
-  research_depth: "deep",
-  captured_at: new Date().toISOString()
+  // TODO (carried over from Airtable era): score_audience_relevance is computed by the Brand Scorer
+  // (scorerOutput.score_audience_relevance) but never written — buried in score_rationales JSON and
+  // invisible to the planner. Either (a) add a dedicated `score_audience_relevance numeric` column
+  // to pipeline.ideas and write it here, or (b) remove it from the scorer prompt entirely. Decision pending.
+  intelligence_file: JSON.stringify(deepUIF),  // was Airtable "Intelligence File"
+  notebook_id:       notebook_id,              // reused by /research for fast targeted query
+  research_depth:    "deep",
+  captured_at:       new Date().toISOString(),
 });
 ```
 
@@ -444,26 +440,23 @@ await patchRecord(IDEAS, state.entityId, {
 ## Error Path
 ```javascript
 } catch (error) {
-  // If we have an entityId, update the Airtable record to failed
+  // If we have an entityId, mark the row as failed
   if (state.entityId) {
-    // MCP: update_records_for_table(appgvQDqiFZ3ESigA, tblVKVojZscMG6gDk, typecast: true)
-    await patchRecord(IDEAS, state.entityId, {
+    await patchRecord(TABLES.IDEAS, state.entityId, {
       status: "processing_failed",
-      recommended_next_action: `Failed at ${state.stage}: ${error.message}`
+      recommended_next_action: `Failed at ${state.stage}: ${error.message}`,
     });
   }
 
   // Always log the error
-  // MCP: mcp__claude_ai_Airtable__create_records_for_table(appgvQDqiFZ3ESigA, tblzT4NBJ2Q6zm3Qf, typecast: true)
-await createRecord(LOGS, {
+  await logEntry({
     workflow_id: state.workflowId,
-    entity_id: state.entityId || "none",
-    step_name: "error",
-    stage: state.stage,
-    timestamp: new Date().toISOString(),
+    entity_id:   state.entityId || "none",
+    step_name:   "error",
+    stage:       state.stage,
     output_summary: `Error: ${error.message}`,
     model_version: "n/a",
-    status: "error"
+    status:        "error",
   });
 
   return formatError("/capture", state.stage, error.message, false);

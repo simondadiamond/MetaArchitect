@@ -10,16 +10,24 @@ Self-improves via pillar selection rates stored in `.claude/harvest-memory.json`
 None. This command can run any time.
 Risk tier: medium → S + T + E required.
 
-> **Airtable**: Use MCP tools directly. All table IDs and field IDs in `.claude/skills/airtable.md`. Always `typecast: true`.
+> **Supabase**: All reads/writes go through `tools/supabase.mjs` — never call Supabase MCP from inside this command (token-conscious rule). Column registry: `.claude/skills/supabase.md`. All columns are snake_case.
+> **NotebookLM**: Deep research uses `mcp__notebooklm-mcp__research_start/status/import/notebook_query` — no Perplexity, no node scripts.
 > **No lock**: Harvest has no single long-lived lock. Each idea write is an independent sub-pipeline. Partial runs are inherently tolerant — ideas already written survive a mid-run failure.
+
+```javascript
+import {
+  getRecords, getRecord, createRecord, patchRecord,
+  logEntry, TABLES, db,
+} from './tools/supabase.mjs';
+```
 
 ---
 
 ## ⚠️ Session Integrity Rule (E — Explicit)
 
-**Never write to Airtable using data that was not produced by pipeline steps running in the current session.**
+**Never write to Supabase using data that was not produced by pipeline steps running in the current session.**
 
-Each slot carries a `session_verified: false` flag initialized at query generation time. It is set to `true` only when the live NLM notebook_query call returns a non-empty result in this session. The Airtable write gate (Step 10) MUST check this flag and abort the write if it is `false`.
+Each slot carries a `session_verified: false` flag initialized at query generation time. It is set to `true` only when the live NLM notebook_query call returns a non-empty result in this session. The Supabase write gate (Step 10) MUST check this flag and abort the write if it is `false`.
 
 ```javascript
 // Initialized per slot:
@@ -45,7 +53,7 @@ if (!slotResults[slotIndex].session_verified) {
 }
 ```
 
-**Why this exists:** When Claude resumes from a summarized/compacted context, it may have topic names in memory but not live pipeline outputs. Without this gate, it can silently write fabricated content_briefs, UIFs, and scores to Airtable — corrupting the ideas table with data that was never validated by the actual pipeline. This happened on 2026-03-17 (run hrv_20260317_c4d1). The 5 corrupted records were archived with `selection_reason: CORRUPTED`.
+**Why this exists:** When Claude resumes from a summarized/compacted context, it may have topic names in memory but not live pipeline outputs. Without this gate, it can silently write fabricated content_briefs, UIFs, and scores to Supabase — corrupting `pipeline.ideas` with data that was never validated by the actual pipeline. This happened on 2026-03-17 (run hrv_20260317_c4d1). The 5 corrupted records were archived with `selection_reason: CORRUPTED`.
 
 ---
 
@@ -63,51 +71,21 @@ const state = buildStateObject({
 
 ## Step 0: Mine Existing NLM Notebooks (Corpus-First)
 
-Runs before loading harvest memory. Finds all ideas that have a NLM notebook but haven't been mined yet, queries each notebook for brand-relevant angles, and writes passing ideas to Airtable. Tracks which pillars received ideas.
+Runs before loading harvest memory. Finds all ideas that have a NLM notebook but haven't been mined yet, queries each notebook for brand-relevant angles, and writes passing ideas to Supabase. Tracks which pillars received ideas.
 
-### 0a. Ensure `mined_at` field exists
+### 0a. Schema note
 
-```javascript
-// Check ideas table schema for mined_at field:
-// mcp__claude_ai_Airtable__list_tables_for_base(appgvQDqiFZ3ESigA)
-// If mined_at field is NOT present → create it:
-// mcp__claude_ai_Airtable__create_field(
-//   baseId: "appgvQDqiFZ3ESigA",
-//   tableId: "tblVKVojZscMG6gDk",
-//   { name: "mined_at", type: "dateTime", options: { dateFormat: { name: "iso" }, timeFormat: { name: "24hour" }, timeZone: "America/New_York" } }
-// )
-// Store the returned field ID in MINED_AT_FIELD_ID for use throughout this run.
-// If field already exists, read its field ID from the schema response.
-const MINED_AT_FIELD_ID = "<field ID from schema or create response>";
-```
+`mined_at timestamptz` already exists on `pipeline.ideas` (see `infra/supabase/schema.sql`). No DDL needed at runtime.
 
 ### 0b. Fetch unmined notebooks
 
 ```javascript
-// Get choice IDs for Status "Ready" and "Completed" (singleSelect — requires schema):
-// mcp__claude_ai_Airtable__get_table_schema(appgvQDqiFZ3ESigA, [{ tableId: "tblVKVojZscMG6gDk", fieldIds: ["fld9frOZF4oaf3r6V"] }])
-// → capture selReady and selCompleted choice IDs
-
-// Fetch ideas with notebook_id present AND mined_at null AND Status = Ready or Completed:
-// Note: Airtable filters are single-condition — fetch by Status=Ready and Status=Completed separately, merge in memory.
-// Call 1: list_records_for_table filtered by Status = selReady
-// Call 2: list_records_for_table filtered by Status = selCompleted
-// Merge results → unminedIdeas = those where notebook_id IS non-empty AND mined_at IS null/empty
-
-mcp__claude_ai_Airtable__list_records_for_table(
-  baseId: "appgvQDqiFZ3ESigA",
-  tableId: "tblVKVojZscMG6gDk",
-  fieldIds: [
-    "fld6IEXqxWqwZtHow",   // notebook_id
-    MINED_AT_FIELD_ID,     // mined_at
-    "fldMtlpG32VKE0WkN",   // Topic
-    "fldQMArYmpP8s6VKb",   // Intelligence File
-    "fldBvV1FgpD1l2PG1"    // content_brief
-  ],
-  filters: { operator: "=", operands: ["fld9frOZF4oaf3r6V", selReady] }
-)
-// Repeat for selCompleted, merge. Filter in memory to those with non-empty notebook_id AND null/empty mined_at.
-→ unminedIdeas
+// Status filter accepts an array → resolves to PostgREST .in() — exactly what we want.
+const candidates = await getRecords(TABLES.IDEAS,
+  { status: ['Ready', 'Completed'], mined_at: null },
+  { fields: ['id','topic','status','notebook_id','intelligence_file','content_brief','mined_at'], limit: 200 });
+// In-memory: keep only rows with a non-empty notebook_id
+const unminedIdeas = candidates.filter(r => r.notebook_id && r.notebook_id.trim().length > 0);
 ```
 
 ### 0c. NLM Query Prompt (used per notebook)
@@ -144,12 +122,12 @@ let corpusIdeasWritten = 0;
 let notebooksMined = 0;
 
 for (const idea of unminedIdeas) {
-  const notebookId = idea.fields["notebook_id"] ?? idea.fields[fld6IEXqxWqwZtHow];
+  const notebookId = idea.notebook_id;
   if (!notebookId) continue;
 
   updateStage(state, `corpus_mining_${notebookId.slice(0, 8)}`);
 
-  // Query the notebook
+  // Query the notebook (MCP allowed for NLM — only Supabase MCP is forbidden in commands)
   let nlmResult;
   try {
     nlmResult = await mcp__notebooklm_mcp__notebook_query({
@@ -158,6 +136,7 @@ for (const idea of unminedIdeas) {
     });
   } catch (err) {
     await logEntry({
+      workflow_id: state.workflowId, entity_id: idea.id,
       step_name: "corpus_mining_nlm_query",
       stage: state.stage,
       output_summary: `NLM query failed for notebook ${notebookId}: ${err.message}`,
@@ -165,10 +144,7 @@ for (const idea of unminedIdeas) {
       status: "error"
     });
     // Mark as mined anyway to avoid retry loops on a broken notebook
-    await mcp__claude_ai_Airtable__update_records_for_table(
-      "appgvQDqiFZ3ESigA", "tblVKVojZscMG6gDk", true,
-      [{ id: idea.id, fields: { [MINED_AT_FIELD_ID]: new Date().toISOString() } }]
-    );
+    await patchRecord(TABLES.IDEAS, idea.id, { mined_at: new Date().toISOString() });
     continue;
   }
 
@@ -185,6 +161,7 @@ for (const idea of unminedIdeas) {
   }
 
   await logEntry({
+    workflow_id: state.workflowId, entity_id: idea.id,
     step_name: "corpus_mining_nlm_query",
     stage: state.stage,
     output_summary: `Notebook ${notebookId} (idea: ${idea.id}) → ${observations.length} observations extracted`,
@@ -209,13 +186,15 @@ for (const idea of unminedIdeas) {
     });
 
     if (strategistOutput.reject === true) {
-      await logEntry({ step_name: "corpus_strategist", stage: state.stage,
+      await logEntry({ workflow_id: state.workflowId, entity_id: idea.id,
+        step_name: "corpus_strategist", stage: state.stage,
         output_summary: `Rejected by specificity gate: ${strategistOutput.reason}`, model_version: "claude-sonnet-4-6", status: "error" });
       continue;
     }
     const briefValidation = validateBrief(strategistOutput);
     if (!briefValidation.valid) {
-      await logEntry({ step_name: "corpus_strategist", stage: state.stage,
+      await logEntry({ workflow_id: state.workflowId, entity_id: idea.id,
+        step_name: "corpus_strategist", stage: state.stage,
         output_summary: `Brief validation failed: ${briefValidation.errors.join(", ")}`, model_version: "claude-sonnet-4-6", status: "error" });
       continue;
     }
@@ -224,7 +203,8 @@ for (const idea of unminedIdeas) {
     const scorerOutput = await runScorer(strategistOutput);
     const scoreValidation = validateCaptureScores(scorerOutput);
     if (!scoreValidation.valid || scorerOutput.score_overall < SCORE_THRESHOLD) {
-      await logEntry({ step_name: "corpus_scorer", stage: state.stage,
+      await logEntry({ workflow_id: state.workflowId, entity_id: idea.id,
+        step_name: "corpus_scorer", stage: state.stage,
         output_summary: `Score ${scorerOutput.score_overall}/10 — below threshold or invalid for "${strategistOutput.topic}"`, model_version: "claude-sonnet-4-6", status: "success" });
       continue;
     }
@@ -238,51 +218,49 @@ for (const idea of unminedIdeas) {
     });
     const uifValidation = validateUIF(shallowUIF);
     if (!uifValidation.valid) {
-      await logEntry({ step_name: "corpus_angle_extractor", stage: state.stage,
+      await logEntry({ workflow_id: state.workflowId, entity_id: idea.id,
+        step_name: "corpus_angle_extractor", stage: state.stage,
         output_summary: `UIF validation failed: ${uifValidation.errors.join("; ")}`, model_version: "claude-sonnet-4-6", status: "error" });
       continue;
     }
 
-    // Step 0d-iv: Write to Airtable (same schema as Step 10)
-    await mcp__claude_ai_Airtable__create_records_for_table(
-      "appgvQDqiFZ3ESigA", "tblVKVojZscMG6gDk", true, [{
-        fields: {
-          fldMtlpG32VKE0WkN: strategistOutput.working_title,
-          fld9frOZF4oaf3r6V: "New",
-          fldF8BxXjbUiHCWIa: strategistOutput.intent,
-          fldBvV1FgpD1l2PG1: JSON.stringify(strategistOutput),
-          fldeYByfFx9xjFnnK: scorerOutput.score_brand_fit,
-          fldquN4wVbd6eLKYF: scorerOutput.score_originality,
-          fldnFzMf3h6L7ez0l: scorerOutput.score_monetization,
-          fldrYVICu2Tg71Jrk: scorerOutput.score_production_effort,
-          fldvw93lwpYEqD5nX: scorerOutput.score_virality,
-          fld1L6eEoqpP6uxbX: scorerOutput.score_authority,
-          fldJatmYz453YGTyV: scorerOutput.score_overall,
-          flddvjuABw1KBIf4K: JSON.stringify({ brand_fit: scorerOutput.rationale_brand_fit, originality: scorerOutput.rationale_originality }),
-          fldgyi72BLytnCNPN: scorerOutput.recommended_next_action,
-          fldQMArYmpP8s6VKb: JSON.stringify(shallowUIF),
-          fldAwyDJrDdoyPmtR: "shallow",
-          fldBkIqNugXb4M5Fk: "harvest",
-          fldrQ3CDTEDuIhEsy: `corpus_mine:${notebookId}`,
-          fldoREHCHsCU6pXuE: state.workflowId,
-          fldYU3CKk5HZAfrWo: new Date().toISOString()
-        }
-      }]
-    );
+    // Step 0d-iv: Write to Supabase (same schema as Step 10)
+    const newRow = await createRecord(TABLES.IDEAS, {
+      topic:                   strategistOutput.working_title,
+      status:                  "New",
+      intent:                  strategistOutput.intent,
+      content_brief:           JSON.stringify(strategistOutput),
+      score_brand_fit:         scorerOutput.score_brand_fit,
+      score_originality:       scorerOutput.score_originality,
+      score_monetization:      scorerOutput.score_monetization,
+      score_production_effort: scorerOutput.score_production_effort,
+      score_virality:          scorerOutput.score_virality,
+      score_authority:         scorerOutput.score_authority,
+      score_overall:           scorerOutput.score_overall,
+      score_rationales:        JSON.stringify({
+        brand_fit:   scorerOutput.rationale_brand_fit,
+        originality: scorerOutput.rationale_originality,
+      }),
+      recommended_next_action: scorerOutput.recommended_next_action,
+      intelligence_file:       JSON.stringify(shallowUIF),
+      research_depth:          "shallow",
+      source_type:             "harvest",
+      raw_input:               `corpus_mine:${notebookId}`,
+      workflow_id:             state.workflowId,
+      captured_at:             new Date().toISOString(),
+    }, ['id']);
 
     minedPillarCoverage[obs.pillar]++;
     corpusIdeasWritten++;
     newIdeaLines.push({ topic: strategistOutput.working_title, pillar: obs.pillar, score: scorerOutput.score_overall, source: "corpus" });
 
-    await logEntry({ step_name: "corpus_angle_extractor", stage: state.stage,
+    await logEntry({ workflow_id: state.workflowId, entity_id: newRow.id,
+      step_name: "corpus_angle_extractor", stage: state.stage,
       output_summary: `Idea written: "${strategistOutput.working_title}" [${obs.pillar}] score=${scorerOutput.score_overall}`, model_version: "claude-sonnet-4-6", status: "success" });
   }
 
   // Mark this idea's notebook as mined regardless of whether ideas passed threshold
-  await mcp__claude_ai_Airtable__update_records_for_table(
-    "appgvQDqiFZ3ESigA", "tblVKVojZscMG6gDk", true,
-    [{ id: idea.id, fields: { [MINED_AT_FIELD_ID]: new Date().toISOString() } }]
-  );
+  await patchRecord(TABLES.IDEAS, idea.id, { mined_at: new Date().toISOString() });
 }
 
 // 0e. Identify gap pillars — pillars with 0 ideas from corpus mining
@@ -292,6 +270,7 @@ const gapPillars = PILLARS.filter(p => minedPillarCoverage[p] === 0);
 Log corpus mining complete:
 ```javascript
 await logEntry({
+  workflow_id: state.workflowId, entity_id: state.workflowId,
   step_name: "corpus_mining_complete",
   stage: "corpus_mining",
   output_summary: `Notebooks mined: ${notebooksMined} | Ideas written: ${corpusIdeasWritten} | Gap pillars: ${gapPillars.join(", ") || "none"}`,
@@ -324,26 +303,22 @@ This is the cold-start fallback — no crash, no prompt to user.
 }
 ```
 
-`ideas_generated` = 1 if this query produced an idea that passed the `score_overall >= 7.0` threshold and was written to Airtable; 0 otherwise.
+`ideas_generated` = 1 if this query produced an idea that passed the `score_overall >= 7.0` threshold and was written to `pipeline.ideas`; 0 otherwise.
 
 ---
 
 ## Step 2: Fetch Brand Context
 
-```
-mcp__claude_ai_Airtable__list_records_for_table(
-  baseId: "appgvQDqiFZ3ESigA",
-  tableId: "tblwfU5EpDgOKUF7f",
-  fieldIds: ["fldsP8FwcTxJdkac8","fld7N55IwEM8CQYW0","fldLYt1DMS1Fwd5Vy","fldBtXwgSegiYP2pB"],
-  // name, goals, icp_short, main_guidelines only — colors/typography/icp_long excluded (not used in query gen)
-  filters: { operator: "=", operands: ["fldsP8FwcTxJdkac8", "metaArchitect"] }
-)
-→ brand = result.records[0]
+```javascript
+const brandRows = await getRecords(TABLES.BRAND,
+  { name: 'metaArchitect' },
+  { fields: ['name','goals','icp_short','main_guidelines'], limit: 1 });
+const brand = brandRows[0];
 ```
 
 If no brand record found, abort with:
 ```
-❌ /harvest failed at init — Brand record 'metaArchitect' not found in Airtable
+❌ /harvest failed at init — Brand row 'metaArchitect' not found in pipeline.brand
 ```
 
 ---
@@ -354,31 +329,10 @@ If no brand record found, abort with:
 
 ### 3a. Fetch all harvest-generated ideas
 
-Get choice ID for Status field first (singleSelect requires schema lookup for filtering):
-```
-mcp__claude_ai_Airtable__get_table_schema(
-  appgvQDqiFZ3ESigA,
-  [{ tableId: "tblVKVojZscMG6gDk", fieldIds: ["fld9frOZF4oaf3r6V"] }]
-)
-→ capture choice ID for "New" → selXXX
-```
-
-Then fetch all harvest ideas (source_type is singleSelect — get choice ID for "harvest" via get_table_schema before filtering):
-// choice ID for "harvest": sel5h40HUz6JnB5O5
-```
-mcp__claude_ai_Airtable__list_records_for_table(
-  baseId: "appgvQDqiFZ3ESigA",
-  tableId: "tblVKVojZscMG6gDk",
-  fieldIds: [
-    "fldMtlpG32VKE0WkN",   // Topic
-    "fld9frOZF4oaf3r6V",   // Status
-    "fldBkIqNugXb4M5Fk",   // source_type
-    "fldQMArYmpP8s6VKb",   // Intelligence File
-    "fldYU3CKk5HZAfrWo"    // captured_at
-  ],
-  filters: { operator: "=", operands: ["fldBkIqNugXb4M5Fk", "harvest"] }
-)
-→ harvestedIdeas = result.records
+```javascript
+const harvestedIdeas = await getRecords(TABLES.IDEAS,
+  { source_type: 'harvest' },
+  { fields: ['id','topic','status','source_type','intelligence_file','captured_at'], limit: 1000 });
 ```
 
 ### 3b. Compute rates per pillar
@@ -396,12 +350,12 @@ const rates = {};
 PILLARS.forEach(p => { rates[p] = { total: 0, selected: 0 }; });
 
 for (const idea of harvestedIdeas) {
-  const uif = JSON.parse(idea.fields["Intelligence File"] ?? "null");
+  const uif = JSON.parse(idea.intelligence_file ?? "null");
   if (!uif?.angles?.[0]?.pillar_connection) continue;
   const pillar = PILLARS.find(p => uif.angles[0].pillar_connection.includes(p));
   if (!pillar) continue;
   rates[pillar].total++;
-  if (idea.fields["Status"] !== "New") rates[pillar].selected++;
+  if (idea.status !== "New") rates[pillar].selected++;
 }
 
 const selectionRates = {};
@@ -495,8 +449,8 @@ You are the Harvest Query Generator for The Meta Architect content brand.
 
 Brand: The Meta Architect — AI Reliability Engineering
 Thesis: State Beats Intelligence
-Brand guidelines: {brand.fields?.main_guidelines}
-ICP: {brand.fields?.icp_short}
+Brand guidelines: {brand.main_guidelines}
+ICP: {brand.icp_short}
 
 Current year: 2026. Target research from 2025 — the AI space moves fast, even the wrong month matters.
 
@@ -806,7 +760,7 @@ if (scorerOutput.score_overall < SCORE_THRESHOLD) {
     status: "success"
   });
   slotResults[slotIndex].ideas_generated = 0;
-  continue; // Skip to next query — no Airtable write
+  continue; // Skip to next query — no Supabase write
 }
 ```
 
@@ -869,42 +823,38 @@ Log success:
 
 ---
 
-## Step 10: Write to Airtable (per query slot, above-threshold only)
+## Step 10: Write to Supabase (per query slot, above-threshold only)
 
 ```javascript
-// MCP: mcp__claude_ai_Airtable__create_records_for_table
-// baseId: "appgvQDqiFZ3ESigA", tableId: "tblVKVojZscMG6gDk", typecast: true
-{
-  fields: {
-    fldMtlpG32VKE0WkN: strategistOutput.working_title,    // Topic
-    fld9frOZF4oaf3r6V: "New",                             // Status
-    fldF8BxXjbUiHCWIa: strategistOutput.intent,           // intent
-    fldBvV1FgpD1l2PG1: JSON.stringify(strategistOutput),  // content_brief
-    fldeYByfFx9xjFnnK: scorerOutput.score_brand_fit,
-    fldquN4wVbd6eLKYF: scorerOutput.score_originality,
-    fldnFzMf3h6L7ez0l: scorerOutput.score_monetization,
-    fldrYVICu2Tg71Jrk: scorerOutput.score_production_effort,
-    fldvw93lwpYEqD5nX: scorerOutput.score_virality,
-    fld1L6eEoqpP6uxbX: scorerOutput.score_authority,
-    fldJatmYz453YGTyV: scorerOutput.score_overall,
-    flddvjuABw1KBIf4K: JSON.stringify({
-      brand_fit: scorerOutput.rationale_brand_fit,
-      audience_relevance: scorerOutput.rationale_audience_relevance,
-      originality: scorerOutput.rationale_originality,
-      monetization: scorerOutput.rationale_monetization,
-      production_effort: scorerOutput.rationale_production_effort,
-      virality: scorerOutput.rationale_virality,
-      authority: scorerOutput.rationale_authority
-    }),
-    fldgyi72BLytnCNPN: scorerOutput.recommended_next_action,
-    fldQMArYmpP8s6VKb: JSON.stringify(shallowUIF),         // Intelligence File (UIF)
-    fldAwyDJrDdoyPmtR: "shallow",                          // research_depth
-    fldBkIqNugXb4M5Fk: "harvest",                          // source_type — typecast creates value
-    fldrQ3CDTEDuIhEsy: generatedQuery,                     // raw_input = the query string
-    fldoREHCHsCU6pXuE: state.workflowId,                   // workflow_id
-    fldYU3CKk5HZAfrWo: new Date().toISOString()            // captured_at
-  }
-}
+const newRow = await createRecord(TABLES.IDEAS, {
+  topic:                   strategistOutput.working_title,
+  status:                  "New",
+  intent:                  strategistOutput.intent,
+  content_brief:           JSON.stringify(strategistOutput),
+  score_brand_fit:         scorerOutput.score_brand_fit,
+  score_originality:       scorerOutput.score_originality,
+  score_monetization:      scorerOutput.score_monetization,
+  score_production_effort: scorerOutput.score_production_effort,
+  score_virality:          scorerOutput.score_virality,
+  score_authority:         scorerOutput.score_authority,
+  score_overall:           scorerOutput.score_overall,
+  score_rationales:        JSON.stringify({
+    brand_fit:         scorerOutput.rationale_brand_fit,
+    audience_relevance: scorerOutput.rationale_audience_relevance,
+    originality:       scorerOutput.rationale_originality,
+    monetization:      scorerOutput.rationale_monetization,
+    production_effort: scorerOutput.rationale_production_effort,
+    virality:          scorerOutput.rationale_virality,
+    authority:         scorerOutput.rationale_authority,
+  }),
+  recommended_next_action: scorerOutput.recommended_next_action,
+  intelligence_file:       JSON.stringify(shallowUIF),
+  research_depth:          "shallow",
+  source_type:             "harvest",
+  raw_input:               generatedQuery,            // the query string
+  workflow_id:             state.workflowId,
+  captured_at:             new Date().toISOString(),
+}, ['id']);
 ```
 
 After successful write:
@@ -920,15 +870,15 @@ After all query slots are processed.
 
 ### 11a. Identify stale ideas
 
-Re-use `harvestedIdeas` from Step 3 (no new Airtable call needed).
+Re-use `harvestedIdeas` from Step 3 (no new Supabase call needed).
 
 > **Cold start (run_count = 0)**: `harvestedIdeas` is empty — prune loop runs over an empty array. Correct, no special handling needed.
 
 ```javascript
 const STALE_DAYS = 28;
 const staleIdeas = harvestedIdeas.filter(idea => {
-  if ((idea.fields["Status"] ?? "New") !== "New") return false;
-  const capturedAt = idea.fields["captured_at"] ?? idea.fields[fldYU3CKk5HZAfrWo];
+  if ((idea.status ?? "New") !== "New") return false;
+  const capturedAt = idea.captured_at;
   if (!capturedAt) return false;
   const ageMs = Date.now() - new Date(capturedAt).getTime();
   return ageMs > STALE_DAYS * 24 * 60 * 60 * 1000;
@@ -937,30 +887,28 @@ const staleIdeas = harvestedIdeas.filter(idea => {
 
 ### 11b. Archive stale ideas
 
-For each stale idea (batch into groups of 10 for MCP call limit):
+For each stale idea, run a sequential `patchRecord` (no batching needed — Supabase calls are cheap):
 ```javascript
-// MCP: mcp__claude_ai_Airtable__update_records_for_table
-// baseId: "appgvQDqiFZ3ESigA", tableId: "tblVKVojZscMG6gDk", typecast: true
-{
-  id: idea.id,
-  fields: {
-    fld9frOZF4oaf3r6V: "Archived",                                  // Status — typecast creates value
-    fld5Q97Lwm8ZzHpAK: "harvest_prune: No activity after 28 days"   // selection_reason
-  }
+for (const idea of staleIdeas) {
+  await patchRecord(TABLES.IDEAS, idea.id, {
+    status:           "Archived",
+    selection_reason: "harvest_prune: No activity after 28 days",
+  });
 }
 ```
 
-> `Status = "Archived"` is a new singleSelect value. `typecast: true` creates it automatically. Pruned ideas are NOT deleted — their count still contributes to the denominator in selection rate computation (a pruned idea is a non-selected idea).
+> `status = "Archived"` is a valid value in the migrated enum. Pruned ideas are NOT deleted — their count still contributes to the denominator in selection rate computation (a pruned idea is a non-selected idea).
 
 Log:
 ```javascript
-{
+await logEntry({
+  workflow_id: state.workflowId, entity_id: state.workflowId,
   step_name: "harvest_prune",
   stage: "pruning",
-  output_summary: `Archived ${staleIdeas.length} stale harvest ideas (28+ days at Status=New)`,
+  output_summary: `Archived ${staleIdeas.length} stale harvest ideas (28+ days at status=New)`,
   model_version: "n/a",
   status: "success"
-}
+});
 ```
 
 ---
@@ -983,7 +931,7 @@ const newEntries = queryPlan.map((slot, i) => ({
 }));
 
 // Note: ideas_selected is NOT tracked in query_log.
-// Selection rates are computed live from Airtable at Step 3 of each run.
+// Selection rates are computed live from pipeline.ideas at Step 3 of each run.
 // The query_log is append-only — never backfill old entries.
 
 const updatedMemory = {
@@ -1055,18 +1003,17 @@ ${newIdeasStr}
 
 ```javascript
 } catch (error) {
-  await mcp_create_log_entry({
+  await logEntry({
     workflow_id: state.workflowId,
     entity_id: state.workflowId,
     step_name: "error",
     stage: state.stage,
-    timestamp: new Date().toISOString(),
     output_summary: `Error: ${error.message}`,
     model_version: "n/a",
     status: "error"
   });
   // No lock to clear — harvest has no single long-lived lock.
-  // Ideas already written to Airtable remain. Partial progress is preserved.
+  // Ideas already written to pipeline.ideas remain. Partial progress is preserved.
   return `❌ /harvest failed at ${state.stage} — ${error.message}`;
 }
 ```
@@ -1079,7 +1026,7 @@ Before marking this run complete, verify:
 - [x] State object initialized (`buildStateObject` at start)
 - [x] Stage updated at each transition (`updateStage` before each major step)
 - [x] Every LLM call logged (Query Generator, Strategist, Scorer, Angle Extractor)
-- [x] Every Perplexity call logged (Step 6)
+- [x] Every NLM call logged (Step 6)
 - [x] Lock: Not applicable — no single long-lived lock; each idea is independent
-- [x] All LLM/API output validated before Airtable write (`validateBrief`, `validateCaptureScores`, `validateUIF`)
+- [x] All LLM/API output validated before Supabase write (`validateBrief`, `validateCaptureScores`, `validateUIF`)
 - [x] Error path reports stage + error message

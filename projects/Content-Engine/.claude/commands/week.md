@@ -2,7 +2,7 @@
 
 Run the complete planning → research → draft → review flow for the current ISO week in one session.
 
-Replaces running `/editorial-planner` + `/research` ×N + `/draft` ×N + `/review` ×N sequentially. Instead of re-querying Airtable at each command to find "what's next", `/week` builds a session manifest of post stub IDs in Phase 1 and carries it through all phases.
+Replaces running `/editorial-planner` + `/research` ×N + `/draft` ×N + `/review` ×N sequentially. Instead of re-querying Supabase at each command to find "what's next", `/week` builds a session manifest of post stub IDs in Phase 1 and carries it through all phases.
 
 **Usage**: `/week` (current ISO week) or `/week 2026-W15` (specific week)
 
@@ -10,7 +10,14 @@ Replaces running `/editorial-planner` + `/research` ×N + `/draft` ×N + `/revie
 
 **Does NOT include**: `/publish` (requires LinkedIn action + URL) or `/score` (requires 7-day wait). Those remain separate commands.
 
-> **Airtable**: MCP tools directly — no node scripts. All table IDs and field IDs in `.claude/skills/airtable.md`. Always `typecast: true` on writes.
+> **Supabase**: All reads/writes go through `tools/supabase.mjs` — never call Supabase MCP from inside this command (token-conscious rule). Column registry: `.claude/skills/supabase.md`. All columns are snake_case.
+
+```javascript
+import {
+  getRecords, getRecord, createRecord, patchRecord,
+  logEntry, setLock, clearLock, TABLES,
+} from './tools/supabase.mjs';
+```
 
 ---
 
@@ -76,19 +83,17 @@ function updateStage(newStage) {
 
 Run immediately after STATE init, before Resume check and before any other work.
 Loads brand once for the entire session — all phases (research, draft) read from `weekState.cache.brand`
-instead of making separate Airtable calls.
+instead of making separate Supabase calls.
 
 ```javascript
 updateStage("cache_preload");
 
 // Load brand record once — used by Phase 2 (research) and Phase 3 (draft)
-// MCP: mcp__claude_ai_Airtable__list_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblwfU5EpDgOKUF7f"
-//   fieldIds: [fldsP8FwcTxJdkac8, fld7N55IwEM8CQYW0, fldLYt1DMS1Fwd5Vy, fldBtXwgSegiYP2pB]
-//   filters: name = "metaArchitect"
-const brandRecords = // result.records
-if (!brandRecords[0]) throw new Error("Brand record 'metaArchitect' not found — aborting /week");
-weekState.cache.brand = brandRecords[0];
+const brandRows = await getRecords(TABLES.BRAND,
+  { name: 'metaArchitect' },
+  { fields: ['name','goals','icp_short','main_guidelines'], limit: 1 });
+if (!brandRows[0]) throw new Error("Brand row 'metaArchitect' not found in pipeline.brand — aborting /week");
+weekState.cache.brand = brandRows[0];
 
 // Note: frameworks, hooks, snippets are loaded just before Phase 3 (only needed for drafting)
 // See Phase 3 preamble in runPhase3Draft()
@@ -103,14 +108,13 @@ Run immediately after Phase 0 cache preload. Detects in-flight or partially comp
 ```javascript
 updateStage("resume_check");
 
-// MCP: mcp__claude_ai_Airtable__list_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblz0nikoZ89MHHTs"
-//   fieldIds: [fldlC1PMzRw0z6cTR, fldViXirsiFl1j1w4, fldIqhg3WzB4vZfhl,
-//              fldwDOdJgmbf2IZKv, fldlGGDwqp6Hy17jT, fldC2PIfrupZA2Ohk,
-//              fldDNwByEQkXdq4lV, fldoszwWyI2UBIIzu]
-//   filters: planned_week = targetWeek (text field, direct string match — no schema lookup needed)
-//   sort: fldIqhg3WzB4vZfhl asc  (planned_order)
-const existingStubs = // result.records
+const existingStubs = await getRecords(TABLES.POSTS,
+  { planned_week: targetWeek },
+  {
+    fields: ['id','status','planned_order','narrative_role','angle_index','idea_id','intent','research_started_at'],
+    orderBy: { col: 'planned_order', dir: 'asc' },
+    limit: 50,
+  });
 ```
 
 If stubs exist, populate the manifest:
@@ -120,16 +124,16 @@ if (existingStubs.length > 0) {
   weekState.postStubIds = existingStubs.map(s => s.id);
   weekState.postStubMap = Object.fromEntries(
     existingStubs.map(s => [s.id, {
-      ideaId:       s.fields?.idea_id?.[0],
-      plannedOrder: s.fields?.planned_order,
-      narrativeRole: s.fields?.narrative_role,
-      angleIndex:   s.fields?.angle_index ?? 0,
-      status:       s.fields?.status,
+      ideaId:       s.idea_id,           // UUID FK (no longer an array)
+      plannedOrder: s.planned_order,
+      narrativeRole: s.narrative_role,
+      angleIndex:   s.angle_index ?? 0,
+      status:       s.status,
       topic:        null   // filled from idea record if needed
     }])
   );
 
-  const statuses = existingStubs.map(s => s.fields?.status);
+  const statuses = existingStubs.map(s => s.status);
   const allDecided       = statuses.every(st => ["approved", "rejected"].includes(st));
   const allDrafted       = statuses.every(st => ["drafted", "approved", "rejected"].includes(st));
   const allResearchReady = statuses.every(st => ["research_ready", "drafted", "approved", "rejected"].includes(st));
@@ -171,7 +175,7 @@ if (existingStubs.length > 0) {
 
 ## Phase 1 — Plan
 
-Full `/editorial-planner` logic, reproduced inline. The only differences: (1) `targetWeek` is already set (supports the `/week 2026-W15` argument path); (2) stub IDs are captured into the session manifest as they are written — no second Airtable query needed.
+Full `/editorial-planner` logic, reproduced inline. The only differences: (1) `targetWeek` is already set (supports the `/week 2026-W15` argument path); (2) stub IDs are captured into the session manifest as they are written — no second Supabase query needed.
 
 ### Step 1. Idempotency check (already handled by resume check above)
 
@@ -181,15 +185,15 @@ If stubs exist for `targetWeek`, resume check above catches it. Phase 1 only run
 
 ```javascript
 updateStage("fetch_candidates");
-// MCP: get_table_schema for Status "New" choice ID, then:
-//   mcp__claude_ai_Airtable__list_records_for_table
-//   baseId: "appgvQDqiFZ3ESigA", tableId: "tblVKVojZscMG6gDk"
-//   fieldIds: [fldMtlpG32VKE0WkN, fld9frOZF4oaf3r6V, fldQMArYmpP8s6VKb, fldBvV1FgpD1l2PG1,
-//              fldF8BxXjbUiHCWIa, fldJatmYz453YGTyV, fldeYByfFx9xjFnnK, fldquN4wVbd6eLKYF, fldvw93lwpYEqD5nX]
-//   filters: Status = "New" (choice ID) — sort: fldJatmYz453YGTyV desc
-const candidates = // result.records
+const candidates = await getRecords(TABLES.IDEAS,
+  { status: 'New' },
+  {
+    fields: ['id','topic','status','intelligence_file','content_brief','intent','score_overall','score_brand_fit','score_originality','score_virality'],
+    orderBy: { col: 'score_overall', dir: 'desc' },
+    limit: 100,
+  });
 if (candidates.length < 3) {
-  return `⚠ Only ${candidates.length} ideas with Status = "New" — need at least 3. Run /capture or /harvest to add more.`;
+  return `⚠ Only ${candidates.length} ideas with status = "New" — need at least 3. Run /capture or /harvest to add more.`;
 }
 ```
 
@@ -218,10 +222,8 @@ for (const post of plan.posts) {
     const territoryKey = deriveTerritory(post, sourceAngleName);  // same helper as /editorial-planner
     const postClass = inferPostClass(post, sourceAngleName, territoryKey, recentHistory);  // same helper
 
-    // MCP: mcp__claude_ai_Airtable__create_records_for_table
-    //   baseId: "appgvQDqiFZ3ESigA", tableId: "tblz0nikoZ89MHHTs", typecast: true
-    const postStub = await createRecord(POSTS, {
-      idea_id:          [post.idea_id],
+    const postStub = await createRecord(TABLES.POSTS, {
+      idea_id:          post.idea_id,        // UUID FK (single value, not an array)
       planned_week:     targetWeek,
       planned_order:    post.order,
       narrative_role:   post.narrative_role,
@@ -236,29 +238,32 @@ for (const post of plan.posts) {
       source_angle_name: sourceAngleName,
       territory_key:    territoryKey,
       post_class:       postClass,
-    });
+    }, ['id']);
 
     // Patch idea to Selected
-    await patchRecord(IDEAS, post.idea_id, {
-      Status: "Selected",
+    await patchRecord(TABLES.IDEAS, post.idea_id, {
+      status:           "Selected",
       selected_at,
-      planned_week: targetWeek,
-      planned_order: post.order,
-      narrative_role: post.narrative_role,
-      series_id: post.series_id ?? null,
-      series_part: post.series_part ?? null,
-      series_total: post.series_total ?? null,
-      selection_reason: post.why_selected
+      planned_week:     targetWeek,
+      planned_order:    post.order,
+      narrative_role:   post.narrative_role,
+      series_id:        post.series_id ?? null,
+      series_part:      post.series_part ?? null,
+      series_total:     post.series_total ?? null,
+      selection_reason: post.why_selected,
     });
 
     // ← KEY DIFFERENCE FROM /editorial-planner: populate manifest immediately
     weekState.postStubIds.push(postStub.id);
 
-    // Cache UIF + contentBrief from the candidate record — already loaded in Step 2 fetch_candidates.
-    // This prevents research and draft from re-fetching the same data from Airtable.
+    // Cache UIF + contentBrief from the raw idea record (loaded in Step 2 fetch_candidates).
+    // Look up by id from the original `candidates` array — composerInput.candidates is mapped
+    // and doesn't carry the raw JSON columns.
+    // This prevents research and draft from re-fetching the same data from Supabase.
     // After research completes, the UIF entry is overwritten with the deepened version.
-    const rawUIF = candidateRecord?.fields?.["Intelligence File"];
-    const rawBrief = candidateRecord?.fields?.content_brief;
+    const rawIdea  = candidates.find(c => c.id === post.idea_id);
+    const rawUIF   = rawIdea?.intelligence_file;
+    const rawBrief = rawIdea?.content_brief;
 
     weekState.postStubMap[postStub.id] = {
       ideaId:       post.idea_id,
@@ -266,7 +271,7 @@ for (const post of plan.posts) {
       narrativeRole: post.narrative_role,
       angleIndex:   post.angle_index,
       status:       "planned",
-      topic:        post.topic ?? candidateRecord?.topic ?? "",
+      topic:        post.topic ?? rawIdea?.topic ?? "",
       uif:          rawUIF ? JSON.parse(rawUIF) : null,          // shallow UIF from planning phase
       contentBrief: rawBrief ? JSON.parse(rawBrief) : null       // overwritten by research if deep
     };
@@ -281,7 +286,7 @@ for (const post of plan.posts) {
 
   } catch (e) {
     const writtenList = written.length > 0 ? ` Already written: ${written.join(", ")}` : "";
-    return `❌ /week failed at writing (idea ${post.idea_id}) — ${e.message}${writtenList} — check Airtable before retrying`;
+    return `❌ /week failed at writing (idea ${post.idea_id}) — ${e.message}${writtenList} — check pipeline.posts before retrying`;
   }
 }
 ```
@@ -314,7 +319,7 @@ Confirm? Enter y to continue, x to stop here:
 ```javascript
 const confirm = await getUserInput();
 if (confirm.trim().toLowerCase() !== "y") {
-  console.log(`\nStopped after planning. Post stubs written to Airtable.`);
+  console.log(`\nStopped after planning. Post stubs written to pipeline.posts.`);
   console.log(`Run /week again to resume, or /research [id] to process individually.`);
   return;
 }
@@ -444,24 +449,21 @@ async function runResearchForStub(stubId, weekState) {
     if (!brand) throw new Error("weekState.cache.brand is empty — Phase 0 cache preload may have failed");
 
     // Step 2: Load target stub by ID (not "oldest planned" filter)
-    // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblz0nikoZ89MHHTs)
-    //   recordIds: [stubId]
-    //   fieldIds: [fldlC1PMzRw0z6cTR, fldlGGDwqp6Hy17jT, fldwDOdJgmbf2IZKv,
-    //              fldViXirsiFl1j1w4, fldIqhg3WzB4vZfhl, fldC2PIfrupZA2Ohk]
-    const postStub = // records[0]
+    const postStub = await getRecord(TABLES.POSTS, stubId,
+      ['id','status','idea_id','angle_index','planned_week','planned_order','research_started_at']);
     if (!postStub) throw new Error(`Post stub ${stubId} not found`);
 
     // Stale lock check: if research_started_at is set on this stub, clear it and proceed
-    if (postStub.fields?.research_started_at) {
+    if (postStub.research_started_at) {
       subState.stage = "clearing_stale_lock";
-      await logEntry({ ...subState, step_name: "stale_lock_cleared",
+      await logEntry({ workflow_id: subState.workflowId, entity_id: stubId,
+        step_name: "stale_lock_cleared", stage: subState.stage,
         output_summary: `Stale lock found on ${stubId} — cleared, retrying`, status: "success" });
-      // MCP: update_records_for_table — set research_started_at: null, status: "planned"
-      await patchRecord(POSTS, stubId, { research_started_at: null, status: "planned" });
+      await clearLock(TABLES.POSTS, stubId, 'research_started_at', 'planned');
     }
 
-    const ideaId    = postStub.fields?.idea_id?.[0];
-    const angleIndex = postStub.fields?.angle_index ?? 0;
+    const ideaId    = postStub.idea_id;            // UUID FK (not an array)
+    const angleIndex = postStub.angle_index ?? 0;
     if (!ideaId) throw new Error("Post stub missing idea_id");
 
     // Steps 3–11: Full /research SOP
@@ -470,8 +472,8 @@ async function runResearchForStub(stubId, weekState) {
     //
     // Step 3: Load idea + UIF
     //         Note: weekState.postStubMap[stubId].uif has the shallow UIF from Phase 1 —
-    //         /research still fetches fresh from Airtable here (stub might have been pre-existing
-    //         from a resume, with no cached UIF). Use the Airtable fetch as source of truth.
+    //         /research still fetches fresh from Supabase here (stub might have been pre-existing
+    //         from a resume, with no cached UIF). Use the Supabase fetch as source of truth.
     // Step 4: Set LOCK — research_started_at = now(), status = "researching"
     // Step 5: Research Architect LLM call (researcher.md system prompt)
     // Step 6: NLM research (fast path or full path — see research.md Step 6)
@@ -482,7 +484,7 @@ async function runResearchForStub(stubId, weekState) {
 
     // ── CACHE UPDATE: write deepened UIF back to weekState for draft phase ──
     // updatedUIF is the result from the UIF Merger (Step 7 above).
-    // Draft phase reads weekState.postStubMap[stubId].uif instead of re-fetching from Airtable.
+    // Draft phase reads weekState.postStubMap[stubId].uif instead of re-fetching from Supabase.
     if (updatedUIF && weekState.postStubMap[stubId]) {
       weekState.postStubMap[stubId].uif = updatedUIF;
     }
@@ -492,7 +494,7 @@ async function runResearchForStub(stubId, weekState) {
   } catch (error) {
     // Clear lock on failure
     try {
-      await patchRecord(POSTS, stubId, { research_started_at: null, status: "planned" });
+      await clearLock(TABLES.POSTS, stubId, 'research_started_at', 'planned');
     } catch (_) {}
 
     await logEntry({ workflow_id: weekState.workflowId, entity_id: stubId,
@@ -516,8 +518,13 @@ Sequential by design: fast (~10s/post), and sequential output is readable. Paral
 async function runPhase3Draft(weekState) {
   updateStage("draft_start");
 
-  // Re-verify statuses from Airtable before filtering (handles resume case)
-  // MCP: list_records_for_table — same query as resume check, update weekState.postStubMap statuses
+  // Re-verify statuses from Supabase before filtering (handles resume case)
+  const refreshed = await getRecords(TABLES.POSTS,
+    { id: weekState.postStubIds },
+    { fields: ['id','status'], limit: weekState.postStubIds.length });
+  refreshed.forEach(r => {
+    if (weekState.postStubMap[r.id]) weekState.postStubMap[r.id].status = r.status;
+  });
 
   const stubsToDraft = weekState.postStubIds.filter(
     id => weekState.postStubMap[id]?.status === "research_ready"
@@ -535,31 +542,27 @@ async function runPhase3Draft(weekState) {
 
   // ── LIBRARY PRELOAD ────────────────────────────────────────────────────────
   // Load frameworks, hooks, and snippets ONCE before the draft loop.
-  // Each runDraftForStub() reads from weekState.cache instead of querying Airtable per post.
+  // Each runDraftForStub() reads from weekState.cache instead of querying Supabase per post.
   updateStage("library_preload");
 
   // Frameworks — all non-retired
-  // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblYsys2ydvryVtmf)
-  //   fieldIds: [fldcFJnXRemmm2PqU, fld92B4yioAGqEbfL, fldMPkk9oVvbqvTv5, fldlCsQrc9GWIT1yg,
-  //              fldoAs2QC066Th0x9, fldtVJ6vuENyFgz8A, fldBhDdj55AxwLEUl, fldiGWr8FwZMQjqfe, fldAQX51YZ6YsIAE7]
-  //   filters: status != "retired"
-  weekState.cache.frameworks = // result.records
+  const allFrameworks = await getRecords(TABLES.FRAMEWORKS, null,
+    { fields: ['id','framework_name','description','one_liner','use_when','example','status','source_link','avg_score'], limit: 200 });
+  weekState.cache.frameworks = allFrameworks.filter(f => f.status !== 'retired');
 
   // Hooks — all non-retired, sorted by avg_score desc (intent filtering done in-memory per post)
-  // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblWuQNSJ25bs18DZ)
-  //   fieldIds: [fldSIjqzsFuxWOaYb, fldOvWxj7O0x51aIX, fld6UZ8Fy7q2cZQyF, fldVKrSnP34sofwZ7,
-  //              fld0b1nWNg3ZXT21f, fldfckbIwaSSebctW, fld6RgXuUNgyMBuFe, flddxiv4RPE8IEwvm]
-  //   filters: status != "retired"
-  //   maxRecords: 60  ← sorted by avg_score desc; covers all quality hooks
-  weekState.cache.hooks = // result.records
+  const allHooks = await getRecords(TABLES.HOOKS, null,
+    { fields: ['id','hook_text','hook_type','intent','status','avg_score','source_idea_id','angle_name'],
+      orderBy: { col: 'avg_score', dir: 'desc' }, limit: 200 });
+  weekState.cache.hooks = allHooks.filter(h => h.status !== 'retired').slice(0, 60);
 
-  // Snippets — eligible only (cooldown filter pre-applied)
-  // MCP: list_records_for_table(appgvQDqiFZ3ESigA, tblk8QpMOBOs6BMbF)
-  //   fieldIds: [fldaWegy2OyWpA28D, fldZFO5xKMiqBuUMY, fldiAFNJJZUcqhr7C, fldZ6ifFD4OW0PDOt,
-  //              fld90hLmFbyPWvy59, fldvIYK5Xh9v7BwOl, fldfqHyUlwn7JqBFn]
-  //   filters: last_used_at < [now - 28 days] OR last_used_at isEmpty
-  //   maxRecords: 50
-  weekState.cache.snippets = // result.records
+  // Snippets — eligible only (cooldown filter applied in-memory)
+  const cutoff = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString();
+  const allSnippets = await getRecords(TABLES.SNIPPETS, null,
+    { fields: ['id','snippet_text','category','tags','last_used_at','status','snippet_fit_avg'], limit: 300 });
+  weekState.cache.snippets = allSnippets
+    .filter(s => !s.last_used_at || s.last_used_at < cutoff)
+    .slice(0, 50);
 
   await logEntry({ workflow_id: weekState.workflowId, entity_id: targetWeek,
     step_name: "library_preload", stage: "library_preload",
@@ -621,23 +624,23 @@ Full `/draft` SOP for one stub. Key differences:
 ```javascript
 async function runDraftForStub(stubId, weekState) {
   // Step 1: Brand context — use weekState.cache.brand (loaded in Phase 0, never re-fetch)
-  // Step 2: Load stub by ID (recordIds: [stubId]) — not "oldest research_ready" filter
+  // Step 2: Load stub by ID — getRecord(TABLES.POSTS, stubId, [...])
   // Step 3: Load idea + parse UIF — use weekState.postStubMap[stubId].uif (deepened by research)
-  //         Falls back to Airtable fetch only if cache miss (e.g. resume from partial state)
+  //         Falls back to getRecord(TABLES.IDEAS, ideaId, [...]) only if cache miss (e.g. resume from partial state)
   // Step 4: Platform default: "linkedin"
   // Step 5: Query framework_library — use weekState.cache.frameworks (loaded in Phase 3 preamble)
-  //         Falls back to Airtable fetch (maxRecords: 40) if cache miss
+  //         Falls back to getRecords(TABLES.FRAMEWORKS, ...) if cache miss
   // Step 6: Query hooks_library — use weekState.cache.hooks, filter in-memory by intent
-  //         Falls back to Airtable fetch (maxRecords: 60, intent filter) if cache miss
+  //         Falls back to getRecords(TABLES.HOOKS, ...) if cache miss
   // Step 7: Query humanity_snippets — use weekState.cache.snippets (cooldown pre-filtered)
-  //         Falls back to Airtable fetch (maxRecords: 50, date filter) if cache miss
-  // Step 8: Call claude-sonnet-4-6 with writer.md system prompt
+  //         Falls back to getRecords(TABLES.SNIPPETS, ...) if cache miss
+  // Step 8: In-session LLM call (claude-sonnet-4-6, writer.md system prompt — Max subscription, NOT SDK)
   //         validatePost() gate — word count 150–250, structure valid
-  // Step 9: Patch post stub:
+  // Step 9: patchRecord(TABLES.POSTS, stubId, {...}):
   //         status="drafted", draft_content, hook_id, framework_id, humanity_snippet_id,
   //         alt_snippet_ids, needs_snippet, intent, format, platform, drafted_at=now()
   //         Update humanity_snippets.last_used_at = now() (immediate — not at score time)
-  // Step 10: Log LLM call to logs table (workflow_id = weekState.workflowId)
+  // Step 10: Log LLM call via logEntry({...}) (workflow_id = weekState.workflowId)
   //
   // See .claude/commands/draft.md for the complete step-by-step.
 }
@@ -651,9 +654,13 @@ async function runDraftForStub(stubId, weekState) {
 async function runPhase4Review(weekState) {
   updateStage("review_start");
 
-  // Re-verify statuses from Airtable (handles resume — only show still-drafted posts)
-  // MCP: list_records_for_table — refetch current statuses + draft_content + linked record IDs
-  // Update weekState.postStubMap before filtering
+  // Re-verify statuses from Supabase (handles resume — only show still-drafted posts)
+  const refreshed = await getRecords(TABLES.POSTS,
+    { id: weekState.postStubIds },
+    { fields: ['id','status'], limit: weekState.postStubIds.length });
+  refreshed.forEach(r => {
+    if (weekState.postStubMap[r.id]) weekState.postStubMap[r.id].status = r.status;
+  });
 
   const stubsToReview = weekState.postStubIds.filter(
     id => weekState.postStubMap[id]?.status === "drafted"
@@ -683,17 +690,16 @@ async function runPhase4Review(weekState) {
     reviewedCount++;
     const stub = weekState.postStubMap[stubId];
 
-    // Load full post data for this stub (draft_content + linked records)
-    // MCP: list_records_for_table(tblz0nikoZ89MHHTs, recordIds: [stubId])
-    //   fieldIds: [fldgVwvcXFDA7RCxf, fldztvQenFV0pW44l, fldps8GeW62IjxTze,
-    //              fldRHUQer2GFyLieS, fldk046kLs4yG2p1Y, fldNQw5L5KBFpFt5a,
-    //              fldmmLHwgsBpa6KP6, fldcQe7vI0lE6qqwQ, fld9OwHI6Z2Al3p7T]
-    // Load linked records (hook, framework, snippet, alt_snippets) — same as /review Step 2
+    // Load full post data for this stub (draft_content + FK ids)
+    const post = await getRecord(TABLES.POSTS, stubId,
+      ['id','status','draft_content','intent','format','platform','hook_id','framework_id','humanity_snippet_id','alt_snippet_ids','needs_snippet','idea_id']);
+    // FK lookups (hook, framework, snippet, alt_snippets) — same as /review Step 2,
+    // performed inline via getRecord(TABLES.HOOKS / FRAMEWORKS / SNIPPETS, ...) when needed.
 
     // Post header
     console.log(`\n${"━".repeat(52)}`);
     console.log(`POST ${reviewedCount} OF ${totalToReview}  — /week Phase 4`);
-    const intentLabel = stub.intent ?? post.fields?.intent ?? "";
+    const intentLabel = stub.intent ?? post.intent ?? "";
     console.log(`Platform: linkedin | Intent: ${intentLabel}`);
     console.log(`${"━".repeat(52)}`);
 
@@ -717,8 +723,7 @@ async function runPhase4Review(weekState) {
       const cmd = input.trim().toLowerCase();
 
       if (cmd === "a") {
-        // Approve optimized
-        // MCP: update_records_for_table — draft_content (if changed), status="approved", approved_at=now()
+        // Approve optimized — patchRecord(TABLES.POSTS, stubId, { draft_content, status: 'approved', approved_at: now() })
         await approvePost(stubId, optimization.winnerContent, false, weekState);
         weekState.reviewResults[stubId] = { status: "approved" };
         weekState.postStubMap[stubId].status = "approved";
@@ -763,8 +768,7 @@ async function runPhase4Review(weekState) {
 
       } else if (cmd === "x") {
         // Reject
-        // MCP: update_records_for_table — status="rejected"
-        await patchRecord(POSTS, stubId, { status: "rejected" });
+        await patchRecord(TABLES.POSTS, stubId, { status: "rejected" });
         await logEntry({ workflow_id: weekState.workflowId, entity_id: stubId,
           step_name: "post_rejected", stage: "review_rejected",
           timestamp: new Date().toISOString(), output_summary: "Post rejected",
@@ -784,7 +788,7 @@ async function runPhase4Review(weekState) {
       } else if (/^sf [1-5]$/.test(cmd)) {
         // Rate snippet fit
         const score = parseInt(cmd.slice(3));
-        await patchRecord(POSTS, stubId, { snippet_fit_score: score });
+        await patchRecord(TABLES.POSTS, stubId, { snippet_fit_score: score });
         console.log(`✅ Snippet fit: ${score}/5 saved.`);
 
       } else if (cmd.startsWith("sn ")) {
@@ -792,8 +796,7 @@ async function runPhase4Review(weekState) {
         const text = input.slice(3).trim();
         if (text.length < 20) { console.log("⚠ Snippet too short — provide at least a sentence."); }
         else {
-          // MCP: create_records_for_table(tblk8QpMOBOs6BMbF) — snippet_text, status="candidate"
-          await createRecord(SNIPPETS, { snippet_text: text, status: "candidate" });
+          await createRecord(TABLES.SNIPPETS, { snippet_text: text, status: "candidate" });
           console.log(`✅ Snippet candidate saved.`);
         }
 
@@ -906,18 +909,18 @@ All errors use format: `❌ /week failed at [phase]/[stage] — [message] — [r
 
 ---
 
-## Airtable Writes (Full Reference)
+## Supabase Writes (Full Reference)
 
-No new fields required. All fields are written by existing commands and carry over unchanged.
+All columns exist in `pipeline.*` (see `infra/supabase/schema.sql`). All names are snake_case.
 
-| Phase | Table | Fields |
+| Phase | Table | Columns |
 |---|---|---|
-| Plan | `posts` | `idea_id`, `planned_week`, `planned_order`, `narrative_role`, `angle_index`, `status="planned"`, `pillar`, `thesis_angle`, `source_angle_name`, `territory_key`, `post_class`, `selection_reason`, series fields |
-| Plan | `ideas` | `Status="Selected"`, `selected_at`, `planned_week`, `planned_order`, `narrative_role`, `selection_reason` |
-| Research | `posts` | `research_started_at` (lock → null on completion), `status="researching"→"research_ready"`, `research_completed_at` |
-| Research | `ideas` | `Intelligence File` (updated UIF), `research_depth="deep"`, `research_completed_at`, `Status="Ready"` |
-| Research | `hooks_library` | new hook records per stub |
-| Draft | `posts` | `draft_content`, `hook_id`, `framework_id`, `humanity_snippet_id`, `alt_snippet_ids`, `needs_snippet`, `intent`, `format`, `platform="linkedin"`, `status="drafted"`, `drafted_at` |
-| Draft | `humanity_snippets` | `last_used_at=now()` |
-| Review | `posts` | `draft_content` (if revised), `status="approved"|"rejected"`, `approved_at`, `humanity_snippet_id` (if swapped), `snippet_fit_score` |
-| All phases | `logs` | `workflow_id`, `entity_id`, `step_name`, `stage`, `timestamp`, `output_summary`, `model_version`, `status` |
+| Plan | `pipeline.posts` | `idea_id` (uuid FK), `planned_week`, `planned_order`, `narrative_role`, `angle_index`, `status="planned"`, `pillar`, `thesis_angle`, `source_angle_name`, `territory_key`, `post_class`, `selection_reason`, series fields |
+| Plan | `pipeline.ideas` | `status="Selected"`, `selected_at`, `planned_week`, `planned_order`, `narrative_role`, `selection_reason` |
+| Research | `pipeline.posts` | `research_started_at` (lock → null on completion), `status="researching"→"research_ready"`, `research_completed_at` |
+| Research | `pipeline.ideas` | `intelligence_file` (updated UIF), `research_depth="deep"`, `research_completed_at`, `status="Ready"` |
+| Research | `pipeline.hooks_library` | new hook rows per stub (`source_idea_id` uuid FK) |
+| Draft | `pipeline.posts` | `draft_content`, `hook_id`, `framework_id`, `humanity_snippet_id`, `alt_snippet_ids`, `needs_snippet`, `intent`, `format`, `platform="linkedin"`, `status="drafted"`, `drafted_at` |
+| Draft | `pipeline.humanity_snippets` | `last_used_at=now()` |
+| Review | `pipeline.posts` | `draft_content` (if revised), `status="approved"\|"rejected"`, `approved_at`, `humanity_snippet_id` (if swapped), `snippet_fit_score` |
+| All phases | `pipeline.logs` | `workflow_id`, `entity_id`, `step_name`, `stage`, `timestamp`, `output_summary`, `model_version`, `status` |
