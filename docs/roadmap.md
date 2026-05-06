@@ -80,11 +80,11 @@
 - [x] ~~Save to `funnel/lead-magnets/state-readiness-checklist.pdf`~~ ✓ 2026-03-22
   - Hosted: https://storage.googleapis.com/mailerlite-uploads-prod/2210707/jn1JSNybbE4IAkMwVRTOQqP7TOIeGKZ34fftV0op.pdf
 
-### 3.5c. Opt-In Page
-- [ ] Headline: "Is your GenAI pilot production-ready? Score it in 5 minutes."
-- [ ] Form: name + email only — no more fields
-- [ ] On submit: delivers PDF immediately + triggers welcome sequence
-- [ ] Host at `/checklist` route on simonparis.ca or as standalone funnel page
+### 3.5c. STATE Readiness Diagnostic — ✅ LIVE
+- [x] ~~Live at simonparis.ca/readiness~~ ✓ 2026-05-06
+- **What it actually is**: Full 5-pillar audit tool (15–20 min). Collects system name, role, company size, industry, prod status, regulations, then walks through S/T/A/T/E questions with conditional follow-ups. Saves to Supabase + subscribes to MailerLite. Session resume built in.
+- **Strategic value**: This is the consulting funnel entry point, not a simple opt-in. Someone who completes it is pre-qualified. Simon reviews and delivers a STATE Readiness Report within 48 hrs.
+- Note: original spec was a simple checklist opt-in — what was built is significantly more powerful. The `/checklist` route is superseded by this.
 
 ### 3.5d. Homepage Tweak (simonparis.ca — scope: 3 changes, not a redesign)
 - [ ] Above the fold: own the category — "I design AI systems that don't break. The STATE framework is how."
