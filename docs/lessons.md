@@ -158,6 +158,54 @@ Schema says `title` defaults to null. Server rejects it. Always pass a real desc
 
 ---
 
+## 2026-05-09 — 8 weeks of LinkedIn-only posting → 250 followers
+
+**What happened:** Pipeline shipped 2x/week for 8 weeks. Follower count plateaued at ~250. Posts had near-zero discovery. Treated content quality as the variable; distribution was actually the bottleneck.
+
+**Root cause:** Solo posting on LinkedIn doesn't compound without an audience seed. The algorithm rewards initial engagement; with no followers, posts die in the feed. The roadmap implicitly assumed cadence + quality → growth. It does not — those are necessary but not sufficient.
+
+**Fix applied:** Distribution split into its own phase (3.7 Audience Growth System) with three explicit mechanics: (1) ICP commenting to borrow audiences, (2) bi-weekly teardowns as proof-of-work artifacts, (3) blog + LinkedIn newsletter as owned distribution. Cadence on its own is no longer treated as a growth lever — only as a habit asset.
+
+**Where documented:** `docs/roadmap.md` Phases 3.6 and 3.7.
+
+---
+
+## 2026-05-09 — Public blog CTA pointed at `/readiness` (paid intake form)
+
+**What happened:** Blog post "audit" CTA in `PostCTA.tsx` linked to `/readiness` — the 15-20 minute paid consulting intake. Strangers landing from blog posts were dropped into operational tooling meant for paying clients.
+
+**Root cause:** The `/readiness` page was built as a back-office tool but rendered as a public route with no documented convention separating it from public-facing pages. No naming or routing convention enforced the distinction.
+
+**Fix applied:** Changed `PostCTA.tsx:44` from `/readiness` → `/score`. Added comment block at top of `PostCTA.tsx` documenting the rule: public surfaces link to `/score` only; `/readiness` is operational tooling and is never linked from anywhere a stranger could land.
+
+**Where documented:** `components/blog/PostCTA.tsx` (header comment), `docs/roadmap.md` LESSONS LOG.
+
+---
+
+## 2026-05-09 — Workshop / cohort built on roadmap before audience could support them
+
+**What happened:** Roadmap had Workshop (Phase 4), Cohort Readiness (4.5), and Cohort Beta (5) as the next sequential phases. None of them are viable at 250 followers. Energy was being spent thinking about Phase 4.5 curriculum design while Phase 3 distribution was failing silently.
+
+**Root cause:** Phase ordering treated "what comes next in the funnel" as "what to build next." But each phase requires the prior phase to actually be working — not just shipped. Workshop needs an audience large enough to register meaningful attendance. Cohort needs workshop validation. Building forward without demand signal = work without leverage.
+
+**Fix applied:** Sequencing rule added to roadmap — don't build the next-tier offer until the current tier has actual demand signal. Phases 4 / 4.5 / 5 moved to Parking Lot with explicit unblock criteria (followers ≥ 1K OR proven teardown engagement). Phase 6 (Consulting) promoted to active because it can monetize current audience size with the right pricing.
+
+**Where documented:** `docs/roadmap.md` PARKING LOT (with unblock criteria) and Phase 6.
+
+---
+
+## 2026-05-10 — Two agents opened parallel PRs for the same pivot cleanup
+
+**What happened:** PR #9 (`chore/remove-workshop-cohort`) and PR #10 (`chore/remove-parked-offers`) on simonparis-website both removed `/workshop` and `/cohort` after the 2026-05-09 pivot. PR #10 was a strict superset (also cleaned `about.json` Work-with-me, dead `subscribe/route.ts` groupMap branches, `.env.local.example`). PR #9 also had no Vercel preview deployment because the commit author email wasn't associated with a GitHub account — so even reviewing the PR required reading code, no live preview to click. Wasted scope-comparison cycles. Both PRs also flagged `score.json` CTAs as out-of-scope, but those keys ship the broken `/workshop` and `/cohort` URLs into the diagnostic email and on-screen score result — highest-impact gap.
+
+**Root cause:** (a) Two parallel agent jobs were kicked off for the same cleanup without one checking open PRs first. (b) Agent commits used a non-Vercel-recognized commit author email, breaking preview deploys for one branch. (c) "Out of scope per brief" was treated as a stopping condition even when the leftover code shipped user-visible broken URLs.
+
+**Fix applied:** Closed #9 as superseded; merged #10; opened #11 to fix the user-visible gap (score CTAs) + the two items both PRs missed (`TODO.md`, `PageHero.tsx` comment). Lesson: before kicking off a chore PR, `gh pr list` first. When agent commits, set author email to one Vercel recognizes (Simon's GitHub noreply) so previews build. When an out-of-scope item ships user-visible broken copy, surface it loudly instead of silently parking it.
+
+**Where documented:** This lessons entry; roadmap parking-lot lessons-table.
+
+---
+
 ## Template for new entries
 
 ```
