@@ -203,6 +203,31 @@
 - [ ] Apply locked pricing + copy to `/consulting` page (Phase 6b — sitemaster job)
 - [ ] Update QUICK REFERENCE pricing line: $750 CAD → $1,295 USD (full) / intro rate TBD
 
+### 6g. Institutional Artifacts — "What You Keep" on /audit — 🔼 HIGH-ISH PRIORITY
+
+**Goal: ship the three reference artifacts the buyer keeps (already named in positioning) so `/audit` can surface a "What you keep" section that raises perceived value of the reference rate.**
+**Why now: SYSTEM.md (sitemaster + brand) promises these artifacts; `/audit` cannot truthfully list them until they exist. Sitemaster PR #17 (merge `503b415`, 2026-05-10) intentionally deferred adding the "What you keep" section until at least one artifact ships. DESIGN.md already reserves `#1F1F1F` ("Elevated Slate") for the deliverable tiles — design intent is locked, only the artifacts are missing.**
+**Priority: above normal feature work, below any in-flight P0. Sits above 3.6b post-writing because it's a direct conversion lever on the only paid surface.**
+
+#### 6g.i — Artifacts (each ships independently, in any order)
+- [ ] **STATE Field Guide** — practitioner reference: one page per pillar (Structured / Traceable / Auditable / Tolerant / Explicit), failure→pattern mapping, brand-compliant PDF. Doubles as comment ammo + blog footer CTA.
+- [ ] **GenAI Production Failure Atlas** — taxonomy doc: failure modes seen in prod, with examples + detection signals + STATE remediation. Builds on the existing Production Failure Taxonomy pillar (Phase 1).
+- [ ] **Regulatory Mapping** — Law 25 (Quebec) + EU AI Act + (light) NIST AI RMF mapped to STATE controls. Practitioner-facing, not legal-grade. Matters most for regulated-industry buyers.
+
+#### 6g.ii — Website surfacing (follow-on, runs incrementally)
+- [ ] As **each** artifact lands, add (or extend) the "What you keep" section on `/audit` — EN + FR via next-intl. Do not wait for all three; ship the section the moment the first artifact exists, then append as the others land.
+- [ ] Sitemaster agent owns the page update. Coordinate so heading, ordering, a11y, and the `#1F1F1F` tile pattern survive each incremental add.
+- [ ] Strict rule (inherited from sitemaster SYSTEM.md): **never invent download links.** A tile appears only when the artifact is real.
+
+#### 6g.iii — Naming reconciliation (one-time, cheap)
+- [ ] Roadmap Phase 6b currently refers to the offer page as `/consulting`; the live route is `/audit` (verified 2026-05-12 against `app/[locale]/audit/page.tsx`). Update 6b copy in a separate small PR so future briefs don't have to re-derive this.
+
+#### Out of scope (explicit)
+- Multi-pillar artifact bundling or a "resource hub" route — keep each artifact a single asset until demand says otherwise.
+- Gating downloads behind email capture beyond the existing `/score` flow — first version is link-and-go; iterate only if download volume justifies it.
+
+---
+
 ### 6f. Full Audit Tier (LATER — not now)
 - Reactivate when: ≥5 entry audits delivered AND ≥2 prospects asking for "more than the entry audit"
 - Spec preserved: full /readiness intake + written report + 90-min delivery + 30-day check-in, $2,500–3,500 CAD, Stripe invoice
