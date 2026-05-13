@@ -6,7 +6,7 @@
 ---
 
 ## CURRENT FOCUS
-**Phase 3 v2: Distribution Reset.** 8 weeks of LinkedIn-only posting → 250 followers. Diagnosis: distribution problem, not content problem. Pivoting to three compounding plays — **blog**, **ICP commenting**, **bi-weekly teardowns** — plus one simple entry audit at $750 CAD. Cohort and workshop parked until audience supports them.
+**Phase 3 v2: Distribution Reset.** 8 weeks of LinkedIn-only posting → 254 followers. Diagnosis: distribution problem, not content problem. Pivoting to three compounding plays — **blog**, **ICP commenting**, **bi-weekly teardowns** — plus one simple entry audit at $1,295 USD. Cohort and workshop parked until audience supports them. LinkedIn profile fully optimized (2026-05-13). ICP superstar list built. Commenting cadence not yet started — this is the #1 growth lever.
 
 ---
 
@@ -20,8 +20,10 @@
 | Active offer count | 1 (entry audit only — keep it simple) |
 | Posting cadence | 2x/week LinkedIn (habit, not growth play) |
 | Teardown cadence target | bi-weekly (not yet started) |
-| Followers (last check) | ~250 LinkedIn |
-| In flight | PR #8 on simonparis-website — blog OG fix + RSS feed + brand-suffix dedup (open, ready to review/merge) |
+| Followers (last check) | 254 LinkedIn (2026-05-13) |
+| In flight | Background job `0fbe2447` — salvage PR #14 /readiness + engagement context + Supabase migration into clean PR; PR #14 being closed |
+| LinkedIn profile | ✅ Fully optimized 2026-05-13 — headline, about, featured, experience, banner |
+| /audit page | ✅ Live on simonparis.ca/audit (shipped PR #13, refined #17-19) |
 | Audience-growth handoff | `projects/Audience-Growth/superstar-list-activation.md` — pick-up point for the commenting cadence |
 
 ---
@@ -58,12 +60,13 @@
 **Status: pipeline runs. The distribution layer (audience growth) moved to Phase 3.6.**
 **Cadence is now a habit asset — keep it running, but stop expecting it to grow followers on its own.**
 
-### 3a. Profile Optimization — DO THIS WEEK
-- [ ] Headline: "AI Reliability Engineer | State Beats Intelligence | simonparis.ca"
-- [ ] About section: lead with burned practitioner problem, name STATE and Law 25, link to simonparis.ca
-- [ ] Featured section: origin story post pinned + first teardown when published
-- [ ] Experience: add "The Meta Architect" as current role — practitioner + teacher framing
-- [ ] Banner: brand-compliant visual (#0F0F0F background, orange accent, Merriweather wordmark)
+### 3a. Profile Optimization — ✅ DONE 2026-05-13
+- [x] ~~Headline: "STATE Framework | LLMOps & AI Reliability Engineering | I design AI systems that don't break."~~ ✓ 2026-05-13
+- [x] ~~About section: opens with "Your production agent isn't failing because of the model..." — burned practitioner hook, STATE framework expanded, Law 25/OSFI named, ends with "DM STATE" CTA~~ ✓ 2026-05-13
+- [x] ~~Featured section: origin story post pinned~~ ✓ 2026-05-13
+- [x] ~~Experience: simonparis.ca listed as current AI Reliability Engineering role~~ ✓ 2026-05-13
+- [x] ~~Banner: "State Beats Intelligence" brand-compliant (#0F0F0F, orange accent)~~ ✓ 2026-05-13
+- [ ] **Remaining**: /score link not visible in About — confirm "DM STATE" keyword automation sends /score link; if not, add simonparis.ca/score explicitly to About or Featured
 
 ### 3b. Posting Cadence — RUNNING (maintain, don't expand)
 - 2x/week cadence — keep as habit, don't push to 3x until audience is growing
@@ -83,7 +86,7 @@
 ### Remaining 3.5 cleanup
 - [ ] Verify Email 1 content reflects /score (not old checklist PDF)
 - [ ] Activate MailerLite automation
-- [ ] Add /score link to LinkedIn About / Featured section
+- [ ] Update LinkedIn About "DM STATE" line — change "framework scoring checklist" to set expectation for manual reply with /score link (no automation; manual reply at current scale)
 - [ ] Every 3rd post: soft CTA pointing to /score
 
 ---
@@ -100,8 +103,8 @@
 - [x] ~~Lock blog-first repurposing workflow (long-form anchors short-form; teardown-first added soon as second long-form unit)~~ ✓ 2026-05-09
 - [x] ~~Decide: NEW `/blog-draft` pipeline (separate from `/draft`) — long-form ≠ LinkedIn shape~~ ✓ 2026-05-09 (build deferred until Plan 1 Supabase migration)
 - [x] ~~URL/unfurl audit: linkable, no paywall, robots OK, sitemap.ts present, per-post OG image renders~~ ✓ 2026-05-09
-- [ ] **OG image redesign + brand-suffix dedup + title-source fix** — `/api/og/route.tsx` had three problems: (a) it sourced `post.seo_title` (dry, Google-keyword-tuned) instead of `post.title` (catchy display H1) — wrong title shows on social cards; (b) the seo_title also contained `" | The Meta Architect"` suffix which made brand appear 2× alongside the top-right wordmark; (c) orange accent too thin to survive thumbnail crop. Fix: switch OG to `post.title`, defensive-strip suffix, redesign with right-side orange block (33% canvas), bigger pillar tag, drop redundant top-right eyebrow. Orange-only (no per-pillar variants). **Sitemaster job spawned 2026-05-09.**
-- [ ] Add `app/rss.xml/route.ts` (Plan 5 spec gap). **Sitemaster job to dispatch.**
+- [x] ~~**OG image redesign + brand-suffix dedup + title-source fix**~~ ✓ 2026-05-10 (PR #8 merged)
+- [x] ~~Add `app/rss.xml/route.ts`~~ ✓ 2026-05-10 (PR #8 merged)
 - [ ] Spec `projects/Content-Engine/.claude/commands/blog-draft.md` (defer build until `blog_posts` Supabase table exists)
 - [x] ~~`/repurpose` command — N/A: blog-writer agent already owns the multi-platform repurposing pipeline~~ ✓ 2026-05-09 (decided)
 
@@ -133,10 +136,9 @@
 **Goal: borrow audiences you don't have yet. Two compounding mechanics — strategic commenting + bi-weekly teardowns.**
 **Why now: posts into a void don't compound. 60 days of strategic commenting moves followers more than 8 more weeks of solo posting.**
 
-### 3.7a. ICP Superstar List (build once, use forever)
-- [ ] Identify 10-15 accounts in MLOps / production AI / LLM reliability space (5K+ followers)
-- [ ] For each: post topics they cover, posting cadence, best time to comment
-- [ ] Stored as `/app/data/projects/MetaArchitect/projects/Audience-Growth/superstar-list.md`
+### 3.7a. ICP Superstar List — ✅ DONE (see Phase 7 for detail)
+- [x] ~~22 candidates evaluated → 11 INCLUDE / 5 WATCH / 6 EXCLUDE~~ ✓ 2026-05-10
+- [x] ~~Stored at `projects/Audience-Growth/superstar-list.md`~~ ✓ 2026-05-10
 
 ### 3.7b. Commenting Cadence
 - [ ] Daily: 3-5 substantive comments on superstar list posts (within first hour when possible)
@@ -164,21 +166,21 @@
 ## Phase 6: Audit Offer — 🔄 NOW PRIORITIZED (one tier, simple)
 
 **Goal: monetize the audience that exists, at a price that matches current trust level.**
-**Strategy: ONE tier first. $750 CAD entry audit. Use `/readiness` to deliver tremendous value. Get testimonials. Raise prices later. Resist the urge to stack multiple offers.**
+**Strategy: ONE tier first. $1,295 USD entry audit (intro rate TBD for first ~5). Use `/readiness` to deliver tremendous value. Get testimonials. Raise prices later. Resist the urge to stack multiple offers.**
 **Why one tier:** Simon's instinct, validated — multi-tier offers force prospects to think; single offer with overwhelming value forces them to decide yes/no. Easier close, easier marketing, easier to iterate the deliverable.
 
 ### 6a. Entry Audit Offer
-- [ ] Define scope: 90-min call + STATE score (via /readiness intake) + top 3 gaps + remediation summary
 - [x] ~~Price: $1,295 USD full + intro starter rate for first ~5 audits (CAD→USD migration locked 2026-05-09)~~ ✓
-- [ ] Deliverable: short summary doc + recording (V1 — upgrade to PDF report once we have ≥3 audits delivered)
-- [ ] Booking flow: Calendly link → discovery + delivery in same call (or split across two if needed)
+- [x] ~~Booking flow: email → invoice → pay → /readiness intake → 3-5 day prep → single 90-min presentation call (no discovery call). Calendly link sent after prep is complete.~~ ✓ 2026-05-11 (locked in PR #14)
+- [ ] Intro rate: set the actual dollar amount (likely $750–$895 USD as founder rate) — pending NotebookLM #2 copy research
+- [ ] Deliverable: written remediation plan + named artifacts (STATE Field Guide PDF, GenAI Production Failure Atlas, Regulatory Mapping) — artifacts don't exist yet, named on /audit creates internal deadline
 - [ ] CTA target on blog posts and teardowns
 
 ### 6b. Consulting Page on Site
 - [x] ~~Remove `/workshop` and `/cohort` surfaces — pages, nav, footer, sitemap, offerCards, i18n namespaces, redirects, dead subscribe groupMap~~ ✓ 2026-05-10 (PR #10 merged)
 - [x] ~~Fix score-result CTAs (`ctaWorkshop`/`ctaCohort`) that still pointed at removed URLs in the diagnostic email + on-screen results~~ ✓ 2026-05-10 (PR #11 opened)
-- [ ] Build /consulting (or rework offers section) — frame the single audit tier, process steps, Calendly CTA
-- [ ] Sitemaster agent owns the build after Phase A plan is approved
+- [x] ~~Build /audit page — single audit tier, process steps, mailto CTA (not Calendly), "What you keep" artifacts, "How it works" strip~~ ✓ 2026-05-11 (PR #13, refined #17-19)
+- [ ] /readiness engagement context section + Supabase migration — in flight (background job `0fbe2447`, PR pending)
 - [ ] Editorial pass on `privacy.json` / `terms.json` to drop "workshops" / "cohort availability" generic mentions (forward-looking legal language, deferred for review)
 
 ### 6c. Audit Deliverable Quality (perceived value lever — V2 work, after first 3 audits)
@@ -200,8 +202,8 @@
 - [x] ~~Voice (locked): practitioner-to-practitioner, "I built this because I use it" — no marketer-speak.~~ ✓
 - [x] ~~NotebookLM #2 dispatched 2026-05-09 — notebook `0a86ea2d-8f1a-4c57-8451-a23060042c4f` ("Consulting Page Copy — $1,295 USD Audit + Intro Rate")~~ ✓
 - [ ] Once #2 sources import, generate report → save to `projects/Audience-Growth/consulting-page-copy.md`
-- [ ] Apply locked pricing + copy to `/consulting` page (Phase 6b — sitemaster job)
-- [ ] Update QUICK REFERENCE pricing line: $750 CAD → $1,295 USD (full) / intro rate TBD
+- [ ] Apply locked pricing + copy to `/audit` page (Phase 6b — sitemaster job)
+- [x] ~~Update QUICK REFERENCE pricing line: $750 CAD → $1,295 USD (full) / intro rate TBD~~ ✓ 2026-05-13
 
 ### 6g. Institutional Artifacts — "What You Keep" on /audit — 🔼 HIGH-ISH PRIORITY
 
@@ -360,6 +362,8 @@ Parked behind Phase 3.6 (blog) and Phase 3.7 (audience growth). Distribution com
 | 2026-05-09 | Workshop / cohort built on roadmap before audience could support them | Sequencing rule: don't build the next-tier offer until the current tier has actual demand signal. Workshop needs ~1K followers OR proven teardown engagement before it returns to the active roadmap. |
 | 2026-05-10 | Misdiagnosed "hung" sitemaster job as still running 6h in (it had completed and opened PR #8) | Before claiming a background job is hung, run `agent-job-background.js status` AND `gh pr list --repo <repo>` to check completion signals. Docker logs alone can be from earlier stages of a successful run. |
 | 2026-05-10 | Misdiagnosed NotebookLM rate-limit as wrong-account auth issue | Verify the symptom against ground truth before proposing fixes — Simon could see my created notebooks in his Pro account, which falsifies "wrong cookies" outright. When two diagnoses are possible, ask Simon to check the cheap one (does the artifact appear in your account?) before committing to the expensive one (regenerate cookies). |
+| 2026-05-10 | Pivot cleanup shipped as 3 sequential PRs (#10, #11, #12) instead of one because each PR shipped before the next round of stragglers was caught. Same pattern produced parallel PRs #9 and #10 from sitemaster (started fresh from master instead of pushing to existing branch) | Systemic fix at the platform layer, not per-agent: (a) `agents/CLAUDE.md` now has a top-level "Coding Agent Workflow Discipline" section auto-loaded by every scoped agent (sitemaster, blog-writer, task-forge, future agents) — defines job-end-is-the-ship-action, repo-grep + build + surface-check gates before job-end, one-job-one-PR-one-branch, recurrence check against this lessons log, honest PR-body reporting; (b) same discipline added to `agent-job/SYSTEM.md` base prompt so unscoped jobs inherit it too; (c) sitemaster's SYSTEM.md slimmed to sitemaster-specific additions only, references the shared discipline; (d) COO brief-authoring convention saved to memory — repo-audit step FIRST in every brief, never as bottom checklist |
 | 2026-05-10 | Two parallel agent PRs (#9, #10) opened for the same pivot cleanup; #9 had no Vercel preview (commit author email mismatch); both PRs left broken score-result URLs in scope | Before kicking off a chore PR, `gh pr list` to dedupe. Agent commits should use a Vercel-recognized author email. "Out of scope per brief" is not acceptable when the leftover code ships user-visible broken URLs — escalate, don't silently park. |
 | 2026-05-10 | Punted a `git push` back to Simon ("you'll need to push from your machine") instead of finding the token already in scope | Before claiming an auth limitation, check the obvious places: sibling-repo remote URLs (a PAT in one repo often covers the same owner's other repos), agent-job-secrets store, env vars. Also: when a tokenless remote is found, tokenize it so the next push works without re-extracting. |
 | 2026-05-10 | Tried to "cancel" a ScheduleWakeup by calling ScheduleWakeup again with an empty prompt — that schedules a second wakeup instead of cancelling | ScheduleWakeup has no cancel mode. To end the loop, **omit the call** that turn. Don't re-invoke with a stub prompt. Also: don't background-verify on user's behalf when the session is wrapping — verify inline or hand off, never both. |
+| 2026-05-11 | Per-agent `SYSTEM.md` files REPLACE `agent-job/SYSTEM.md` (don't extend) — universal guardrails (harness-auto-commit warning, "cannot edit" list, workflow gates) could be silently dropped by any new agent. Plus agents jumped into multi-surface tasks without a plan. | Universal discipline now lives in `agents/CLAUDE.md` (auto-loaded by every scoped agent via cwd-walk): Rules 1-5 (gates, one-PR, recurrence, brief audit, honest reporting), Rule 6 (Plan-First: `/tmp/<task>-plan.md` + TodoWrite for any task >2 files or multi-surface), Rule 7 (universal safety rails lifted from base). Plan-First also mirrored into `agent-job/SYSTEM.md` for unscoped jobs. |
