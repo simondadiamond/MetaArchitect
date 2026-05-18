@@ -10,6 +10,58 @@
 
 ---
 
+## 🎯 NEEDLE MOVERS — TOP OF STACK (locked 2026-05-18)
+
+> When Simon asks "what's my next task?" — answer from this list, top to bottom. Anything not on this list is either parked, in-flight elsewhere, or noise. These are the actions that compound toward profitability.
+>
+> Rule: don't pick item N+1 until item N is in motion or has a documented reason to defer. Commenting cadence is daily and never "done" — start it and keep it running while the rest of the stack moves.
+
+### Priority 1 — Commenting cadence (daily, never done)
+- **Why this is #1**: cheapest revenue-adjacent action. Zero infra. Compounds in week 2, not month 6. Roadmap's named #1 growth lever (Phase 3.7b). Currently not started.
+- **Next concrete task**: 3 substantive comments today on superstar list anchors (Hamel / Eugene / Aishwarya — verify first per Phase 7b). 30 min.
+- **Pickup doc**: `projects/Audience-Growth/superstar-list-activation.md`
+- **Cadence target**: 3-5 comments/day, < 1h old when possible, quality bar = insight or specific reference (never "great post"). Never link simonparis.ca unless invited.
+- **Roadmap section**: 3.7b + 7e
+
+### Priority 2 — Curate blog topic queue (one-time, ~2 hrs)
+- **Why before posting**: posting random shit is what failed for 25 posts. Need a methodically-picked queue against the 5 pillars before plowing through.
+- **Next concrete task**: from `projects/Content-Engine/`, run `/harvest` once per pillar (5 runs), filter by ease-to-write × ICP signal, pick top 6 titles, save to `projects/Content-Engine/blog-topic-queue.md`.
+- **Output**: 6 blog post titles, ranked, queued. Not 25. Six.
+- **Pillars**: Production Failure Taxonomy / STATE Framework Applied / Defensive Architecture / The Meta Layer / Regulated AI & Law 25
+
+### Priority 3 — Ship one "What you keep" artifact (1-3 days)
+- **Why now**: `/audit` page lists three artifacts that don't exist (STATE Field Guide / GenAI Production Failure Atlas / Regulatory Mapping). The page is currently lying. Fixing this is a direct conversion lever on the only paid surface.
+- **Recommended first**: **STATE Field Guide** — one page per pillar, Simon knows it cold, no research needed. ~1 day. Doubles as comment ammo + blog footer + audit deliverable. Triple-duty.
+- **Can ship 1, 2, or all 3** — each is independently valuable. Order by ease, not by sequence.
+- **Roadmap section**: 6g.i. As each lands, Sitemaster adds the "What you keep" tile to `/audit` (6g.ii).
+
+### Priority 4 — Ship blog posts 2 and 3 (per the queue)
+- **Why**: Phase 3.6b target was 3 posts in 3 weeks. 9 days in, 1 shipped. Behind. Catch up.
+- **Next concrete task**: pick post #2 from the topic queue (Priority 2 output), draft via blog-writer agent, ship.
+- **Format**: long-form blog, ends with /score CTA, repurpose to LinkedIn via blog-writer pipeline.
+- **Roadmap section**: 3.6b + 3.6c
+
+### Priority 5 — First teardown (defines the format)
+- **Venue locked**: blog canonical (`simonparis.ca/blog/teardowns/<name>`) → LinkedIn repurpose. Blog is the artifact, LinkedIn is the distribution. dev.to canonical cross-post next, HN event-driven on bangers, X/Reddit deferred. **Rule: never publish a teardown to LinkedIn without a blog URL it links back to.**
+- **Next concrete task**: define teardown format (target system + STATE scoring + 2-3 specific gaps + remediation), pick 6 candidates, write #1.
+- **Cadence target once #1 ships**: one every 2 weeks.
+- **Roadmap section**: 3.7c
+
+### Priority 6 — Lock intro audit price + sell the first one
+- **Why this is here (not higher)**: prerequisites (artifacts, teardowns, commenting traffic) need to exist first. But it's on the list because nothing else matters if no one buys.
+- **Blocking item**: intro rate $$$ not set — pending NotebookLM #2 report (notebook `0a86ea2d-8f1a-4c57-8451-a23060042c4f`). Check if sources have imported; if yes, generate report → `projects/Audience-Growth/consulting-page-copy.md` → apply to `/audit`.
+- **Once price is locked + first artifact is live**: stop optimizing the page, start asking for the sale (DM superstars who engaged, LinkedIn soft CTAs every 3rd post).
+- **Roadmap section**: 6e + 6a
+
+### Explicitly NOT on the stack right now
+- Marketing knowledge base (Phase 6.5) — productivity layer, defer
+- Admin panel (Phase 8) — productivity layer, defer
+- Audit deliverable PDF/visualization (6c) — V2 work, defer until 3 audits delivered
+- Multi-platform fan-out beyond LinkedIn (X/HN/Reddit/dev.to) — defer until blog cadence holds
+- Workshop / cohort / full audit tier — parked, requires audience signal
+
+---
+
 ## QUICK REFERENCE (operational state — fast lookup)
 
 | Thing | Value |
