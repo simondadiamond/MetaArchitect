@@ -206,6 +206,37 @@ Schema says `title` defaults to null. Server rejects it. Always pass a real desc
 
 ---
 
+## 2026-05-11 — Per-agent SYSTEM.md replaces base, leaving universal guardrails orphaned
+
+**What happened:** Investigating why sitemaster shipped duplicate PRs (#9 + #10) on 2026-05-10, found a deeper structural issue: per-agent `SYSTEM.md` files **replace** `agent-job/SYSTEM.md` rather than extend it. Initial fix only added gates to `agents/sitemaster/SYSTEM.md`. Simon flagged: "That's a terrible problem. That needs more than just a gate in one of the agents md file... Like for any agent?" Second issue: agents jumped into multi-surface tasks without a plan or checklist, missing surfaces and shipping half-done work.
+
+**Root cause:** (a) No single source of truth for universal workflow discipline — each per-agent SYSTEM.md could silently drop the harness-auto-commit warning, the "what you cannot edit" guardrails, or the gates. (b) Agents treated multi-surface tasks as if they were hotfixes — no plan, no checklist, easy to miss surfaces.
+
+**Fix applied:**
+1. Universal workflow discipline (Rules 1-5: job-end gates, one-job-one-PR, recurrence check, brief audit-first, honest reporting) lives in `agents/CLAUDE.md` — auto-loaded by every scoped agent via the Claude Code cwd-walk.
+2. Added Rule 6 (Plan-First for multi-surface tasks) to `agents/CLAUDE.md` — requires `/tmp/<task>-plan.md` + TodoWrite for anything touching >2 files or multiple surfaces.
+3. Added Rule 7 (Universal safety rails) to `agents/CLAUDE.md` — lifts the harness-auto-commit warning, `/tmp` scratch directive, and "what you cannot edit" list from `agent-job/SYSTEM.md` into the auto-loaded CLAUDE.md.
+4. Mirrored Plan-First into `agent-job/SYSTEM.md` for unscoped jobs (they don't traverse `agents/CLAUDE.md`).
+
+**Where documented:** This lessons entry; `agents/CLAUDE.md` Rules 6 + 7; `agent-job/SYSTEM.md` Plan-First subsection.
+
+---
+
+## 2026-06-12 — Teardown agent narrativized structured fields instead of populating them
+
+**What happened:** `/teardown-generate` ran on Intercom Fin AI Engine and produced an excellent 1,574-word blog post with 3 well-named gaps embedded in the prose, but wrote empty `{}` objects to the structured `gaps` and `remediation` JSONB columns. Same shape risk: blog used a series-description italic block instead of the canonical `/score` CTA. Two structured-output drift points in one run.
+
+**Root cause:** The skill's Step 2 instructs the agent to "produce" gaps and remediation, but Step 4's INSERT block has placeholder `'...'` strings that read as boilerplate rather than required fields. An agent generating long-form prose tends to satisfy the "write the gaps" instruction in the narrative section and skip re-emitting them as JSON. Same for the closing CTA — the format spec was buried in the markdown template and didn't trigger a verification gate.
+
+**Fix applied:**
+1. Backfilled gaps (3) and remediation (4) on draft `625c6f9f` from the prose.
+2. Swapped closing block for canonical `/score` CTA.
+3. Hardened `agents/coo/skills/teardown-generate/SKILL.md`: added an explicit "Structured Output Contract" section listing required JSONB fields with non-empty validation, and added a pre-write checklist that fails if (a) `gaps` array has fewer than 2 entries, (b) any gap has empty `pillar`/`gap`/`consequence`, (c) `full_content` doesn't end with the `/score` CTA, or (d) `linkedin_post` exceeds 250 words.
+
+**Where documented:** This entry; `agents/coo/skills/teardown-generate/SKILL.md` (Structured Output Contract + Pre-Write Checklist sections).
+
+---
+
 ## Template for new entries
 
 ```

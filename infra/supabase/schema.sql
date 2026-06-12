@@ -360,4 +360,75 @@ ALTER TABLE pipeline.engagement_opportunities  ENABLE ROW LEVEL SECURITY;
 -- service_role bypasses RLS by default — no policies needed for the migration script
 -- or tools/supabase.mjs running with SUPABASE_SERVICE_ROLE_KEY.
 
--- End of schema v1.
+-- =====================================================================
+-- 13) teardown_candidates
+-- =====================================================================
+-- Lightweight metadata for candidate production AI systems.
+-- Written by /teardown-research skill. Read by admin panel + /teardown-generate.
+-- pipeline schema is NOT exposed to PostgREST — access via Management API SQL or CLI only.
+CREATE TABLE IF NOT EXISTS pipeline.teardown_candidates (
+  id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name                  text NOT NULL,
+  company               text,
+  category              text,             -- enterprise_search | rag | agentic | orchestration | chatbot | customer_service | finserv_ai | healthcare_ai
+  description           text,             -- 2-3 sentences: what it does, who uses it, how
+  primary_source_url    text,
+  sources               jsonb NOT NULL DEFAULT '[]'::jsonb,   -- [{url, type, title}]
+  icp_relevance         int CHECK (icp_relevance   BETWEEN 1 AND 5),   -- LLM Platform/Reliability Leader cares? (primary filter ≥3)
+  content_yield         int CHECK (content_yield  BETWEEN 1 AND 5),   -- insight density × extractability: rich gaps + standalone LinkedIn post possible (filter ≥3)
+  public_info_depth     text CHECK (public_info_depth IN ('shallow', 'medium', 'deep')),
+  state_s_score         int CHECK (state_s_score   BETWEEN 0 AND 2),  -- Structured
+  state_t_score         int CHECK (state_t_score   BETWEEN 0 AND 2),  -- Traceable
+  state_a_score         int CHECK (state_a_score   BETWEEN 0 AND 2),  -- Auditable
+  state_tol_score       int CHECK (state_tol_score BETWEEN 0 AND 2),  -- Tolerant
+  state_e_score         int CHECK (state_e_score   BETWEEN 0 AND 2),  -- Explicit
+  interesting_gap       text,             -- 1-2 sentences: most interesting inferable STATE violation
+  teardown_angle        text,             -- recommended narrative angle (strong enough to be a LinkedIn hook)
+  status                text NOT NULL DEFAULT 'candidate'
+                          CHECK (status IN ('candidate', 'selected', 'in_teardown', 'published', 'skipped')),
+  skip_reason           text,
+  workflow_id           text,             -- traceable: which research run inserted this row
+  created_at            timestamptz NOT NULL DEFAULT now(),
+  updated_at            timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS teardown_candidates_status_idx  ON pipeline.teardown_candidates (status);
+CREATE INDEX IF NOT EXISTS teardown_candidates_icp_idx     ON pipeline.teardown_candidates (icp_relevance DESC NULLS LAST);
+CREATE TRIGGER teardown_candidates_set_updated_at BEFORE UPDATE ON pipeline.teardown_candidates
+  FOR EACH ROW EXECUTE FUNCTION pipeline.set_updated_at();
+
+-- =====================================================================
+-- 14) teardown_drafts
+-- =====================================================================
+-- Full teardown content — separated from candidates because body is large.
+-- Written by /teardown-generate (not yet built). One draft per candidate (soft constraint).
+CREATE TABLE IF NOT EXISTS pipeline.teardown_drafts (
+  id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  candidate_id          uuid REFERENCES pipeline.teardown_candidates(id) ON DELETE SET NULL,
+  system_summary        text,             -- final system description used as generation input
+  interview_answers     jsonb NOT NULL DEFAULT '{}'::jsonb,   -- Simon's guided-mode answers if used
+  state_scores          jsonb NOT NULL DEFAULT '{}'::jsonb,   -- {s:{score,reasoning}, t:{...}, a:{...}, tol:{...}, e:{...}}
+  gaps                  jsonb NOT NULL DEFAULT '[]'::jsonb,   -- [{pillar, gap, consequence, severity}]
+  remediation           jsonb NOT NULL DEFAULT '[]'::jsonb,   -- [{pillar, recommendation, priority}]
+  full_content          text,             -- full markdown teardown article
+  linkedin_post         text,             -- repurposed LinkedIn post (150-250 words)
+  post_angle            text,             -- "is there a LinkedIn post in this?" one-liner
+  blog_slug             text,
+  blog_url              text,
+  published_at          timestamptz,
+  status                text NOT NULL DEFAULT 'draft'
+                          CHECK (status IN ('draft', 'reviewed', 'published', 'archived')),
+  workflow_id           text,             -- traceable
+  generation_log        jsonb NOT NULL DEFAULT '[]'::jsonb,   -- auditable: each LLM call logged {step, model, prompt_hash, output_summary}
+  created_at            timestamptz NOT NULL DEFAULT now(),
+  updated_at            timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS teardown_drafts_candidate_idx  ON pipeline.teardown_drafts (candidate_id);
+CREATE INDEX IF NOT EXISTS teardown_drafts_status_idx     ON pipeline.teardown_drafts (status);
+CREATE TRIGGER teardown_drafts_set_updated_at BEFORE UPDATE ON pipeline.teardown_drafts
+  FOR EACH ROW EXECUTE FUNCTION pipeline.set_updated_at();
+
+ALTER TABLE pipeline.teardown_candidates  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pipeline.teardown_drafts      ENABLE ROW LEVEL SECURITY;
+-- service_role bypasses RLS — same policy as all other pipeline.* tables.
+
+-- End of schema v1 + teardown extension (added 2026-06-03).
