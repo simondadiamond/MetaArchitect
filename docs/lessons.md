@@ -237,6 +237,25 @@ Schema says `title` defaults to null. Server rejects it. Always pass a real desc
 
 ---
 
+## 2026-06-27 — `agent-job-background` spawned sitemaster job no-op'd (empty PR #91 on Sterling) because `/app/data/projects/` is not mounted into background-spawned containers
+
+**What happened:** COO spawned sitemaster via `agent-job-background` with a multi-surface RICE-redesign brief. Sitemaster booted, found that `/app/data/projects/simonparis-website/` did not exist in its container, correctly refused to ship code to the stale `agents/coo/deliverables/admin-panel/` handoff bundle, and ended the job with a plan file and no code. The harness auto-merged an empty PR (#91 on Sterling, 0 files changed).
+
+**Root cause (two-layer):**
+1. **Platform layer**: `agent-job-background`-spawned containers receive the workspace clone but NOT `/app/data/projects/` (which is host-mounted only into the chat-mode event-handler container). The sitemaster SYSTEM.md falsely claimed the path was "always available regardless of session."
+2. **Agent layer**: when the path was missing, the SYSTEM.md told the agent to "instruct Simon to run the one-time setup on Sterling" — a Simon-blocking handoff rather than an autonomous remediation. The harness still merges the empty PR, masking the failure as success.
+
+**Fix applied:**
+1. New idempotent bootstrap script `agents/sitemaster/scripts/bootstrap-repos.sh` — fast-exits if the canonical path is populated (chat mode); else clones the repos to `/home/coding-agent/projects/` and symlinks them into `/app/data/projects/` so all existing path references resolve.
+2. `agents/sitemaster/SYSTEM.md` now mandates running the bootstrap as **Step 0** of every job, before reading the brief. Failure → DM Simon, never silently no-op.
+3. `agents/sitemaster/CLAUDE.md` Context section updated to point at the bootstrap.
+
+**Where documented:** This entry; `agents/sitemaster/SYSTEM.md` (Step 0 — Bootstrap); `agents/sitemaster/scripts/bootstrap-repos.sh`; `agents/sitemaster/CLAUDE.md`.
+
+**Open follow-up (apply same pattern to other agents when they next get spawned as background jobs):** blog-writer, task-forge, bug-bounty — each will hit the same missing-mount class of failure on its first `agent-job-background` invocation. Hoist the bootstrap pattern into `agents/CLAUDE.md` once a second agent needs it (don't pre-build; let demand pull the abstraction).
+
+---
+
 ## Template for new entries
 
 ```
