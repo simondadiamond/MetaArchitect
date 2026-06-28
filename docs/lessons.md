@@ -256,6 +256,20 @@ Schema says `title` defaults to null. Server rejects it. Always pass a real desc
 
 ---
 
+## 2026-06-28 — Static code review missed a `text-4xl` column overflow that was only visible in a live preview walk (PR #35, sitemaster)
+
+**What happened:** COO read all three new admin components from sitemaster's PR #35 line-by-line and rated them elite/brand-compliant. Recommended merge. After Simon added `VERCEL_AUTOMATION_BYPASS_SECRET` to the vault, COO walked the actual preview and immediately saw the dashboard `TopPriorities` widget had `w-16` (64px) score columns that overflowed for decimal scores like `149.3` and `76.8` — the `.3` and `.8` were wrapping into the title column. Bug never surfaced in code review because the overflow only manifests at the intersection of `text-4xl` + tabular monospace + actual ≥4-char data.
+
+**Root cause:** Static code review can verify logic, props, and brand tokens, but cannot predict CSS box-model conflicts under real data widths. COO treated "elite code review" as sufficient when the preview-walk gate was unavailable (no bypass token), instead of falling back to the documented localhost-dev path in `agents/sitemaster/CLAUDE.md`.
+
+**Fix applied:**
+1. Pushed `773bed7` to PR #35 widening the score column to `w-24` (96px), which fits up to `9999` / `999.9` cleanly. Re-walked the new preview, confirmed clean, then merged (94d52c8).
+2. Lesson recorded here. Going forward: **a live walk is the closing gate on any UI-touching PR**, not a nice-to-have on top of code review. If the preferred preview-walk path is blocked (no bypass token, protection issues, Supabase allow-list), fall back to localhost-dev per `agents/sitemaster/CLAUDE.md` lines 71–76 — do NOT skip the walk and substitute deeper code review.
+
+**Where documented:** This entry; `agents/coo/CLAUDE.md` already documents the COO ↔ sitemaster build loop with the walk as step 5 — this lesson promotes it from "review step" to "closing gate."
+
+---
+
 ## Template for new entries
 
 ```
