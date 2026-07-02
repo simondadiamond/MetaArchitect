@@ -60,6 +60,49 @@ projects/
 
 **Content pipeline**: run all slash commands from `projects/Content-Engine/` — commands live there, not at repo root.
 
+## Story Pipeline — default route for small code tasks
+
+Command Center runs an autonomous story pipeline: capture → plan → build → test → visual-verify → PR → gated auto-merge. The `story-worker` systemd service polls Supabase and processes queued stories unattended, one per repo at a time. Board: `http://100.105.85.5:3737/pipeline`.
+
+**When a code task qualifies (see criteria), queue it as a story instead of doing it in-session.** This applies to tasks Simon mentions in chat AND to fix-it items agents discover themselves.
+
+### Queue a story
+
+```bash
+curl -s -X POST http://100.105.85.5:3737/api/stories \
+  -H 'content-type: application/json' \
+  -d '{
+    "description": "What to change, where, and how to verify it. First line becomes the title. Include checkable success criteria.",
+    "target_repo": "simonparis-website",
+    "agent_target": "sitemaster",
+    "goal_id": "<uuid>"
+  }'
+```
+
+- `target_repo` (required): `command-center` | `simonparis-website` — the only registered targets (`worker/targets.ts` in the command-center repo)
+- `agent_target` (optional): `sitemaster` for website UI work
+- `goal_id` (optional): links a `goals` row — the goal flips `in_progress` on start, `done` on merge
+- `auto_merge` (optional): omit to use the global default from `pipeline_settings`
+- If the API is down: `systemctl --user start command-center`. Don't insert into `stories` directly — the API applies validation and defaults.
+
+### Route to the pipeline when ALL of these hold
+
+1. **Code change in a registered target repo** (command-center or simonparis-website — NOT this MetaArchitect repo)
+2. **Small/medium**: describable in a few sentences, expected to touch ~1–5 files
+3. **Checkable success criteria**: the verify stage must be able to judge pass/fail by driving the running app or reading test output — "make it nicer" doesn't qualify, "the nav links render in #C97A1A on /blog" does
+4. **No open design decisions**: if you'd need to ask Simon something mid-task, resolve it in chat first, then queue
+
+### Keep in-session when ANY of these hold
+
+- Needs brainstorming, spec work, or Simon's judgment mid-flight
+- Large scope: new subsystem, cross-cutting refactor, anything wanting a plan (use brainstorm → writing-plans → subagent-driven-development instead)
+- Touches the pipeline itself (`worker/`, its migrations), secrets/env, auth, deploy config, or any DB migration
+- Not a code change: content, strategy, research, ops (those have their own skills/pipelines)
+- Live-fire debugging of something currently broken — the queue adds latency; fix it directly
+- Time-sensitive and Simon is waiting on it in chat
+
+Full details: `projects/command-center/README.md` ("Story worker") and `docs/superpowers/plans/golden-path.md` in that repo.
+
 ## Git & Deployment
 
 **Always use `gh` CLI for git operations, never raw `git push`.** Simon SSH-es into this machine and SSH agent forwarding is unreliable. Standard `git push` hangs. The fix:
