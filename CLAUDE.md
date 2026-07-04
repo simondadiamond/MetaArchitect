@@ -85,6 +85,28 @@ curl -s -X POST http://100.105.85.5:3737/api/stories \
 - `auto_merge` (optional): omit to use the global default from `pipeline_settings`
 - If the API is down: `systemctl --user start command-center`. Don't insert into `stories` directly — the API applies validation and defaults.
 
+### Queue a schedule
+
+Command Center also runs recurring tasks (Claude prompts or server scripts) on cron schedules — the `/schedules` page. Any Claude session can create one:
+
+```bash
+curl -s -X POST http://100.105.85.5:3737/api/schedules \
+  -H 'content-type: application/json' \
+  -d '{
+    "name": "Morning roadmap brief",
+    "kind": "prompt",
+    "cron": "0 7 * * *",
+    "working_dir": "~/projects/MetaArchitect",
+    "agent": "coo",
+    "prompt": "/roadmap — summarize current phase and today'\''s top task."
+  }'
+```
+
+- `kind`: `prompt` (needs `prompt`; `working_dir` defaults to MetaArchitect, `agent` optional) or `script` (needs absolute, executable `script_path`)
+- `cron`: standard 5-field expression, server-local time
+- Runs land in the `/runs` log; failures ping Simon's ntfy topic. Missed fires while the service is down are skipped, and overlapping fires of the same schedule are skipped.
+- Only schedule what Simon asked to schedule — don't create recurring tasks on your own initiative.
+
 ### Route to the pipeline when ALL of these hold
 
 1. **Code change in a registered target repo** (command-center or simonparis-website — NOT this MetaArchitect repo)
