@@ -166,7 +166,7 @@ Schema says `title` defaults to null. Server rejects it. Always pass a real desc
 
 **Fix applied:** Distribution split into its own phase (3.7 Audience Growth System) with three explicit mechanics: (1) ICP commenting to borrow audiences, (2) bi-weekly teardowns as proof-of-work artifacts, (3) blog + LinkedIn newsletter as owned distribution. Cadence on its own is no longer treated as a growth lever — only as a habit asset.
 
-**Where documented:** `docs/roadmap.md` Phases 3.6 and 3.7.
+**Where documented:** Phases 3.6 and 3.7, formerly in `docs/roadmap.md` (deprecated 2026-07-04) — now tracked in the Supabase `goals` table.
 
 ---
 
@@ -178,7 +178,7 @@ Schema says `title` defaults to null. Server rejects it. Always pass a real desc
 
 **Fix applied:** Changed `PostCTA.tsx:44` from `/readiness` → `/score`. Added comment block at top of `PostCTA.tsx` documenting the rule: public surfaces link to `/score` only; `/readiness` is operational tooling and is never linked from anywhere a stranger could land.
 
-**Where documented:** `components/blog/PostCTA.tsx` (header comment), `docs/roadmap.md` LESSONS LOG.
+**Where documented:** `components/blog/PostCTA.tsx` (header comment); LESSONS LOG formerly in `docs/roadmap.md` (deprecated 2026-07-04), now the Supabase `goals` table.
 
 ---
 
@@ -190,7 +190,7 @@ Schema says `title` defaults to null. Server rejects it. Always pass a real desc
 
 **Fix applied:** Sequencing rule added to roadmap — don't build the next-tier offer until the current tier has actual demand signal. Phases 4 / 4.5 / 5 moved to Parking Lot with explicit unblock criteria (followers ≥ 1K OR proven teardown engagement). Phase 6 (Consulting) promoted to active because it can monetize current audience size with the right pricing.
 
-**Where documented:** `docs/roadmap.md` PARKING LOT (with unblock criteria) and Phase 6.
+**Where documented:** PARKING LOT (with unblock criteria) and Phase 6, formerly in `docs/roadmap.md` (deprecated 2026-07-04) — now tracked in the Supabase `goals` table.
 
 ---
 
@@ -202,7 +202,7 @@ Schema says `title` defaults to null. Server rejects it. Always pass a real desc
 
 **Fix applied:** Closed #9 as superseded; merged #10; opened #11 to fix the user-visible gap (score CTAs) + the two items both PRs missed (`TODO.md`, `PageHero.tsx` comment). Lesson: before kicking off a chore PR, `gh pr list` first. When agent commits, set author email to one Vercel recognizes (Simon's GitHub noreply) so previews build. When an out-of-scope item ships user-visible broken copy, surface it loudly instead of silently parking it.
 
-**Where documented:** This lessons entry; roadmap parking-lot lessons-table.
+**Where documented:** This lessons entry; parking-lot items now tracked in the Supabase `goals` table (formerly the roadmap parking-lot lessons-table in the now-deprecated `docs/roadmap.md`).
 
 ---
 
@@ -267,6 +267,52 @@ Schema says `title` defaults to null. Server rejects it. Always pass a real desc
 2. Lesson recorded here. Going forward: **a live walk is the closing gate on any UI-touching PR**, not a nice-to-have on top of code review. If the preferred preview-walk path is blocked (no bypass token, protection issues, Supabase allow-list), fall back to localhost-dev per `agents/sitemaster/CLAUDE.md` lines 71–76 — do NOT skip the walk and substitute deeper code review.
 
 **Where documented:** This entry; `agents/coo/CLAUDE.md` already documents the COO ↔ sitemaster build loop with the walk as step 5 — this lesson promotes it from "review step" to "closing gate."
+
+---
+
+## 2026-07-02 — Supabase access on Sterling blocked twice: MCP connector dropped mid-session, then Cloudflare 1010 rejected python-urllib's default User-Agent
+
+**What happened:** During teardown #1 regeneration, the claude.ai Supabase MCP connector disconnected mid-session and did not recover. The documented skill fallback (`/app/data/workspaces/*/.supabase/access-token`) is popebot-only and doesn't exist on Sterling; the auto-mode classifier correctly blocked a filesystem-wide credential hunt. After Simon provisioned a PAT at `~/.supabase/access-token`, the Management API still returned `403 error code: 1010` — Cloudflare bot-blocking python-urllib's default User-Agent, which looks like an auth failure but isn't.
+
+**Root cause:** Two-layer: (1) the teardown skills documented only the popebot token path, so Sterling-local runs had no sanctioned credential location; (2) `urllib.request` sends `Python-urllib/3.x` as UA and Cloudflare's rules on api.supabase.com reject it — any skill following the documented snippet verbatim would fail on Sterling with a misleading 403.
+
+**Fix applied:**
+1. Simon generated a PAT stored at `~/.supabase/access-token` (chmod 600) — the canonical Sterling location.
+2. Both `.claude/skills/teardown-{generate,research}/SKILL.md` patched: `_get_token()` now checks popebot glob first, then `~/.supabase/access-token`; `supabase_sql()` sends `User-Agent: supabase-cli/2.30.4`.
+3. Note: the token was pasted in chat before storage — flagged for rotation (generate new PAT, replace file contents, revoke old).
+4. Open follow-up: popebot copies of these skills (`agents/coo/skills/teardown-*`) still carry the unpatched snippet — sync when next touched.
+
+**Where documented:** This entry; both skill files' Supabase Access sections.
+
+---
+
+## 2026-07-02 — First two story-pipeline stories parked at verify: session killed itself with its own `pkill`
+
+**What happened:** Stories `3f6ec824` (fuse ideas/blog tabs) and `ef0613ef` (node upgrade) both failed at the `verifying` stage with "session exited 143" (SIGTERM), `timedOut: false`. Plan, build, and deterministic tests had all passed. Transcripts showed each verify session died at the exact moment it ran its dev-server cleanup: `pkill -f "next dev -p 4123"`.
+
+**Root cause:** `lib/claude/spawn.ts` (command-center repo) passed the entire stage prompt as an argv argument (`claude -p "<prompt>"`). The verify prompt embeds the dev-server start command verbatim (`pipeline.ts` injects the literal `npx next dev -p 4123`), so the claude process's own command line contained that string. `pkill -f` matches full command lines — the session's cleanup pattern matched its parent claude process and SIGTERMed it. Worker saw exit 143 and parked the story. Systematic: *any* `pkill -f` pattern that happens to appear anywhere in a stage prompt would kill the session. Story 2 even killed by PID first and ran pkill only as belt-and-suspenders — still died.
+
+**Fix applied:**
+1. `lib/claude/spawn.ts`: prompt now delivered via stdin (`claude -p` with the prompt piped), never argv. Regression test in `worker/__tests__/session.test.ts` with a `fake-claude-echo.sh` fixture asserting stdin-not-argv delivery. Verified against the real CLI (`echo ... | claude -p --output-format stream-json` → correct result). Side benefits: no argv length limits, prompts no longer visible in `ps`.
+2. `worker/skills/verify.md`: kill the dev server by captured PID, never `pkill -f`-style pattern matching (a broad pattern like `pkill -f node` would still kill the worker itself).
+3. Restarted `story-worker`, retried both stories via `POST /api/stories/{id}/retry` — they resume at `verifying` with worktrees intact.
+4. Note: the Next.js app on :3737 (chat + actions routes) also spawns claude through the same `spawn.ts` — it gets the fix on its next rebuild/redeploy; not urgent since chat prompts rarely contain pkill-able strings.
+
+**Where documented:** This entry; comment above the args array in `spawn.ts`; regression test comment in `session.test.ts`.
+
+---
+
+## 2026-07-04 — Story with a new Supabase migration dead-ended at verify (no way to apply DDL)
+
+**What happened:** Story `7544d841` (chat cwd/agent dropdown) implemented correctly — typecheck, build, and 4/7 verify criteria passed — but parked at `verifying` because its new `supabase/migrations/0003_chat_model.sql` was never applied to the live Supabase project. `POST /api/chats` 500'd with "column chats.model does not exist". No amount of fix-loop retries could code past it.
+
+**Root cause:** Stage sessions only hold PostgREST keys (anon + service-role JWTs) — no `DATABASE_URL`, no management token — so nothing in the pipeline could execute DDL. The routing rule "migrations stay in-session" only covers migrations known *up front*; here the build agent legitimately *discovered* it needed a schema change mid-story. The gap was systemic: any story that emerges a migration was guaranteed to park.
+
+**Fix applied:**
+1. Immediate: applied the DDL via the Supabase Management API using the token at `~/.supabase/access-token`, then `POST /api/stories/7544d841/retry` — story resumed at verify, PR #6 merged.
+2. Systemic (command-center PR #7): worker now diffs the story branch for added migration files before the verify session and auto-applies them via the Management API — but ONLY if every statement is additive and idempotent (whitelist in `worker/migrations.ts`). Anything destructive/transforming parks the story with the exact SQL for the human SQL-editor path. Token stays worker-side; never enters an agent session. All-or-nothing per batch. `skills/build.md` now instructs agents to write `if not exists` DDL and to return `blocked` when a plan needs destructive DDL.
+
+**Where documented:** This entry; `worker/migrations.ts` header comment; `worker/skills/build.md` "Database migrations" section; Supabase `goals` table (formerly the roadmap lessons table in the now-deprecated `docs/roadmap.md`).
 
 ---
 

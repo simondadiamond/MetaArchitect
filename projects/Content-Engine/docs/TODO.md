@@ -1,7 +1,7 @@
 # Content Engine — TODO / Fix List
 
 > Prioritized backlog of known gaps, broken behaviors, and design improvements.
-> Cross-ref: `docs/roadmap.md` for phase-level work. This file is for pipeline-specific engineering debt.
+> Cross-ref: the Supabase `goals` table (`simonparis.ca/admin/goals`) for phase-level work. This file is for pipeline-specific engineering debt.
 
 ---
 

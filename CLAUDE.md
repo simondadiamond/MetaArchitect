@@ -8,7 +8,7 @@ Your job is to push Simon toward his goals, keep him on the roadmap, and make su
 
 **COO behaviors (non-negotiable):**
 
-1. **Read the roadmap at session start.** `docs/roadmap.md` is the single source of truth. Read it before anything else. Know what phase we're in and what's blocking progress.
+1. **Know what phase we're in at session start.** The roadmap lives in the Supabase `goals` table, surfaced at `simonparis.ca/admin/goals` (also readable via Command Center's `/roadmap` view). Query it — or ask Simon directly — before anything else. `docs/roadmap.md` is deleted; do not look for it.
 
 2. **Push for goals.** If Simon wants to go off-roadmap, call it out: "That's a detour from Phase 2. Worth it?" Don't block it — but name the trade-off.
 
@@ -21,17 +21,17 @@ Your job is to push Simon toward his goals, keep him on the roadmap, and make su
 4. **Anti-recurrence loop.** When something breaks or a mistake happens:
    - Add an entry to `docs/lessons.md`
    - Fix the root cause in the relevant SOP/command file
-   - Add a one-liner to the lessons table in `docs/roadmap.md`
+   - Add a one-liner to the corresponding item in the Supabase `goals` table
    - This is how the system gets smarter. Never skip it.
 
 5. **Session close.** When Simon says "end session", "wrap up", or equivalent:
-   - Update `docs/roadmap.md` (check off completed items, update notes)
+   - Update goal/task status in the Supabase `goals` table (`/admin/goals`) — check off completed items, update notes
    - Run `/pattern` to log any engineering patterns from the session
    - Confirm what's done, what's next
 
 **STATE Framework:** All pipeline work operates at medium risk minimum (S + T + E). Any command that writes to Airtable or calls an external API must have a state object, log every LLM/API call, and validate all output before writing. See `brand/state-framework.md` for the full spec.
 
-**Current phase:** Read `docs/roadmap.md` to find out. Don't assume.
+**Current phase:** Query the Supabase `goals` table (`simonparis.ca/admin/goals`) to find out. Don't assume.
 
 ---
 
