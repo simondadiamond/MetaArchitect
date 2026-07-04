@@ -10,9 +10,13 @@ description: Generates a full STATE teardown for a candidate in pipeline.teardow
 Take a candidate from `pipeline.teardown_candidates`, do deep source research, and produce:
 1. Full STATE scoring with per-pillar reasoning (not just 0/1/2 — the *why*)
 2. 2–3 specific gaps with production consequences
-3. Remediation recommendations (concrete, not generic)
+3. Remediation recommendations (concrete, not generic) — including at least one real artifact snippet
 4. A full blog post (~1,000–1,500 words) for `simonparis.ca/blog/teardowns/<slug>`
 5. A LinkedIn post (150–250 words, hook→setup→turn→lesson→close)
+6. An outreach kit: personalizable DM template + 2–3 alternate LinkedIn hooks
+
+The teardown has three conversion jobs: make the reader self-diagnose, prove the paid audit's
+quality by sample, and produce outreach ammo. Every section serves one of those.
 
 **Voice**: practitioner-to-practitioner. "I built this because I use it." No marketer-speak. No softening. If the system has a serious gap, name it specifically.
 
@@ -23,13 +27,16 @@ Take a candidate from `pipeline.teardown_candidates`, do deep source research, a
 Same pattern as `/teardown-research`:
 
 ```python
-import json, glob, urllib.request
+import json, glob, os, urllib.request
 
 def _get_token():
+    # popebot containers first, then Sterling local (lessons.md 2026-07-02)
     paths = glob.glob('/app/data/workspaces/*/.supabase/access-token')
-    if not paths:
-        raise RuntimeError("No supabase access-token found")
-    return open(paths[0]).read().strip()
+    paths += [os.path.expanduser('~/.supabase/access-token')]
+    for p in paths:
+        if os.path.exists(p):
+            return open(p).read().strip()
+    raise RuntimeError("No supabase access-token found")
 
 TOKEN = _get_token()
 REF   = 'ashwrqkoijzvakdmfskj'
@@ -40,6 +47,8 @@ def supabase_sql(query):
     req  = urllib.request.Request(url, data=body, headers={
         'Authorization': f'Bearer {TOKEN}',
         'Content-Type':  'application/json',
+        # Cloudflare 403 error 1010 blocks python-urllib's default UA (lessons.md 2026-07-02)
+        'User-Agent':    'supabase-cli/2.30.4',
     })
     with urllib.request.urlopen(req) as r:
         return json.loads(r.read())
@@ -78,6 +87,22 @@ Score each pillar 0, 1, or 2 based on evidence — not assumption:
 
 ---
 
+## Pillar Framings & Self-Score Bank
+
+Use the framing (adapted, 1–2 sentences — don't paste verbatim) to open the gap section for that
+pillar; use the matching self-score question to close it. This is the same rubric as /readiness —
+deliberately. The reader should recognize the paid instrument inside the free artifact.
+
+| Pillar | Framing (adapt) | Self-score question |
+|---|---|---|
+| S | Production AI systems fail when they reconstruct business state from conversation history instead of carrying it as an explicit object. | If your agent crashed mid-workflow right now, what happens to the work in progress — and have you tested it? |
+| T | When an LLM system misbehaves in production, the first question is: what exactly did it receive, what did it produce, and when? If you can't answer that after the fact, you're flying blind. | Could you reconstruct exactly what happened in any specific LLM call from the past 30 days? |
+| A | In regulated environments, "the model did something unexpected" is not an acceptable explanation. | If a regulator asked what data drove one specific decision last month, could you answer in under 30 minutes? |
+| Tol | A system that only works in the forward-motion state is a demo. Production systems fail at step 6 of 10. | If your workflow died at step 6 right now, does it resume from step 6 — or have you never tested it? |
+| E | Every point where LLM output crosses into real-world action is a risk boundary. | Can your system take a high-risk action on LLM output alone, with no deterministic check or human gate in between? |
+
+---
+
 ## Blog Post Format
 
 ```markdown
@@ -101,15 +126,30 @@ No marketing copy — write from the perspective of someone who has read the arc
 | E — Explicit    | X/2 | [verdict] |
 | **Total**       | **X/10** | |
 
-## Gap 1: [Name the Specific Gap]
+[STATE Index line — ONLY if ≥2 teardowns are already published (query pipeline.teardown_drafts
+WHERE status = 'published'). One line: "STATE Index so far: [System A] X/10 · [System B] X/10 ·
+[this system] X/10 — [full index →](/blog/teardowns)". Skip entirely below the threshold —
+a benchmark of one is an opinion.]
 
-[200–300 words. Describe the gap precisely. Cite the evidence (blog post, GitHub, docs).
+## What [System] Gets Right
+
+[100–150 words. At least one strength, held to the SAME evidence standard as the gaps — cite the
+doc/repo/post. Anchor to the highest-scoring pillar. If no pillar scores 2/2, say that plainly
+("nothing here earns a 2 — and that's the story") instead of manufacturing praise. This section
+is what makes the gaps read as diagnosis, not attack. Senior practitioners smell hit pieces.]
+
+## Gap 1: [Name the Specific Gap — question-form H2 when natural, e.g. "Can It Resume From Step 6?"]
+
+[Open with 1–2 sentences adapted from the pillar framing (Pillar Framings & Self-Score Bank above).
+Then 200–300 words. Describe the gap precisely. Cite the evidence (blog post, GitHub, docs).
 Explain the production consequence — what breaks, who notices first, what it costs.
 Don't moralize — describe the mechanism.]
 
+**Score yourself:** [The matching self-score question from the bank, addressed to the reader.]
+
 ## Gap 2: [Name the Second Gap]
 
-[Same structure. Be specific. Name the failure mode.]
+[Same structure: framing opener → mechanism → evidence → consequence → **Score yourself:** close.]
 
 ## [Optional Gap 3 if warranted]
 
@@ -117,7 +157,11 @@ Don't moralize — describe the mechanism.]
 
 [150–200 words. Concrete remediation — not "add logging," but "add a workflowId to every
 LLM call and store inputs/outputs to a structured log table with the session context."
-Reference STATE pillars explicitly. Don't lecture — propose.]
+Reference STATE pillars explicitly. Don't lecture — propose.
+
+MUST include at least one real artifact in a fenced code block — a state object schema, a
+decision-record row, a checkpoint pattern. This is a free sample of the paid audit deliverable;
+it must be correct and production-quality, not pseudocode decoration.]
 
 ## The Generalizable Lesson
 
@@ -125,7 +169,19 @@ Reference STATE pillars explicitly. Don't lecture — propose.]
 This is the insight your ICP takes back to their team.
 One clean principle, stated plainly.]
 
+## FAQ
+
+[Exactly 3 questions, phrased the way the ICP would ask an AI assistant — e.g. "Is [System] safe
+for regulated data?", "Does [System] log LLM decisions?", "Does Law 25 apply to [category]?"
+Each answer 2–4 sentences, self-contained and citable on its own (AEO). Across the full post,
+at least 2 H2/H3 headings must be question-form.]
+
 ---
+
+[FOUNDING CTA — include ONLY while the founding program copy is live on /audit; omit until then:]
+*I run this same scoring against interior evidence — logs, schemas, incidents — for founding
+clients. Three Production AI Audit slots at the founding rate; the slot count is real and lives
+in a database I don't hand-edit. [See the founding program →](/audit)*
 
 *Want to know how your production AI system scores? [Take the STATE assessment →](/score)*
 ```
@@ -151,6 +207,26 @@ Never "link in bio" or "check my post." Either a question or an implicit invitat
 ```
 
 150–250 words total. No hashtags unless they're earning their keep. No em-dashes as decoration.
+
+---
+
+## Outreach Kit Format
+
+Every teardown also produces sales ammo — this is half the point of the artifact.
+
+**DM template** (40–80 words; keep `{name}` and `{their_pattern}` placeholders in — Simon
+personalizes before sending, this is a template, not a send-as-is message):
+
+```
+{name} — I published a STATE teardown of [System]: X/10, sharpest gap is [gap in ~5 words].
+Your {their_pattern} runs the same pattern. The public version works from public evidence
+only — the interesting version of this scoring uses interior access. Teardown: [URL].
+Worth 30 minutes?
+```
+
+**Alternate hooks** — 2–3 additional LinkedIn hook lines (first 1–2 lines only), each angling
+a *different* pillar or gap, so one teardown feeds multiple posts on different days
+(roadmap 3.6c: every blog post → 2–3 LinkedIn posts).
 
 ---
 
@@ -198,11 +274,17 @@ Using your research, produce:
    - The evidence (where you found it)
    - The production consequence (what breaks, who discovers it, what it costs)
 
-3. **Full blog post** — follow the format above exactly. ~1,000–1,500 words. Ends with the `/score` CTA.
+3. **Full blog post** — follow the format above exactly. ~1,000–1,500 words. Includes: "What
+   [System] Gets Right" section, pillar-framing openers + **Score yourself:** close on every gap,
+   artifact snippet in "What Good Looks Like", 3-question FAQ, ≥2 question-form headings,
+   conditional STATE Index line, conditional founding CTA, and the `/score` CTA.
 
 4. **LinkedIn post** — follow the format above. 150–250 words. Distill the sharpest gap into the hook.
 
-5. **Post angle** — one sentence: "is there a post in this beyond the teardown itself?" (e.g., a follow-up angle for a different pillar, a series idea, a broader principle post)
+5. **Outreach kit** — DM template (40–80 words, placeholders intact) + 2–3 alternate hooks,
+   per the Outreach Kit Format above.
+
+6. **Post angle** — one sentence: "is there a post in this beyond the teardown itself?" (e.g., a follow-up angle for a different pillar, a series idea, a broader principle post)
 
 ### Step 3: Generate blog slug
 
@@ -277,18 +359,49 @@ for i, r in enumerate(remediation):
         assert r.get(k) not in (None,'',[]), f"remediation[{i}] missing or empty: {k}"
 
 # Gate 4: full_content ends with the canonical /score CTA (lessons.md 2026-05-09)
+# (founding CTA above it is conditional — only while founding copy is live on /audit)
 assert '[Take the STATE assessment →](/score)' in full_content, \
     "full_content must end with the canonical /score CTA, not a series description"
 
 # Gate 5: linkedin_post word count is 150-250
 lp_words = len(linkedin_post.split())
 assert 150 <= lp_words <= 250, f"linkedin_post is {lp_words} words; must be 150-250"
+
+# Gate 6: "Gets Right" section present (credibility gate — gaps must read as diagnosis, not attack)
+assert 'Gets Right' in full_content, "missing 'What [System] Gets Right' section"
+
+# Gate 7: every gap closes with a self-score question
+assert full_content.count('**Score yourself:**') >= len(gaps), \
+    "each gap section must close with a **Score yourself:** line"
+
+# Gate 8: 'What Good Looks Like' contains a fenced artifact snippet
+wgll = full_content.split('## What Good Looks Like')[1].split('\n## ')[0]
+assert '```' in wgll, "What Good Looks Like must include a fenced artifact snippet"
+
+# Gate 9: FAQ section present
+assert '## FAQ' in full_content, "missing 3-question FAQ section"
+
+# Gate 10: >= 2 question-form H2/H3 headings (AEO)
+import re as _re
+_qh = [h for h in _re.findall(r'^#{2,3} (.+)$', full_content, _re.M) if h.strip().endswith('?')]
+assert len(_qh) >= 2, f"need >= 2 question-form headings, found {len(_qh)}"
+
+# Gate 11: outreach kit populated
+assert 40 <= len(dm_template.split()) <= 80, f"dm_template is {len(dm_template.split())} words; must be 40-80"
+assert '{name}' in dm_template and '{their_pattern}' in dm_template, "dm_template must keep personalization placeholders"
+assert len(alt_hooks) >= 2, "need >= 2 alternate LinkedIn hooks"
 ```
+
+# The outreach kit lives in an `outreach` jsonb column: {'dm_template': str, 'alt_hooks': [str]}
+# If the column doesn't exist yet, add it first (idempotent):
+#   ALTER TABLE pipeline.teardown_drafts ADD COLUMN IF NOT EXISTS outreach jsonb;
+
+outreach = {'dm_template': dm_template, 'alt_hooks': alt_hooks}
 
 sql = f"""
     INSERT INTO pipeline.teardown_drafts
       (candidate_id, system_summary, state_scores, gaps, remediation,
-       full_content, linkedin_post, post_angle, blog_slug, status, workflow_id, generation_log)
+       full_content, linkedin_post, outreach, post_angle, blog_slug, status, workflow_id, generation_log)
     VALUES (
       '{candidate['id']}',
       '{esc(candidate['description'])}',
@@ -297,6 +410,7 @@ sql = f"""
       '{json.dumps(remediation).replace("'","''")}'::jsonb,
       '{esc(full_content)}',
       '{esc(linkedin_post)}',
+      '{json.dumps(outreach).replace("'","''")}'::jsonb,
       '{esc(post_angle)}',
       '{esc(slug)}',
       'draft',
@@ -338,8 +452,10 @@ Print the full LinkedIn post and a 3-sentence summary of each gap so Simon can r
 The PR body must include:
 1. **LinkedIn post** (full text, ready to paste)
 2. **Gap summary** (3 bullets: gap name + one-line consequence each)
-3. **Blog slug** (the URL it will live at once published)
-4. **Draft ID** in Supabase (for reference)
+3. **DM template** (ready to personalize — this is the founding-slot outreach ammo)
+4. **Alternate hooks** (2–3, for repurposed posts on later days)
+5. **Blog slug** (the URL it will live at once published)
+6. **Draft ID** in Supabase (for reference)
 
 ---
 

@@ -25,14 +25,16 @@ Use the Supabase Management API with the access token that persists across works
 
 ```python
 #!/usr/bin/env python3
-import json, glob, urllib.request
+import json, glob, os, urllib.request
 
 def _get_token():
-    """Find the supabase access token across workspace volume paths."""
+    """Find the supabase access token: popebot workspace volumes, then Sterling local."""
     paths = glob.glob('/app/data/workspaces/*/.supabase/access-token')
-    if not paths:
-        raise RuntimeError("No supabase access-token found in /app/data/workspaces/")
-    return open(paths[0]).read().strip()
+    paths += [os.path.expanduser('~/.supabase/access-token')]
+    for p in paths:
+        if os.path.exists(p):
+            return open(p).read().strip()
+    raise RuntimeError("No supabase access-token found")
 
 TOKEN = _get_token()
 REF   = 'ashwrqkoijzvakdmfskj'
@@ -43,6 +45,8 @@ def supabase_sql(query):
     req  = urllib.request.Request(url, data=body, headers={
         'Authorization': f'Bearer {TOKEN}',
         'Content-Type':  'application/json',
+        # Cloudflare 403 error 1010 blocks python-urllib's default UA (lessons.md 2026-07-02)
+        'User-Agent':    'supabase-cli/2.30.4',
     })
     with urllib.request.urlopen(req) as r:
         return json.loads(r.read())

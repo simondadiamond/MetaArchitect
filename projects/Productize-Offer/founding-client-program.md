@@ -1,7 +1,11 @@
 # Founding Client Program — The Meta Architect
 
+> ⚠️ **AMENDED 2026-07-03** — COO red-team complete. This spec stands EXCEPT four amendments locked in [`offer-ladder.md`](offer-ladder.md) §3:
+> (1) retainer sold in day-blocks — 1 d/wk $5,500/mo founding on-ramp, 2 d/wk $9,000/mo; (2) **no month-4 auto-step** — founding rate holds the 6-month term, steps at renewal with 60 days' notice; (3) exchange terms tiered — diagnostic gets the light exchange (testimonial + debrief + 2 warm intros), full §5 applies to audit/retainer only, no retroactive invoicing at diagnostic tier; (4) funnel requires outbound — inbound alone cannot feed the slots in time.
+> `offer-ladder.md` is the pricing source of truth; this doc remains authoritative for eligibility (§2), slots (§3), tracking schema (§6), and qualification (§8).
+
 > Owner: Simon Paris
-> Status: v1 spec, draft for COO review
+> Status: v1 spec + 2026-07-03 amendments
 > Source of truth for "founding" pricing across the three-tier offer ladder
 > Surface: simonparis.ca/audit (public copy), Supabase `founding_clients` table (operational)
 
