@@ -51,5 +51,8 @@ projects/Content-Engine/.tmp/*.json
 # simonparis-website — own git repo (nested)
 projects/simonparis-website/
 
+# command-center — own git repo (nested)
+projects/command-center/
+
 # Stray machine-specific Claude Code permission allowlists
 projects/.claude/
