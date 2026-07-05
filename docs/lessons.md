@@ -316,6 +316,36 @@ Schema says `title` defaults to null. Server rejects it. Always pass a real desc
 
 ---
 
+## 2026-07-04 — "Cancelled" story thrashed in needs_review forever (no cancel path in the pipeline)
+
+**What happened:** Story `bad71799` (agent picker) was superseded when Simon had the same change implemented in-session. It was "cancelled" by writing a note into its `error` field — but its stage stayed `needs_review` with `auto_merge=true` and PR #10 still open. From then on, `reconcileNeedsReview` re-attempted the merge gate on every poll: push branch → gate says CONFLICTING (main already contains the in-session version) → park back to `needs_review`. The story's `updated_at` churned every few minutes for ~3 hours, and the board showed a dead story as pending review.
+
+**Root cause:** The pipeline has no terminal "cancelled" state and no cancel operation. `StoryStage` (worker/types.ts) ends at `merged | failed | needs_review`, and `reconcileNeedsReview` (worker/pipeline.ts) assumes every open-PR `needs_review` story with `auto_merge` on still *wants* to merge — a closed-on-purpose or superseded PR loops indefinitely. Writing prose into `error` changes nothing the worker reads.
+
+**Fix applied:**
+1. Immediate: PATCHed the story to `stage=failed` with a "cancelled — superseded" error via Supabase REST (same call path as `worker/db.ts updateStory`), which removes it from the `findNeedsReviewWithPr` query. PR #10 closure + worktree/branch removal handed to Simon (permission-gated in-session).
+2. Systemic (proposed, not yet built): `reconcileNeedsReview` should check PR state — if the PR is CLOSED (not merged), park the story as `failed`/cancelled instead of re-attempting the gate; plus a proper `POST /api/stories/:id/cancel` that closes the PR, removes the worktree, and sets a terminal stage. Pipeline-touching → in-session work, not a queued story.
+
+**Where documented:** This entry; Supabase `goals` table note.
+
+---
+
+## 2026-07-04 — Blind-guarantee leak via a sibling surface (teardown panel /runs page)
+**What happened:** The teardown training panel's core invariant — Claude's blind analysis stays hidden until Simon submits his answers — was correctly enforced in the session API (server-side stripping), but the analysis leaked anyway: the prepare run's raw output (the full blind analysis) was stored in `agent_runs.output` and rendered on the /runs page while Simon was still answering. Every per-task review passed; only the final whole-branch review caught it.
+**Root cause:** The invariant was specified and tested against one surface (the teardown API) while a shared infrastructure component (`startRun`/`finishRun` → agent_runs → /runs) persisted the same secret on another. Confidentiality invariants must be enforced at every surface that persists or displays the data, not at the primary read path.
+**Fix applied:** Run-1 output is redacted at write time in `defaultSpawn` (command-center `lib/teardowns/runner.ts`); the analysis lives only on the session row. Spec updated to state the guarantee extends to every persisting surface. Meta-fix: whole-branch reviews now explicitly walk "where else does this data land?" for any hidden/withheld data feature.
+**Where documented:** This entry; command-center spec `docs/superpowers/specs/2026-07-04-teardown-training-panel-design.md`; SDD ledger.
+
+---
+
+## 2026-07-04 — Concurrent Claude sessions fighting over one command-center checkout
+**What happened:** During the teardown-panel build (12 tasks, subagent-driven, on `main`), another live session repeatedly used the same `projects/command-center` checkout: switched branches under us twice (implementers found themselves on `feat/schedules`, then `feat/story-cancel-path`), ran a `git stash` that reverted an in-flight edit, and accidentally committed its own work onto `main` (later cherry-picked away by that session). Also: one task's verification server (port 4123) was left orphaned and collided with the next task's.
+**Root cause:** Two interactive sessions treating the primary checkout as exclusively theirs. Worktrees existed (`~/.worktrees/command-center-schedules`) but branch switching still happened in the shared checkout. No convention says which session owns the primary checkout's HEAD.
+**Fix applied:** In-session mitigations: every subagent dispatch now includes "verify `git branch --show-current` before starting and before committing; stage only your files"; verification servers get explicit kill steps and the controller sweeps orphans. Convention to adopt (proposed): the primary checkout stays on `main`; any branch work happens in a `git worktree` — never `git checkout <branch>` in the primary checkout while another session may be active.
+**Where documented:** This entry; command-center SDD ledger `.superpowers/sdd/progress.md`.
+
+---
+
 ## Template for new entries
 
 ```
@@ -325,3 +355,18 @@ Schema says `title` defaults to null. Server rejects it. Always pass a real desc
 **Fix applied:** ...
 **Where documented:** ...
 ```
+
+## 2026-07-04 — Next.js instrumentation.ts: early-return env guards break `next dev`
+Building the command-center Schedules ticker: `instrumentation.ts` with early-return guards (`if (process.env.NODE_ENV !== "production") return;`) before a dynamic import of Node-API code made webpack bundle the import anyway — `UnhandledSchemeError: node:child_process` and **every** dev page 500'd, while prod built fine. Only the documented nested-if shape (`if (process.env.NEXT_RUNTIME === "nodejs" && process.env.NODE_ENV === "production") { await import(...) }`) gets dead-code-eliminated in dev. Root cause fixed in commit `069ca94` (command-center); rule of thumb: in instrumentation.ts, always gate dynamic imports with the positive nested-if form, never early returns.
+
+## 2026-07-05 — First live teardown (Ramp) failed at draft gate: "gaps[0] bad pillar"
+**What happened:** The first real training-panel teardown ran prepare + Simon's answers fine, then died in run 2 with `draft: gaps[0] bad pillar`. The review run's output used capitalized pillar ids (`"Tol"`, `"S"`, `"T"`, `"A"`) while the validator whitelist is lowercase `["s","t","a","tol","e"]`.
+**Root cause:** `buildReviewPrompt`'s JSON schema showed `"pillar": "..."` for gaps/remediation — unlike `buildPreparePrompt`, which spells out `"s"|"t"|"a"|"tol"|"e"`. With no enum in sight, the model fell back to the capitalized STATE letters used everywhere in the brand docs. General rule: every enum-constrained field in an LLM output schema must show its literal allowed values in the prompt; a validation gate downstream of a schema the model never saw is a trap, not a gate.
+**Fix applied:** command-center PR #18 — enum spelled out in the review schema (root cause), plus `normalizePillarCase` in `lib/teardowns/validate.ts` applied before validation in both runs (lossless lowercase canonicalization of exact pillar ids; unknown values still fail loudly). Verified by replaying the actual failed Ramp output: validates clean. Session is retryable from the panel once the PR is merged and deploy-sync picks it up.
+**Where documented:** This entry; command-center PR #18; one-liner pending on the "Build Teardown Engine" goal (write to Supabase was permission-blocked this session).
+
+## 2026-07-05 — Story queued for a file that lives outside the pipeline's target repos
+**What happened:** Story 7a984b5b ("upgrade the sitemaster profile") was queued with `target_repo: command-center`. Planning blocked: the sitemaster profile lives at `MetaArchitect/.claude/agents/sitemaster.md` (the `~/.claude/agents/sitemaster.md` copy is a symlink to it), and MetaArchitect is not a registered pipeline target (`worker/targets.ts`: command-center, simonparis-website only). Simon read the block as the agent getting confused; it wasn't — the planner traced the symlink correctly and had no valid move, since it can only PR registered repos. Blocking with a precise reason was the right behavior.
+**Root cause:** Routing gap at story-creation time, not an agent-capability gap. Nothing in the SOP made explicit that agent profiles / brand files / skills are MetaArchitect files and therefore un-storyable. Secondary find while verifying: sitemaster.md and coo.md still carried pope-agent container paths (`/app/data/projects/...`) and a wrong accent color (`#F97316` vs brand `#E04500`) — stale-profile drift is its own recurring hazard.
+**Fix applied:** Root CLAUDE.md routing rule 1 now spells out that agent profiles, brand files, skills, and CLAUDE.md are session work, never stories. sitemaster.md upgraded in-session (the story's actual intent): Sterling-correct paths, correct brand palette + non-negotiable design rules, and a "Two Execution Contexts" section telling it how to behave in interactive sessions vs pipeline worktrees. coo.md paths corrected the same way.
+**Where documented:** This entry; root CLAUDE.md routing section; `.claude/agents/sitemaster.md`, `.claude/agents/coo.md`.

@@ -109,7 +109,7 @@ curl -s -X POST http://100.105.85.5:3737/api/schedules \
 
 ### Route to the pipeline when ALL of these hold
 
-1. **Code change in a registered target repo** (command-center or simonparis-website — NOT this MetaArchitect repo)
+1. **Code change in a registered target repo** (command-center or simonparis-website — NOT this MetaArchitect repo). Agent profiles (`.claude/agents/*.md`), brand files, skills, and CLAUDE.md live in MetaArchitect — edits to them are session work, never stories. The `~/.claude/agents/*.md` files are symlinks into this repo, so "upgrade agent X" always means a MetaArchitect edit. A story whose subject file isn't in the chosen `target_repo` will (correctly) fail at planning.
 2. **Small/medium**: describable in a few sentences, expected to touch ~1–5 files
 3. **Checkable success criteria**: the verify stage must be able to judge pass/fail by driving the running app or reading test output — "make it nicer" doesn't qualify, "the nav links render in #C97A1A on /blog" does
 4. **No open design decisions**: if you'd need to ask Simon something mid-task, resolve it in chat first, then queue
@@ -131,6 +131,8 @@ Full details: `projects/command-center/README.md` ("Story worker") and `docs/sup
 - `gh auth setup-git` — wires HTTPS credential helper (run once, already done)
 - All pushes: `git push origin <branch>` will now use gh token automatically
 - If auth ever breaks: `echo "ghp_TOKEN" | gh auth login --with-token` — do NOT paste tokens in chat
+
+**Worktrees are mandatory for code work in shared checkouts** (Simon's rule, 2026-07-04): any session doing code changes in `projects/command-center/` (or any repo other sessions may touch) works in a `git worktree`, not the primary checkout. The primary checkout stays on `main` and nobody runs `git checkout <branch>` in it — concurrent sessions have collided here (lessons.md 2026-07-04). The live service on :3737 runs from `~/command-center`, which is a SYMLINK to the primary checkout — the service serves whatever branch/state that checkout holds (another reason it must stay on `main`). Verify unpushed work with a local `next start` on another port; the story-worker (and, once PR #14 lands, a deploy-sync timer) handles pull/build/restart after merges.
 
 **simonparis.ca website** lives at `projects/simonparis-website/` (own git repo, gitignored from root).
 - GitHub: `github.com/simondadiamond/simonparis-website` (private)

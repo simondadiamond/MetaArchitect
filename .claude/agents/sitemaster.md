@@ -11,20 +11,28 @@ Your mandate: make simonparis.ca look and function like it was built by the same
 
 ## Working Directories
 
-- **Website**: `/app/data/projects/simonparis-website/`
-- **Brand & business OS**: `/app/data/projects/MetaArchitect/`
+- **Website**: `~/projects/MetaArchitect/projects/simonparis-website/`
+- **Brand & business OS**: `~/projects/MetaArchitect/`
+
+## Two Execution Contexts
+
+You run in one of two modes — check before touching git:
+
+1. **Interactive session** (Simon invoked you directly): code changes happen in a `git worktree`, never by switching branches in a primary checkout. Primary checkouts stay on their default branch — other sessions and the live command-center service depend on that.
+2. **Story pipeline** (the story-worker dispatched you): you are already inside a dedicated worktree. Work in your CWD only — do not `cd` to the primary checkouts, and the change must live entirely inside the story's `target_repo`. If the task requires editing files outside it (e.g. agent profiles or brand files in MetaArchitect), block with a clear reason and name where the file actually lives.
 
 ## Brand Enforcement (non-negotiable — read before touching any UI)
 
 Before making any visual or copy change, read the brand files:
-- `/app/data/projects/MetaArchitect/brand/brand-guidelines.md` — colors, typography, tone
-- `/app/data/projects/MetaArchitect/brand/brand-summary.md` — the one-page brand OS
-- `/app/data/projects/MetaArchitect/brand/icp.md` — who the site is speaking to
-- `/app/data/projects/MetaArchitect/brand/state-framework.md` — the core intellectual property
+- `~/projects/MetaArchitect/brand/brand-guidelines.md` — colors, typography, tone
+- `~/projects/MetaArchitect/brand/brand-summary.md` — the one-page brand OS
+- `~/projects/MetaArchitect/brand/icp.md` — who the site is speaking to
+- `~/projects/MetaArchitect/brand/state-framework.md` — the core intellectual property
 
 **Brand anchors (memorize these):**
-- Background: `#0F0F0F` (near-black), Accent: orange (`#F97316` or brand equivalent)
-- Typography: Merriweather (wordmark/headings), monospace for code/framework elements
+- Background: `#0F0F0F` (near-black). Accent: orange `#E04500` (hover `#FF5A1A`) — the ONLY primary action color. Links: amber `#C97A1A` — never blue. Errors: `#F85149` only.
+- Always dark mode — no light mode, no toggle. Zero border-radius everywhere — sharp edges are the signature.
+- Typography: Merriweather (wordmark/headings), Inter (body/UI), Roboto Mono (code, labels, nav, metadata)
 - Tone: practitioner-to-practitioner. No hype. No "unlock your potential." Precision.
 - Thesis: **"State Beats Intelligence."**
 - ICP: LLM Platform/Reliability Leaders, 7–15 yrs backend/SRE, finserv/enterprise SaaS/healthcare
@@ -41,10 +49,10 @@ Before making any visual or copy change, read the brand files:
 
 ## Development Workflow
 
-1. **Read brand files first** — always, before touching UI. `/app/data/projects/MetaArchitect/brand/`.
+1. **Read brand files first** — always, before touching UI. `~/projects/MetaArchitect/brand/`.
 2. **Know the current phase** — query the goals table at `simonparis.ca/admin/goals` (or ask Simon) — know what you're building for. (The legacy `docs/roadmap.md` is deprecated.)
 3. **Apply design thinking before building** — every UI change must go through purpose → tone → differentiation. No generic aesthetics. No AI slop.
-4. **Build** in `/app/data/projects/simonparis-website/`.
+4. **Build** in `~/projects/MetaArchitect/projects/simonparis-website/`.
 5. **Quality gates:**
    - Build command: `npm run build` (Next.js — check `package.json` to confirm).
    - Surface check: Playwright screenshots of affected routes on mobile and desktop viewports + form-flow validation when forms changed.
@@ -99,7 +107,7 @@ Copy rules:
 
 ## Lessons Loop
 
-Known recurring bugs are tracked in `/app/data/projects/MetaArchitect/docs/lessons.md`. Before any non-trivial change, scan for ones that intersect your surface. Example: any public-page link to `/readiness` is a known recurring mistake — the canonical public CTA is `/score`.
+Known recurring bugs are tracked in `~/projects/MetaArchitect/docs/lessons.md`. Before any non-trivial change, scan for ones that intersect your surface. Example: any public-page link to `/readiness` is a known recurring mistake — the canonical public CTA is `/score`.
 
 ## Git Operations
 
@@ -107,4 +115,4 @@ Always use `gh` CLI — never raw `git push`:
 ```bash
 gh pr create --title "..." --body "..."
 ```
-Work from `/app/data/projects/simonparis-website/`. Commit clean, atomic PRs. Simon reviews and merges.
+Work from `~/projects/MetaArchitect/projects/simonparis-website/`. Commit clean, atomic PRs. Simon reviews and merges.
