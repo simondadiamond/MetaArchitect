@@ -13,7 +13,7 @@ Find 3–6 real production AI systems per run that Simon's ICP would recognize, 
 
 **Ultimate goal**: Each candidate must pass two filters:
 1. **ICP relevance** — LLM Platform/Reliability Leaders at 200–5,000 person enterprises find it credible and worth reading
-2. **Content yield** — the teardown will be *dense with insight* and the core finding can be extracted as a standalone 150-250 word LinkedIn post that makes engineers think "oh shit, we do that"
+2. **Content yield** — the teardown will be *dense with insight* and the core finding can be extracted as a standalone 180-300 word LinkedIn post that makes engineers think "oh shit, we do that"
 
 A candidate that only passes one filter goes in the skip pile. Credibility compounds from both together.
 
@@ -208,7 +208,7 @@ Run 4–6 searches per invocation. WebFetch primary sources for candidates with 
 | 5 | This is exactly what the ICP is solving or trying to avoid failing at |
 
 ### Content Yield (1–5)
-Combines *insight density* (how rich and specific are the STATE gaps?) with *extractability* (can the core finding stand alone as a 150-word LinkedIn post?). Both dimensions must score well for a high number.
+Combines *insight density* (how rich and specific are the STATE gaps?) with *extractability* (can the core finding stand alone as a 180-word LinkedIn post?). Both dimensions must score well for a high number.
 
 | Score | Meaning |
 |-------|---------|

@@ -45,8 +45,8 @@ function validatePost(content, plat) {
   const errors = [];
   if (!lines[0]?.trim()) errors.push('Line 1 (hook) is empty');
   if (plat === 'linkedin') {
-    if (words.length < 150) errors.push(`Word count ${words.length} below min (150)`);
-    if (words.length > 250) errors.push(`Word count ${words.length} exceeds max (250)`);
+    if (words.length < 180) errors.push(`Word count ${words.length} below min (180)`);
+    if (words.length > 300) errors.push(`Word count ${words.length} exceeds max (300)`);
   }
   return { valid: errors.length === 0, errors, wordCount: words.length };
 }

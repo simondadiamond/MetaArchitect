@@ -635,7 +635,7 @@ async function runDraftForStub(stubId, weekState) {
   // Step 7: Query humanity_snippets — use weekState.cache.snippets (cooldown pre-filtered)
   //         Falls back to getRecords(TABLES.SNIPPETS, ...) if cache miss
   // Step 8: In-session LLM call (claude-sonnet-4-6, writer.md system prompt — Max subscription, NOT SDK)
-  //         validatePost() gate — word count 150–250, structure valid
+  //         validatePost() gate — word count 180–300, structure valid
   // Step 9: patchRecord(TABLES.POSTS, stubId, {...}):
   //         status="drafted", draft_content, hook_id, framework_id, humanity_snippet_id,
   //         alt_snippet_ids, needs_snippet, intent, format, platform, drafted_at=now()

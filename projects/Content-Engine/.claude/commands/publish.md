@@ -56,7 +56,7 @@ if (posts.length === 0) {
 ```javascript
 function formatLinkedIn(draftContent) {
   // Ensure blank lines between sections are present
-  // Ensure hashtags are on final line
+  // Hashtags (if any — 0–3 max, 0 preferred): must NOT be the final visual line of the post
   // Return clean copy-paste string
   return draftContent.trim();
 }
@@ -82,6 +82,12 @@ READY TO PUBLISH — [PLATFORM] ([N] of [Total])
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Paste the post URL once it's live (required):
 ```
+
+#### Posting mechanics (LinkedIn)
+
+- Simon schedules the post via **Postiz**. Target slots: Tue–Thu, 10:00–12:00. Max 1 post/day, 3–4/week.
+- **First-2-hours rule**: once the post is live, reply substantively to every comment within the first 2 hours — author replies add ~30% engagement. A reply is a second chance to add mechanism, not "Thanks!". Budget 20 minutes post-publish.
+- Full mechanics: `.claude/skills/repurpose/references/linkedin-playbook.md` (repo root).
 
 ### 3. Collect URL from Simon
 

@@ -299,16 +299,17 @@ Line 2-3: Setup — what most people think or do
          (blank line)
 Line 4-6: The turn — what's actually happening / what Simon learned
          (blank line)
-Line 7-9: Lesson — specific, architectural, actionable
+Line 7-9: Lesson — specific, architectural, actionable — carries the save-worthy element
          (blank line)
-Line 10: Close — question inviting response OR one-line STATE tie-in
+Line 10: Close — ONE question only production scar tissue can answer, OR one-line STATE tie-in — never generic
 ```
 
-**Length**: 150–250 words.
+**Length**: 180–300 words (~1,300–1,900 characters). Short posts underperform badly — never publish under 400 characters.
 **Diagrams**: Before/after architecture comparisons beat 300 words.
 **Blank lines**: Structural, not decorative — they control reading pace.
-**Hook (Line 1)**: Must stand alone. Works as the first line of a cold read.
-**Close (Line 10)**: Must earn its position. No "what do you think?" unless it's genuine.
+**Hook (Line 1)**: Must stand alone. Works as the first line of a cold read. Never the "it's not X, it's Y" shape — LinkedIn's publicly named AI-tell. That includes the plumbing phrase; keep it in the brand, out of hooks, and vary the wording.
+**Close (Line 10)**: Must earn its position. A question must require production scar tissue to answer. "What do you think?" / "Agree?" / "Comment YES" are classifier-detected engagement bait.
+**Save-worthy element**: Every post includes something referenceable — a checklist, score, taxonomy, or field test. Saves are the heaviest ranking signal.
 
 ---
 
@@ -328,11 +329,14 @@ If the queue has >60% authority posts, surface other intents for balance.
 ## 7. Platform Rules
 
 ### LinkedIn (Primary)
-- **Length**: 150–250 words
+- **Length**: 180–300 words (~1,300–1,900 characters)
 - **Format**: 10-line anatomy with blank lines as specified
-- **Hashtags**: 3–5 at end — `#AIReliabilityEngineering #LLMOps #StateManagement #Law25` or similar
+- **Hashtags**: 0–3 niche max, 0 preferred — hashtags no longer drive distribution; never end the post on a hashtag row
 - **CTA**: Optional — only if it opens a genuine conversation
 - **First line**: Must appear in preview (no blank lines before hook)
+- **Post-publish**: Reply substantively to comments within the first 2 hours — author replies expand distribution
+- **Cadence**: 3–4 posts/week, never more than 1/day; Tue–Thu 10:00–12:00 are the strongest slots
+- **Mechanics source of truth**: `.claude/skills/repurpose/references/linkedin-playbook.md` (formats, timing, anti-slop checklist)
 
 ### X / Twitter (Secondary)
 - **Single tweet**: ≤280 characters

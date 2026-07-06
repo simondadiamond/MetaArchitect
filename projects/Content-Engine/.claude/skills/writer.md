@@ -19,10 +19,14 @@ Line 7:  Evidence/example — specific, concrete
 Line 8:  Mechanism — why this is architecturally true
 Line 9:  (blank)
 Line 10: Close — implication, principle, or specific practitioner question
-         (If a question: must NOT be answerable with "yes", "no", or "it depends" — rewrite as what/how/when and name a specific tool, failure mode, or scenario)
+         (If a question: it must require production scar tissue to answer — NOT answerable with "yes", "no", or "it depends"; name a specific tool, failure mode, or scenario. "Agree?" / "Thoughts?" / "Comment YES" are classifier-detected engagement bait — never.)
 ```
 
-Followed by 3–5 hashtags on a separate line (e.g., `#AIEngineering #LLMReliability #MLOps`).
+Every post carries one save-worthy element — a checklist, score, taxonomy, or concrete test the reader would reference later (saves are the heaviest ranking signal). It usually lives in Lines 7–8.
+
+Hashtags: 0–3 niche max, 0 preferred — they no longer drive distribution. Never end the post on a hashtag row.
+
+Full LinkedIn mechanics: `.claude/skills/repurpose/references/linkedin-playbook.md` (repo root).
 
 ---
 
@@ -38,6 +42,7 @@ ICP: {brand.fields?.icp_short}
 
 Voice rules:
 - Never write: "excited to share", "game-changing", "revolutionary", "in today's fast-paced world"
+- Never hook with an "it's not X, it's Y" construction — LinkedIn's publicly named AI-tell (this includes "it's not the model, it's the plumbing" — vary it: "The model was fine. The plumbing wasn't.")
 - Never vague lessons — name the specific mechanism, not the abstract takeaway
 - Short sentences for emphasis. Longer for explanation.
 - First person only when anchored in a specific moment, never for general claims
@@ -48,7 +53,7 @@ Fact citation rules:
 - tier3 or tier4 → color and framing only, never the anchor claim
 - verified: false → never use as a standalone claim; only as supporting context when a verified fact already anchors the point
 
-POST ANATOMY (LinkedIn — 10 lines + hashtags):
+POST ANATOMY (LinkedIn — 10 lines):
 Line 1: Hook (adapted from the provided hook — do NOT copy verbatim, fit to context)
 Line 2: (blank)
 Line 3: Problem/tension
@@ -58,10 +63,11 @@ Line 6: Reframe/insight
 Line 7: Specific evidence or example
 Line 8: Mechanism
 Line 9: (blank)
-Line 10: Close — if a question, it must name a specific scenario, tool, or failure mode; must NOT be answerable with "yes", "no", or "it depends"
+Line 10: Close — if a question, it must require production scar tissue to answer: name a specific scenario, tool, or failure mode; must NOT be answerable with "yes", "no", or "it depends"; never "Agree?"-style engagement bait
 
-Word count: 150–250 words.
-End with 3–5 hashtags on a new line.
+Word count: 180–300 words.
+Include one save-worthy element the reader would reference later — a checklist, score, taxonomy, or concrete test.
+Hashtags: 0–3 niche max, 0 preferred — never as the final line.
 Output: the post text only. No preamble, no explanation.
 ```
 
@@ -146,10 +152,11 @@ If `needs_snippet = true`:
 ## Platform Formatting
 
 ### LinkedIn
-- 150–250 words
+- 180–300 words (~1,300–1,900 characters — the dwell-time sweet spot)
 - Blank lines after Line 1 (hook), after Line 4 (elaboration), after Line 8 (mechanism)
-- 3–5 hashtags at end, separate line
-- No bullet lists in the main body — prose only
+- Hashtags: 0–3 niche max, 0 preferred — never the final visual line
+- One save-worthy element per post — checklist, score, taxonomy, or test
+- No decorative bullet lists — prose default; a 2–4 line mini-checklist in the lesson is the one exception
 - Character limit is not a concern (word count is)
 
 ### X (Twitter)

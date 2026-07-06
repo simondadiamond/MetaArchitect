@@ -164,17 +164,18 @@ GEO CITABILITY CHECK (required before insert):
   [ ] Primary keyword in title, first H2, and naturally in body
 
 LINKEDIN_EXTRACT:
-[150–250 words. 10-line anatomy:
+[180–300 words. 10-line anatomy:
  Line 1:  Hook — specific failure / contrarian claim / shared-pain question
           [blank line]
  Lines 2-3: Setup — what most engineers do / think
           [blank line]
  Lines 4-6: The turn — what's actually happening
           [blank line]
- Lines 7-9: Lesson — specific, architectural, actionable
+ Lines 7-9: Lesson — specific, architectural, actionable — include one save-worthy element (checklist, score, taxonomy, or test)
           [blank line]
- Line 10: Close — question or STATE tie-in
- 3–5 hashtags]
+ Line 10: Close — question that requires production scar tissue to answer, or STATE tie-in — never generic ("Agree?", "Thoughts?")
+ Hashtags: 0–3 niche max, 0 preferred — never the final line
+ Full mechanics: .claude/skills/repurpose/references/linkedin-playbook.md]
 ```
 
 ---

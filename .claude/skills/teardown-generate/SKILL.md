@@ -11,8 +11,8 @@ Take a candidate from `pipeline.teardown_candidates`, do deep source research, a
 1. Full STATE scoring with per-pillar reasoning (not just 0/1/2 — the *why*)
 2. 2–3 specific gaps with production consequences
 3. Remediation recommendations (concrete, not generic) — including at least one real artifact snippet
-4. A full blog post (~1,000–1,500 words) for `simonparis.ca/blog/teardowns/<slug>`
-5. A LinkedIn post (150–250 words, hook→setup→turn→lesson→close)
+4. A full blog post (~1,000–1,500 words) for `simonparis.ca/blog/<slug>`
+5. A LinkedIn post (180–300 words, generated per the /repurpose skill's linkedin playbook — see LinkedIn Post Format below)
 6. An outreach kit: personalizable DM template + 2–3 alternate LinkedIn hooks
 
 The teardown has three conversion jobs: make the reader self-diagnose, prove the paid audit's
@@ -128,7 +128,7 @@ No marketing copy — write from the perspective of someone who has read the arc
 
 [STATE Index line — ONLY if ≥2 teardowns are already published (query pipeline.teardown_drafts
 WHERE status = 'published'). One line: "STATE Index so far: [System A] X/10 · [System B] X/10 ·
-[this system] X/10 — [full index →](/blog/teardowns)". Skip entirely below the threshold —
+[this system] X/10 — [full index →](/blog)". Skip entirely below the threshold —
 a benchmark of one is an opinion.]
 
 ## What [System] Gets Right
@@ -144,6 +144,18 @@ is what makes the gaps read as diagnosis, not attack. Senior practitioners smell
 Then 200–300 words. Describe the gap precisely. Cite the evidence (blog post, GitHub, docs).
 Explain the production consequence — what breaks, who notices first, what it costs.
 Don't moralize — describe the mechanism.]
+
+[LINKS — across the full post, required (lessons: Ramp teardown 2026-07-05 shipped 1,650 words
+with zero hyperlinks): EVERY research source becomes a markdown link — first mention at minimum,
+and again at later natural mentions (a source discussed in three sections gets an anchor in each).
+Aim for 8–12 total links per post. Evidence name-dropped but not linked is off-brand — the whole
+pitch is evidence over vibes, and outbound links are basic SEO/E-E-A-T. Also include ≥1 internal
+link beyond the CTA lines (e.g. [teardown](/blog); once ≥2 teardowns are published, link the index).]
+
+[STYLE — ration em dashes; dense em dashes read as generated text. Budget: roughly one per 150
+words across the post (score-table pillar labels and verbatim quotes count against it, so prose
+gets few). Prefer periods, colons, commas, and parentheses; save the em dash for the one or two
+sentences per section that earn it.]
 
 **Score yourself:** [The matching self-score question from the bank, addressed to the reader.]
 
@@ -178,10 +190,11 @@ at least 2 H2/H3 headings must be question-form.]
 
 ---
 
-[FOUNDING CTA — include ONLY while the founding program copy is live on /audit; omit until then:]
+[FOUNDING CTA — include ONLY while the founding program copy is live on /work-with-me; omit
+until then. Check the live page for the current slot count — don't hardcode a stale number:]
 *I run this same scoring against interior evidence — logs, schemas, incidents — for founding
-clients. Three Production AI Audit slots at the founding rate; the slot count is real and lives
-in a database I don't hand-edit. [See the founding program →](/audit)*
+clients. [N] Production AI Audit slots at the founding rate; the slot count is real and lives
+in a database I don't hand-edit. [See the founding program →](/work-with-me)*
 
 *Want to know how your production AI system scores? [Take the STATE assessment →](/score)*
 ```
@@ -190,23 +203,46 @@ in a database I don't hand-edit. [See the founding program →](/audit)*
 
 ## LinkedIn Post Format
 
-```
-[HOOK — specific, surprising, slightly uncomfortable claim. 1–2 lines.]
+Generate the LinkedIn post per the repurpose skill's linkedin playbook
+(`.claude/skills/repurpose/references/linkedin-playbook.md`, repo root) and the /repurpose
+skill's candidate/anatomy/anti-slop rules (`.claude/skills/repurpose/SKILL.md`), using the
+freshly generated teardown (scores, gaps, remediation, full blog post) as the source. Read
+the playbook before drafting — it holds the hook library, post anatomy, and anti-slop
+checklist; don't work from memory.
 
-[SETUP — what the system built that's genuinely impressive. 2–3 lines.
-Establish that this isn't a weak system. Makes the turn land harder.]
+Concretely:
+- Draft 2–3 candidates on different angles (score/receipts, single-worst-gap,
+  remediation-pattern), each using a different hook pattern from the playbook's hook library.
+  Keep the strongest as `linkedin_post`; the runner-up hooks feed the outreach kit's
+  `alt_hooks` (each angling a different pillar or gap, per the Outreach Kit Format).
+- **Hybrid rule for the chosen `linkedin_post`** (Simon's call, 2026-07-06, after comparing
+  the two Ramp posts): whichever angle wins, the final post must carry BOTH of these or it
+  isn't the winner —
+  1. a **save-worthy artifact**: the five-pillar scorecard with per-pillar 0–2 scores, or an
+     equally referenceable checklist/field list pulled from the teardown;
+  2. a **concrete failure-mechanism moment**: one passage stating what physically goes wrong
+     mid-run and its consequence, at the caliber of "a timeout mid-approval means the approval
+     is recorded and the side effects never happen, or something retries blind and the action
+     happens twice" — not an abstract gap statement.
+  A scorecard post without a visceral mechanism reads like a report card; a mechanism post
+  without an artifact gets read and never saved. The published post needs both.
+- Anatomy: the playbook's version — hook lands within the ~140-char mobile fold; setup;
+  turn (the dwell-time payload); save-worthy lesson; close is ONE scar-tissue practitioner
+  question OR a one-line STATE tie-in. Never both, never generic ("Agree?" is
+  classifier-detected engagement bait).
+- 180–300 words total (playbook update — supersedes the old 150–250 rule). Hashtags 0–3,
+  0 preferred.
+- Run the playbook's anti-slop checklist on the final post. No "it's not X, it's Y"
+  construction in the hook — LinkedIn's publicly named AI-tell.
+- ZERO em dashes — applies to the post, the DM template, and every alt hook. The ICP reads
+  em dashes as the ChatGPT signature; short sentences do the emphasis work instead (Simon's
+  call, 2026-07-05). Stricter than the playbook's max-2 budget; the stricter rule wins.
+- No links in the post body — no markdown links, no raw URLs. LinkedIn strips markdown and
+  deprioritizes posts with outbound links; name sources in prose ("ZenML's write-up says…").
+  The teardown link goes in the author's first comment after publishing.
 
-[TURN — the gap. Specific. Named. With a production consequence. 3–4 lines.
-This is the "oh shit" moment. Name the exact failure mode, not a vague pattern.]
-
-[LESSON — the generalizable principle. 1–2 lines.
-Should work as a standalone insight even without the setup.]
-
-[CLOSE — soft CTA or open question. 1 line.
-Never "link in bio" or "check my post." Either a question or an implicit invitation.]
-```
-
-150–250 words total. No hashtags unless they're earning their keep. No em-dashes as decoration.
+The flow stays self-contained: the chosen post is still written to
+`teardown_drafts.linkedin_post` in Step 4 below — only the generation guidance changed.
 
 ---
 
@@ -218,9 +254,9 @@ Every teardown also produces sales ammo — this is half the point of the artifa
 personalizes before sending, this is a template, not a send-as-is message):
 
 ```
-{name} — I published a STATE teardown of [System]: X/10, sharpest gap is [gap in ~5 words].
+{name}, I published a STATE teardown of [System]: X/10, sharpest gap is [gap in ~5 words].
 Your {their_pattern} runs the same pattern. The public version works from public evidence
-only — the interesting version of this scoring uses interior access. Teardown: [URL].
+only; the interesting version of this scoring uses interior access. Teardown: [URL].
 Worth 30 minutes?
 ```
 
@@ -262,6 +298,8 @@ Fetch the primary source URL and up to 3 additional sources from `candidate['sou
 - Engineering team's own words about trade-offs
 
 Use WebFetch on each source. Take notes — you'll need specific evidence for Gap sections.
+Keep every fetched URL in a `source_urls` list; the pre-write checklist (Gate 10b) asserts
+each one appears as a markdown link in the post.
 
 ### Step 2: Generate the teardown
 
@@ -279,7 +317,7 @@ Using your research, produce:
    artifact snippet in "What Good Looks Like", 3-question FAQ, ≥2 question-form headings,
    conditional STATE Index line, conditional founding CTA, and the `/score` CTA.
 
-4. **LinkedIn post** — follow the format above. 150–250 words. Distill the sharpest gap into the hook.
+4. **LinkedIn post** — follow the LinkedIn Post Format section above (repurpose playbook process: candidates, anatomy, anti-slop). 180–300 words. Distill the sharpest gap into the hook.
 
 5. **Outreach kit** — DM template (40–80 words, placeholders intact) + 2–3 alternate hooks,
    per the Outreach Kit Format above.
@@ -363,9 +401,9 @@ for i, r in enumerate(remediation):
 assert '[Take the STATE assessment →](/score)' in full_content, \
     "full_content must end with the canonical /score CTA, not a series description"
 
-# Gate 5: linkedin_post word count is 150-250
+# Gate 5: linkedin_post word count is 180-300 (repurpose linkedin playbook, 2026-07-05)
 lp_words = len(linkedin_post.split())
-assert 150 <= lp_words <= 250, f"linkedin_post is {lp_words} words; must be 150-250"
+assert 180 <= lp_words <= 300, f"linkedin_post is {lp_words} words; must be 180-300"
 
 # Gate 6: "Gets Right" section present (credibility gate — gaps must read as diagnosis, not attack)
 assert 'Gets Right' in full_content, "missing 'What [System] Gets Right' section"
@@ -385,6 +423,26 @@ assert '## FAQ' in full_content, "missing 3-question FAQ section"
 import re as _re
 _qh = [h for h in _re.findall(r'^#{2,3} (.+)$', full_content, _re.M) if h.strip().endswith('?')]
 assert len(_qh) >= 2, f"need >= 2 question-form headings, found {len(_qh)}"
+
+# Gate 10b: links (lessons: Ramp teardown 2026-07-05 shipped with zero hyperlinks)
+_links = _re.findall(r'\[[^\]]*\]\((\S+?)\)', full_content)
+for _src in source_urls:  # every research source must be linked
+    assert f']({_src})' in full_content, f"source not linked: {_src}"
+_int = [u for u in _links if u.startswith('/') and u not in ('/score', '/work-with-me')]
+assert _int, "need an internal link beyond the CTA lines (e.g. [teardown](/blog))"
+# founding CTA — only while the founding program is live on /work-with-me
+assert '](/work-with-me)' in full_content, "founding program live: include the founding CTA"
+assert not _re.search(r'\[[^\]]*\]\(\S+?\)', linkedin_post), \
+    "linkedin_post must not contain links — name sources in prose"
+
+# Gate 10c: em-dash budget (dense em dashes read as generated text)
+_w = len(full_content.split())
+assert full_content.count('—') <= max(8, -(-_w // 150)), \
+    f"{full_content.count('—')} em dashes in {_w} words — vary the punctuation"
+# LinkedIn surfaces: ZERO em dashes (the ICP reads them as the ChatGPT signature)
+assert '—' not in linkedin_post, "linkedin_post: zero em dashes"
+assert '—' not in dm_template, "dm_template: zero em dashes"
+assert all('—' not in h for h in alt_hooks), "alt_hooks: zero em dashes"
 
 # Gate 11: outreach kit populated
 assert 40 <= len(dm_template.split()) <= 80, f"dm_template is {len(dm_template.split())} words; must be 40-80"
@@ -422,6 +480,48 @@ result = supabase_sql(sql)
 draft_id = result[0]['id']
 print(f"Draft written: {draft_id}")
 ```
+
+### Step 4b: Save the post to pipeline.posts (with media)
+
+Every teardown's chosen LinkedIn post ALSO lands in `pipeline.posts` so it flows through
+`/review` → `/publish` with everything else (Simon's call, 2026-07-06 — no more posts living
+only inside `teardown_drafts`).
+
+The teardown card image is a **deterministic URL, not a stored asset** — same params, same
+pixels. Build it from the scores (pillar digit order: S, T, A, Tol, E):
+
+```python
+from urllib.parse import quote
+card_url = (f"https://simonparis.ca/api/og/teardown?name={quote(system_name)}"
+            f"&score={total_score}"
+            f"&pillars={s_score}{t_score}{a_score}{tol_score}{e_score}")
+# optional: &n=<issue number> and &verdict=<one line, max 8 words, URL-encoded>
+```
+
+Insert (same `supabase_sql` mechanism):
+
+```python
+media = {'card_url': card_url, 'carousel_urls': None}  # carousel filled by the carousel builder later
+sql = f"""
+    INSERT INTO pipeline.posts
+      (platform, status, intent, format, pillar, post_class,
+       source_angle_name, thesis_angle, draft_content, drafted_at, media)
+    VALUES ('linkedin', 'drafted', 'authority', 'image', 'STATE Framework Applied', 'teardown',
+      '{esc(winning_hook_pattern)}', '{esc(winning_angle_rationale)}',
+      '{esc(linkedin_post)}', now(), '{json.dumps(media).replace("'","''")}'::jsonb)
+    RETURNING id
+"""
+```
+
+- `format` is `'image'` because the post ships with the card attached (download the PNG from
+  `card_url` at publish time and attach it; the first comment still carries the teardown link).
+- **If the insert fails with `column posts.media does not exist`**: the media-column migration
+  (`ALTER TABLE pipeline.posts ADD COLUMN IF NOT EXISTS media jsonb NOT NULL DEFAULT '{}'::jsonb;`)
+  hasn't been applied yet — apply it if you have Management API access, else insert WITHOUT the
+  media field, put `card_url` in the log `output_summary`, and tell Simon explicitly. Never
+  silently drop the card URL.
+- Log the write: `step_name: 'teardown_post_saved'`, `entity_id` = the new posts row id,
+  `output_summary` naming the source draft id and the card URL.
 
 ### Step 5: Update candidate status
 

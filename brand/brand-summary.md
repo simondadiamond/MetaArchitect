@@ -19,6 +19,8 @@
 - "Control is scarce. Scarcity pays." — the economic argument
 - "I design AI systems that don't break." — the one-line positioning statement
 
+**Caution**: "It's not about the model — it's about the plumbing" matches LinkedIn's publicly named AI-tell shape ("it's not X, it's Y"). Keep the phrase in the brand — never in hooks, and vary the phrasing ("The model was fine. The plumbing wasn't.").
+
 ### What This Brand Is NOT
 - Not prompt engineering, not beginner AI tutorials, not AI hype, not "AI for business"
 
@@ -97,12 +99,14 @@ Line 2-3: Setup — what most people think or do
          (blank line)
 Line 4-6: The turn — what's actually happening / what Simon learned
          (blank line)
-Line 7-9: Lesson — specific, architectural, actionable
+Line 7-9: Lesson — specific, architectural, actionable — carries the save-worthy element
          (blank line)
-Line 10: Close — question inviting response OR one-line STATE tie-in
+Line 10: Close — ONE question only production scar tissue can answer, OR one-line STATE tie-in — never generic ("Agree?", "Thoughts?", "Comment YES" are classifier-detected bait)
 ```
 
-**Length**: 150–250 words. **Hashtags**: 3–5 at end. **Blank lines**: structural, not decorative.
+**Length**: 180–300 words (~1,300–1,900 chars). **Hashtags**: 0–3, 0 preferred — never the final line. **Blank lines**: structural, not decorative.
+**Save-worthy element**: every post includes something referenceable — a checklist, score, taxonomy, or field test. Saves are the heaviest ranking signal.
+Full LinkedIn mechanics: `.claude/skills/repurpose/references/linkedin-playbook.md`
 
 ### Intent Ratios
 | Intent | Target | Purpose |

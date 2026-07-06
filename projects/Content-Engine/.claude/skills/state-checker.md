@@ -132,8 +132,8 @@ function validatePost(draft) {
 
   // Platform-specific
   if (draft.platform === "linkedin") {
-    if (words.length < 150) errors.push(`Word count ${words.length} below minimum (150)`);
-    if (words.length > 250) errors.push(`Word count ${words.length} exceeds maximum (250)`);
+    if (words.length < 180) errors.push(`Word count ${words.length} below minimum (180)`);
+    if (words.length > 300) errors.push(`Word count ${words.length} exceeds maximum (300)`);
   }
 
   if (draft.platform === "twitter") {

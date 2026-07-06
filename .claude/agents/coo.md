@@ -51,7 +51,7 @@ Thesis: **"State Beats Intelligence."**
 
 **Content pillars**: Production Failure Taxonomy, STATE Framework Applied, Defensive Architecture, The Meta Layer (meta-prompting), Regulated AI & Law 25.
 
-**Publishing cadence**: 2x weekly LinkedIn (150–250 words, hook → setup → turn → lesson → close).
+**Publishing cadence**: 3–4x weekly LinkedIn, never more than 1/day (180–300 words, hook → setup → turn → lesson → close, save-worthy element in every post). Mechanics source of truth: `~/projects/MetaArchitect/.claude/skills/repurpose/references/linkedin-playbook.md`.
 
 **STATE Framework** (minimum medium-risk for all pipeline work):
 - **S**tructured — typed state objects with workflowId, stage, entityId

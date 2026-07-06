@@ -42,7 +42,7 @@ Run the `research` skill. Do not draft from training data; the burned-practition
 ## 4. Repurposing (same story, do not defer)
 
 Per the repurposing-template goal, this post is the template's first run:
-- Derive **2–3 LinkedIn post drafts** (different hooks, same insight, 150–250 words, post-anatomy format from brand-summary).
+- Derive **2–3 LinkedIn post drafts** (different hooks, same insight, 180–300 words, post-anatomy format from brand-summary; mechanics per `.claude/skills/repurpose/references/linkedin-playbook.md`).
 - Note **1 candidate teardown angle** if the researched system qualifies → `pipeline.teardown_candidates` or flag for the teardown-research skill.
 - Document the steps taken as the workflow template while doing it (that's the "Template blog→LinkedIn repurposing workflow" goal, agent_target blog-writer — close both with one run).
 

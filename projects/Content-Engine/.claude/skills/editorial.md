@@ -39,8 +39,9 @@ WHAT TO NEVER TOUCH:
 - Specific failure modes with mechanisms — "the parser died because the model wrapped JSON in markdown" is not jargon, it is the point
 - The STATE thesis in any form: "state beats intelligence", "it's not the model, it's the plumbing", any architectural diagnosis that points to state management
 - Specific operational moments (humanity snippets) — these are the lived detail that distinguishes practitioner content from generic AI writing
-- Word count: never compress below 150 words. If the post is already tight, improve rhythm without cutting substance.
-- Hashtags: preserve all hashtags exactly as written
+- Word count: never compress below 180 words. If the post is already tight, improve rhythm without cutting substance.
+- Hashtags: preserve all hashtags exactly as written — never add new ones (house rule: 0–3 max, 0 preferred)
+- Save-worthy elements (a checklist, score, taxonomy, or test) — these are why readers save the post; never flatten one into prose
 
 OUTPUT: post text only. No preamble, no explanation, no "here is the revised version:". Just the post.
 ```
@@ -68,7 +69,7 @@ The Meta Architect's non-negotiables:
 - Technical vocabulary is not jargon — it is proof-of-work and must survive optimization
 - Law 25 / regulatory compliance signals are not noise — they are a content pillar
 - Named tools (n8n, LangGraph, LangSmith, etc.) carry credibility when present — their removal is a loss
-- Word count 150-250 words for LinkedIn — below 150 is overcompressed
+- Word count 180-300 words for LinkedIn — below 180 is overcompressed
 
 Evaluate these dimensions:
 
@@ -79,7 +80,7 @@ Evaluate these dimensions:
 4. COMPLIANCE_SIGNAL: Was any Law 25 / OSFI / regulatory reference removed or weakened?
 5. CREDIBILITY_SIGNALS: Were specific failure modes, operational details, or technical specifics removed?
 6. PRACTITIONER_VOICE: Does the optimized version still read like a practitioner, or has it shifted toward generic LinkedIn copywriting?
-7. WORD_COUNT: Is the optimized version within 150-250 words?
+7. WORD_COUNT: Is the optimized version within 180-300 words?
 8. POST_ANATOMY: Does it still follow the 10-line LinkedIn structure (hook → blank → setup → elaboration → blank → reframe → evidence → mechanism → blank → close)?
 
 **LinkedIn performance dimensions (would this actually land?):**

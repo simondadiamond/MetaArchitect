@@ -111,10 +111,14 @@ if (!optimization) {
   // Engagement checks — flag as repair targets if failing:
   //   Hook (Line 1): Does it make an ICP practitioner think "this is about my problem"?
   //     Test: could this hook apply to any industry/profession? If yes → too generic, flag.
-  //   Closing line (Line 10 if question): Is it specific enough that someone paged at 2am has a direct answer?
+  //   Closing line (Line 10 if question): Must require production scar tissue to answer — someone paged at 2am has a direct answer.
   //     Test: is it answerable with "yes", "no", or "it depends"? If yes → too vague, flag.
-  //     Generic fails: "Have you run into this?" "What do you think?" "Do you agree?"
+  //     Generic fails: "Have you run into this?" "What do you think?" "Do you agree?" "Comment YES"
+  //       — generic invitations are classifier-detected engagement bait on LinkedIn and get suppressed.
   //     Strong passes: names a specific tool, failure mode, or architectural decision.
+  //   Save-worthy element: does the post contain something referenceable — a checklist, score,
+  //     taxonomy, or concrete test? Saves are the heaviest ranking signal. If nothing a reader
+  //     would save → flag.
   // Output a fidelityReport object:
   let fidelityReport = null;
   if (humanizedCandidate) {
@@ -127,7 +131,7 @@ if (!optimization) {
       preserved_aspects: [],  // what was correctly kept
       repair_targets: [],     // only populated if recommendation = "repair_needed"
                               // each entry is a specific element to restore or fix
-      engagement_flags: []    // "hook_too_generic" | "closing_question_too_vague"
+      engagement_flags: []    // "hook_too_generic" | "closing_question_too_vague" | "no_save_worthy_element"
                               // each is added as a repair_target if populated
     };
     // If humanizer made no meaningful improvement → prefer_original
@@ -314,7 +318,7 @@ optimization = null;
 **Revision prompt** for writer skill (same as existing, but starts from optimized):
 ```
 Revise this LinkedIn post based on the following notes.
-Keep all structural rules (10-line anatomy, word count 150-250, voice prohibitions).
+Keep all structural rules (10-line anatomy, word count 180-300, voice prohibitions).
 
 Current post:
 [optimization.winnerContent]
