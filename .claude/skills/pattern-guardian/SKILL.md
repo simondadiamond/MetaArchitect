@@ -1,6 +1,6 @@
 ---
 name: pattern-guardian
-description: Use when the user types /pattern, /log, /end, "End Session", or "Wrap up" to extract generalizable engineering patterns from the current work session and push a structured pattern log to Airtable for The Meta Architect brand and curriculum.
+description: Use when the user types /pattern, /log, /end, "End Session", or "Wrap up" to extract generalizable engineering patterns from the current work session and push a structured pattern log to Supabase (pipeline.sessions) for The Meta Architect brand and curriculum.
 ---
 
 # Pattern Guardian (S.T.A.T.E. Edition)
@@ -55,9 +55,9 @@ Output exactly:
 Publication Viability Gate: FAILED
 Reason: [1 sentence — why this session doesn't produce a publishable pattern]
 Session type: [UI work | deployment ops | tooling setup | other non-architectural work]
-Logged to Airtable: metadata only (no full artifact)
+Logged to Supabase: metadata only (no full artifact)
 ```
-Then push a minimal record to Airtable with: date, status=`skipped`, full_log=the gate failure reason. Skip all remaining phases.
+Then push a minimal record to Supabase with: date, status=`skipped`, full_log=the gate failure reason. Skip all remaining phases.
 
 ---
 
@@ -156,7 +156,7 @@ pattern_confidence: [High | Medium | Low]
 
 ---
 
-## Phase 5 — Push to Airtable (silent)
+## Phase 5 — Push to Supabase (silent)
 
 After outputting the artifact, run these two steps without commentary:
 
@@ -168,35 +168,35 @@ Use the Write tool to write the exact markdown output to `.pattern_log.md` in th
 
 **2. Run the push script:**
 ```bash
-node "C:/repos/MetaArchitect/.claude/skills/pattern-guardian/scripts/push_pattern_to_airtable.mjs"
+node ~/projects/MetaArchitect/.claude/skills/pattern-guardian/scripts/push_pattern_to_supabase.mjs
 ```
 
-The script reads `.pattern_log.md`, parses the fields, and writes to Airtable (`AIRTABLE_TABLE_PATTERNS`). It uses `AIRTABLE_PAT` and `AIRTABLE_BASE_ID` from `.env`.
+The script reads `.pattern_log.md`, parses the fields, and writes a row to `pipeline.sessions` via the Content-Engine data layer (`projects/Content-Engine/tools/supabase.mjs`, which reads `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` from `.env` at repo root).
 
 After the script runs, output one line:
 ```
-✅ Pattern log pushed to Airtable — record [id]
+✅ Pattern log pushed — session [id]
 ```
 
 If the push fails, report the error inline. Do not retry automatically.
 
-**Airtable field mapping:**
+**Supabase field mapping (`pipeline.sessions`):**
 
-| Skill field | Airtable field | Source |
+| Skill field | Column | Source |
 |---|---|---|
 | `date` | `date` | YAML frontmatter |
 | `pattern_confidence` | `pattern_confidence` | YAML frontmatter |
 | `tags` | `tags` | YAML frontmatter (strip `#`) |
 | `status` | `status` | YAML frontmatter |
-| Simon's Reality (if real) | `snippet_text` in `humanity_snippets` table | Created as a new record; ID linked back |
-| Linked snippet record ID | `related_humanity_snippet` | Linked record array `[recordId]` |
+| Simon's Reality (if real) | `snippet_text` in `pipeline.humanity_snippets` | Created as a new row; ID linked back |
+| Linked snippet ID | `related_humanity_snippet` | uuid array `[id]` |
 | Core Insight line | `core_insight` | Section 6 |
 | ICP Pain line | `icp_pain` | Section 6 |
 | Full markdown | `full_log` | Entire artifact |
 
-**Snippet logic**: If Simon's Reality is a real, non-N/A sentence, the script creates a `humanity_snippets` record first, then links it via `related_humanity_snippet`. If no real snippet exists, neither record nor link is written. `Related Log Entry` is not set at write time — link manually in Airtable when relevant.
+**Snippet logic**: If Simon's Reality is a real, non-N/A sentence, the script creates a `humanity_snippets` row first, then links it via `related_humanity_snippet`. If no real snippet exists, neither row nor link is written.
 
-**Note**: The push script passes `typecast: true` in the request body (not as a query param — Airtable only honours it in the body). This auto-creates any `tags`, `status`, or `pattern_confidence` values that don't yet exist in the select option list.
+**History**: This skill originally pushed to Airtable (`push_pattern_to_airtable.mjs`, kept for reference). The content pipeline migrated to Supabase (`pipeline.*` schema) in 2026-06; pattern logs live in `pipeline.sessions`.
 
 ---
 
