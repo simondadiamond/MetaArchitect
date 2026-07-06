@@ -70,7 +70,8 @@ All tools live in `tools/` (relative to this folder).
 - `ideas`: `New → Selected → Ready → Completed`
   - `research_depth` field: `shallow` (set at `/capture`) → `deep` (set after `/research`)
   - Note: ideas no longer pass through "Researching" status — research lock is now on the post stub
-- `posts`: `planned → researching → research_ready → drafted → approved | rejected → published → scored`
+- `posts`: `planned → researching → research_ready → drafted → approved | rejected → scheduled → published → scored`
+  - `scheduled` = queued in Postiz (`postiz_id` + `scheduled_at` set). Use exactly this value when scheduling — Command Center's `/content` table and its published-reconciler key off `status === "scheduled"`; `approved` rows with a `postiz_id` render as unscheduled (2026-07-06 lesson).
 - `hooks_library`: `candidate → proven | retired`
 
 ### Field Name Gotchas (case-sensitive, exact names required)
