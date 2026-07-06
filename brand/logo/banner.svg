@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1584 396">
+  <!-- LinkedIn banner 1584x396. Content sits right of x=400: LinkedIn's profile photo
+       overlaps the bottom-left corner of the banner. -->
+  <rect width="1584" height="396" fill="#0F0F0F"/>
+
+  <!-- faint schematic grid, right side -->
+  <g stroke="#333333" stroke-width="1" opacity="0.35">
+    <path d="M1190 0 V396 M1234 0 V396 M1278 0 V396 M1322 0 V396 M1366 0 V396 M1410 0 V396 M1454 0 V396 M1498 0 V396 M1542 0 V396"/>
+    <path d="M1146 44 H1584 M1146 88 H1584 M1146 132 H1584 M1146 176 H1584 M1146 220 H1584 M1146 264 H1584 M1146 308 H1584 M1146 352 H1584"/>
+  </g>
+
+  <!-- mark -->
+  <g transform="translate(420 88) scale(2.3)">
+    <path d="M20 35 V20 H35" fill="none" stroke="#EAEAEA" stroke-width="5" stroke-linecap="butt"/>
+    <path d="M61 20 H76 V35" fill="none" stroke="#EAEAEA" stroke-width="5" stroke-linecap="butt"/>
+    <path d="M76 61 V76 H61" fill="none" stroke="#EAEAEA" stroke-width="5" stroke-linecap="butt"/>
+    <path d="M35 76 H20 V61" fill="none" stroke="#EAEAEA" stroke-width="5" stroke-linecap="butt"/>
+    <rect x="37" y="37" width="22" height="22" fill="#E04500"/>
+  </g>
+
+  <!-- wordmark -->
+  <text x="701" y="192" font-family="Roboto Mono" font-size="44" font-weight="500" letter-spacing="9.7" fill="#E04500">THE META ARCHITECT</text>
+  <text x="701" y="242" font-family="Roboto Mono" font-size="20" font-weight="500" letter-spacing="2.8" fill="#777777">STATE BEATS INTELLIGENCE</text>
+</svg>
