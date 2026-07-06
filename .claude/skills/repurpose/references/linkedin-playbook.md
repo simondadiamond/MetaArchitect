@@ -158,6 +158,7 @@ Run every draft against this. LinkedIn's classifiers AND the burned-practitioner
 - **Conflict, resolved:** Forbes (Jan 2026) claims posting time doesn't matter, only consistency. Position: consistency is the first-order variable; timing is second-order. Pick 3 fixed slots (e.g., Tue/Wed/Thu ~10:30 ET), keep them, stop optimizing.
 - **Post-publish protocol:** stay 20 minutes; reply to every substantive comment with added mechanism within the first 2 hours.
 - **Weekly mix** (matches brand intent ratios — authority 50 / education 30 / community 15 / virality 5): 2 text posts (authority: teardown finding, contrarian claim) + 1 document carousel (education: framework/checklist) + 1 optional image or community post. ≥2 posts/week land on State Beats Intelligence.
+- **Soft /score CTA every ~3rd post** (Phase 3.5 lead-capture rule): roughly every third LinkedIn post carries a soft CTA to `simonparis.ca/score` — phrased as a practitioner sharing a tool ("I scored this system with the STATE self-assessment on my site — takes 5 minutes, no email to see your score"), never as a marketer pushing a download. Check mechanically before drafting: query the last 2 rows in `pipeline.posts` (platform `linkedin`, shipped/drafted); if neither mentions `/score`, this post carries the CTA (body close or seeded first comment both fine). The `/score` URL is the canonical public lead-capture link — never point public CTAs at `/readiness`.
 
 ---
 

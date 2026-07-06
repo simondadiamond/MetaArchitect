@@ -7,7 +7,7 @@ description: Use when Simon says "weekly review", "/weekly-review", "how did thi
 
 ## Purpose
 
-Compile the weekly operating review for The Meta Architect: goals movement, content cadence vs the 2x/week LinkedIn target, **ICP conversations started vs the ≥2/week target (the headline metric — conversations, not engagement)**, story pipeline health, lessons logged, and (when available) MailerLite subscriber counts. Write the review to `public.weekly_reviews` so Command Center displays it, then print it in chat.
+Compile the weekly operating review for The Meta Architect: goals movement, content cadence vs the 2x/week LinkedIn target, **ICP conversations started vs the ≥2/week target (the headline metric — conversations, not engagement)**, story pipeline health, superstar-list health, lead follow-ups, lessons logged, and (when available) MailerLite subscriber counts. Write the review to `public.weekly_reviews` so Command Center displays it, then print it in chat.
 
 Everything is read-only except two writes: the `weekly_reviews` insert and one `pipeline.logs` run entry.
 
@@ -70,8 +70,31 @@ Emits one validated JSON object: `{week_start, week_end, stale_cutoff, goals: {i
 - `stories.stage` terminal values: `merged | failed | needs_review`. "Cancelled" stories are `stage=failed` with `error` starting with "cancelled" — count them as cancelled, not real failures, in the narrative (metrics count raw `failed`).
 - Lessons: parse `docs/lessons.md` for headings matching `^## YYYY-MM-DD — title`; keep dates within the week. Entries are NOT in chronological file order — filter by date, don't take the tail.
 - Leads: the `public.leads` table is being built by story `2d378962` — until it merges, gather.sh degrades to `{"skipped": true, ...}`; surface the skip in Flags, never abort. **A lead = an actual two-way exchange started** (DM reply, comment thread that turned into a real exchange, inbound inquiry) — a sent-but-unanswered DM is not a conversation. `conversations_started` = count of leads rows created this week.
-- MailerLite: key comes from `projects/simonparis-website/.env*` (skip `*.example` placeholders). The API sits behind Cloudflare which 403s default curl/urllib User-Agents — always send a browser UA (`Mozilla/5.0 ...`). Endpoint: `GET https://connect.mailerlite.com/api/groups?limit=50` with `Authorization: Bearer $KEY`. `subscribers_total` = sum of group `active_count` (groups may overlap — it's a trend number, not a census). If no key or the call fails: skip with a note in the review. **Never abort over MailerLite.**
+- MailerLite: key comes from the MetaArchitect repo root `.env` (confirmed present 2026-07-06), falling back to `projects/simonparis-website/.env*` (skip `*.example` placeholders). The API sits behind Cloudflare which 403s default curl/urllib User-Agents — always send a browser UA (`Mozilla/5.0 ...`). Endpoint: `GET https://connect.mailerlite.com/api/groups?limit=50` with `Authorization: Bearer $KEY`. `subscribers_total` = sum of group `active_count` (groups may overlap — it's a trend number, not a census). If no key or the call fails: skip with a note in the review. **Never abort over MailerLite.**
 - `subscribers_delta` = current `subscribers_total` − `previous_review[0].metrics.subscribers_total`. Omit both subscriber keys if MailerLite was skipped; omit delta if there's no previous review with a total.
+
+### Step 1b — Superstar list health (optional source — degrade, don't abort)
+
+The live superstar list is **`public.engage_targets`** (the ~30 profiles the engage queue sweeps). Two reads, same env/headers as Step 1, no schema header:
+
+```bash
+curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/engage_targets?select=id,name,priority,active&order=priority.desc" -H "apikey: $KEY" -H "Authorization: Bearer $KEY"
+curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/engage_posts?select=id,target_id,status&created_at=gte.{ws}&created_at=lt.{we}" -H "apikey: $KEY" -H "Authorization: Bearer $KEY"
+```
+
+Read: active target count, priority spread, and per-target yield this week (join `engage_posts.target_id` → targets). Flag as **demotion candidates** any active targets with zero swept posts this week (gone quiet, or the sweep can't see them); flag as **promotion candidates** targets whose posts keep producing `engaged` replies. This replaces the old manual Friday superstar-list check: promotions/demotions = Simon editing `priority`/`active` on `engage_targets` rows — the review only names the candidates, it never writes them. Weekly LinkedIn analytics (profile views, follower growth vs which superstars drove ICP-aligned visits) stay a manual Simon step — prompt for it in the review section, don't fake the numbers.
+
+If `engage_targets` is missing or either query fails: **skip with a note in Flags** (same pattern as MailerLite — never abort). Note: `pipeline.engagement_targets` / `pipeline.engagement_opportunities` are empty Plan-3 prep tables — NOT the live list; don't read them.
+
+### Step 1c — Lead follow-ups (optional — degrade, don't abort)
+
+Beyond this week's new leads (Step 1), pull the whole open pipeline for the Friday follow-up pass:
+
+```bash
+curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/leads?select=id,name,company,status,created_at&order=created_at.asc" -H "apikey: $KEY" -H "Authorization: Bearer $KEY"
+```
+
+Group by `status`; name leads sitting in an early status >7 days (they need a follow-up or an explicit stage move), and flag any in-pipeline engagement that should be checked for renewal. The review prompts the moves — Simon makes them in `/admin`. Table missing → skip with a note in Flags (story 2d378962).
 
 ## Step 2 — Compose the review
 
@@ -99,6 +122,10 @@ Template (`summary_md`):
 
 ## Cadence check
 {published vs 2/week target. Behind → say behind and why (no drafts in pipeline? drafts stuck at review?). Diagnose from post statuses, don't just report.}
+
+## Superstar list & lead follow-ups
+- {superstar list: N active targets; demotion candidates (zero swept posts this week) and promotion candidates (repeat engaged replies), named. Remind Simon: 5-min LinkedIn analytics pass — which superstars drove ICP-aligned profile visits — then apply priority/active edits in engage_targets. Source skipped → note in Flags.}
+- {open leads by status; leads stuck in an early status >7 days named as follow-ups; engagements due a renewal check. Skipped → note in Flags.}
 
 ## Goal drift & stale items
 - {in_progress goals untouched >14 days, named with days idle}
@@ -186,6 +213,8 @@ Then print the **full review markdown in chat** and end with the single most imp
 | goals / posts / stories query fails or returns non-array | ABORT at that stage (core data — no partial reviews) |
 | `leads` query fails / table missing | SKIP conversations metric with note in Flags (story 2d378962 builds it) |
 | `engage` block skipped / zero drafts all week / sweep_post_errors > 0 | SKIP row or FLAG per the diagnostic reading in Step 1 — never abort over engage |
+| `engage_targets` missing / Step 1b query fails | SKIP superstar-list section with note in Flags — never abort |
+| Step 1c open-leads query fails | SKIP follow-ups line with note in Flags — never abort |
 | `docs/lessons.md` missing | SKIP section with note in review |
 | No MailerLite key found | SKIP subscribers with note in Flags |
 | MailerLite call fails / invalid JSON | SKIP subscribers with note in Flags |

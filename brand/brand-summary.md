@@ -106,6 +106,7 @@ Line 10: Close — ONE question only production scar tissue can answer, OR one-l
 
 **Length**: 180–300 words (~1,300–1,900 chars). **Hashtags**: 0–3, 0 preferred — never the final line. **Blank lines**: structural, not decorative.
 **Save-worthy element**: every post includes something referenceable — a checklist, score, taxonomy, or field test. Saves are the heaviest ranking signal.
+**CTA cadence**: roughly every 3rd LinkedIn post carries a soft CTA to `simonparis.ca/score` — phrased as a practitioner sharing a tool, never a marketer pushing a download. Check mechanically: if neither of the last 2 LinkedIn rows in `pipeline.posts` mentions `/score`, this post carries it. `/score` is the canonical public lead-capture URL — never point public CTAs at `/readiness`.
 Full LinkedIn mechanics: `.claude/skills/repurpose/references/linkedin-playbook.md`
 
 ### Intent Ratios

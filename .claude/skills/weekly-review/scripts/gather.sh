@@ -106,13 +106,13 @@ fi
 # --- MailerLite (optional — degrade, don't abort). Cloudflare blocks default curl UA. ---
 stage="mailerlite"
 ML_KEY=""
-for f in "$ROOT"/projects/simonparis-website/.env "$ROOT"/projects/simonparis-website/.env.local "$ROOT"/projects/simonparis-website/.env.production; do
+for f in "$ROOT"/.env "$ROOT"/projects/simonparis-website/.env "$ROOT"/projects/simonparis-website/.env.local "$ROOT"/projects/simonparis-website/.env.production; do
   [ -f "$f" ] || continue
   v=$(grep -m1 '^MAILERLITE_API_KEY=' "$f" | cut -d= -f2- | tr -d '"' || true)
   case "$v" in ""|*your*|*xxx*|*XXX*|*placeholder*) ;; *) ML_KEY="$v"; break ;; esac
 done
 if [ -z "$ML_KEY" ]; then
-  echo '{"skipped": true, "reason": "no MAILERLITE_API_KEY in simonparis-website/.env*"}' > "$TMP/ml.json"
+  echo '{"skipped": true, "reason": "no MAILERLITE_API_KEY in repo root .env or simonparis-website/.env*"}' > "$TMP/ml.json"
 else
   if curl -s --max-time 30 "https://connect.mailerlite.com/api/groups?limit=50" \
        -H "Authorization: Bearer $ML_KEY" -H "Accept: application/json" \
