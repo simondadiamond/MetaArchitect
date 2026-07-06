@@ -194,6 +194,10 @@ grep -cE 'https?://|\]\(' candidate.txt                        # must be 0 (no l
 - [ ] Candidates are actually distinct: different hook patterns, different angles, and (for teardowns) none duplicates the draft's existing `linkedin_post` angle
 - [ ] **No sentence (≥6 words) reused verbatim from the source's existing derivative posts** (`teardown_drafts.linkedin_post`, `outreach.alt_hooks`, `blog_posts.linkedin_extract`). Quoting the *source system's* evidence is fine; recycling your own shipped post lines is not — the 2026-07-05 test run caught two of these on the first pass. Check mechanically: split candidates into sentences and search each against the shipped texts.
 - [ ] First comment adds mechanism or the link — the post stands alone without it
+- [ ] **Set-level dedupe** (2026-07-06 review): across the full set *including the teardown's own `linkedin_post`*, no two posts share their lesson paragraph's core dichotomy or closing move — serialized posts each carry ONE distinct payload; the reader of Monday's post must not get déjà vu Wednesday
+- [ ] **First comments as a set**: zero em dashes (same rule as bodies), structures varied (never the same "link + payoff clause" template every time), and roughly every third post's comment carries the `/score` CTA ("Run the same scoring on your own system: simonparis.ca/score")
+- [ ] **Source-number fidelity**: quote stats at source precision with the source's unit ("65%+ of approvals", "10–15% of expenses") — never round, floor, or swap the unit to dodge the reuse check; rephrase *around* the number instead
+- [ ] **No implied incidents**: a present-tense failure narrative sitting next to a named company's real metrics reads as "this happened at X" — keep hypotheticals clearly hypothetical; this brand never fabricates
 
 ---
 
