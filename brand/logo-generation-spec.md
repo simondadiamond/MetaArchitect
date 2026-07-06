@@ -45,15 +45,13 @@
    - Wordmark: `Simon Paris` — serif, off-white `#EAEAEA`, bold
    - Tagline: `State Beats Intelligence` — mono, gray `#777777`, letter-spacing 0.10em
 
-## Concept directions (pick one, generate variations)
+## The official mark (decided 2026-07-06)
 
-**A — The State Block (recommended).** A filled orange square (a "state cell") locked inside a thin gray outline square grid — one cell of a state machine, deterministic and contained. Monogram-free, survives circle crop, scales to 16px.
+**Locked State**: four sharp viewfinder corner brackets (off-white `#EAEAEA`) holding one solid burnt-orange (`#E04500`) square centered between them, on near-black `#0F0F0F`. Meaning: one deterministic state — observed, contained, under control. Canonical geometry is `brand/logo/mark.svg`; never redraw it freehand when the vector can be placed directly.
 
-**B — Monogram "S/A".** Sharp-edged geometric monogram built from rectangular strokes only (no curves) — reads as "S" (Simon/State) constructed like a circuit trace. Orange on near-black.
+Use the prompts below for **derivative imagery** (post graphics, ad experiments, textures) — not to regenerate the logo itself. Paste into a **fresh conversation**: in an ongoing chat the model infers from earlier images and reproduces them.
 
-**C — The Validation Gate.** Two vertical bars with a square node passing between them — input → gate → output. Abstract, engineering-diagram feel.
-
-## Master prompt (paste into ChatGPT or Gemini)
+## Master prompt (paste into a NEW ChatGPT or Gemini conversation)
 
 ```
 Design a minimalist flat vector logo mark for "The Meta Architect", a personal
@@ -67,9 +65,11 @@ diagram, not friendly startup branding.
 
 COMPOSITION: a single abstract mark centered on a solid near-black background
 (#0F0F0F), occupying roughly the central 60% of a square canvas so it survives
-a circular crop. [INSERT CONCEPT: e.g. "The mark is one filled orange square
-cell locked inside a thin dark-gray (#333333) 3x3 grid of outline squares —
-one active state in a state machine."]
+a circular crop. The mark: four sharp L-shaped viewfinder corner brackets in
+off-white (#EAEAEA) framing one solid burnt-orange (#E04500) square floating
+at the exact center — a camera focus target locked onto a single square. The
+brackets do NOT touch each other or the square; the frame is open on all four
+sides. No grid, no tic-tac-toe pattern, no full square outline.
 
 COLORS — exact and strict:
 - background: #0F0F0F (near black)
@@ -97,12 +97,9 @@ faint #333333 grid or schematic line-work. Keep all text left of center
 (LinkedIn overlays the profile photo bottom-left — keep that corner clear).
 ```
 
-**Monogram variant:** replace the COMPOSITION line with:
-```
-The mark is a bold geometric letter "S" constructed only from straight
-rectangular strokes with sharp 90° corners, like a circuit trace or maze path —
-no curves anywhere. Solid #E04500 on #0F0F0F.
-```
+> Note: the final banner already exists as a rendered asset
+> (`brand/logo/banner-1584x396.png`, editable source `banner.svg`) — only use
+> the banner prompt above for alternative/experimental versions.
 
 ## Generator workflow tips
 
