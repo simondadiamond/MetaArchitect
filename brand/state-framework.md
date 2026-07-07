@@ -14,7 +14,7 @@ Production AI systems fail not because models are too weak, but because they lac
 | Tier | Condition | Required Pillars |
 |------|-----------|-----------------|
 | Low | Internal, read-only, no API calls, non-personalized | S + T |
-| Medium | Airtable writes, LLM calls, external API calls, external-facing | S + T + E |
+| Medium | Database writes (Supabase), LLM calls, external API calls, external-facing | S + T + E |
 | High | Decisions affecting individuals, financial operations, regulated data, Law 25 scope | All five — no exceptions |
 
 All pipeline commands operate at **medium risk minimum** (S + T + E).
@@ -143,7 +143,7 @@ Each pillar scores 0–2 based on the two diagnostic questions:
   workflowId: string,      // unique per command execution (use crypto.randomUUID())
   stage: string,           // current stage name (e.g., "init", "locking", "researching")
   entityType: string,      // "idea" | "post" | "hook"
-  entityId: string,        // Airtable record ID
+  entityId: string,        // Supabase row id (uuid)
   startedAt: string,       // ISO timestamp
   lastUpdatedAt: string    // ISO timestamp, updated at each stage transition
 }
@@ -156,12 +156,12 @@ Each pillar scores 0–2 based on the two diagnostic questions:
 ```javascript
 {
   workflow_id: string,      // matches state.workflowId
-  entity_id: string,        // Airtable record ID
+  entity_id: string,        // Supabase row id (uuid)
   step_name: string,        // e.g., "research_architect", "uif_compiler"
   stage: string,            // current stage at time of log
   timestamp: string,        // ISO timestamp
   output_summary: string,   // brief description of what happened
-  model_version: string,    // e.g., "claude-sonnet-4-6" or "sonar-pro" or "n/a"
+  model_version: string,    // the id of the model that ACTUALLY ran (never hardcode a model name in a template) or "n/a"
   status: "success" | "error"
 }
 ```
@@ -174,10 +174,10 @@ Each pillar scores 0–2 based on the two diagnostic questions:
 
 ```javascript
 // 1. Set lock timestamp BEFORE the operation
-await airtable.patch(recordId, { research_started_at: new Date().toISOString() });
+await updateRecord(TABLES.IDEAS, rowId, { research_started_at: new Date().toISOString() });
 
 // 2. If operation fails, clear the lock
-await airtable.patch(recordId, { research_started_at: null, status: "research_failed" });
+await updateRecord(TABLES.IDEAS, rowId, { research_started_at: null, status: "research_failed" });
 ```
 
 Lock fields by stage:
@@ -186,7 +186,7 @@ Lock fields by stage:
 
 **Idempotency check** — at command start, verify the lock field is null:
 ```javascript
-if (record.fields.research_started_at !== null) {
+if (row.research_started_at !== null) {
   return "⚠ Already in progress or completed — check status before retrying.";
 }
 ```
@@ -216,7 +216,7 @@ Before marking any command complete, verify:
 - [ ] Every external API call logged to `logs` table
 - [ ] Lock set before expensive operations
 - [ ] Lock cleared on failure
-- [ ] All LLM/API output validated before Airtable write
+- [ ] All LLM/API output validated before any database write
 - [ ] Error path reports: stage + error message + confirms lock reset
 
 ## All-Five Checklist (High Risk — regulated data / personal data)

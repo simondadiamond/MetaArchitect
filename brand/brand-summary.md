@@ -128,7 +128,7 @@ Full LinkedIn mechanics: `.claude/skills/repurpose/references/linkedin-playbook.
 | Tier | Condition | Required Pillars |
 |------|-----------|-----------------|
 | Low | Read-only, no API calls, internal | S + T |
-| Medium | Airtable writes, LLM calls, external APIs | S + T + E |
+| Medium | Database writes (Supabase), LLM calls, external APIs | S + T + E |
 | High | Individual decisions, financial, regulated data, Law 25 | All five |
 
 **Content pipeline minimum**: medium (S + T + E).
@@ -149,7 +149,7 @@ Full LinkedIn mechanics: `.claude/skills/repurpose/references/linkedin-playbook.
   workflowId: string,   // randomUUID() per run
   stage: string,        // current stage name
   entityType: string,   // "idea" | "post" | "hook"
-  entityId: string,     // Airtable record ID
+  entityId: string,     // Supabase row id (uuid)
   startedAt: string,    // ISO timestamp
   lastUpdatedAt: string // ISO timestamp, updated per stage
 }
@@ -170,7 +170,7 @@ Full LinkedIn mechanics: `.claude/skills/repurpose/references/linkedin-playbook.
 - [ ] Every external API call logged
 - [ ] Lock set before expensive operations
 - [ ] Lock cleared on failure
-- [ ] All LLM/API output validated before Airtable write
+- [ ] All LLM/API output validated before any database write
 - [ ] Error path reports: stage + error message + confirms lock reset
 
 ### Error Format

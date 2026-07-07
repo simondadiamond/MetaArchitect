@@ -43,10 +43,13 @@ logs/
 .capture_input
 
 # Content Engine runtime state
-projects/Content-Engine/.tmp/*.json
+projects/Content-Engine/.tmp/
 
 # Agent runtime state
 .agents/
+
+# Private personal context (family, health state) — local-only, never commit
+.personal/
 
 # simonparis-website — own git repo (nested)
 projects/simonparis-website/
