@@ -27,7 +27,7 @@ This skill holds the **process**. Platform mechanics (algorithm reality, hook li
 The process below is platform-agnostic; only the playbook changes. `carousel` is the exception: it produces a slide-image set (PNGs for Postiz multi-image scheduling; optional PDF for a native document post), not text candidates — after Step 0 (STATE init) and Step 2 (source load), jump to the **Carousel Mode** section below instead of Steps 3–8. If the requested platform has no playbook file and is not `carousel`:
 
 ```
-❌ /repurpose failed at platform_resolve — no playbook for "<platform>" (supported: linkedin)
+❌ /repurpose failed at platform_resolve — no playbook for "<platform>" (supported: linkedin, carousel)
 ```
 
 ---
@@ -62,11 +62,10 @@ Update `stage` at every transition: `platform_resolve → source_load → angle_
 
 Read the playbook file **in full** before generating anything. It is the source of truth for platform mechanics.
 
-**Where the playbook conflicts with `brand/brand-summary.md`, the playbook wins.** For LinkedIn the known deltas (documented in the playbook with sources):
+**Where the playbook conflicts with `brand/brand-summary.md`, the playbook wins.** As of 2026-07-07 the two are in sync (hashtags 0–3, length 180–300 words, scar-tissue close) — if you find a new conflict, follow the playbook and flag the drift to Simon. Two Simon-decided overrides sit above both documents:
 
-1. Hashtags: **0–3, 0 preferred** — not the brand summary's 3–5.
-2. Length: **180–300 words** (~1,300–1,900 chars) — not 150–250.
-3. Close: ONE scar-tissue question OR a one-line STATE tie-in — never both, never generic ("Agree?", "Thoughts?" are classifier-detected engagement bait).
+1. **Zero em dashes** in post text and first comments (stricter than the playbook's max-2; 2026-07-05).
+2. **Body links allowed** — max one bare URL; see the link rule in `references/linkedin-gate.md` (2026-07-07).
 
 Brand voice rules (`brand/brand-summary.md`: prohibitions, burned-practitioner / specificity / thesis tests) always apply on top — the playbook's anti-slop checklist includes them.
 
@@ -147,7 +146,7 @@ Write each candidate against the playbook's **post anatomy** (hook fold-check, s
 - **Every specific comes from the source.** Numbers, quotes, failure modes, names — pulled verbatim from the source material. Never fabricate an anecdote or a stat.
 - **No "it's not X, it's Y" shape anywhere in a hook** — LinkedIn's publicly named AI-tell (playbook explains). This includes the brand's own "not about the model, about the plumbing" phrasing; vary it ("The model was fine. The plumbing wasn't.").
 - **Zero em dashes** in the post and the first comment. Simon's call, 2026-07-05: the ICP reads em dashes as the ChatGPT signature — stricter than the playbook's max-2 budget; the stricter rule wins. Short sentences do the emphasis work.
-- **No links in the post body** — no markdown links (LinkedIn strips markdown), no raw URLs. Name sources in prose ("ZenML's write-up says…"). The blog/teardown link goes in the suggested first comment; the post must stand alone without it.
+- **Links**: the blog/teardown link may sit in the body (max one bare URL, never in the hook, no markdown syntax — LinkedIn strips it) or in the first comment. Either way the post must deliver its core insight without the click. Name sources in prose ("ZenML's write-up says…").
 - Line break every 1–2 sentences. No decorative-symbol bullets. Hashtags: default 0, max 3 niche.
 
 Each candidate ships as a package:
@@ -174,30 +173,15 @@ Every candidate passes this gate **before being shown to Simon** and re-passes i
 ❌ /repurpose failed at candidate_gate — [which check failed on which candidate] — nothing written
 ```
 
-**Mechanical checks** (write each candidate to a temp file and verify):
+**Run the full shared gate** — `references/linkedin-gate.md` (mechanical greps + judgment checks, including claim provenance, source-number fidelity, no implied incidents, and the `/score` CTA cadence). That file is the single canonical copy of the gate for every LinkedIn-copy producer; never re-derive or fork the checks locally.
 
-```bash
-wc -w candidate.txt   # 180–300 words (post text only, excluding first comment)
-grep -cE '—' candidate.txt                                    # must be 0
-grep -inE "it'?s not [^.]{1,60}, (it'?s|it is)" candidate.txt  # must be 0 (hook AI-tell shape)
-grep -inE "comment yes|agree\?|thoughts\?|tag (a|someone)|repost if|let that sink in|read that again|excited to share|thrilled to announce|game.chang|revolutionary|groundbreaking|transformational|cutting.edge|state.of.the.art|in today's fast|in the age of ai" candidate.txt   # must be 0
-head -1 candidate.txt | wc -c   # hook line ≤ ~140 chars (mobile fold)
-grep -cE 'https?://|\]\(' candidate.txt                        # must be 0 (no links in body)
-```
+**Repurpose-specific checks on top of the shared gate:**
 
-**Judgment checks** — run the playbook's full **anti-slop checklist** (every box), plus:
-
-- [ ] Anatomy holds: hook / setup / turn / lesson / close, blank-line separated
-- [ ] Close is ONE specific practitioner question OR a STATE tie-in — not both, not generic
-- [ ] Something referenceable a reader would **save** (score, checklist, field list, test)
-- [ ] Burned-practitioner test, specificity test, thesis-alignment test (`brand/brand-summary.md`)
 - [ ] Candidates are actually distinct: different hook patterns, different angles, and (for teardowns) none duplicates the draft's existing `linkedin_post` angle
 - [ ] **No sentence (≥6 words) reused verbatim from the source's existing derivative posts** (`teardown_drafts.linkedin_post`, `outreach.alt_hooks`, `blog_posts.linkedin_extract`). Quoting the *source system's* evidence is fine; recycling your own shipped post lines is not — the 2026-07-05 test run caught two of these on the first pass. Check mechanically: split candidates into sentences and search each against the shipped texts.
 - [ ] First comment adds mechanism or the link — the post stands alone without it
 - [ ] **Set-level dedupe** (2026-07-06 review): across the full set *including the teardown's own `linkedin_post`*, no two posts share their lesson paragraph's core dichotomy or closing move — serialized posts each carry ONE distinct payload; the reader of Monday's post must not get déjà vu Wednesday
-- [ ] **First comments as a set**: zero em dashes (same rule as bodies), structures varied (never the same "link + payoff clause" template every time), and roughly every third post's comment carries the `/score` CTA ("Run the same scoring on your own system: simonparis.ca/score")
-- [ ] **Source-number fidelity**: quote stats at source precision with the source's unit ("65%+ of approvals", "10–15% of expenses") — never round, floor, or swap the unit to dodge the reuse check; rephrase *around* the number instead
-- [ ] **No implied incidents**: a present-tense failure narrative sitting next to a named company's real metrics reads as "this happened at X" — keep hypotheticals clearly hypothetical; this brand never fabricates
+- [ ] **First comments as a set**: zero em dashes (same rule as bodies), structures varied (never the same "link + payoff clause" template every time), `/score` CTA cadence per the shared gate
 
 ---
 
@@ -243,6 +227,7 @@ const row = await createRecord(TABLES.POSTS, {
   source_angle_name: candidate.hookPatternName,           // e.g. "receipts/scored-teardown"
   thesis_angle:      candidate.rationale,
   draft_content:     candidate.postText,                  // post text ONLY — first comment is not part of it
+  first_comment:     candidate.firstComment,              // column live since 2026-07-06 (migration 0010)
   drafted_at:        new Date().toISOString(),
 });
 await logEntry({ workflow_id: state.workflowId, entity_id: row.id, step_name: 'repurpose_draft_created',
@@ -250,9 +235,13 @@ await logEntry({ workflow_id: state.workflowId, entity_id: row.id, step_name: 'r
   model_version: '<current model>', status: 'success' });
 ```
 
-**Storage fit note**: `pipeline.posts` has no column for the suggested first comment or the source reference. So always also write the full run record to `projects/Content-Engine/.tmp/repurpose-<YYYYMMDD>-<source-slug>.md` (all candidates, gate results, first comments, source id) and tell Simon that's where the first comments live. Source provenance also goes in the `pipeline.logs` `output_summary` (above).
+**Storage note**: `first_comment` and `media` are real columns now (2026-07-06 migrations) — the first comment goes ON the row, where `tools/postiz-comment-nudge.mjs` reads it at publish time. Still also write the full run record to `projects/Content-Engine/.tmp/repurpose-<YYYYMMDD>-<source-slug>.md` (all candidates incl. unsaved ones, gate results, source id). Source provenance goes in the `pipeline.logs` `output_summary` (above). Scheduling happens via the `linkedin-publish` skill (`tools/postiz.mjs`) — never an ad-hoc script.
 
 Never touch the source row (`teardown_drafts` / `blog_posts`) from this skill.
+
+**Multi-candidate saves are NOT atomic** — the loop above inserts one row at a time. Capture each returned `row.id` as you go. If insert *k* fails: report exactly which rows WERE written (with ids), log the error, and resume by inserting only the missing candidates — never blind-retry the whole loop (that duplicates the rows that succeeded). Any later action on these rows (scheduling, editing, deleting) uses the **captured ids** — never re-query by `source_angle_name` or another non-unique attribute (lessons.md 2026-07-06: an attribute re-query grabbed a stale test draft and nearly published it).
+
+**Test-run hygiene (lessons.md 2026-07-06):** any test or dry run of this skill that writes to `pipeline.posts` ends by marking its rows `status: 'rejected'` (using the captured ids) before the session moves on. Test rows left `drafted` in a production table are live ammunition for every future query.
 
 ---
 
@@ -261,8 +250,8 @@ Never touch the source row (`teardown_drafts` / `blog_posts`) from this skill.
 ```
 ✅ /repurpose linkedin — <n> draft(s) saved to pipeline.posts (status: drafted)
    <post id> — pattern <n>: <name> — "<hook first ~60 chars…>"
-   First comments + full run record: projects/Content-Engine/.tmp/repurpose-<date>-<slug>.md
-   Publish flow: /review → /publish (post the first comment right after publishing; stay 20 min per playbook)
+   Full run record: projects/Content-Engine/.tmp/repurpose-<date>-<slug>.md
+   Next: schedule via the linkedin-publish skill (tools/postiz.mjs) — Tue/Thu 10:30 ET slots; the nudger pings the first comment at publish time; stay 20 min post-publish per playbook
 ```
 
 ---
@@ -384,7 +373,7 @@ if (!readErr) {
 
 ## Error Path
 
-No lock is needed — all pipeline writes happen atomically in Step 7, after approval. On any failure:
+No lock is needed — pipeline writes happen only in Step 7 after approval, one row per candidate (see Step 7 for partial-failure handling; "safe to retry" means *resume the missing inserts by captured id*, not re-run the loop). On any failure:
 
 ```javascript
 await logEntry({ workflow_id: state.workflowId, entity_id: state.entityId, step_name: 'error',

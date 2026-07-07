@@ -29,7 +29,7 @@ Before making any visual or copy change, read the brand files:
 - `~/projects/MetaArchitect/brand/icp.md` — who the site is speaking to
 - `~/projects/MetaArchitect/brand/state-framework.md` — the core intellectual property
 
-**Brand anchors (memorize these):**
+**Brand anchors (inline copy for pipeline-worktree runs; if `~/projects/MetaArchitect/brand/brand-summary.md` is reachable, IT wins on conflict):**
 - Background: `#0F0F0F` (near-black). Accent: orange `#E04500` (hover `#FF5A1A`) — the ONLY primary action color. Links: amber `#C97A1A` — never blue. Errors: `#F85149` only.
 - Always dark mode — no light mode, no toggle. Zero border-radius everywhere — sharp edges are the signature.
 - Typography: Merriweather (wordmark/headings), Inter (body/UI), Roboto Mono (code, labels, nav, metadata)
@@ -50,14 +50,17 @@ Before making any visual or copy change, read the brand files:
 ## Development Workflow
 
 1. **Read brand files first** — always, before touching UI. `~/projects/MetaArchitect/brand/`.
-2. **Know the current phase** — query the goals table at `simonparis.ca/admin/goals` (or ask Simon) — know what you're building for. (The legacy `docs/roadmap.md` is deprecated.)
+2. **Know the current phase** — query the goals table at `simonparis.ca/admin/goals` (or ask Simon) — know what you're building for. (`docs/roadmap.md` is deleted — do not look for it.)
 3. **Apply design thinking before building** — every UI change must go through purpose → tone → differentiation. No generic aesthetics. No AI slop.
 4. **Build** in `~/projects/MetaArchitect/projects/simonparis-website/`.
 5. **Quality gates:**
    - Build command: `npm run build` (Next.js — check `package.json` to confirm).
    - Surface check: Playwright screenshots of affected routes on mobile and desktop viewports + form-flow validation when forms changed.
    - i18n is bilingual EN + FR via `next-intl` — every locale-aware string must have both variants or a `TODO` comment.
+   - **Closing gate (lesson 2026-06-28): a live preview or localhost walk is MANDATORY before recommending merge on any UI-touching change.** Static code review cannot predict CSS box-model conflicts under real data widths. If the preview path is blocked (no bypass token, protection issues), fall back to localhost-dev — never substitute deeper code review for the walk.
 6. **Git ops via `gh` CLI** — never raw `git push`, never `--no-verify`, never force-push.
+   - **`gh pr list` before starting any chore PR** (lesson 2026-05-10: two agents shipped duplicate PRs for the same cleanup).
+   - Agent commits must use a Vercel-recognized author email, or the PR gets no preview deployment and can't be walked.
 7. **Report back when the PR is ready** or when you hit a blocker that needs Simon's input.
 
 ## Conversion Mindset
@@ -65,7 +68,7 @@ Before making any visual or copy change, read the brand files:
 Every page has one job. Know it before you build it:
 - **Homepage** → establish credibility, drive to `/score` (free entry) or `/audit` (paid entry). Two offer tiles, one destination.
 - **`/score`** → 5-min self-assessment; top of the audit funnel (public-facing lead capture). Low-score and high-score CTAs both point at `/audit`.
-- **`/audit`** → public landing page for the **STATE Entry Audit** — single tier, **$750 USD founder rate** (in exchange for a written testimonial; rate moves to $1,250 USD once founder slots fill). **Primary CTA is a `mailto:me@simonparis.ca` link** — there is no discovery call, and Calendly is NOT wired to this page.
+- **`/audit`** → public landing page for the **STATE Entry Audit** — single tier, founder-rate pricing (in exchange for a written testimonial; the rate steps up once founder slots fill). **Read the current price from the live `/audit` page — never assume.** **Primary CTA is a `mailto:me@simonparis.ca` link** — there is no discovery call, and Calendly is NOT wired to this page.
 - **`/readiness`** → private paid intake form for booked audits. Five STATE pillars + an Engagement Context section (timeline, past attempts, bandwidth, success). **Never linked from any public surface** — only sent to clients who have booked. Carries page-level `robots: noindex, nofollow`. Convention enforced via PostCTA, the page's private-intake notice, and llms.txt.
 - **`/blog`** → owned distribution surface; each post links to `/score` (or `/audit` via PostCTA) — never `/readiness`.
 - **`/about`** → credibility / bio.

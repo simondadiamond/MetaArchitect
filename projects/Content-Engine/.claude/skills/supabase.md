@@ -54,7 +54,7 @@ TABLES.ENGAGEMENT_OPPORTUNITIES  // 'engagement_opportunities' (Plan 3)
 
 > **All columns are snake_case.** No more case-sensitive `Topic`/`Status` gotchas. Every table also has:
 > - `id uuid PRIMARY KEY` (gen_random_uuid)
-> - `airtable_record_id text UNIQUE` (cross-ref during 1-week fallback — drop after decommission)
+> - `airtable_record_id text UNIQUE` (legacy column, unused — Airtable is decommissioned)
 > - `created_at timestamptz`
 > - `updated_at timestamptz` (auto-updated via trigger)
 
@@ -98,7 +98,7 @@ TABLES.ENGAGEMENT_OPPORTUNITIES  // 'engagement_opportunities' (Plan 3)
 | Column | Type | Notes |
 |--------|------|-------|
 | format | text | |
-| status | text | planned \| researching \| research_ready \| drafted \| approved \| rejected \| published \| scored |
+| status | text | planned \| researching \| research_ready \| drafted \| approved \| rejected \| scheduled \| published \| scored — flow: drafted → approved → scheduled → published |
 | idea_id | uuid | FK → ideas.id |
 | platform | text | linkedin \| twitter |
 | intent | text | |
@@ -126,6 +126,12 @@ TABLES.ENGAGEMENT_OPPORTUNITIES  // 'engagement_opportunities' (Plan 3)
 | thesis_angle / source_angle_name | text | |
 | post_class | text | |
 | territory_key | text | |
+| postiz_id | text | set when queued to Postiz via Command Center /content (migration 0009) |
+| scheduled_at | timestamptz | Postiz publish slot; status becomes `scheduled`, flips to `published` on reconcile |
+
+**Editing a scheduled post (2026-07-07 rule):** `pipeline.posts.draft_content` is the single source of truth; Postiz is only the delivery queue. Any edit to a `scheduled` row must, in ONE script: delete the old Postiz post, re-create it with the new content, write the new `postiz_id` + new `draft_content` back to the row, log to `logs`, and ntfy Simon (NTFY_URL in command-center `.env`) a one-line summary of what changed and the new Postiz ID. Never edit only one side — a delete+recreate with no notification looks like the post vanished/reverted and causes false alarms. Postiz cannot post LinkedIn comments: `first_comment` lives only on the row and is pasted manually (ntfy'd at publish time by Command Center when the row flips to `published`).
+
+**Re-queueing a row that ever published (2026-07-07 addendum):** if the LinkedIn post was deleted and the content re-queued, ALSO reset `post_url = null` and `published_at = null` when setting status back to `scheduled`. The reconciler stamps these on publish; leaving stale values produces a franken-row (status `scheduled`, `post_url` pointing at a deleted LinkedIn share) that makes Command Center look out of sync with reality even when the queue is correct.
 
 ### `hooks_library`
 | Column | Type | Notes |
@@ -215,11 +221,11 @@ const newIdeas = await getRecords(TABLES.IDEAS,
   { fields: ['id','topic','intent','captured_at'], limit: 20, orderBy: { col: 'captured_at', dir: 'desc' } });
 ```
 
-### Fetch a single record (legacy Airtable rec ID still works during fallback)
+### Fetch a single record
 ```javascript
-const idea = await getRecord(TABLES.IDEAS, 'rec0CMdThT89QOvnO', ['id','topic','intelligence_file']);
-const same = await getRecord(TABLES.IDEAS, idea.id, ['topic','status']); // UUID also works
+const idea = await getRecord(TABLES.IDEAS, ideaId, ['id','topic','intelligence_file']);
 ```
+(Legacy `recXXX` Airtable IDs still route via `airtable_record_id`, but no live flow uses them.)
 
 ### Set/clear lock on the post stub for /research
 ```javascript
@@ -282,7 +288,7 @@ const score   = idea?.score_overall ?? null;
 
 ## Averaging Formulas
 
-Same as the Airtable era — these live in `/score`:
+**This file is the canonical home of these formulas** (improver.md and the other score-consumers are archived under `archive/`; `/score` references them from here):
 
 ```javascript
 function updateRunningAverage(oldAvg, oldCount, newScore) {

@@ -1,6 +1,6 @@
 ---
 name: teardown-generate
-description: Generates a full STATE teardown for a candidate in pipeline.teardown_candidates. Produces a blog article, STATE scores with reasoning, gaps, remediation, and a LinkedIn post. Writes to pipeline.teardown_drafts. Run when Simon selects a candidate and says "teardown [name]".
+description: Use when Simon selects a candidate and says "teardown [name]", "generate the teardown", or asks to turn a pipeline.teardown_candidates row into a full teardown. Do NOT trigger for finding/scoring new candidates (teardown-research) or for making derivatives of an already-generated teardown (repurpose).
 ---
 
 # /teardown-generate
@@ -24,66 +24,27 @@ quality by sample, and produce outreach ammo. Every section serves one of those.
 
 ## Supabase Access
 
-Same pattern as `/teardown-research`:
+Read `.claude/skills/_shared/supabase-access.md` (repo root) — the single canonical copy of the
+Management-API access pattern (token lookup order, project ref, the `User-Agent` Cloudflare
+workaround). Edit there, never fork here. After reading it, define:
 
 ```python
-import json, glob, os, urllib.request
-
-def _get_token():
-    # popebot containers first, then Sterling local (lessons.md 2026-07-02)
-    paths = glob.glob('/app/data/workspaces/*/.supabase/access-token')
-    paths += [os.path.expanduser('~/.supabase/access-token')]
-    for p in paths:
-        if os.path.exists(p):
-            return open(p).read().strip()
-    raise RuntimeError("No supabase access-token found")
-
-TOKEN = _get_token()
-REF   = 'ashwrqkoijzvakdmfskj'
-
-def supabase_sql(query):
-    url  = f'https://api.supabase.com/v1/projects/{REF}/database/query'
-    body = json.dumps({'query': query}).encode()
-    req  = urllib.request.Request(url, data=body, headers={
-        'Authorization': f'Bearer {TOKEN}',
-        'Content-Type':  'application/json',
-        # Cloudflare 403 error 1010 blocks python-urllib's default UA (lessons.md 2026-07-02)
-        'User-Agent':    'supabase-cli/2.30.4',
-    })
-    with urllib.request.urlopen(req) as r:
-        return json.loads(r.read())
+def supabase_sql(query: str):
+    """Per _shared/supabase-access.md. Returns [] for DDL, list[dict] for SELECT/INSERT rows."""
 ```
 
 ---
 
 ## STATE Scoring Reference
 
-Score each pillar 0, 1, or 2 based on evidence — not assumption:
+Canonical rubric: `.claude/skills/_shared/state-scoring-rubric.md` (repo root) — read it before
+scoring; never fork a local variant.
 
-**S — Structured**: Does an explicit state schema exist? If the system crashed right now, could you look at the last saved state and know exactly where it stopped without reading conversation history?
-- 0 = stateless or ad-hoc; no evidence of typed state objects
-- 1 = some state management implied but no explicit schema
-- 2 = typed state objects with workflow stages documented
-
-**T — Traceable**: Can you pull a trace right now showing every LLM call, input, output, and tool call for a specific user session from last week?
-- 0 = no mention of tracing or observability
-- 1 = general logging present but not LLM-call-level trace replay
-- 2 = full trace capability (inputs/outputs/tools/session-level) documented
-
-**A — Auditable**: If a regulator asked today what data was used and the principal factors behind a specific decision from last month — could you answer in under 30 minutes?
-- 0 = no audit capability; decisions are unrecoverable
-- 1 = access logs exist but not decision records
-- 2 = decision records, explainability, or regulatory compliance documented
-
-**Tol — Tolerant**: If the workflow crashes at step 6 of 10 right now — does it resume from step 6 or restart from step 1?
-- 0 = crash-and-restart; no checkpoint or resume
-- 1 = basic retries but no mid-workflow resume
-- 2 = explicit checkpoint/resume, idempotency, or distributed lock documented
-
-**E — Explicit**: For every LLM call in this workflow — what is the worst thing it could output, and what stops that output from becoming a real-world action?
-- 0 = LLM outputs directly trigger actions without gates
-- 1 = some content filtering or confidence thresholds
-- 2 = explicit validation gates, human-in-the-loop checkpoints, or output schemas
+Deltas specific to this skill:
+- Score from the **Step 1 deep-research evidence**, not assumption — reconsider the research
+  phase's preliminary scores in light of what you now know.
+- Every final score carries **2–4 sentences of reasoning** (Gate 1 enforces this), preserving
+  the evidence chain: what source says what, and what that implies.
 
 ---
 
@@ -203,14 +164,20 @@ in a database I don't hand-edit. [See the founding program →](/work-with-me)*
 
 ## LinkedIn Post Format
 
-Generate the LinkedIn post per the repurpose skill's linkedin playbook
-(`.claude/skills/repurpose/references/linkedin-playbook.md`, repo root) and the /repurpose
-skill's candidate/anatomy/anti-slop rules (`.claude/skills/repurpose/SKILL.md`), using the
-freshly generated teardown (scores, gaps, remediation, full blog post) as the source. Read
-the playbook before drafting — it holds the hook library, post anatomy, and anti-slop
-checklist; don't work from memory.
+Generate and validate the LinkedIn post against the shared LinkedIn stack — read both files
+before drafting; don't work from memory:
 
-Concretely:
+- **Playbook** (hook library, post anatomy, anti-slop checklist, platform mechanics):
+  `.claude/skills/repurpose/references/linkedin-playbook.md`
+- **Copy gate** (canonical validation for ALL LinkedIn producers — word count 180–300, link
+  rule for the body, zero em dashes, claim provenance, `/score` CTA cadence):
+  `.claude/skills/repurpose/references/linkedin-gate.md`
+
+Every candidate passes the gate before being shown to Simon and re-passes it after any edit.
+If a check needs to change, change it in the gate file — never fork a local variant here.
+The gate's word count (180–300) is the rule; it replaces the old 250-word cap.
+
+Teardown-specific deltas (the only LinkedIn rules that live in this skill):
 - Draft 2–3 candidates on different angles (score/receipts, single-worst-gap,
   remediation-pattern), each using a different hook pattern from the playbook's hook library.
   Keep the strongest as `linkedin_post`; the runner-up hooks feed the outreach kit's
@@ -226,20 +193,8 @@ Concretely:
      happens twice" — not an abstract gap statement.
   A scorecard post without a visceral mechanism reads like a report card; a mechanism post
   without an artifact gets read and never saved. The published post needs both.
-- Anatomy: the playbook's version — hook lands within the ~140-char mobile fold; setup;
-  turn (the dwell-time payload); save-worthy lesson; close is ONE scar-tissue practitioner
-  question OR a one-line STATE tie-in. Never both, never generic ("Agree?" is
-  classifier-detected engagement bait).
-- 180–300 words total (playbook update — supersedes the old 150–250 rule). Hashtags 0–3,
-  0 preferred.
-- Run the playbook's anti-slop checklist on the final post. No "it's not X, it's Y"
-  construction in the hook — LinkedIn's publicly named AI-tell.
-- ZERO em dashes — applies to the post, the DM template, and every alt hook. The ICP reads
-  em dashes as the ChatGPT signature; short sentences do the emphasis work instead (Simon's
-  call, 2026-07-05). Stricter than the playbook's max-2 budget; the stricter rule wins.
-- No links in the post body — no markdown links, no raw URLs. LinkedIn strips markdown and
-  deprioritizes posts with outbound links; name sources in prose ("ZenML's write-up says…").
-  The teardown link goes in the author's first comment after publishing.
+- The gate's zero-em-dash rule extends to the **DM template and every alt hook** — the gate
+  only covers the post body; the outreach kit holds to the same bar.
 
 The flow stays self-contained: the chosen post is still written to
 `teardown_drafts.linkedin_post` in Step 4 below — only the generation guidance changed.
@@ -271,8 +226,10 @@ a *different* pillar or gap, so one teardown feeds multiple posts on different d
 ### Step 0: Generate workflow_id and load candidate
 
 ```python
+import re
 from datetime import datetime
 WORKFLOW_ID = f"teardown-generate-{datetime.utcnow().strftime('%Y%m%dT%H%M%S')}"
+MODEL_ID    = '<the id of the model that actually ran>'  # set at runtime — never hardcode a model id
 
 # Load by name — replace with the actual candidate name
 CANDIDATE_NAME = "Intercom Fin AI Engine"  # set per invocation
@@ -286,7 +243,8 @@ if not rows:
     raise SystemExit(f"Candidate '{CANDIDATE_NAME}' not found in pipeline.teardown_candidates")
 
 candidate = rows[0]
-print(f"Loaded: {candidate['name']} (ICP: {candidate['icp_relevance']}, Yield: {candidate['content_yield']})")
+slug = re.sub(r'[^a-z0-9]+', '-', candidate['name'].lower()).strip('-')  # e.g. "intercom-fin-ai-engine"
+print(f"Loaded: {candidate['name']} (ICP: {candidate['icp_relevance']}, Yield: {candidate['content_yield']}) → slug: {slug}")
 ```
 
 ### Step 1: Deep source research
@@ -300,6 +258,29 @@ Fetch the primary source URL and up to 3 additional sources from `candidate['sou
 Use WebFetch on each source. Take notes — you'll need specific evidence for Gap sections.
 Keep every fetched URL in a `source_urls` list; the pre-write checklist (Gate 10b) asserts
 each one appears as a markdown link in the post.
+
+**Checkpoint (Tol):** before generation begins, persist the research notes (including
+`source_urls`, key quotes with their URLs, and any preliminary score revisions) to
+`projects/Content-Engine/.tmp/teardown-research-notes-<slug>.md`. If the session crashes
+mid-generation, the rerun resumes from that file instead of re-fetching every source.
+
+**Claim provenance (2026-07-07 lesson — the Ramp 65% + shadow-mode incident):** every
+external-world claim in the article must be traceable to a **verbatim sentence you actually
+fetched**. This covers three claim types, each of which failed that day:
+1. **Numbers** (percentages, multipliers, counts — anything not Simon's own STATE scores):
+   preserve the source's scope and qualifiers ("at Ramp itself", "more than 65%", "since
+   deployment").
+2. **Process/architecture narratives** ("ran in shadow mode against human ground truth until
+   accuracy cleared a threshold"): do not sharpen what the source describes into a
+   better-sounding industry pattern — Ramp's sources describe *suggestion mode*, and "shadow
+   mode" was invented in the write-up, then propagated into the title, FAQ, and 3 LinkedIn posts.
+3. **Attributed statements** ("ZenML says it plainly: …"): the named source must literally say
+   it. Deriving a conclusion from a source's *silence* is fine — but attribute it to yourself
+   ("crash recovery isn't described anywhere"), never to the source.
+If a claim came from the research phase but you can't find it in any source you fetched in
+Step 1, WebFetch until you find its primary source and add that URL to `source_urls` — or cut
+the claim. An unsourced claim is a gate failure, not a style issue: derivatives inherit it and
+it ends up on LinkedIn.
 
 ### Step 2: Generate the teardown
 
@@ -324,13 +305,10 @@ Using your research, produce:
 
 6. **Post angle** — one sentence: "is there a post in this beyond the teardown itself?" (e.g., a follow-up angle for a different pillar, a series idea, a broader principle post)
 
-### Step 3: Generate blog slug
+### Step 3: Blog slug
 
-```python
-import re
-slug = re.sub(r'[^a-z0-9]+', '-', candidate['name'].lower()).strip('-')
-# e.g. "intercom-fin-ai-engine"
-```
+Already computed in Step 0 (`slug`) — it also names the Step 1 checkpoint file. Reuse it here;
+don't derive it twice.
 
 ### Step 4: Write draft to Supabase
 
@@ -338,13 +316,18 @@ slug = re.sub(r'[^a-z0-9]+', '-', candidate['name'].lower()).strip('-')
 
 The draft row has both prose fields (`full_content`, `linkedin_post`) and structured JSONB fields (`state_scores`, `gaps`, `remediation`). **Both must be populated — narrativizing gaps inside the blog post does not satisfy the structured field requirement.** The admin panel and downstream automations read from the structured columns; empty `{}` there means the work is unusable even if the blog post is excellent.
 
-Required JSONB shapes (all keys mandatory, all string values non-empty):
+Required JSONB shapes (all keys mandatory, all string values non-empty). Every enum-constrained
+field shows its literal allowed values (lessons.md 2026-07-05) — `pillar` is always lowercase,
+exactly one of `'s' | 't' | 'a' | 'tol' | 'e'`:
 
 ```
 state_scores:  {'s'|'t'|'a'|'tol'|'e': {'score': int 0-2, 'reasoning': str 2-4 sentences}}  (all 5 pillars)
-gaps:          [{'pillar': str, 'gap': str, 'consequence': str, 'severity': 'high'|'medium'|'low'}]  (>=2 entries)
-remediation:   [{'pillar': str, 'recommendation': str, 'priority': int}]  (>=2 entries)
+gaps:          [{'pillar': 's'|'t'|'a'|'tol'|'e', 'gap': str, 'consequence': str, 'severity': 'high'|'medium'|'low'}]  (>=2 entries)
+remediation:   [{'pillar': 's'|'t'|'a'|'tol'|'e', 'recommendation': str, 'priority': int}]  (>=2 entries)
 ```
+
+Any prompt/JSON schema shown to an LLM to produce these structures must spell out those same
+literal pillar values — never `'pillar': str`.
 
 Build them as actual values, not placeholders:
 
@@ -360,15 +343,16 @@ state_scores = {
 }
 
 # At least 2 gaps. Each must name the mechanism, evidence-backed consequence, severity.
+# pillar: lowercase, one of 's'|'t'|'a'|'tol'|'e' (Gate 2b enforces).
 gaps = [
-    {'pillar': 'T', 'gap': <specific mechanism>, 'consequence': <production consequence with who notices/what costs>, 'severity': 'high'},
-    {'pillar': 'S', 'gap': <...>, 'consequence': <...>, 'severity': 'high'},
+    {'pillar': 't', 'gap': <specific mechanism>, 'consequence': <production consequence with who notices/what costs>, 'severity': 'high'},
+    {'pillar': 's', 'gap': <...>, 'consequence': <...>, 'severity': 'high'},
 ]
 
 # At least 2 remediation entries. Concrete — not "add logging."
 remediation = [
-    {'pillar': 'T', 'recommendation': <concrete field/schema/check>, 'priority': 1},
-    {'pillar': 'S', 'recommendation': <...>, 'priority': 2},
+    {'pillar': 't', 'recommendation': <concrete field/schema/check>, 'priority': 1},
+    {'pillar': 's', 'recommendation': <...>, 'priority': 2},
 ]
 ```
 
@@ -390,6 +374,14 @@ for i, g in enumerate(gaps):
         assert g.get(k), f"gap[{i}] missing or empty: {k}"
     assert g['severity'] in ('high','medium','low'), f"gap[{i}] bad severity"
 
+# Gate 2b: pillar enum — normalize case, then require the literal allowed values
+# (lessons.md 2026-07-05: every enum-constrained field must show its literal allowed values)
+PILLARS = {'s','t','a','tol','e'}
+for i, entry in enumerate(gaps + remediation):
+    entry['pillar'] = str(entry['pillar']).lower()
+    assert entry['pillar'] in PILLARS, \
+        f"entry[{i}] bad pillar {entry['pillar']!r} — must be one of 's','t','a','tol','e'"
+
 # Gate 3: remediation array has >=2 fully-populated entries
 assert len(remediation) >= 2, "need at least 2 remediation items"
 for i, r in enumerate(remediation):
@@ -397,7 +389,7 @@ for i, r in enumerate(remediation):
         assert r.get(k) not in (None,'',[]), f"remediation[{i}] missing or empty: {k}"
 
 # Gate 4: full_content ends with the canonical /score CTA (lessons.md 2026-05-09)
-# (founding CTA above it is conditional — only while founding copy is live on /audit)
+# (founding CTA above it is conditional — Gate 10b checks the live page at run time)
 assert '[Take the STATE assessment →](/score)' in full_content, \
     "full_content must end with the canonical /score CTA, not a series description"
 
@@ -412,7 +404,8 @@ assert 'Gets Right' in full_content, "missing 'What [System] Gets Right' section
 assert full_content.count('**Score yourself:**') >= len(gaps), \
     "each gap section must close with a **Score yourself:** line"
 
-# Gate 8: 'What Good Looks Like' contains a fenced artifact snippet
+# Gate 8: 'What Good Looks Like' section exists and contains a fenced artifact snippet
+assert '## What Good Looks Like' in full_content, "missing '## What Good Looks Like' section"
 wgll = full_content.split('## What Good Looks Like')[1].split('\n## ')[0]
 assert '```' in wgll, "What Good Looks Like must include a fenced artifact snippet"
 
@@ -430,10 +423,25 @@ for _src in source_urls:  # every research source must be linked
     assert f']({_src})' in full_content, f"source not linked: {_src}"
 _int = [u for u in _links if u.startswith('/') and u not in ('/score', '/work-with-me')]
 assert _int, "need an internal link beyond the CTA lines (e.g. [teardown](/blog))"
-# founding CTA — only while the founding program is live on /work-with-me
-assert '](/work-with-me)' in full_content, "founding program live: include the founding CTA"
+
+# Founding CTA — conditional on the LIVE page, checked at run time (a temporary condition
+# must be code, not a comment). As of 2026-07-07: /work-with-me is 200, /audit 308-redirects
+# to it — /work-with-me is the founding CTA target.
+import urllib.request as _ur
+try:
+    _page = _ur.urlopen(_ur.Request('https://simonparis.ca/work-with-me',
+                                    headers={'User-Agent': 'Mozilla/5.0'})).read().decode('utf-8', 'replace')
+    founding_live = 'founding' in _page.lower()
+except Exception:
+    founding_live = False   # page unreachable/gone → treat the program as not live
+if founding_live:
+    assert '](/work-with-me)' in full_content, "founding program live: include the founding CTA"
+else:
+    assert '](/work-with-me)' not in full_content, \
+        "founding program not live: drop the founding CTA (keep only the /score CTA)"
+
 assert not _re.search(r'\[[^\]]*\]\(\S+?\)', linkedin_post), \
-    "linkedin_post must not contain links — name sources in prose"
+    "linkedin_post: no markdown links — LinkedIn strips markdown; if it carries a URL it is bare, max 1 (shared linkedin-gate rule)"
 
 # Gate 10c: em-dash budget (dense em dashes read as generated text)
 _w = len(full_content.split())
@@ -450,34 +458,72 @@ assert '{name}' in dm_template and '{their_pattern}' in dm_template, "dm_templat
 assert len(alt_hooks) >= 2, "need >= 2 alternate LinkedIn hooks"
 ```
 
-# The outreach kit lives in an `outreach` jsonb column: {'dm_template': str, 'alt_hooks': [str]}
-# If the column doesn't exist yet, add it first (idempotent):
-#   ALTER TABLE pipeline.teardown_drafts ADD COLUMN IF NOT EXISTS outreach jsonb;
+#### Idempotent write (Tol — resume/replace, never duplicate)
 
+The outreach kit lives in an `outreach` jsonb column (`{'dm_template': str, 'alt_hooks': [str]}`).
+If the column doesn't exist yet, add it first (idempotent):
+`ALTER TABLE pipeline.teardown_drafts ADD COLUMN IF NOT EXISTS outreach jsonb;`
+
+Before writing, check for an existing non-archived draft for this candidate. A rerun after a
+crash, or a deliberate regenerate, must UPDATE that row — a second row for the same candidate
+is a bug, not a version.
+
+```python
 outreach = {'dm_template': dm_template, 'alt_hooks': alt_hooks}
 
-sql = f"""
-    INSERT INTO pipeline.teardown_drafts
-      (candidate_id, system_summary, state_scores, gaps, remediation,
-       full_content, linkedin_post, outreach, post_angle, blog_slug, status, workflow_id, generation_log)
-    VALUES (
-      '{candidate['id']}',
-      '{esc(candidate['description'])}',
-      '{json.dumps(state_scores).replace("'","''")}'::jsonb,
-      '{json.dumps(gaps).replace("'","''")}'::jsonb,
-      '{json.dumps(remediation).replace("'","''")}'::jsonb,
-      '{esc(full_content)}',
-      '{esc(linkedin_post)}',
-      '{json.dumps(outreach).replace("'","''")}'::jsonb,
-      '{esc(post_angle)}',
-      '{esc(slug)}',
-      'draft',
-      '{WORKFLOW_ID}',
-      '{json.dumps([{{"step": "generate", "model": "claude-sonnet-4-6", "output_summary": "full teardown generated"}}]).replace("'","''")}'::jsonb
-    ) RETURNING id
-"""
-result = supabase_sql(sql)
-draft_id = result[0]['id']
+log_entry = json.dumps({'step': 'generate', 'model': MODEL_ID,
+                        'output_summary': 'full teardown generated',
+                        'workflow_id': WORKFLOW_ID}).replace("'", "''")
+
+existing = supabase_sql(f"""
+    SELECT id, status FROM pipeline.teardown_drafts
+    WHERE candidate_id = '{candidate['id']}' AND status != 'archived'
+    ORDER BY created_at DESC LIMIT 1
+""")
+
+if existing:
+    draft_id = existing[0]['id']
+    print(f"Existing draft {draft_id} (status: {existing[0]['status']}) — replacing in place")
+    supabase_sql(f"""
+        UPDATE pipeline.teardown_drafts SET
+          system_summary = '{esc(candidate['description'])}',
+          state_scores   = '{json.dumps(state_scores).replace("'","''")}'::jsonb,
+          gaps           = '{json.dumps(gaps).replace("'","''")}'::jsonb,
+          remediation    = '{json.dumps(remediation).replace("'","''")}'::jsonb,
+          full_content   = '{esc(full_content)}',
+          linkedin_post  = '{esc(linkedin_post)}',
+          outreach       = '{json.dumps(outreach).replace("'","''")}'::jsonb,
+          post_angle     = '{esc(post_angle)}',
+          blog_slug      = '{esc(slug)}',
+          status         = 'draft',
+          workflow_id    = '{WORKFLOW_ID}',
+          generation_log = generation_log || '[{log_entry}]'::jsonb,
+          updated_at     = now()
+        WHERE id = '{draft_id}'
+    """)
+else:
+    result = supabase_sql(f"""
+        INSERT INTO pipeline.teardown_drafts
+          (candidate_id, system_summary, state_scores, gaps, remediation,
+           full_content, linkedin_post, outreach, post_angle, blog_slug, status, workflow_id, generation_log)
+        VALUES (
+          '{candidate['id']}',
+          '{esc(candidate['description'])}',
+          '{json.dumps(state_scores).replace("'","''")}'::jsonb,
+          '{json.dumps(gaps).replace("'","''")}'::jsonb,
+          '{json.dumps(remediation).replace("'","''")}'::jsonb,
+          '{esc(full_content)}',
+          '{esc(linkedin_post)}',
+          '{json.dumps(outreach).replace("'","''")}'::jsonb,
+          '{esc(post_angle)}',
+          '{esc(slug)}',
+          'draft',
+          '{WORKFLOW_ID}',
+          '[{log_entry}]'::jsonb
+        ) RETURNING id
+    """)
+    draft_id = result[0]['id']
+
 print(f"Draft written: {draft_id}")
 ```
 
@@ -515,6 +561,10 @@ sql = f"""
 
 - `format` is `'image'` because the post ships with the card attached (download the PNG from
   `card_url` at publish time and attach it; the first comment still carries the teardown link).
+- **Preview rule (long parameterized URLs are a truncation hazard — lesson 2026-07-06):** never
+  paste `card_url` into chat for Simon to preview. Download the PNG
+  (`curl -s -o projects/Content-Engine/.tmp/teardown-card-<slug>.png "<card_url>"`) and present
+  the image file directly. The URL itself only ever travels inside the `media` jsonb and logs.
 - **If the insert fails with `column posts.media does not exist`**: the media-column migration
   (`ALTER TABLE pipeline.posts ADD COLUMN IF NOT EXISTS media jsonb NOT NULL DEFAULT '{}'::jsonb;`)
   hasn't been applied yet — apply it if you have Management API access, else insert WITHOUT the
@@ -539,19 +589,19 @@ supabase_sql(f"""
 supabase_sql(f"""
     INSERT INTO pipeline.logs (workflow_id, entity_id, step_name, stage, output_summary, model_version, status)
     VALUES ('{WORKFLOW_ID}', '{candidate['id']}', 'teardown_generated', 'complete',
-            'Draft {draft_id} written for {candidate["name"]}', 'claude-sonnet-4-6', 'success')
+            'Draft {draft_id} written for {candidate["name"]}', '{MODEL_ID}', 'success')
 """)
 ```
 
-Print the full LinkedIn post and a 3-sentence summary of each gap so Simon can review immediately in the PR body.
+Then print the output contract below in chat — Simon reviews it there.
 
 ---
 
-## Output in PR Body
+## Output Contract (print in chat)
 
-The PR body must include:
+This skill runs in interactive Sterling sessions; the review surface is the chat itself. Print:
 1. **LinkedIn post** (full text, ready to paste)
-2. **Gap summary** (3 bullets: gap name + one-line consequence each)
+2. **Gap summary** (one bullet per gap: gap name + one-line consequence)
 3. **DM template** (ready to personalize — this is the founding-slot outreach ammo)
 4. **Alternate hooks** (2–3, for repurposed posts on later days)
 5. **Blog slug** (the URL it will live at once published)
@@ -564,5 +614,5 @@ The PR body must include:
 - **S**: Draft stored as typed row with structured scores/gaps/remediation — not a free-form blob
 - **T**: workflow_id on draft row and candidate update; logged to pipeline.logs
 - **A**: generation_log captures model and output summary; state_scores.reasoning preserves decision chain
-- **Tol**: INSERT is atomic; if run fails after insert, candidate status is not updated (safe to retry)
+- **Tol**: Step 1 notes persist to `.tmp/teardown-research-notes-<slug>.md` before generation (crash checkpoint); the Step 4 write is idempotent — an existing non-archived draft for the candidate is updated in place, never duplicated (safe to retry at any stage)
 - **E**: No publish action taken — draft status only; Simon reviews before anything goes live

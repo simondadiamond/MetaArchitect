@@ -3,7 +3,8 @@
 # Usage: gather.sh [WEEK_START]   (WEEK_START = a Monday, ISO date; defaults to Monday of current week)
 # STATE (E — Explicit): every response is validated before use. Any core-source
 # failure prints "FAILED at <stage>: <detail>" to stderr and exits non-zero.
-# Optional sources (MailerLite, lessons.md) degrade to {"skipped": true, "reason": ...}.
+# Optional sources (leads, open_leads, superstars, postiz_drift, engage, lessons.md,
+# MailerLite) degrade to {"skipped": true, "reason": ...} — never abort over them.
 set -euo pipefail
 
 ROOT=/home/diamond/projects/MetaArchitect
@@ -46,18 +47,27 @@ pg goals_blocked     "goals?select=id,title,kind,updated_at&status=eq.blocked&up
 pg goals_stale       "goals?select=id,title,kind,updated_at&status=eq.in_progress&updated_at=lt.$STALE_CUTOFF&order=updated_at.asc" "$TMP/gstale.json"
 
 # --- Content cadence (pipeline schema — needs Accept-Profile: pipeline) ---
-pg posts "posts?select=id,status,pillar,intent,planned_week,drafted_at,published_at,performance_score&or=(and(drafted_at.gte.$WEEK_START,drafted_at.lt.$WEEK_END),and(published_at.gte.$WEEK_START,published_at.lt.$WEEK_END))" "$TMP/posts.json" pipeline
+# status=neq.rejected: rejected test drafts must not inflate "Posts drafted" (lesson 2026-07-06).
+pg posts "posts?select=id,status,pillar,intent,planned_week,drafted_at,published_at,performance_score&status=neq.rejected&or=(and(drafted_at.gte.$WEEK_START,drafted_at.lt.$WEEK_END),and(published_at.gte.$WEEK_START,published_at.lt.$WEEK_END))" "$TMP/posts.json" pipeline
 
 # --- Story pipeline (public schema) ---
 pg stories "stories?select=id,title,stage,failed_stage,error,target_repo,updated_at&stage=in.(merged,failed,needs_review)&updated_at=gte.$WEEK_START&updated_at=lt.$WEEK_END&order=updated_at.desc" "$TMP/stories.json"
 
-# --- Leads / ICP conversations (public schema, optional — table lands with story 2d378962; degrade until then) ---
+# --- Leads / ICP conversations (public schema, optional — probe the table; degrade gracefully if absent) ---
 stage="leads"
 curl -s --max-time 30 "$SUPABASE_URL/rest/v1/leads?select=id,name,company,channel,source_ref,status,created_at&created_at=gte.$WEEK_START&created_at=lt.$WEEK_END&order=created_at.desc" \
   -H "apikey: $KEY" -H "Authorization: Bearer $KEY" -o "$TMP/leads.json" \
   || echo '{"skipped": true, "reason": "curl error on leads"}' > "$TMP/leads.json"
 python3 -c "import json;d=json.load(open('$TMP/leads.json'));assert isinstance(d,list)" 2>/dev/null \
-  || echo '{"skipped": true, "reason": "leads table not available yet (story 2d378962 pending)"}' > "$TMP/leads.json"
+  || echo '{"skipped": true, "reason": "leads table not readable"}' > "$TMP/leads.json"
+
+# --- Open lead pipeline (all statuses, for the Friday follow-up pass; optional — degrade, don't abort) ---
+stage="open_leads"
+curl -s --max-time 30 "$SUPABASE_URL/rest/v1/leads?select=id,name,company,status,created_at&order=created_at.asc" \
+  -H "apikey: $KEY" -H "Authorization: Bearer $KEY" -o "$TMP/open_leads.json" \
+  || echo '{"skipped": true, "reason": "curl error on open leads"}' > "$TMP/open_leads.json"
+python3 -c "import json;d=json.load(open('$TMP/open_leads.json'));assert isinstance(d,list)" 2>/dev/null \
+  || echo '{"skipped": true, "reason": "leads table not readable"}' > "$TMP/open_leads.json"
 
 # --- Engage queue health (public schema, optional — degrade, don't abort) ---
 stage="engage"
@@ -83,6 +93,57 @@ except Exception as ex:
     out = {'skipped': True, 'reason': f'engage tables not readable: {ex}'}
 json.dump(out, open('$TMP/engage.json','w'))
 " || echo '{"skipped": true, "reason": "engage aggregation failed"}' > "$TMP/engage.json"
+
+# --- Superstar list (public.engage_targets — the active target list; optional — degrade, don't abort) ---
+# NOTE: pipeline.engagement_targets / pipeline.engagement_opportunities are empty Plan-3 prep tables — NOT this list.
+stage="superstars"
+curl -s --max-time 30 "$SUPABASE_URL/rest/v1/engage_targets?select=id,name,priority,active&order=priority.desc" \
+  -H "apikey: $KEY" -H "Authorization: Bearer $KEY" -o "$TMP/targets.json" || echo 'null' > "$TMP/targets.json"
+curl -s --max-time 30 "$SUPABASE_URL/rest/v1/engage_posts?select=id,target_id,status&created_at=gte.$WEEK_START&created_at=lt.$WEEK_END" \
+  -H "apikey: $KEY" -H "Authorization: Bearer $KEY" -o "$TMP/tposts.json" || echo 'null' > "$TMP/tposts.json"
+python3 - "$TMP" <<'PYEOF' || echo '{"skipped": true, "reason": "superstar aggregation failed"}' > "$TMP/superstars.json"
+import json, sys
+t = sys.argv[1]
+try:
+    targets = json.load(open(f"{t}/targets.json")); posts = json.load(open(f"{t}/tposts.json"))
+    assert isinstance(targets, list) and isinstance(posts, list)
+    out = {"targets": targets, "posts_this_week": posts}
+except Exception as ex:
+    out = {"skipped": True, "reason": f"engage_targets not readable: {ex}"}
+json.dump(out, open(f"{t}/superstars.json", "w"))
+PYEOF
+
+# --- Postiz drift check (pipeline scheduled queue vs Postiz queue — 2026-07-07 false-alarm blind spot; optional) ---
+stage="postiz_drift"
+NOW_TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+HORIZON=$(date -u -d '+90 days' +%Y-%m-%dT%H:%M:%SZ)
+curl -s --max-time 30 "$SUPABASE_URL/rest/v1/posts?select=id,scheduled_at,postiz_id&status=eq.scheduled&scheduled_at=gte.$NOW_TS" \
+  -H "apikey: $KEY" -H "Authorization: Bearer $KEY" -H "Accept-Profile: pipeline" -o "$TMP/sched.json" || echo 'null' > "$TMP/sched.json"
+if [ -n "${POSTIZ_API_URL:-}" ] && [ -n "${POSTIZ_API_KEY:-}" ]; then
+  curl -s --max-time 30 "$POSTIZ_API_URL/posts?startDate=$NOW_TS&endDate=$HORIZON" \
+    -H "Authorization: $POSTIZ_API_KEY" -o "$TMP/postiz.json" || echo 'null' > "$TMP/postiz.json"
+else
+  echo 'null' > "$TMP/postiz.json"
+fi
+python3 - "$TMP" <<'PYEOF' || echo '{"skipped": true, "reason": "postiz drift aggregation failed"}' > "$TMP/postiz_drift.json"
+import json, sys
+t = sys.argv[1]
+try:
+    sched = json.load(open(f"{t}/sched.json")); assert isinstance(sched, list)
+    out = {"pipeline_scheduled": len(sched),
+           "pipeline_rows": [{"id": r.get("id"), "scheduled_at": r.get("scheduled_at"), "postiz_id": r.get("postiz_id")} for r in sched]}
+    try:
+        pz = json.load(open(f"{t}/postiz.json"))
+        posts = pz.get("posts") if isinstance(pz, dict) else None
+        assert isinstance(posts, list)
+        out["postiz_queued"] = len(posts)
+        out["drift"] = out["pipeline_scheduled"] != len(posts)
+    except Exception as ex:
+        out["postiz"] = {"skipped": True, "reason": f"Postiz API not readable: {ex}"}
+except Exception as ex:
+    out = {"skipped": True, "reason": f"pipeline scheduled-posts query failed: {ex}"}
+json.dump(out, open(f"{t}/postiz_drift.json", "w"))
+PYEOF
 
 # --- Lessons (local file, optional — degrade, don't abort) ---
 stage="lessons"
@@ -154,6 +215,9 @@ print(json.dumps({
     "posts": load("posts.json"),
     "stories": load("stories.json"),
     "leads": load("leads.json"),
+    "open_leads": load("open_leads.json"),
+    "superstars": load("superstars.json"),
+    "postiz_drift": load("postiz_drift.json"),
     "engage": load("engage.json"),
     "lessons": load("lessons.json"),
     "mailerlite": load("ml.json"),

@@ -2,6 +2,7 @@
 
 > Reference for the `/repurpose` skill: converting blog posts and STATE teardowns into LinkedIn posts.
 > Researched 2026-07-05 from 2025–2026 sources. Every trend claim carries a source note.
+> **Re-verify by 2027-01**: algorithm claims rot; re-run the research sweep and update this file (or mark sections stale) — don't let a 6-month-old "mid-2026" snapshot masquerade as current.
 > Audience: LLM platform/reliability leads in data-sensitive enterprises. Voice: confident, diagnostic, concrete.
 
 ---
@@ -12,7 +13,7 @@
 - **Dwell time is the primary quality signal.** Posts holding readers 61+ seconds see ~13x the engagement of posts skimmed in 0–3 seconds. Write for the slow read, not the scroll-by. (Stackmatix data breakdown, 2026)
 - **Saves are the heaviest engagement signal** — roughly 5x a like and ~2x a comment. Referenceable content (frameworks, checklists, taxonomies) wins. Comments weigh ~15x a like. Reactions are near-noise. (Forbes, Jan 2026; SocialPilot algorithm guide, Jun 2026)
 - **Early test window still exists.** A post is shown to a small follower slice first; strong engagement in the first ~2 hours expands distribution. Author replies to comments boost engagement ~30%. One prominent source (Forbes, Jan 2026) argues "there has never been a golden hour" — position taken here: the test window is real per multiple guides, but consistency matters more than clock-watching. (Postiv AI frequency guide, 2026; Buffer w/ LinkedIn team input, Dec 2025)
-- **External links: mild penalty, not death.** Aggregate data shows link posts reach ~30–50% fewer people, but LinkedIn's own guidance (via Buffer, Dec 2025) is that links are fine if the post itself delivers standalone value. Link-in-first-comment is obsolete advice — links can sit in the body. (Dataslayer, Feb 2026; Buffer, Dec 2025; Forbes, Jan 2026)
+- **External links: mild penalty, not death.** Aggregate data shows link posts reach ~30–50% fewer people, but LinkedIn's own guidance (via Buffer, Dec 2025) is that links are fine if the post itself delivers standalone value. Link-in-first-comment is obsolete advice — links can sit in the body. (Dataslayer, Feb 2026; Buffer, Dec 2025; Forbes, Jan 2026) *House rule (Simon, 2026-07-07): this wins — body links allowed, max one bare URL, never in the hook; mechanics in `linkedin-gate.md`.*
 - **Hashtags are functionally dead for distribution.** The algorithm classifies posts by their text via interest graphs; hashtags are at best cosmetic. 0–3 maximum, or none. (Forbes, Jan 2026; Buffer, Dec 2025 — "nice to have, not a need to have")
 - **AI-slop suppression is official policy.** LinkedIn (VP Laura Lorenzetti, May 2026) announced reach limits on content that looks AI-generated without genuine perspective, suppression of AI/bot comments, and verified-profile filters. Claimed 94% detection accuracy in early tests; flagged posts aren't removed, they're quietly excluded from recommendations. The named tell: "it's not X, it's Y" phrasing. (Social Media Today, May 2026; TheNextWeb, 2026; Engadget, 2026)
 - **Engagement bait is detected and penalized.** "Comment YES if you agree," reaction polls, tag-a-friend — classifier-suppressed. Engagement pods draw reach penalties up to ~45% via reciprocal-pattern detection. (DigitalApplied engagement guide, 2026; ExpertLinked, Feb 2026)
@@ -143,8 +144,8 @@ Run every draft against this. LinkedIn's classifiers AND the burned-practitioner
 - [ ] No "Let that sink in." / "Read that again." / "Big news 🚀" / emoji rows.
 - [ ] No symmetrical tricolons ("No fluff. No hype. Just results.").
 - [ ] No fake vulnerability arcs ("3 years ago I almost quit...") — this brand never fabricates anecdotes; use verified teardown facts instead.
-- [ ] Em dashes: not an actual detector signal (the 2026 "em dash discourse" was noise — Entrepreneur, 2026), but the audience side-eyes heavy use. Max ~2 per post; prefer the period.
-- [ ] Every claim has a mechanism. "Testing matters" is slop; "the validation gate rejected 3 of 40 outputs that would have written garbage to Airtable" is content.
+- [ ] Em dashes: not an actual detector signal (the 2026 "em dash discourse" was noise — Entrepreneur, 2026), but the audience side-eyes heavy use. *Superseded by Simon's zero-em-dash rule (2026-07-05) for all posts and comments — the max-2 budget here is history, not guidance.*
+- [ ] Every claim has a mechanism. "Testing matters" is slop; "the validation gate rejected 3 of 40 outputs that would have written garbage to Supabase" is content.
 - [ ] Specificity test: if the company/number/failure mode could be swapped for a placeholder, it's too vague to post.
 - [ ] Brand prohibitions (always in force): "excited to share", "thrilled to announce", "game-changing", "revolutionary", "groundbreaking", "cutting-edge", "in today's fast-paced world", "in the age of AI", hedging the thesis.
 - [ ] Would a reader **save** this? If there's nothing referenceable (a checklist, a taxonomy, a score, a test), add one or don't post.

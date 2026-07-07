@@ -3,7 +3,9 @@
 # Usage: insert-review.sh <payload.json>
 # Behavior:
 #   - Validates the payload (E — Explicit) before any network call.
-#   - If the table doesn't exist yet (PGRST205), retries every 60s up to 10 times.
+#   - If the table is missing (PostgREST error code PGRST205, parsed from the JSON
+#     error object — never grepped from the body, which may legitimately mention
+#     the string), retries once after 5s (2 attempts total).
 #   - On table-missing exhaustion: writes summary_md to the fallback path, exits 2.
 #   - On success: prints the inserted row (JSON, includes id), exits 0.
 #   - Any other failure: prints "FAILED at insert: ..." to stderr, exits 1.
@@ -34,14 +36,17 @@ for k in ["posts_published", "posts_target", "stories_merged", "stories_failed",
     assert k in p["metrics"], f"metrics missing required key: {k}"
 PYEOF
 
-for attempt in $(seq 1 10); do
+ATTEMPTS=2
+for attempt in $(seq 1 $ATTEMPTS); do
   resp=$(curl -s --max-time 30 -X POST "$SUPABASE_URL/rest/v1/weekly_reviews" \
     -H "apikey: $KEY" -H "Authorization: Bearer $KEY" \
     -H "content-type: application/json" -H "Prefer: return=representation" \
     -d @"$PAYLOAD") || { echo "FAILED at insert: curl error (attempt $attempt)" >&2; exit 1; }
-  if echo "$resp" | grep -q 'PGRST205'; then
-    echo "attempt $attempt/10: weekly_reviews table not found yet — retry in 60s" >&2
-    [ "$attempt" -lt 10 ] && sleep 60
+  # Table-missing check: parse the JSON error object's code field — a success body is
+  # an array, and a summary_md that merely mentions "PGRST205" must not trip this.
+  if echo "$resp" | python3 -c 'import json,sys; d=json.load(sys.stdin); sys.exit(0 if isinstance(d,dict) and d.get("code")=="PGRST205" else 1)' 2>/dev/null; then
+    echo "attempt $attempt/$ATTEMPTS: weekly_reviews table not found — retry in 5s" >&2
+    [ "$attempt" -lt "$ATTEMPTS" ] && sleep 5
     continue
   fi
   if echo "$resp" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert isinstance(d,list) and d[0].get("id")' 2>/dev/null; then
@@ -54,5 +59,5 @@ done
 
 mkdir -p "$(dirname "$FALLBACK")"
 python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["summary_md"])' "$PAYLOAD" > "$FALLBACK"
-echo "weekly_reviews table never appeared after 10 attempts — review saved to $FALLBACK" >&2
+echo "weekly_reviews table missing after $ATTEMPTS attempts — review saved to $FALLBACK" >&2
 exit 2

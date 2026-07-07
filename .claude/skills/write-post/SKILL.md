@@ -1,13 +1,54 @@
 ---
 name: write-post
-description: Full pipeline for writing a new blog post for simonparis.ca. Trigger when Simon asks to write, create, or draft a new blog post. Covers research, outline, draft, editorial loop, Supabase insert as draft, and DM notification. Do NOT trigger for editing existing posts (use editorial skill) or research-only requests (use research skill).
+description: Use when Simon asks to write, create, or draft a new blog post for simonparis.ca. Do NOT trigger for editing an existing post (use editorial skill), research-only requests (use research skill), or turning existing content into LinkedIn posts (use repurpose skill).
 ---
 
 ## Write-Post Pipeline
 
-Eight steps. Do them in order. Do not skip the editorial loop or the outline approval.
+Nine steps (0–8). Do them in order. Do not skip the editorial loop or the outline approval.
 
-**SEO/GEO reference**: Read `agents/blog-writer/seo-guidelines.md` before every post. It governs structure, keyword strategy, named failure modes, GEO citability, and the 5-to-7 insight rule. These are non-negotiable for 2026 search visibility.
+**Risk tier: medium (S + T + E)** — LLM generation + Supabase writes. Full spec: `brand/state-framework.md`. Run all node snippets from `projects/Content-Engine/` (deps + `.env` resolution live there).
+
+**SEO/GEO rules (non-negotiable — canonical here; the Step 6 gate verifies them):**
+1. **Primary keyword** — one 501–2,400 monthly-volume term per post; it appears in the title, the first H2, and naturally in the body.
+2. **BLUF** — the core insight, stated as the conclusion (not a preview), in the first 150 words.
+3. **Fact-blocks** — every H2 section opens with a bolded 40–50 word standalone statement: the GEO citation unit.
+4. **5–7 distinct non-obvious insights** per post — fewer get absorbed by AI summaries, more dilutes. H2/H3 headings phrased as specific technical questions where natural.
+5. **Named failure mode** — for `failure_taxonomy` posts, the failure is named precisely and defined on first use.
+
+---
+
+### STEP 0 — STATE Init (S + T)
+
+```javascript
+const state = {
+  workflowId: crypto.randomUUID(),
+  stage: "init",
+  entityType: "post",
+  entityId: null,          // set after the blog_posts insert (Step 7)
+  startedAt: new Date().toISOString(),
+  lastUpdatedAt: new Date().toISOString(),
+};
+```
+
+Update `stage` at every transition: `parse_brief → research → outline_approval → draft → editorial → metadata → insert_gate → insert → complete`.
+
+Log every LLM stage (draft, editorial hand-back, metadata + LinkedIn extract) and every Supabase write via `logEntry` from `projects/Content-Engine/tools/supabase.mjs` (logs land in `pipeline.logs`):
+
+```javascript
+const { logEntry } = await import('./tools/supabase.mjs');
+await logEntry({ workflow_id: state.workflowId, entity_id: state.entityId, step_name: 'write_post_draft',
+  stage: state.stage, output_summary: '<what was produced, size, key choices>',
+  model_version: '<the id of the model that actually ran>', status: 'success' });
+```
+
+On any failure, log it (`status: 'error'`) and report:
+
+```
+❌ write-post failed at [stage] — [error message] — nothing written, safe to retry
+```
+
+No lock needed — the only pipeline-visible write is the single Step 7 insert, gated.
 
 ---
 
@@ -30,7 +71,7 @@ Extract from Simon's message:
 | `regulated_law25` | Regulated AI & Law 25 | `audit` | Compliance as architecture requirements |
 
 **CTA logic:**
-- `audit` → "Score Your System" card → drives to `/readiness`. Use when the post surfaces a gap — natural next action is self-assessment.
+- `audit` → "Score Your System" card → drives to `/score` (the canonical public lead-capture URL — never point a public CTA at `/readiness`; lessons.md 2026-05-09). Use when the post surfaces a gap — natural next action is self-assessment.
 - `subscribe` → inline email form. Use when the post teaches a pattern — natural next action is "get more like this."
 
 ---
@@ -60,7 +101,7 @@ TITLE OPTIONS:
   3. ...
 
 WORKING SLUG: [kebab-case, ≤60 chars]
-PRIMARY KEYWORD: [the 501-2,400 volume term this post targets — see seo-guidelines.md]
+PRIMARY KEYWORD: [the 501-2,400 volume term this post targets — SEO/GEO rule 1]
 NAMED FAILURE MODE: [specific name for the failure mode, or "n/a" for non-taxonomy posts]
 
 HOOK TYPE: [contrarian | stat_lead | question | story_open | provocative_claim]
@@ -101,29 +142,19 @@ Write the full post. These rules apply without exception.
 
 **Structure:**
 - No `# h1` in body. Use `## h2` as the top-level heading.
-- **BLUF**: Core insight stated in first 150 words — the conclusion, not a preview. (44.2% of LLM citations come from the first 30% of the document.)
-- **Fact-blocks**: Every H2 section opens with a bolded 40-50 word standalone statement — the GEO citation unit.
-- **Headings**: Review all H2/H3s — phrase as specific technical questions where natural.
-- **Named failure mode**: If failure_taxonomy pillar, the failure must be named precisely and defined on first use.
-- **Insight count**: 5-7 genuinely non-obvious claims. Fewer = absorbed by AI summaries. More = diluted.
+- Apply the five SEO/GEO rules (top of this file) — primary keyword, BLUF, fact-blocks, insight count, named failure mode. They are stated once there; do not improvise variants.
 - End on a pointed question OR a one-line STATE tie-in. Not both.
 - 800–1800 words. Most strong posts land at 1000–1400. Do not pad to hit length.
 
-**Voice prohibitions (never use):**
-- "excited to share" / "thrilled to announce"
-- "game-changing" / "revolutionary" / "groundbreaking" / "transformational"
-- "in today's fast-paced world" / "cutting-edge" / "state-of-the-art"
-- Vague lessons without mechanism ("testing matters" → always name what broke and why)
-- Hedging the thesis ("in some cases" / "it depends")
-- Passive voice for diagnostic statements
+**Voice:** `brand/brand-summary.md` is canonical — its Prohibitions list plus the burned-practitioner / specificity / thesis tests. Don't restate the list here; the shared LinkedIn gate greps the fixed phrases mechanically for the extract (Step 6), and editorial Pass 2 greps them for the blog prose.
 
-**Evidence tiering:**
-| Tier | Use as | Example |
-|---|---|---|
-| T1 — Named entity + specific metric + source | Primary claim | Verified stat from a real source |
-| T2 — Named pattern + mechanism | Primary claim | "Retry loops without idempotency keys corrupt state on partial failures" |
-| T3 — General principle with specificity | Supporting color | "Most teams discover this when post-mortems end with 'the model did something weird'" |
-| T4 — Reasoned inference | Never as claims | Don't present as fact |
+**Stat provenance (E — the origin gate; the 2026-07-07 Ramp 65% incident started in this layer):**
+- Every external number, process narrative ("ran in shadow mode"), or attributed statement ("ZenML says…") must trace to a **verbatim sentence fetched from a primary source in this session**, and the draft links that primary URL where the claim appears.
+- Quote at source precision with scope qualifiers intact ("more than 65%", "at Ramp itself", "since deployment") — dropping a qualifier changes the claim.
+- Conclusions drawn from a source's *silence* are the author's — never put them in the source's mouth.
+- Untraceable → cut. A punchier line is never worth an unattributable claim.
+
+**Evidence tiering:** the canonical T1–T4 definitions live in the `research` skill (Phase 1) — do not restate them. The operational rule: only T1-anchored numbers (verbatim source sentence + primary URL) may appear as stats; T2 patterns may carry primary claims without numbers; T3 is supporting color; T4 is never presented as fact.
 
 **Code blocks:**
 - Always annotate: ` ```typescript `, ` ```python `, ` ```sql `, ` ```bash `
@@ -164,42 +195,42 @@ GEO CITABILITY CHECK (required before insert):
   [ ] Primary keyword in title, first H2, and naturally in body
 
 LINKEDIN_EXTRACT:
-[180–300 words. 10-line anatomy:
- Line 1:  Hook — specific failure / contrarian claim / shared-pain question
-          [blank line]
- Lines 2-3: Setup — what most engineers do / think
-          [blank line]
- Lines 4-6: The turn — what's actually happening
-          [blank line]
- Lines 7-9: Lesson — specific, architectural, actionable — include one save-worthy element (checklist, score, taxonomy, or test)
-          [blank line]
- Line 10: Close — question that requires production scar tissue to answer, or STATE tie-in — never generic ("Agree?", "Thoughts?")
- Hashtags: 0–3 niche max, 0 preferred — never the final line
- Full mechanics: .claude/skills/repurpose/references/linkedin-playbook.md]
+[Generate per `.claude/skills/repurpose/references/linkedin-playbook.md` — anatomy, hook
+ patterns, anti-slop checklist all live there; read it, don't restate it. Then run the
+ shared gate `.claude/skills/repurpose/references/linkedin-gate.md` (mechanical greps +
+ judgment checks) on the candidate BEFORE writing it to `linkedin_extract`. Gate failure →
+ rewrite and re-run; never save a failing candidate, never lower the bar.]
 ```
 
 ---
 
-### STEP 7 — Insert to Supabase
+### STEP 7 — Validation Gate, then Insert to Supabase (E)
 
-Use the **PostgREST API** (not the Management API) — see `skills/supabase-cli/SKILL.md` for the full Python template. The Management API is blocked by Cloudflare WAF for large payloads. Write the Python script to a file (`/tmp/insert_post.py`) and run it — do not embed in a bash heredoc.
+**Validation gate — check mechanically before the insert. Any failure → error path, nothing written:**
 
-Key fields to set:
-- `slug`, `title`, `excerpt`, `body_markdown`, `pillar`, `status='draft'`
-- `seo_title`, `seo_description`, `cta_type`, `featured`
-- `reading_time_minutes`, `linkedin_extract`, `tags` (Python list → JSON array)
+- [ ] `pillar` ∈ `failure_taxonomy | state_applied | defensive_arch | meta_layer | regulated_law25` — the Step 1 table is the enum; no other value exists
+- [ ] `cta_type` ∈ `audit | subscribe`
+- [ ] `tags` is a non-empty array of kebab-case strings
+- [ ] `slug` kebab-case, ≤60 chars; `status` = `'draft'`
+- [ ] GEO citability check (Step 6) — every box ticked
+- [ ] Stat provenance (Step 4) holds on the **final** post-editorial text
+- [ ] `linkedin_extract` passed the shared gate (Step 6)
 
-Verify the insert via the Management API (short queries are fine). Read the Supabase access token from your local secret store (`$SUPABASE_ACCESS_TOKEN` in `.env`, or `~/.supabase/access-token` if present):
-```bash
-TOKEN="${SUPABASE_ACCESS_TOKEN:-$(cat ~/.supabase/access-token 2>/dev/null)}"
-REF=ashwrqkoijzvakdmfskj
-curl -s -X POST "https://api.supabase.com/v1/projects/$REF/database/query" \
-  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"query": "SELECT id, slug, title, status, pillar, cta_type, reading_time_minutes FROM blog_posts WHERE slug = '"'"'your-slug'"'"'"}' \
-  | python3 -m json.tool
+**Insert:** `blog_posts` lives in the **public** schema (website data), so `tools/supabase.mjs` (pipeline schema) doesn't cover it — build a one-off client, the exact pattern from `repurpose` Step 2. Column registry: `projects/Content-Engine/.claude/skills/supabase.md`. Do not insert via the Management API (Cloudflare WAF blocks large payloads; short verification queries are fine). Write the script to a file and run it from `projects/Content-Engine/` — do not embed the post body in a bash heredoc.
+
+```javascript
+import { createClient } from '@supabase/supabase-js';
+const pub = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY,
+  { db: { schema: 'public' }, auth: { persistSession: false, autoRefreshToken: false } });
+const { data, error } = await pub.from('blog_posts').insert({
+  slug, title, excerpt, body_markdown, pillar, status: 'draft',
+  seo_title, seo_description, cta_type, featured,
+  reading_time_minutes, linkedin_extract, tags,
+}).select('id, slug, status').single();
+if (error) throw error;   // slug conflict → adjust the slug and retry
 ```
 
-If slug conflicts, adjust and retry.
+Set `state.entityId = data.id`, log the write (`step_name: 'blog_post_inserted'`, stage `insert`, via `logEntry` as in Step 0), then verify by reading the row back with the same client (`id, slug, title, status, pillar, cta_type` by slug).
 
 ---
 
@@ -211,7 +242,7 @@ If slug conflicts, adjust and retry.
 "[title]"
 
 Pillar: [label]
-CTA: [audit → /readiness | subscribe → email form]
+CTA: [audit → /score | subscribe → email form]
 ~[X] min read / [N] words
 
 Slug: /blog/[slug]

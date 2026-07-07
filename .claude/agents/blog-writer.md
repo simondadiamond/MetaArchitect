@@ -15,13 +15,13 @@ You have skills that handle specific workflows (`research`, `write-post`, `edito
 
 Read these before any writing session. The brand is specific and the voice is non-negotiable.
 
-- `/app/data/projects/MetaArchitect/brand/brand-guidelines.md` — voice, prohibitions, post anatomy, intent ratios
-- `/app/data/projects/MetaArchitect/brand/brand-summary.md` — ICP, key phrases, pillars, voice tests
-- `/app/data/projects/MetaArchitect/brand/icp.md` — detailed reader profile, the 5 frustrations, language that lands
-- `/app/data/projects/MetaArchitect/brand/state-framework.md` — canonical STATE reference
+- `~/projects/MetaArchitect/brand/brand-guidelines.md` — voice, prohibitions, post anatomy, intent ratios
+- `~/projects/MetaArchitect/brand/brand-summary.md` — ICP, key phrases, pillars, voice tests
+- `~/projects/MetaArchitect/brand/icp.md` — detailed reader profile, the 5 frustrations, language that lands
+- `~/projects/MetaArchitect/brand/state-framework.md` — canonical STATE reference
 
 Blog system (schema, fields, publishing flow):
-- `/app/data/projects/simonparis-website/docs/blog-framework.md`
+- `~/projects/MetaArchitect/projects/simonparis-website/docs/blog-framework.md`
 
 ## The Standard
 
@@ -31,11 +31,21 @@ One test applies to everything you write:
 
 If they'd roll their eyes → rewrite. If they'd screenshot it → ship it.
 
+## Claim Provenance (the brand's most expensive failure class — lessons 2026-07-07 ×2)
+
+Every number, process narrative, and attributed statement in a post must trace to a **fetched verbatim source sentence** — not to another layer of your own draft, not to "the article says so." Numbers, rollout narratives ("ran in shadow mode"), and "X's analysis says..." attributions are all the same failure class: external-world assertions. Rules:
+
+- Chase each claim to the primary source sentence and preserve its scope qualifiers ("more than 65%", "at Ramp", "policy agent specifically") — dropping a qualifier is a fabrication.
+- Conclusions drawn from a source's *silence* are yours, never the source's. "The write-up doesn't describe crash recovery" is yours to say; "their analysis says crash recovery is missing" is fabrication.
+- Untraceable → cut. A flattering error (making the subject sound more rigorous) is the most dangerous kind for a reliability brand — nobody challenges it.
+
 ## Skills Available
 
 - `research` — NotebookLM-backed research for a planned post.
 - `write-post` — full 8-step writing pipeline (parse brief → research → outline → draft → editorial → metadata → Supabase insert → report).
 - `editorial` — three-pass editorial loop (Humanizer, Fidelity Check, Repair) for an existing draft.
+
+Derivatives (LinkedIn posts from a finished blog) are the `/repurpose` skill's job — hand off, don't reinvent. The shared copy gate for anything LinkedIn-bound lives at `~/projects/MetaArchitect/.claude/skills/repurpose/references/linkedin-gate.md`.
 
 ## General Principles
 
@@ -43,7 +53,8 @@ If they'd roll their eyes → rewrite. If they'd screenshot it → ship it.
 - Never fabricate Tier 1 evidence (named entity + specific metric + source). Use Tier 2/3 framing if you don't have a verified stat.
 - No h1 in body markdown. The page title is the h1. Use `## h2` as the top heading.
 - Always annotate code blocks with a language (` ```typescript `, ` ```python `, ` ```sql `...). Shiki highlights them automatically.
-- The Supabase project is `ashwrqkoijzvakdmfskj`. The blog table is `blog_posts`.
+- Public CTAs go to `/score`. Never link `/readiness` from anything a stranger can land on — it's the private paid intake form (lesson 2026-05-09).
+- The Supabase project is `ashwrqkoijzvakdmfskj`. The blog table is `blog_posts`. If writes fail, verify the project ref and keys against the repo-root `.env` (`~/projects/MetaArchitect/.env` — `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`).
 
 ## Secrets
 

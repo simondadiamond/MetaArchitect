@@ -1,6 +1,6 @@
 ---
 name: teardown-research
-description: Finds and scores real production AI systems as teardown candidates. Writes qualified results to pipeline.teardown_candidates in Supabase. Run when Simon says "research teardown candidates", "find teardown targets", or "fill the teardown pipeline".
+description: Use when Simon says "research teardown candidates", "find teardown targets", "fill the teardown pipeline", or asks for new systems to tear down. Do NOT trigger for generating a teardown from an existing candidate (teardown-generate) or general blog-topic research (research).
 ---
 
 # /teardown-research
@@ -9,7 +9,7 @@ description: Finds and scores real production AI systems as teardown candidates.
 
 Find 3–6 real production AI systems per run that Simon's ICP would recognize, score them against STATE-analyzability + ICP/FDE relevance criteria, and write qualified candidates to `pipeline.teardown_candidates`.
 
-**This skill handles research and scoring only.** Content generation is `/teardown-generate` (not yet built).
+**This skill handles research and scoring only.** Content generation is `/teardown-generate` (live — it has shipped real teardowns; candidates written here feed it directly).
 
 **Ultimate goal**: Each candidate must pass two filters:
 1. **ICP relevance** — LLM Platform/Reliability Leaders at 200–5,000 person enterprises find it credible and worth reading
@@ -21,109 +21,32 @@ A candidate that only passes one filter goes in the skip pile. Credibility compo
 
 ## Supabase Access
 
-Use the Supabase Management API with the access token that persists across workspace volumes. This token can run arbitrary SQL against any schema — no PostgREST exposure required.
+Read `.claude/skills/_shared/supabase-access.md` (repo root) — the single canonical copy of the
+Management-API access pattern (token lookup order, project ref, the `User-Agent` Cloudflare
+workaround). Edit there, never fork here. After reading it, define:
 
 ```python
-#!/usr/bin/env python3
-import json, glob, os, urllib.request
-
-def _get_token():
-    """Find the supabase access token: popebot workspace volumes, then Sterling local."""
-    paths = glob.glob('/app/data/workspaces/*/.supabase/access-token')
-    paths += [os.path.expanduser('~/.supabase/access-token')]
-    for p in paths:
-        if os.path.exists(p):
-            return open(p).read().strip()
-    raise RuntimeError("No supabase access-token found")
-
-TOKEN = _get_token()
-REF   = 'ashwrqkoijzvakdmfskj'
-
-def supabase_sql(query):
-    url  = f'https://api.supabase.com/v1/projects/{REF}/database/query'
-    body = json.dumps({'query': query}).encode()
-    req  = urllib.request.Request(url, data=body, headers={
-        'Authorization': f'Bearer {TOKEN}',
-        'Content-Type':  'application/json',
-        # Cloudflare 403 error 1010 blocks python-urllib's default UA (lessons.md 2026-07-02)
-        'User-Agent':    'supabase-cli/2.30.4',
-    })
-    with urllib.request.urlopen(req) as r:
-        return json.loads(r.read())
+def supabase_sql(query: str):
+    """Per _shared/supabase-access.md. Returns [] for DDL, list[dict] for SELECT/INSERT rows."""
 ```
-
-`[]` response = DDL success. Array of dicts = SELECT/INSERT result rows.
-
-Save as `/tmp/teardown_db.py` and import, or inline.
 
 ---
 
-## First-Run Setup (one-time, done manually in Supabase dashboard)
+## First-Run Setup
 
-The tables must exist before this skill runs. Apply the DDL once via **Supabase SQL Editor** (project `ashwrqkoijzvakdmfskj` → SQL Editor → paste and run the contents of `MetaArchitect/infra/supabase/schema.sql` tables 13–14).
+Tables 13–14 (`pipeline.teardown_candidates`, `pipeline.teardown_drafts`) must exist before this
+skill runs. The canonical DDL lives in `infra/supabase/schema.sql` (tables 13–14) — do not copy
+it here; read it there if you need column names or CHECK constraints. If the tables are missing,
+apply that DDL via the same `supabase_sql` Management API call — no dashboard needed.
 
-To verify before proceeding:
+Verify before proceeding:
 
 ```python
 try:
     supabase_sql("SELECT id FROM pipeline.teardown_candidates LIMIT 1")
     print("Tables exist — proceeding.")
 except Exception as e:
-    raise SystemExit(f"Tables not found — apply DDL via Management API first.\n{e}")
-```
-
-The DDL being applied (for reference):
-
-```sql
--- See MetaArchitect/infra/supabase/schema.sql tables 13-14 for canonical source
-    CREATE TABLE IF NOT EXISTS pipeline.teardown_candidates (
-      id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-      name              text NOT NULL,
-      company           text,
-      category          text,
-      description       text,
-      primary_source_url text,
-      sources           jsonb NOT NULL DEFAULT '[]'::jsonb,
-      icp_relevance     int CHECK (icp_relevance  BETWEEN 1 AND 5),
-      content_yield     int CHECK (content_yield  BETWEEN 1 AND 5),
-      public_info_depth text CHECK (public_info_depth IN ('shallow','medium','deep')),
-      state_s_score     int CHECK (state_s_score   BETWEEN 0 AND 2),
-      state_t_score     int CHECK (state_t_score   BETWEEN 0 AND 2),
-      state_a_score     int CHECK (state_a_score   BETWEEN 0 AND 2),
-      state_tol_score   int CHECK (state_tol_score BETWEEN 0 AND 2),
-      state_e_score     int CHECK (state_e_score   BETWEEN 0 AND 2),
-      interesting_gap   text,
-      teardown_angle    text,
-      status            text NOT NULL DEFAULT 'candidate'
-                          CHECK (status IN ('candidate','selected','in_teardown','published','skipped')),
-      skip_reason       text,
-      workflow_id       text,
-      created_at        timestamptz NOT NULL DEFAULT now(),
-      updated_at        timestamptz NOT NULL DEFAULT now()
-    );
-    CREATE TABLE IF NOT EXISTS pipeline.teardown_drafts (
-      id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-      candidate_id     uuid REFERENCES pipeline.teardown_candidates(id) ON DELETE SET NULL,
-      system_summary   text,
-      interview_answers jsonb NOT NULL DEFAULT '{}'::jsonb,
-      state_scores     jsonb NOT NULL DEFAULT '{}'::jsonb,
-      gaps             jsonb NOT NULL DEFAULT '[]'::jsonb,
-      remediation      jsonb NOT NULL DEFAULT '[]'::jsonb,
-      full_content     text,
-      linkedin_post    text,
-      post_angle       text,
-      blog_slug        text,
-      blog_url         text,
-      published_at     timestamptz,
-      status           text NOT NULL DEFAULT 'draft'
-                          CHECK (status IN ('draft','reviewed','published','archived')),
-      workflow_id      text,
-      generation_log   jsonb NOT NULL DEFAULT '[]'::jsonb,
-      created_at       timestamptz NOT NULL DEFAULT now(),
-      updated_at       timestamptz NOT NULL DEFAULT now()
-    );
-    ALTER TABLE pipeline.teardown_candidates ENABLE ROW LEVEL SECURITY;
-    ALTER TABLE pipeline.teardown_drafts     ENABLE ROW LEVEL SECURITY;
+    raise SystemExit(f"Tables not found — apply infra/supabase/schema.sql tables 13-14 via supabase_sql first.\n{e}")
 ```
 
 ---
@@ -162,7 +85,7 @@ The DDL being applied (for reference):
 
 - **Regulated domain** — finserv, healthcare, insurance, legal = stronger Law 25/OSFI angle + differentiates from most teardown content
 - **Named failure modes** — system has broken publicly (postmortem, outage report, archived issues)
-- **Recency** — actively in production 2024–2025
+- **Recency** — actively in production in the current or prior year (derive at runtime — never hardcode years, lessons.md 2026-03-31)
 - **Surprise factor** — gap is non-obvious; not just "they don't log" but "their state model breaks specifically when X happens"
 
 ---
@@ -185,11 +108,18 @@ The DDL being applied (for reference):
 
 ### Search queries
 
+Derive year anchors at runtime — hardcoded years rot (lessons.md 2026-03-31):
+
+```python
+from datetime import date
+YEARS = f"{date.today().year - 1} OR {date.today().year}"  # current and prior year
+```
+
 Mix and match per chosen category:
-- `"[product name] engineering blog architecture 2024 OR 2025"`
+- `"[product name] engineering blog architecture {YEARS}"`
 - `"[product name] how it works design decisions"`
 - `"[company] LLM agent production case study"`
-- `"[domain] AI production postmortem failure 2024 2025"`
+- `"[domain] AI production postmortem failure {YEARS}"`
 - `"[FDE target company] AI system design technical deep dive"`
 
 Run 4–6 searches per invocation. WebFetch primary sources for candidates with promising titles. Target 8–12 raw candidates before applying the filter.
@@ -225,32 +155,14 @@ Combines *insight density* (how rich and specific are the STATE gaps?) with *ext
 
 ### STATE Pillars (0, 1, 2 per pillar)
 
-Score each based on what public information reveals:
+Canonical rubric: `.claude/skills/_shared/state-scoring-rubric.md` (repo root) — read it before
+scoring; never fork a local variant.
 
-**S — Structured**: Is an explicit state schema documented?
-- 0 = No evidence of state management; likely stateless or ad-hoc
-- 1 = Some state management implied but no explicit schema
-- 2 = Typed state objects with workflow stages documented
-
-**T — Traceable**: Can every LLM call for a session be reconstructed?
-- 0 = No mention of logging, tracing, or observability
-- 1 = General logging mentioned but not LLM-call-level tracing
-- 2 = Full trace capability documented (inputs/outputs/tool calls/session-level)
-
-**A — Auditable**: Can it explain a specific decision from last month?
-- 0 = No audit capability, no compliance story
-- 1 = Audit mentioned at surface level (access logs only, not decision records)
-- 2 = Decision records, explainability, or regulatory compliance documented
-
-**Tol — Tolerant**: Does the workflow resume from failure or restart from scratch?
-- 0 = No retry/resume evident; crash-and-restart behavior
-- 1 = Basic retries but no mid-workflow checkpoint/resume
-- 2 = Explicit checkpoint/resume, idempotency, or distributed lock documented
-
-**E — Explicit**: Are there validation gates before outputs become real-world actions?
-- 0 = LLM outputs directly trigger actions without intermediate gates
-- 1 = Some content filtering or confidence thresholds mentioned
-- 2 = Explicit validation gates, human-in-the-loop checkpoints, or output schemas
+Deltas specific to this skill:
+- Score from **public information only** — what the sources reveal, not what you'd guess a
+  serious team probably does.
+- A pillar the public evidence doesn't reach stays **unscored (NULL)** — never invent a score.
+  At least 3 of 5 pillars must be scoreable with confidence or the candidate fails the filter.
 
 ### Interesting Gap (free text — 1–2 sentences)
 The most interesting STATE violation inferable from public information. This becomes the teardown's thesis. If you can't articulate a specific gap, the candidate is too thin.
@@ -305,6 +217,8 @@ For each selected category:
 3. Look for: architecture diagrams, engineering decisions, tech stack specifics, failure modes, postmortems, GitHub links
 4. Collect candidate data in a list of dicts
 
+Keep every URL you WebFetch in a `sources_fetched` list — it goes into the Step 7 run log (T).
+
 Per candidate dict:
 ```python
 {
@@ -320,15 +234,24 @@ Per candidate dict:
     'icp_relevance': 4,
     'content_yield': 4,
     'public_info_depth': 'deep',
+    # Pillar scores: 0/1/2 per the shared rubric. A pillar the evidence doesn't reach is
+    # set to None — it stays NULL in the DB. Never invent a score.
     'state_s_score': 1,
     'state_t_score': 1,
     'state_a_score': 0,
-    'state_tol_score': 0,
+    'state_tol_score': None,
     'state_e_score': 1,
     'interesting_gap': '1-2 sentences.',
     'teardown_angle': '1 sentence hook.',
 }
 ```
+
+**Stat provenance (the Ramp 65% orphan entered the pipeline at this exact step):** any number
+written into `description` or `interesting_gap` — a percentage, multiplier, count, dollar figure —
+carries its source URL inline, in parentheses, right after the number, with the source's scope
+qualifiers intact ("more than 65% of approvals at Ramp itself (https://...)"). Downstream
+generation and LinkedIn derivatives inherit these fields verbatim; an unsourced number here
+becomes an unattributable claim on LinkedIn.
 
 Collect 8–12 raw candidates before filtering.
 
@@ -345,11 +268,16 @@ If fewer than 3 pass, run 2 more searches before concluding.
 
 ### Step 6: Write qualified candidates
 
+Pillar scores pass through exactly as scored — an unscored pillar writes NULL. No silent
+defaults: a missing score must never invent a number.
+
 ```python
 qualified = []   # populated in Step 5
 
+def esc(v): return (str(v) if v is not None else '').replace("'", "''")
+def num(v): return v if v is not None else "NULL"   # unscored stays NULL — never default
+
 for c in qualified:
-    def esc(v): return (str(v) if v is not None else '').replace("'", "''")
     sql = f"""
         INSERT INTO pipeline.teardown_candidates
           (name, company, category, description, primary_source_url, sources,
@@ -360,10 +288,10 @@ for c in qualified:
           '{esc(c["name"])}', '{esc(c.get("company"))}', '{esc(c.get("category"))}',
           '{esc(c.get("description"))}', '{esc(c.get("primary_source_url"))}',
           '{json.dumps(c.get("sources", [])).replace("'", "''")}'::jsonb,
-          {c.get("icp_relevance") or "NULL"}, {c.get("content_yield") or "NULL"},
-          '{esc(c.get("public_info_depth","medium"))}',
-          {c.get("state_s_score",1)}, {c.get("state_t_score",1)}, {c.get("state_a_score",0)},
-          {c.get("state_tol_score",0)}, {c.get("state_e_score",1)},
+          {num(c.get("icp_relevance"))}, {num(c.get("content_yield"))},
+          '{esc(c["public_info_depth"])}',
+          {num(c.get("state_s_score"))}, {num(c.get("state_t_score"))}, {num(c.get("state_a_score"))},
+          {num(c.get("state_tol_score"))}, {num(c.get("state_e_score"))},
           '{esc(c.get("interesting_gap"))}', '{esc(c.get("teardown_angle"))}',
           'candidate', '{WORKFLOW_ID}'
         ) RETURNING id
@@ -375,17 +303,25 @@ for c in qualified:
 
 ### Step 7: Log the run
 
+`MODEL_ID` = the id of the model that actually ran this session — set it at runtime; never
+hardcode a model id (traceability data that lies when another model runs).
+
 ```python
+MODEL_ID = '<the id of the model that actually ran>'
+
 skipped_summary = '; '.join([
     f"{c['name']} ({c.get('_skip_reason','unknown')})"
     for c in raw_candidates if c not in qualified
 ])[:500]
 
+# sources_fetched: every URL WebFetched in Step 4 (T — the run's evidence trail)
+sources_blob = json.dumps(sources_fetched)[:1000].replace("'", "''")
+
 supabase_sql(f"""
     INSERT INTO pipeline.logs (workflow_id, entity_id, step_name, stage, output_summary, model_version, status)
     VALUES ('{WORKFLOW_ID}', 'teardown-research', 'research_complete', 'complete',
-            '{skipped_summary.replace("'","''")}... inserted {len(qualified)}',
-            'claude-sonnet-4-6', 'success')
+            '{skipped_summary.replace("'","''")}... inserted {len(qualified)} | sources_fetched: {sources_blob}',
+            '{MODEL_ID}', 'success')
 """)
 ```
 
@@ -411,7 +347,7 @@ INSERTED:
   2. ...
 
 SKIPPED:
-  - [Name]: [reason — shallow / ICP<3 / FDE<2 / already exists / <3 pillars scoreable]
+  - [Name]: [reason — shallow depth / ICP<3 / yield<3 / already exists / <3 pillars scoreable]
 
 TOP PICK for next teardown: [Name with highest ICP + content_yield combined score]
   → [teardown_angle]
@@ -425,7 +361,12 @@ Next: say "teardown [name]" to generate content.
 ## STATE Compliance
 
 - **S — Structured**: Every candidate is a typed row with explicit scores, status, and source chain. No free-form blobs.
-- **T — Traceable**: `workflow_id` stamped on every inserted row. Run logged to `pipeline.logs` with input/output summary.
+- **T — Traceable**: `workflow_id` stamped on every inserted row. Run logged to `pipeline.logs` with input/output summary plus the `sources_fetched` URL list (the run's evidence trail).
 - **A — Auditable**: `interesting_gap` + `teardown_angle` + `sources` preserve the reasoning chain so any future agent can understand why a candidate was included.
 - **Tol — Tolerant**: Each INSERT is atomic. If the run crashes mid-way, already-inserted candidates are preserved. Rerun skips existing names via the dedup check in Step 2.
-- **E — Explicit**: No writes happen until all three gates pass: `icp_relevance >= 3`, `fde_relevance >= 2`, `public_info_depth != 'shallow'`, ≥3 STATE pillars scored, dedup passes.
+- **E — Explicit**: No candidate is written until ALL five gates pass (same list as Step 5's filter — if these ever diverge, Step 5 is canonical):
+  1. `icp_relevance >= 3`
+  2. `content_yield >= 3`
+  3. `public_info_depth != 'shallow'`
+  4. ≥3 STATE pillars scored with confidence
+  5. case-insensitive name dedup against existing rows

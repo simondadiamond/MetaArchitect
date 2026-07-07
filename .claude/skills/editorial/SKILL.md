@@ -1,11 +1,13 @@
 ---
 name: editorial
-description: Three-pass editorial loop for The Meta Architect blog content. Trigger when Simon asks to edit, review, or improve a draft — or when write-post hands off a completed draft for quality control. Can run on a full post or a specific section. Does NOT add new content or change the argument — only improves execution.
+description: Use when Simon asks to edit, review, or improve a blog draft or a specific section — or when write-post hands off a completed draft for quality control. Contract - does NOT add new content or change the argument, only improves execution. Do NOT trigger for writing a new post (write-post) or for LinkedIn copy (the shared gate in repurpose/references covers that).
 ---
 
 ## Editorial Loop — Three Passes
 
-Do not skip a pass. Do not batch them. Run in order and show output between passes so Simon can see what changed.
+**Risk tier: low — deliberately exempt.** Read-only: no DB writes, no external API calls. No state object, no pipeline logging; the calling skill (write-post) carries the STATE obligations for the run.
+
+Do not skip a pass. Do not batch them. Output discipline: Pass 2's score block is always shown in full; Passes 1 and 3 present a change summary (or diff) and the final text respectively — never re-print the whole draft between passes.
 
 ---
 
@@ -25,13 +27,20 @@ Goal: improve rhythm and remove crutch language without touching the argument or
 - Do not remove specific technical language (it's credibility, not jargon)
 - Do not alter the argument structure
 
-Present the humanized draft.
+Present a compact summary of what changed (bullets or a diff) — not the full draft.
 
 ---
 
 ### PASS 2 — Fidelity Check
 
-Score each dimension 0–10. Anything below 7 is flagged for repair.
+**Mechanical greps first** (write the draft to a temp file). Patterns come from `.claude/skills/repurpose/references/linkedin-gate.md`, adapted to blog prose: no word-count or link checks here, and **em dashes are allowed** — the zero-em-dash rule is LinkedIn-scoped, not a blog rule.
+
+```bash
+grep -inE "excited to share|thrilled to announce|game.chang|revolutionary|groundbreaking|transformational|cutting.edge|state.of.the.art|in today's fast|in the age of ai" draft.md   # must be 0 — brand prohibitions
+grep -inE "it'?s not [^.]{1,60}, (it'?s|it is)" draft.md   # AI-tell shape — flag every hit; acceptable only as the brand's own plumbing line, used deliberately in body prose — never in the title or opening hook
+```
+
+Then score each dimension 0–10. Anything below 7 is flagged for repair.
 
 | # | Dimension | Question to ask |
 |---|---|---|
@@ -40,9 +49,10 @@ Score each dimension 0–10. Anything below 7 is flagged for repair.
 | 3 | **Thesis alignment** | Does the post connect, explicitly or implicitly, to "state beats intelligence"? |
 | 4 | **Pillar alignment** | Does it clearly sit in the declared pillar? |
 | 5 | **Voice match** | Practitioner-to-practitioner, not guru-to-student? No talked-down-to feeling? |
-| 6 | **Prohibition check** | Zero banned phrases? (excited to share / game-changing / in today's fast-paced world / etc.) |
+| 6 | **Prohibition check** | Zero banned phrases per `brand/brand-summary.md` Prohibitions? The grep above catches the fixed strings; judgment catches the rest (hedged thesis, vague lessons without mechanism, passive-voice diagnostics). |
 | 7 | **Hook strength** | Would a burned SRE keep reading after the first paragraph — or skim past it? |
 | 8 | **CTA alignment** | Does the natural next action at the end of the post match the declared CTA type? |
+| 9 | **Stat provenance** | Does every external number, process narrative, or attributed statement trace to a verbatim primary-source sentence whose URL is linked in the draft — scope qualifiers ("more than", "at X itself") intact? (The Ramp 65% passed through editorial unchallenged — lessons.md 2026-07-07.) |
 
 Report the scores:
 ```
@@ -57,8 +67,10 @@ FIDELITY CHECK
 6. Prohibition check:    [X]/10
 7. Hook strength:        [X]/10
 8. CTA alignment:        [X]/10
+9. Stat provenance:      [X]/10
 
 FLAGS (scores < 7): [list]
+GREP HITS: [none | list line numbers + phrase]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 

@@ -1,11 +1,11 @@
 ---
 name: pattern-guardian
-description: Use when the user types /pattern, /log, /end, "End Session", or "Wrap up" to extract generalizable engineering patterns from the current work session and push a structured pattern log to Supabase (pipeline.sessions) for The Meta Architect brand and curriculum.
+description: Use when the user types /pattern or /log, or when the session-close skill reaches its pattern-log step. Do NOT trigger directly on "end session"/"wrap up"/"/end" — those route to session-close, which invokes this as one of its steps.
 ---
 
 # Pattern Guardian (S.T.A.T.E. Edition)
 
-You are the Pattern Guardian for The Meta Architect (Simon Paris). Extract generalizable engineering patterns from the current session and output a reusable, Obsidian-ready asset. Focus on state architecture, production failure classes, and human friction. Strip all company-specific context.
+You are the Pattern Guardian for The Meta Architect (Simon Paris). Extract generalizable engineering patterns from the current session and push a structured pattern log to Supabase (`pipeline.sessions`). Focus on state architecture, production failure classes, and human friction. Strip all company-specific context.
 
 ## Phase 1 — Context Check
 
@@ -57,7 +57,11 @@ Reason: [1 sentence — why this session doesn't produce a publishable pattern]
 Session type: [UI work | deployment ops | tooling setup | other non-architectural work]
 Logged to Supabase: metadata only (no full artifact)
 ```
-Then push a minimal record to Supabase with: date, status=`skipped`, full_log=the gate failure reason. Skip all remaining phases.
+Then write the well-formed skipped row directly (no artifact file needed):
+```bash
+node ~/projects/MetaArchitect/.claude/skills/pattern-guardian/scripts/push_pattern_to_supabase.mjs --skipped "<the 1-sentence gate failure reason>" --model <id of the model actually running>
+```
+Skip all remaining phases.
 
 ---
 
@@ -84,7 +88,7 @@ time: [HH:MM]
 type: pattern-log
 status: raw
 tags:
-  - #[state-failure | defensive-architecture | meta-layer | law25-compliance | tool-n8n | tool-obsidian | agent-design | observability]
+  - #[state-failure | defensive-architecture | meta-layer | law25-compliance | agent-design | observability]
 pattern_confidence: [High | Medium | Low]
 ---
 
@@ -160,18 +164,20 @@ pattern_confidence: [High | Medium | Low]
 
 After outputting the artifact, run these two steps without commentary:
 
-**1. Write the log to a temp file** in the current working directory:
-```bash
-# Write the full markdown artifact to .pattern_log.md
-```
-Use the Write tool to write the exact markdown output to `.pattern_log.md` in the repo root (cwd).
+**1. Write the artifact** with the Write tool to `/home/diamond/projects/MetaArchitect/projects/Content-Engine/.tmp/pattern_log.md` (gitignored — never the repo root).
 
 **2. Run the push script:**
 ```bash
-node ~/projects/MetaArchitect/.claude/skills/pattern-guardian/scripts/push_pattern_to_supabase.mjs
+node ~/projects/MetaArchitect/.claude/skills/pattern-guardian/scripts/push_pattern_to_supabase.mjs --model <id of the model actually running>
 ```
 
-The script reads `.pattern_log.md`, parses the fields, and writes a row to `pipeline.sessions` via the Content-Engine data layer (`projects/Content-Engine/tools/supabase.mjs`, which reads `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` from `.env` at repo root).
+The script reads the artifact (that path is its default), validates it, and writes a row to `pipeline.sessions` via the Content-Engine data layer (`projects/Content-Engine/tools/supabase.mjs`, which reads `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` from `.env` at repo root).
+
+**STATE contract (enforced by the script):**
+- **E** — validation gate before any write: `date` must parse, `pattern_confidence` ∈ {High, Medium, Low}, `status` ∈ {raw, skipped}, and at least one content field must extract non-trivially. Failure prints exactly what's missing and exits non-zero with nothing written.
+- **Tolerant** — session row is inserted first, then the snippet, then the link is patched on: a mid-run failure never orphans a snippet that a retry would duplicate.
+- **T** — one `pipeline.logs` entry (`step_name: pattern_logged`) after the push. `--model` = the id of the model that actually ran this session — never hardcoded, never guessed.
+- Failures print the standard error format: `❌ /pattern failed at [stage] — [error] — safe to retry`.
 
 After the script runs, output one line:
 ```
@@ -194,9 +200,7 @@ If the push fails, report the error inline. Do not retry automatically.
 | ICP Pain line | `icp_pain` | Section 6 |
 | Full markdown | `full_log` | Entire artifact |
 
-**Snippet logic**: If Simon's Reality is a real, non-N/A sentence, the script creates a `humanity_snippets` row first, then links it via `related_humanity_snippet`. If no real snippet exists, neither row nor link is written.
-
-**History**: This skill originally pushed to Airtable (`push_pattern_to_airtable.mjs`, kept for reference). The content pipeline migrated to Supabase (`pipeline.*` schema) in 2026-06; pattern logs live in `pipeline.sessions`.
+**Snippet logic**: If Simon's Reality is a real, non-N/A sentence, the script creates a `humanity_snippets` row after the session row and links it via `related_humanity_snippet`. If no real snippet exists, neither row nor link is written.
 
 ---
 
@@ -210,3 +214,7 @@ If the push fails, report the error inline. Do not retry automatically.
 ## Why the Humanity Snippet Matters (When Real)
 
 Simon's ICP — senior LLM Platform Leads — are deeply cynical about AI-generated content. One specific lived detail (time of day, frustration, realization) is what separates a practitioner log from a textbook. When a real moment is present, capture it. When it's not, leave it blank — a fabricated snippet is worse than none.
+
+---
+
+Session close is bigger than the pattern log — the full ritual (goals update, lessons check, this skill, next-action) is the `session-close` skill; when invoked via /end, expect to be called BY it.
