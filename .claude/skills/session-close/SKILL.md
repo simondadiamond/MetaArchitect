@@ -33,13 +33,17 @@ Nothing broke → say so explicitly ("no lessons this session") rather than sile
 
 Invoke the `pattern-guardian` skill (its full gate applies — a session with no generalizable pattern writes a skipped record, which is a valid outcome, not a failure).
 
-### 4. Hygiene sweep (30 seconds, mechanical)
+### 4. Brain promotion (human-gated)
+
+Scan the session for durable facts that belong in the second brain (`~/projects/brain` — see memory `project-second-brain`): decisions made, numbers/dates/paths established, client/people facts, infra changes. **Propose at most 2-3 candidates** as ready-to-run `brain save "<fact>" --domain <d> --tags <t>` lines and apply only what Simon confirms — never auto-save. Quality bar: one fact each, concrete, would someone ask for this directly? Skip-worthy sessions say "nothing brain-worthy" explicitly. (Boundary reminder: how-Claude-works facts go to auto-memory, not the brain; things the repo/git already records don't qualify.)
+
+### 5. Hygiene sweep (30 seconds, mechanical)
 
 - Test rows: did this session write any pipeline rows as tests/smoke checks? They must be `rejected`/deleted now (Data Rule 6, lessons 2026-07-06).
 - Scratch litter: anything this session left in the repo working tree that shouldn't be committed (`git status --short` — untracked files in the primary checkout bite later, lesson 2026-07-06).
 - Orphan processes: if the session started servers/watchers, kill them **by port-owner pid, never broad `pkill -f`**, then `systemctl --user is-active command-center story-worker`.
 
-### 5. Confirm out
+### 6. Confirm out
 
 Close with exactly this shape:
 
@@ -49,10 +53,11 @@ Done: <what shipped this session, one line each>
 Goals: <what was checked off / proposed / appended>
 Lessons: <entry title(s), or "none">
 Pattern: <logged: <title> | skipped: <reason>>
+Brain: <n note(s) saved | nothing brain-worthy>
 **Next Action → [the single next task]** — [command/step, ~time]
 ```
 
 ## Rules
 
-- Steps 1–4 run in order but a failure in one never aborts the rest — note it in the close-out and keep going. The ritual completing imperfectly beats the ritual not completing.
+- Steps 1–5 run in order but a failure in one never aborts the rest — note it in the close-out and keep going. The ritual completing imperfectly beats the ritual not completing.
 - This skill never does new project work. If Simon's "wrap up" message also contains a task, do the task first, then run this.
