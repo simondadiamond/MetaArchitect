@@ -218,6 +218,7 @@ For each selected category:
 4. Collect candidate data in a list of dicts
 
 Keep every URL you WebFetch in a `sources_fetched` list — it goes into the Step 7 run log (T).
+**Every source that shaped a candidate field must ALSO appear in that candidate's `sources` array** — a consulted-but-unlisted source is how the Ramp "shadow mode" transplant became untraceable (2026-07-07): the term came from a LangChain article no verification pass could check because it wasn't on the candidate's list. If a claim came from a URL, the URL goes on the candidate.
 
 Per candidate dict:
 ```python
@@ -246,12 +247,28 @@ Per candidate dict:
 }
 ```
 
-**Stat provenance (the Ramp 65% orphan entered the pipeline at this exact step):** any number
-written into `description` or `interesting_gap` — a percentage, multiplier, count, dollar figure —
-carries its source URL inline, in parentheses, right after the number, with the source's scope
-qualifiers intact ("more than 65% of approvals at Ramp itself (https://...)"). Downstream
-generation and LinkedIn derivatives inherit these fields verbatim; an unsourced number here
-becomes an unattributable claim on LinkedIn.
+**Claim provenance (the Ramp 65% orphan AND the fabricated "shadow mode" narrative both entered
+the pipeline at this exact step):** every external-world assertion written into `description`,
+`interesting_gap`, or `teardown_angle` must trace to a sentence you actually fetched this run:
+
+- **Numbers** — a percentage, multiplier, count, dollar figure — carry their source URL inline,
+  in parentheses, right after the number, with the source's scope qualifiers intact
+  ("more than 65% of approvals at Ramp itself (https://...)").
+- **Process narratives** — how the system was rolled out, validated, or operated ("shadow mode",
+  "pioneered X", "validated against ground truth", "accuracy thresholds") — must paraphrase a
+  fetched sentence **about the same subsystem**. The Ramp candidate said "shadow mode rollout
+  ... against human ground truth until accuracy thresholds are met"; the listed sources contain
+  none of it. The term turned out to be real — a LangChain article describes Ramp's
+  *self-monitoring/alerting loop* running in shadow mode — but it was transplanted onto the
+  approval rollout and embellished. A real term applied to the wrong subsystem is still a
+  fabrication. Flattering upgrades like this are the most dangerous class: they make the
+  subject sound MORE rigorous, so nobody challenges them.
+- **Attributed statements** ("X's write-up says...") — the named source must contain the statement.
+  Conclusions drawn from a source's *silence* are OURS, never the source's.
+
+If a claim can't be traced to a fetched sentence, cut it. Downstream generation and LinkedIn
+derivatives inherit these fields verbatim; an unsourced claim here becomes an unattributable
+claim on LinkedIn.
 
 Collect 8–12 raw candidates before filtering.
 
