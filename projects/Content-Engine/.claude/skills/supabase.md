@@ -178,7 +178,7 @@ TABLES.ENGAGEMENT_OPPORTUNITIES  // 'engagement_opportunities' (Plan 3)
 | model_version | text | |
 | status | text | success \| error |
 
-### `sessions` (used by `/pattern` + pattern-guardian)
+### `sessions` (written by session-close + daily sweep; read by weekly-review Step 1c)
 | Column | Type | Notes |
 |--------|------|-------|
 | date | date | |
@@ -188,7 +188,7 @@ TABLES.ENGAGEMENT_OPPORTUNITIES  // 'engagement_opportunities' (Plan 3)
 | tags | text[] | |
 | pattern_confidence | text | |
 | full_log | text | |
-| status | text | |
+| status | text | raw \| skipped \| promoted \| dropped — weekly-review flips raw → promoted/dropped |
 
 ### Plan 5 prep — `blog_ideas` / `blog_posts`
 See `infra/supabase/schema.sql`. Not yet wired into commands.

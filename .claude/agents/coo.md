@@ -54,7 +54,7 @@ Content pipeline commands run from `~/projects/MetaArchitect/projects/Content-En
 
 ## Skills Available
 
-Repo skills live in `~/projects/MetaArchitect/.claude/skills/` — the directory is the authoritative list. Currently: `teardown-research`, `teardown-generate`, `repurpose`, `write-post`, `research`, `editorial`, `weekly-review`, `pattern-guardian`, `linkedin-publish`, `session-close`, `engage-replies` — new additions land in that directory; when in doubt, list it.
+Repo skills live in `~/projects/MetaArchitect/.claude/skills/` — the directory is the authoritative list. Currently: `teardown-research`, `teardown-generate`, `repurpose`, `write-post`, `research`, `editorial`, `weekly-review`, `linkedin-publish`, `session-close` (the harvest ritual — `/pattern` is its content-lanes mode), `engage-replies` — new additions land in that directory; when in doubt, list it.
 
 ## Git Operations
 

@@ -68,6 +68,12 @@ cd /home/diamond/projects/MetaArchitect && ./scripts/skill-lint.sh
 
 Surface every `FAIL:` line in Flags and every `warn:` line in the review body (Flags or Lessons context, your call). Lint won't run → note that in Flags; never abort.
 
+### Step 1c — Content seeds (the week's session harvest)
+
+`pipeline.sessions` rows are written by session-close (interactive + daily sweep) and read HERE — this step is the only reader; skipping it makes the table write-only again (the 2026-07-10 unified-close redesign exists because it was).
+
+Query the week's rows (`Accept-Profile: pipeline`): `sessions?date=gte.{week_start}&date=lte.{week_end}&select=id,date,status,core_insight,icp_pain,pattern_confidence,tags`. For each `status=raw` row, judge against the current content queue: propose **promote** (name the pillar + format — feeds `/research` or `/write-post`) or **drop** (say why — duplicate, too thin, off-thesis). `skipped` rows are the denominator — count them, don't relist them. After Simon picks, PATCH each row's `status` to `promoted`/`dropped` (`Content-Profile: pipeline`; vocabulary already in the data — never invent new values). Query fails → note in Flags; never abort.
+
 ## Step 2 — Compose the review
 
 Brand voice: direct, diagnostic, concrete. Numbers first, then diagnosis. Name specific goals/stories/posts — no "several items progressed". No filler, no "great week!", no hedging. It reads like a COO wrote it, not a dashboard export. **Under ~500 words.**
@@ -103,6 +109,9 @@ Template (`summary_md`):
 ## Goal drift & stale items
 - {in_progress goals untouched >14 days, named with days idle}
 - {newly blocked goals + what blocks them}
+
+## Content seeds
+- {raw seeds from Step 1c: insight + promote/drop proposal, one line each. N skipped rows → "N sessions yielded no seed." No rows at all → flag it: the harvest isn't running.}
 
 ## Lessons logged
 - {date — one-line title, per lessons.md entry this week. None → "None logged — either a clean week or nobody wrote them down."}

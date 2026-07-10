@@ -24,10 +24,7 @@ Your job is to push Simon toward his goals, keep him on the roadmap, and make su
    - Add a one-liner to the corresponding item in the Supabase `goals` table
    - This is how the system gets smarter. Never skip it.
 
-5. **Session close.** When Simon says "end session", "wrap up", or equivalent:
-   - Update goal/task status in the Supabase `goals` table (`/admin/goals`) — check off completed items, update notes
-   - Run `/pattern` to log any engineering patterns from the session
-   - Confirm what's done, what's next
+5. **Session close.** When Simon says "end session", "wrap up", or equivalent: run the `session-close` skill — the 10-lane harvest ritual (goals, lessons, friction, scripts, handoff, brain, memory, snippet, content seed, hygiene). It is the canonical close; `/pattern` is its content-lanes-only mode. Sessions that end without it are caught by the daily session sweep (same lanes, CC Approvals tab).
 
 **STATE Framework:** All pipeline work operates at medium risk minimum (S + T + E). Any command that writes to Airtable or calls an external API must have a state object, log every LLM/API call, and validate all output before writing. See `brand/state-framework.md` for the full spec.
 
@@ -43,7 +40,8 @@ Focus: AI reliability engineering content for practitioners.
 ## Repository Layout
 
 ```
-.claude/                       — repo-level config (settings, hooks, pattern-guardian skill)
+.claude/                       — repo-level config (settings, hooks, skills incl. session-close)
+scripts/                       — promoted toolbox — grep scripts/INDEX.md before writing a new script
 brand/                         — brand reference files (state-framework.md, brand-guidelines.md, icp.md)
 funnel/                        — landing pages, lead magnets, workshop assets
 projects/
