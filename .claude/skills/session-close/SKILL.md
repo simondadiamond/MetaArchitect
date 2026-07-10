@@ -35,7 +35,12 @@ Invoke the `pattern-guardian` skill (its full gate applies — a session with no
 
 ### 4. Brain promotion (human-gated)
 
-Scan the session for durable facts that belong in the second brain (`~/projects/brain` — see memory `project-second-brain`): decisions made, numbers/dates/paths established, client/people facts, infra changes. **Propose at most 2-3 candidates** as ready-to-run `brain save "<fact>" --domain <d> --tags <t>` lines and apply only what Simon confirms — never auto-save. Quality bar: one fact each, concrete, would someone ask for this directly? Skip-worthy sessions say "nothing brain-worthy" explicitly. (Boundary reminder: how-Claude-works facts go to auto-memory, not the brain; things the repo/git already records don't qualify.)
+Scan the session for durable facts that belong in the second brain (`~/projects/brain` — see memory `project-second-brain`): decisions made, numbers/dates/paths established, client/people facts, infra changes. **No fixed cap — the quality bar is the gate** (one fact each, concrete, would someone ask for this directly?). Most sessions yield 0-3; a dense session may legitimately yield more. Propose them as ready-to-run `brain save "<fact>" --domain <d> --tags <t>` lines and apply only what Simon confirms — never auto-save. Skip-worthy sessions say "nothing brain-worthy" explicitly. (Boundary: how-Claude-works facts → auto-memory; things the repo/git already records don't qualify.)
+
+**Contradiction pre-check (mandatory, deterministic, free):** before proposing each candidate, run `brain find "<candidate's key terms>"`. Confident hit on an existing note →
+- same fact → drop the candidate (already known);
+- newer/changed fact → propose an **update to that note** (edit + `brain doctor --fix` + commit), not a duplicate;
+- session did something that **contradicts** an existing note (config changed, decision reversed, number moved) → propose the correction even if nobody asked — a confidently wrong note is worse than a missing one (n8n lesson, 2026-07-10). Corrections to security/posture notes must cite the verifying command + date.
 
 ### 5. Hygiene sweep (30 seconds, mechanical)
 
