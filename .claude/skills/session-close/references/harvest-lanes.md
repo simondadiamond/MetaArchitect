@@ -37,7 +37,20 @@ context. Contents: goal, verified context (paths, gotchas, decisions made — ma
 
 ## 6. Brain facts — `brain save` / note edit → read by `brain find`
 Durable facts about Simon's life/business/infra: decisions, numbers, dates, paths, people.
-Bar: one fact, concrete, someone would ask for it directly. No fixed cap — quality is the gate.
+Bar (all three, else drop — no fixed cap, quality is the gate):
+- **Atomic** — one fact, concrete, standalone.
+- **Recall test** — you can name the realistic future question where `brain find` surfaces
+  this note AND it changes the next action. Can't name the trigger question → it's trivia, drop.
+  (This is the gate that kills "nice to know" saves — if you can't say *when* it's read, it isn't saved.)
+- **Non-derivable test** — not trivially re-discoverable from the live system in seconds
+  (`ls` the dir, read the config, `git log`). Save the non-obvious *decision or gotcha*, not the
+  discoverable inventory: when a candidate mixes both (device is X, and the gotcha is Y), lead with
+  the durable gotcha and cite the inventory only as example context — never enumerate it as the fact.
+- **Shape (write the fact, not its story)** — length is free and does not affect STATE compliance
+  (the save *pipeline* is what's compliant), but terser recalls better. Two shapes: a *reference card*
+  (paths/commands/decisions) may be dense because every clause is a lookup value; a *decision/lesson*
+  fact is one crisp sentence + the mechanism (~1–2 lines). Cut provenance narration and connective
+  prose — the proposal's `detail` field carries the why for the approval; the saved fact does not.
 Boundary: how-Claude-works → lane 7; things the repo/git already records don't qualify.
 **Mandatory contradiction pre-check per candidate** — `brain find "<key terms>"`:
 - same fact → drop (already known)
