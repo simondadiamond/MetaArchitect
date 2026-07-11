@@ -65,6 +65,9 @@ Rules for this stage:
 - A sub-agent failing or returning nothing degrades that angle (note it in the brief's context) — never abort over exploration.
 - Don't gather for gathering's sake: if the anchors already determine the ranking, two sub-agents are plenty.
 
+Domain facts that have burned a brief before (encode these in any prompt that touches the area):
+- **Engagement is perishable** (2026-07-11): a drafted reply on a LinkedIn post older than ~48h is dead inventory, not a task. The actionable engage set is `engage_comments` at `status='new'` **plus** `engage_posts` at `status='mined'` with `posted_at` inside 48h. Anything `skipped`/`engaged`/`stale` is done — Simon's skips live in `engage_comments.status`; never re-surface them as backlog. A brief task built on stale drafts sent Simon to 4-day-old posts once; he skipped the whole list.
+
 ## Step 3 — Rank and compose
 
 Apply the objective function to everything you now know. Output: **3–5 tasks**, each:
