@@ -25,10 +25,11 @@ Tables live in the **command-center Supabase project** (public schema — REST v
 
 `engage_comments` where `status = 'new'`, score desc, limit ~10; plus `engage_posts` where `status = 'mined'` and `toplevel_draft is not null` and not yet engaged. Join target names for context. Empty queue → report "queue dry — next sweep at <schedule>" and stop; never pad with weak opportunities.
 
-**Freshness gate (2026-07-11 lesson): engagement is perishable.** LinkedIn reply reach decays within a day or two; the sweep runs early UTC, so opportunities are often ~16h old at first sight and a missed day kills them. Before presenting anything, check the underlying post's `posted_at`:
-- Post older than **48h** → do NOT present it. Mark the `engage_posts` row `status = 'stale'` (the vocabulary exists for exactly this; it's queue hygiene, not a judgment call) and drop its comment opportunities from the briefing.
-- 24–48h old → present only if the thread is still visibly active; say the age in the briefing line so Simon can judge.
-Stale-marking is the one status write this skill makes without Simon's confirmation — it removes dead inventory so no downstream consumer (weekly-brief, weekly-review) ever counts it as backlog.
+**Freshness (2026-07-11 lesson): show age, never hide inventory.** The sweep's fixed schedule means opportunities are often ~16h old at first sight, and a missed day compounds — but hiding old rows is backwards; Simon decides what's still worth a reply. Rules:
+- Every briefing line carries the post's age ("posted 26h ago") — computed from `posted_at`, not `scraped_at`.
+- Sort fresher-first within priority; an old draft never outranks a fresh one on score alone.
+- Skips are the only thing that retires inventory: on Simon's "skip", mark `engage_comments` rows `skipped` and toplevel-draft `engage_posts` rows `stale` — by his call, never automatically.
+- **Diagnose, don't discard**: if most of a target's opportunities are >24h old at first sight, the sweep is missing that person's posting window — say so in the briefing. The root fix is per-target pattern-adaptive sweep timing (learn when each target posts from `posted_at` history, look for their posts near those windows), not presentation filtering.
 
 ### 2. Re-gate every draft (the sweeps draft blind; you draft with judgment)
 
