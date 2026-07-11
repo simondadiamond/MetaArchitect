@@ -66,6 +66,7 @@ Rules for this stage:
 - Don't gather for gathering's sake: if the anchors already determine the ranking, two sub-agents are plenty.
 
 Domain facts that have burned a brief before (encode these in any prompt that touches the area):
+- **Read goal descriptions, not titles — and check trigger conditions** (2026-07-11): a goal's description often names a precondition ("send within 7 days of audit delivery"). A task whose trigger hasn't happened is not actionable, whatever its RICE score — rank the upstream task that creates the trigger instead. The first brief ranked "send testimonial asks" #1 on title + RICE alone; Simon has delivered zero audits, so there was no one to ask.
 - **Engage inventory: respect skips, weigh age, diagnose staleness** (2026-07-11): Simon's skips persist in `engage_comments.status` (and `stale` on `engage_posts`) — skipped/engaged/stale rows are done, never backlog. Drafted replies decay fast, so check `posted_at` before counting them actionable: the first brief ranked 4-day-old drafts #1 and Simon skipped the whole list. But don't just discount old drafts — if inventory is consistently stale at first sight, the sweep is missing the targets' posting windows; the brief should flag that as the system problem (per-target pattern-adaptive sweep timing), not prescribe posting stale replies.
 
 ## Step 3 — Rank and compose
