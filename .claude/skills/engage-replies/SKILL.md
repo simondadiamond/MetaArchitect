@@ -25,6 +25,12 @@ Tables live in the **command-center Supabase project** (public schema — REST v
 
 `engage_comments` where `status = 'new'`, score desc, limit ~10; plus `engage_posts` where `status = 'mined'` and `toplevel_draft is not null` and not yet engaged. Join target names for context. Empty queue → report "queue dry — next sweep at <schedule>" and stop; never pad with weak opportunities.
 
+**Freshness (2026-07-11 lesson): show age, never hide inventory.** The sweep's fixed schedule means opportunities are often ~16h old at first sight, and a missed day compounds — but hiding old rows is backwards; Simon decides what's still worth a reply. Rules:
+- Every briefing line carries the post's age ("posted 26h ago") — computed from `posted_at`, not `scraped_at`.
+- Sort fresher-first within priority; an old draft never outranks a fresh one on score alone.
+- Skips are the only thing that retires inventory: on Simon's "skip", mark `engage_comments` rows `skipped` and toplevel-draft `engage_posts` rows `stale` — by his call, never automatically.
+- **Diagnose, don't discard**: if most of a target's opportunities are >24h old at first sight, the sweep is missing that person's posting window — say so in the briefing. The root fix is per-target pattern-adaptive sweep timing (learn when each target posts from `posted_at` history, look for their posts near those windows), not presentation filtering.
+
 ### 2. Re-gate every draft (the sweeps draft blind; you draft with judgment)
 
 For each opportunity, read the ORIGINAL post/comment text, then either bless the best pre-draft or rewrite. Every reply must pass:

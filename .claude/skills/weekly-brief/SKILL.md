@@ -65,6 +65,9 @@ Rules for this stage:
 - A sub-agent failing or returning nothing degrades that angle (note it in the brief's context) — never abort over exploration.
 - Don't gather for gathering's sake: if the anchors already determine the ranking, two sub-agents are plenty.
 
+Domain facts that have burned a brief before (encode these in any prompt that touches the area):
+- **Engage inventory: respect skips, weigh age, diagnose staleness** (2026-07-11): Simon's skips persist in `engage_comments.status` (and `stale` on `engage_posts`) — skipped/engaged/stale rows are done, never backlog. Drafted replies decay fast, so check `posted_at` before counting them actionable: the first brief ranked 4-day-old drafts #1 and Simon skipped the whole list. But don't just discount old drafts — if inventory is consistently stale at first sight, the sweep is missing the targets' posting windows; the brief should flag that as the system problem (per-target pattern-adaptive sweep timing), not prescribe posting stale replies.
+
 ## Step 3 — Rank and compose
 
 Apply the objective function to everything you now know. Output: **3–5 tasks**, each:
