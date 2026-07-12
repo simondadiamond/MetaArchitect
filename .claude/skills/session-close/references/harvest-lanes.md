@@ -34,6 +34,9 @@ strip hardcoded row ids/dates into args. Standing rule: grep `scripts/INDEX.md` 
 Work continues past this session AND the next session would need >5 minutes to rebuild
 context. Contents: goal, verified context (paths, gotchas, decisions made — mark them
 "don't re-litigate"), exact next steps. Committed. Skip if the work is done or trivially resumable.
+Before listing a workstream as owed, check the target repo's git log — if it already shipped,
+cite the commit/PR instead (lesson 2026-07-12: a handoff listed pgid teardown as owed a day
+after PR #58 delivered it; only a pre-plan code read prevented a duplicate implementation).
 
 ## 6. Brain facts — `brain save` / note edit → read by `brain find`
 Durable facts about Simon's life/business/infra: decisions, numbers, dates, paths, people.
