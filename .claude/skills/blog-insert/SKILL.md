@@ -52,7 +52,9 @@ const idea = await getIdea(ideaId);
 if (!idea || idea.stage !== 'inserting') throw new Error(`row not at inserting (found: ${idea?.stage})`);
 ```
 
-Any other stage (`awaiting_final_review`, `failed_inserting`, `promoted_to_post`, anything) → stop, touch nothing, report the mismatch.
+**Status-desync reconciliation (the one exception to "stop, touch nothing"):** a prior run can crash between its successful `claimStage('inserting','promoted_to_post')` and the legacy `status` update (Phase 5), leaving `stage = 'promoted_to_post'` with a stale `status` forever — this guard would reject every retry, so nothing downstream would ever heal it. If `idea.stage === 'promoted_to_post'` AND `idea.status !== 'promoted_to_post'` → finish the interrupted run's status write (the same `pub.from('blog_ideas').update({ status: 'promoted_to_post', updated_at: ... })` as Phase 5), log it (`step_name: 'blog_insert'`, `output_summary: 'reconciled status after interrupted run'`), and stop — do nothing else this run.
+
+Any other unexpected stage (`awaiting_final_review`, `failed_inserting`, a consistent `promoted_to_post`, anything) → stop, touch nothing, report the mismatch. Note on double-invocation: `inserting` is a human-triggered stage — the CC approve action plus the one-row-per-fire dispatcher bound concurrent runs in practice, and the exit `claimStage` CAS below is the backstop if two runs happen anyway.
 
 **Resume check (Tolerant) — this is not optional here.** Unlike `blog_artifacts` (append-only, safe to double-write), a `blog_posts` insert is a one-shot side effect: a crash between a successful insert and the stage/status update would otherwise cause a retry to insert a **second** post row for the same idea. Before doing any other work, check for a prior insert:
 
@@ -61,11 +63,11 @@ import { createClient } from '@supabase/supabase-js';
 const pub = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY,
   { db: { schema: 'public' }, auth: { persistSession: false, autoRefreshToken: false } });
 const { data: existingPost } = await pub.from('blog_posts')
-  .select('id, slug, title, status, pillar, cta_type, post_type')
+  .select('id, slug, title, status, pillar, cta_type, post_type, excerpt, seo_title, seo_description, reading_time_minutes, canonical_url, tags, linkedin_extract')
   .eq('source_idea_id', ideaId).maybeSingle();
 ```
 
-If `existingPost` is found, a prior run already inserted the post and crashed (or lost its report) before closing out — **do not insert again.** Skip straight to Phase 5 (stage + status + log), citing the existing row, and log this run's `output_summary` as `'blog_post_reused (post <id>, slug <slug>)'` so Traceability still holds.
+If `existingPost` is found, a prior run already inserted the post and crashed (or lost its report) before closing out — **do not insert again.** Set `post = existingPost` and skip straight to Phase 5 (stage + status + log + report — the read-back is already satisfied by this query, skip Phase 5's verify query), and log this run's `output_summary` as `'blog_post_reused (post <id>, slug <slug>)'` so Traceability still holds. The select above deliberately covers every field the Step 8 report prints, so the reuse path can produce the full report without a second query.
 
 **Exit — the success transition IS the atomic claim:** after the insert is verified (fresh insert or the resume-check's existing row), `claimStage(ideaId, 'inserting', 'promoted_to_post')`. If it returns `false`, another run already advanced the row past `inserting` — **and this run may have just inserted a second `blog_posts` row for the same idea, since that insert is not append-only-safe.** Report this exact situation to Simon explicitly (idea id, both post row ids if a fresh insert happened here, which one is now orphaned) so he can clean it up by hand; do NOT `setStage` or touch `status` in this branch.
 
@@ -165,7 +167,7 @@ node projects/Content-Engine/tools/insert-blog-post.mjs --require-faq --idea <id
 
 ### PHASE 5 — Verify, Persist Stage + Status, Log, Report
 
-**Post-insert verify** — read the row back by slug with a fresh query (belt-and-suspenders on top of the script's own verify):
+**Post-insert verify** — read the row back by slug with a fresh query (belt-and-suspenders on top of the script's own verify; skip this query on the resume-check reuse path, where `post = existingPost` already satisfies the read-back):
 
 ```javascript
 const { data: post, error } = await pub.from('blog_posts')
