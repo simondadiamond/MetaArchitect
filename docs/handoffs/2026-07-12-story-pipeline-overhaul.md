@@ -1,5 +1,10 @@
 # Handoff — Story-Pipeline Reliability Overhaul
 
+status: done
+goal_id: 4af99947-ec57-4bc4-9c50-166c4660bc3f
+picked_up_by: overhaul session 2026-07-12 (PRs #58/#80, complete per sibling handoff)
+updated: 2026-07-13
+
 > Goal: `4af99947-ec57-4bc4-9c50-166c4660bc3f` (child of Fable 5 Final Week initiative `646c7760`)
 > Written: 2026-07-12 by COO session. Intended to be handed to a fresh session verbatim.
 

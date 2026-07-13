@@ -1,5 +1,10 @@
 # Handoff — Command Center blog creation: make it a masterpiece
 
+status: queued
+goal_id: none
+picked_up_by: nobody yet
+updated: 2026-07-13
+
 **From session:** 2026-07-11/12 (COO worktree `ade/coo-f25d292c`)
 **For:** fresh session, any agent. Read this whole file before acting.
 **Simon's directive (verbatim intent):** "lets make this blog creation from the command center a fucking masterpiece — links, SEO, AEO, GEO etc." Integrate research properly. Test it end-to-end with the meta-prompting post.

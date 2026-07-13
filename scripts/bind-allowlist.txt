@@ -1,0 +1,22 @@
+# bind-allowlist.txt — every sanctioned non-loopback TCP listener on sterling.
+# Consumed by scripts/bind-audit.sh; a listener not matched here = drift -> exit 1 + ntfy.
+# Format: one "address:port" per line; port may be a range "lo-hi" or "*".
+# Loopback (127.*, ::1) is never audited. Snapshot verified against live `ss -tlnp`
+# with process names on 2026-07-13.
+
+0.0.0.0:22                            # sshd
+[::]:22                               # sshd (v6)
+0.0.0.0:80                            # docker-proxy -> pope-agent traefik (ngrok tunnel target)
+[::]:80                               # docker-proxy -> pope-agent traefik (v6)
+0.0.0.0:8123                          # Home Assistant UI
+[::]:8123                             # Home Assistant UI (v6)
+0.0.0.0:5580                          # matter-server (Home Assistant Matter add-on)
+[::]:5580                             # matter-server (v6)
+*:18555                               # go2rtc (Home Assistant camera streaming)
+100.105.85.5:443                      # tailscaled — tailscale serve (Postiz HTTPS front)
+[fd7a:115c:a1e0::7332:5505]:443       # tailscaled — tailscale serve (v6)
+100.105.85.5:3737                     # command-center (Next.js, Tailscale-IP-only binding)
+100.105.85.5:3738                     # term-daemon (Command Center terminal daemon)
+100.105.85.5:5678                     # n8n (docker, tailnet-only)
+100.105.85.5:32768-65535              # tailscaled ephemeral listener (port drifts per restart; 62499 at snapshot)
+[fd7a:115c:a1e0::7332:5505]:32768-65535   # tailscaled ephemeral listener v6 (46450 at snapshot)
