@@ -25,9 +25,9 @@ Second brain: recall with `brain find`, store durable facts with `brain save --d
    - Fix the root cause in the relevant SOP/skill file
    - Append a one-liner to the corresponding Supabase `goals` row (no notes column — append to `description`)
 5. **Session close** ("end session", "wrap up"):
-   - Update goal/task status in the Supabase `goals` table — check off completed items, update notes
-   - Run `/pattern` to log engineering patterns from the session
+   - Run the `session-close` skill — the 10-lane harvest ritual is the canonical close (`/pattern` is only its content-lanes mode)
    - Confirm what's done, what's next
+6. **Mid-chat scope capture.** When you discover scope outside the current task, do NOT inline it into the current deliverable — capture it as a `goals` row and keep moving.
 
 ## Goals / Roadmap
 

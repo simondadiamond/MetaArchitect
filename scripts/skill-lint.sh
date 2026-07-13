@@ -53,6 +53,38 @@ while IFS= read -r line; do
   [ -n "$due" ] && [ "$due" \< "$(date +%Y-%m)" ] && warn "$f re-verify date ($due) has passed — platform claims may be stale"
 done < <(grep -rn 'Re-verify by' $SCOPE 2>/dev/null)
 
+# --- Checks 9–14 added 2026-07-13 (post-Fable gate inventory, goal 3df3143e) ---
+SCOPE_WIDE="$SCOPE CLAUDE.md"            # root CLAUDE.md was the most-drifted file (R10)
+
+# 9. Hook guards must pass their own red-green harness (a broken gate is worse than none)
+if [ -x scripts/hooks/test-hooks.sh ]; then
+  out=$(bash scripts/hooks/test-hooks.sh 2>&1) || fail $'hook test harness failing:\n'"$(echo "$out" | grep '^FAIL' | head -10)"
+else
+  warn "scripts/hooks/test-hooks.sh missing or not executable — hook gates unverified"
+fi
+
+# 10. Hex colors in agent profiles must come from the brand palette (R3: sitemaster shipped #F97316 for 11 days)
+PALETTE='0F0F0F|1A1A1A|1F1F1F|333333|EAEAEA|B4B4B4|777777|E04500|FF5A1A|C97A1A|F85149'
+hits=$(grep -rnoE '#[0-9A-Fa-f]{6}\b' .claude/agents 2>/dev/null | grep -viE "#($PALETTE)")
+[ -n "$hits" ] && fail $'non-palette hex color in an agent profile (brand-summary palette wins):\n'"$hits"
+
+# 11. Hardcoded prices in .claude/ (R5: stale $750 founder rate) — prices live on the live page or one canonical file
+hits=$(grep -rnE '\$[0-9,]+ ?(USD|CAD)' .claude 2>/dev/null | grep -viE 'read the current price|never assume|example')
+[ -n "$hits" ] && fail $'hardcoded price in .claude/ (point at the live page instead):\n'"$hits"
+
+# 12. Bracket placeholders in paste-ready brand docs (lessons 2026-07-06: logo spec shipped [INSERT ...])
+hits=$(grep -rnE '\[(INSERT|TODO|PLACEHOLDER|YOUR[ _])' brand 2>/dev/null)
+[ -n "$hits" ] && fail $'bracket placeholder in a paste-ready brand doc:\n'"$hits"
+
+# 13. Divergent session-close duplicates (R2: coo.md still instructed the old /pattern close after the rewire)
+hits=$(grep -rn '/pattern' .claude/agents $SCOPE_WIDE 2>/dev/null | grep -v 'session-close')
+[ -n "$hits" ] && fail $'/pattern referenced without naming session-close as the canonical close (divergent duplicate):\n'"$hits"
+
+# 14. Postiz API usage outside the canonical tool (P6: both July near-misses were ad-hoc scripts)
+hits=$(grep -rn $EXCLUDE -E 'POSTIZ_API_(KEY|URL)|/api/public/v1' . --include='*.mjs' --include='*.js' --include='*.sh' --include='*.md' 2>/dev/null \
+  | grep -vE 'tools/postiz\.mjs|tools/postiz-comment-nudge\.mjs|weekly-review/scripts/gather\.sh|postiz-update\.sh|skill-lint|gate-inventory|lessons\.md|SETUP\.md|\.env')
+[ -n "$hits" ] && fail $'Postiz API used outside tools/postiz.mjs (the only sanctioned path):\n'"$hits"
+
 echo
 echo "skill-lint: $FAILS fail(s), $WARNS warning(s)"
 [ "$FAILS" -eq 0 ]
