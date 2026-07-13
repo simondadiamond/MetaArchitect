@@ -8,6 +8,12 @@
  *   - Every operation takes a pipeline.posts ROW ID — never a content/attribute query.
  *   - Any edit = delete + recreate + row update + pipeline.logs entry + ntfy ping, atomically here.
  *   - status 'scheduled' is set exactly (Command Center /content keys off it).
+ *   - schedule: hard-errors if another pipeline.posts row sits within ±2h of the slot;
+ *     warns (not errors) at 3+ posts in the same ISO week; warns if the row has a
+ *     first_comment but the comment-nudger schedule isn't alive in Command Center.
+ *   - edit --content: the new text must re-pass scripts/linkedin-gate.sh first
+ *     (POSTIZ_SKIP_GATE=1 is the documented escape hatch). Guards live in
+ *     tools/postiz-guards.mjs (offline-tested via --self-test).
  *
  * CLI:
  *   node tools/postiz.mjs schedule  <rowId> <ISO-date> [imagesJsonPath]
@@ -20,6 +26,7 @@
 import { readFileSync } from 'fs';
 import { basename } from 'path';
 import { db, logEntry } from './supabase.mjs';
+import { findSlotConflicts, sameIsoWeekCount, isoWeek, nudgerScheduleStatus, runContentGate } from './postiz-guards.mjs';
 import { config } from 'dotenv';
 config({ path: new URL('../../command-center/.env', import.meta.url).pathname, quiet: true });
 
@@ -27,6 +34,7 @@ const API = process.env.POSTIZ_API_URL;
 const KEY = process.env.POSTIZ_API_KEY;
 const INTEGRATION = process.env.POSTIZ_LINKEDIN_INTEGRATION_ID || 'cmr9mqq1j0001pl79vupzw2id';
 const NTFY = process.env.NTFY_URL;
+const CC_URL = process.env.COMMAND_CENTER_URL || 'http://100.105.85.5:3737';
 
 if (!API || !KEY) throw new Error('POSTIZ_API_URL / POSTIZ_API_KEY missing — source projects/command-center/.env');
 
@@ -69,6 +77,24 @@ async function postizDelete(postizId) {
   if (!res.ok) throw new Error(`Postiz delete ${postizId} failed: ${res.status}`);
 }
 
+/** Warn (never block) if the first-comment nudger schedule isn't alive in Command Center. */
+async function warnIfNudgerDead(rowId) {
+  let status;
+  try {
+    const res = await fetch(`${CC_URL}/api/schedules`, { signal: AbortSignal.timeout(10_000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const body = await res.json();
+    status = nudgerScheduleStatus(body.schedules ?? body);
+  } catch (e) {
+    status = { alive: false, detail: `schedules API unreachable (${e.message})` };
+  }
+  if (!status.alive) {
+    console.warn(`⚠ WARNING: this row has a first_comment but the comment nudger looks DEAD — ${status.detail}.`
+      + ` Verify the "Postiz first-comment nudges" schedule on ${CC_URL}/schedules or the comment will need posting by hand.`);
+    await ntfy(`⚠ Postiz: scheduled a post with a first_comment but the nudger looks dead (${status.detail}) — row ${rowId}`);
+  }
+}
+
 /** Schedule a drafted/approved row. Refuses rows that already carry a postiz_id. */
 export async function schedule(rowId, date, images = []) {
   const row = await loadRow(rowId);
@@ -76,6 +102,22 @@ export async function schedule(rowId, date, images = []) {
   if (!row.draft_content?.trim()) throw new Error(`row ${rowId} has empty draft_content`);
   if (Number.isNaN(Date.parse(date))) throw new Error(`bad date: ${date}`);
   if (new Date(date) < new Date()) throw new Error(`date ${date} is in the past`);
+  // Slot + cadence guards (logic in postiz-guards.mjs, offline-tested there)
+  const { data: booked, error: qErr } = await db.from('posts')
+    .select('id, scheduled_at, source_angle_name')
+    .in('status', ['scheduled', 'published']).not('scheduled_at', 'is', null);
+  if (qErr) throw qErr;
+  const conflicts = findSlotConflicts(booked, date, { excludeRowId: rowId });
+  if (conflicts.length) {
+    throw new Error(`slot conflict — ${conflicts.length} other post(s) within ±2h of ${date}: `
+      + conflicts.map(c => `${c.id.slice(0, 8)} (${c.source_angle_name ?? 'no angle'}) @ ${c.scheduled_at}`).join(', ')
+      + ' — pick another slot or cancel the other post first');
+  }
+  const weekCount = sameIsoWeekCount(booked, date, { excludeRowId: rowId });
+  if (weekCount >= 2) {
+    console.warn(`⚠ WARNING: this would be post #${weekCount + 1} in ISO week ${isoWeek(date)} — target cadence is 2/week; proceeding anyway`);
+  }
+  if (row.first_comment?.trim()) await warnIfNudgerDead(rowId);
   const pid = await postizCreate(row.draft_content, date, images);
   const media = images.length ? { ...(row.media ?? {}), images, image_count: images.length } : row.media;
   // Re-queueing a row that ever published must null the reconciler-stamped fields
@@ -94,6 +136,16 @@ export async function schedule(rowId, date, images = []) {
 export async function edit(rowId, { content, comment, date, images } = {}) {
   const row = await loadRow(rowId);
   if (!row.postiz_id) throw new Error(`row ${rowId} has no postiz_id — nothing scheduled to edit`);
+  if (content !== undefined) {
+    // New content must re-pass the shared mechanical gate before touching Postiz.
+    const gate = runContentGate(content);
+    if (gate.skipped) console.warn('⚠ POSTIZ_SKIP_GATE=1 — linkedin-gate bypassed for this edit');
+    else if (!gate.ok) {
+      throw new Error('edit refused — new content FAILS scripts/linkedin-gate.sh:\n'
+        + gate.output.split('\n').filter(l => l.startsWith('FAIL')).join('\n')
+        + '\nFix the content and retry (POSTIZ_SKIP_GATE=1 is the documented escape hatch).');
+    }
+  }
   const newContent = content ?? row.draft_content;
   const newDate = date ?? row.scheduled_at;
   const newImages = images ?? row.media?.images ?? [];
