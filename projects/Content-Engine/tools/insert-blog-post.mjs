@@ -7,6 +7,7 @@
  * CLI:
  *   node tools/insert-blog-post.mjs <payload.json>                  # validate, insert, verify
  *   node tools/insert-blog-post.mjs <payload.json> --validate-only  # offline: gate only, no network
+ *   node tools/insert-blog-post.mjs <payload.json> --require-faq --idea <uuid>  # pipeline mode
  *   node tools/insert-blog-post.mjs --self-test                     # offline red-green harness
  *
  * Payload (field names = public.blog_posts columns, write-post Step 7 insert block):
@@ -18,6 +19,20 @@
  *       named_failure_mode_defined, distinct_insights_5_to_7, entity_density,
  *       primary_keyword_placed }
  *     (named_failure_mode_defined may be "n/a" for non-failure_taxonomy pillars)
+ *   post_type — 'article' | 'teardown', defaults to 'article' when omitted.
+ *   canonical_url — must start with 'https://simonparis.ca/blog/'. Optional (but validated
+ *     when present) unless --require-faq mode, where it's required.
+ *   source_idea_id — uuid string, the pipeline.blog_ideas row this post came from. Optional
+ *     (but validated as a uuid when present) unless --idea <uuid> is passed on the CLI, in
+ *     which case it's required and must equal the --idea value.
+ *
+ * Pipeline (skill) callers pass --require-faq --idea <id>: the gate then also requires
+ * canonical_url, source_idea_id (matching --idea), and a '## FAQ' section in body_markdown
+ * with at least 3 questions. A "question" is a line matching either '### <text>' or a
+ * standalone bold line ending in '?' ('**<text>?**') within the FAQ section (up to the next
+ * '## ' heading or end of document) — matches the format blog-optimize/SKILL.md tells authors
+ * to produce (3-5 ICP-phrased questions under a '## FAQ' heading). Legacy/manual callers that
+ * omit --require-faq and --idea are unaffected — backward compatible.
  *
  * blog_posts lives in the PUBLIC schema (website data) — one-off client, never
  * tools/supabase.mjs (pipeline schema) and never the Management API (WAF blocks large
@@ -38,7 +53,31 @@ export const GEO_BOXES = [
   'named_failure_mode_defined', 'distinct_insights_5_to_7', 'entity_density',
   'primary_keyword_placed',
 ];
+export const POST_TYPES = ['article', 'teardown'];
+export const CANONICAL_URL_PREFIX = 'https://simonparis.ca/blog/';
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Count FAQ questions in body_markdown. Looks for a '## FAQ' heading (case-insensitive),
+ * then counts lines within that section (up to the next '## ' heading or end of document)
+ * that are either a '### ...' sub-heading or a standalone bold line ending in '?'
+ * ('**...?**'). Returns -1 if no '## FAQ' heading is found.
+ */
+export function faqQuestionCount(body) {
+  if (typeof body !== 'string') return -1;
+  const lines = body.split('\n');
+  const start = lines.findIndex((l) => /^##\s+FAQ\s*$/i.test(l.trim()));
+  if (start === -1) return -1;
+  let count = 0;
+  for (let i = start + 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (/^##\s+/.test(line)) break; // next H2 section ends the FAQ block
+    if (/^###\s+\S.*$/.test(line)) count++;
+    else if (/^\*\*.+\?\*\*$/.test(line)) count++;
+  }
+  return count;
+}
 
 function gatePath() {
   for (const p of [resolve(HERE, '../../../scripts/linkedin-gate.sh'),
@@ -67,13 +106,48 @@ export function runLinkedinGate(text) {
  * The Step 7 mechanical gate. Returns { errors: [] } — empty array = safe to insert.
  * Pure except for the linkedin_extract sub-gate (spawns scripts/linkedin-gate.sh, still offline).
  */
-export function validatePayload(p, { skipExtractGate = false } = {}) {
+export function validatePayload(p, { skipExtractGate = false, requireFaq = false, ideaId } = {}) {
   const errors = [];
   const err = (m) => errors.push(m);
 
   // pillar / cta enums — the Step 1 table is the enum; no other value exists
   if (!PILLARS.includes(p.pillar)) err(`pillar ${JSON.stringify(p.pillar)} — must be one of: ${PILLARS.join(' | ')}`);
   if (!CTA_TYPES.includes(p.cta_type)) err(`cta_type ${JSON.stringify(p.cta_type)} — must be audit | subscribe`);
+
+  // post_type — defaults to 'article' when omitted
+  const postType = p.post_type ?? 'article';
+  if (!POST_TYPES.includes(postType)) err(`post_type ${JSON.stringify(p.post_type)} — must be one of: ${POST_TYPES.join(' | ')}`);
+
+  // canonical_url — required + domain-checked in --require-faq mode; optional-but-validated otherwise
+  if (requireFaq || p.canonical_url !== undefined) {
+    if (typeof p.canonical_url !== 'string' || !p.canonical_url.trim()) {
+      err(`canonical_url missing or empty${requireFaq ? ' (required in --require-faq mode)' : ''}`);
+    } else if (!p.canonical_url.startsWith(CANONICAL_URL_PREFIX)) {
+      err(`canonical_url ${JSON.stringify(p.canonical_url)} must start with ${CANONICAL_URL_PREFIX}`);
+    }
+  }
+
+  // source_idea_id — uuid; required + must equal --idea when the CLI passed one
+  if (ideaId) {
+    if (typeof p.source_idea_id !== 'string' || !p.source_idea_id.trim()) {
+      err('source_idea_id missing or empty (required when --idea is passed)');
+    } else if (!UUID_RE.test(p.source_idea_id)) {
+      err(`source_idea_id ${JSON.stringify(p.source_idea_id)} is not a valid uuid`);
+    } else if (p.source_idea_id !== ideaId) {
+      err(`source_idea_id ${JSON.stringify(p.source_idea_id)} does not match --idea ${JSON.stringify(ideaId)}`);
+    }
+  } else if (p.source_idea_id !== undefined) {
+    if (typeof p.source_idea_id !== 'string' || !UUID_RE.test(p.source_idea_id)) {
+      err(`source_idea_id ${JSON.stringify(p.source_idea_id)} is not a valid uuid`);
+    }
+  }
+
+  // FAQ — '## FAQ' heading with >=3 questions, required only in --require-faq mode
+  if (requireFaq) {
+    const n = faqQuestionCount(p.body_markdown);
+    if (n === -1) err('body_markdown missing a "## FAQ" section (required in --require-faq mode)');
+    else if (n < 3) err(`body_markdown FAQ section has ${n} question(s) — needs >=3 ("### question" or "**question?**" lines)`);
+  }
 
   // tags: non-empty array of kebab-case strings
   if (!Array.isArray(p.tags) || p.tags.length === 0) err('tags must be a non-empty array');
@@ -130,12 +204,15 @@ async function insert(p) {
 
   const pub = createClient(url, key,
     { db: { schema: 'public' }, auth: { persistSession: false, autoRefreshToken: false } });
-  const { data, error } = await pub.from('blog_posts').insert({
+  const insertRow = {
     slug: p.slug, title: p.title, excerpt: p.excerpt, body_markdown: p.body_markdown,
     pillar: p.pillar, status: 'draft', seo_title: p.seo_title, seo_description: p.seo_description,
     cta_type: p.cta_type, featured: p.featured, reading_time_minutes: p.reading_time_minutes,
-    linkedin_extract: p.linkedin_extract, tags: p.tags,
-  }).select('id, slug, status').single();
+    linkedin_extract: p.linkedin_extract, tags: p.tags, post_type: p.post_type ?? 'article',
+  };
+  if (p.canonical_url !== undefined) insertRow.canonical_url = p.canonical_url;
+  if (p.source_idea_id !== undefined) insertRow.source_idea_id = p.source_idea_id;
+  const { data, error } = await pub.from('blog_posts').insert(insertRow).select('id, slug, status').single();
   if (error) throw new Error(`insert failed: ${error.message} (slug conflict -> adjust the slug and retry)`);
 
   // Verify by reading the row back with the same client (Step 7).
@@ -171,10 +248,28 @@ function goodPayload() {
   };
 }
 
+const TEST_IDEA_ID = '11111111-1111-4111-8111-111111111111';
+const OTHER_IDEA_ID = '22222222-2222-4222-8222-222222222222';
+
+/** A payload shaped the way pipeline callers (--require-faq --idea <id>) will send it. */
+function goodPipelinePayload() {
+  return {
+    ...goodPayload(),
+    post_type: 'article',
+    canonical_url: 'https://simonparis.ca/blog/state-beats-intelligence-in-production',
+    source_idea_id: TEST_IDEA_ID,
+    body_markdown: '## Why does the agent fail?\n\nBody text here.\n\n'
+      + '## FAQ\n\n'
+      + '### What breaks first when an agent has no state?\n\nAnswer text about state.\n\n'
+      + '### How do I add tracing without a rewrite?\n\nAnswer text about tracing.\n\n'
+      + '**Why does this matter for compliance?**\n\nAnswer text about compliance.\n',
+  };
+}
+
 function selfTest() {
   let pass = 0, fail = 0;
-  const expect = (name, payload, wantOk, wantErrMatch) => {
-    const { errors } = validatePayload(payload);
+  const expect = (name, payload, wantOk, wantErrMatch, opts) => {
+    const { errors } = validatePayload(payload, opts);
     const ok = errors.length === 0;
     const matched = wantErrMatch ? errors.some(e => e.includes(wantErrMatch)) : true;
     if (ok === wantOk && matched) { console.log(`PASS self-test: ${name}`); pass++; }
@@ -199,6 +294,32 @@ function selfTest() {
     expect('extract failing shared gate fails', p, false, 'shared gate'); }
   expect('missing excerpt fails', { ...goodPayload(), excerpt: '' }, false, 'excerpt');
 
+  // --- post_type (default article; article|teardown) ---
+  expect('default post_type (article) passes', goodPayload(), true);
+  expect('post_type teardown passes', { ...goodPayload(), post_type: 'teardown' }, true);
+  expect('bad post_type fails', { ...goodPayload(), post_type: 'listicle' }, false, 'post_type');
+
+  // --- canonical_url (optional unless --require-faq; validated whenever present) ---
+  expect('canonical_url absent ok when not --require-faq', goodPayload(), true);
+  expect('canonical_url wrong domain fails even when optional', { ...goodPayload(), canonical_url: 'https://example.com/blog/foo' }, false, 'canonical_url');
+  expect('missing canonical_url fails under --require-faq', { ...goodPipelinePayload(), canonical_url: undefined }, false, 'canonical_url', { requireFaq: true, ideaId: TEST_IDEA_ID });
+  expect('canonical_url wrong domain fails under --require-faq', { ...goodPipelinePayload(), canonical_url: 'https://example.com/blog/foo' }, false, 'canonical_url', { requireFaq: true, ideaId: TEST_IDEA_ID });
+  expect('good pipeline payload passes --require-faq --idea', goodPipelinePayload(), true, undefined, { requireFaq: true, ideaId: TEST_IDEA_ID });
+
+  // --- source_idea_id (uuid; required + must match --idea when passed) ---
+  expect('source_idea_id bad uuid format fails', { ...goodPayload(), source_idea_id: 'not-a-uuid' }, false, 'source_idea_id');
+  expect('missing source_idea_id fails when --idea passed', { ...goodPipelinePayload(), source_idea_id: undefined }, false, 'source_idea_id', { ideaId: TEST_IDEA_ID });
+  expect('source_idea_id mismatch fails when --idea passed', { ...goodPipelinePayload(), source_idea_id: OTHER_IDEA_ID }, false, 'source_idea_id', { ideaId: TEST_IDEA_ID });
+
+  // --- FAQ (## FAQ heading with >=3 questions, required only under --require-faq) ---
+  { const p = goodPipelinePayload(); p.body_markdown = goodPayload().body_markdown;
+    expect('FAQ-less body fails under --require-faq', p, false, 'FAQ', { requireFaq: true, ideaId: TEST_IDEA_ID }); }
+  { const p = goodPipelinePayload();
+    p.body_markdown = '## Why does the agent fail?\n\nBody text here.\n\n## FAQ\n\n'
+      + '### What breaks first when an agent has no state?\n\nAnswer text about state.\n\n'
+      + '**Why does this matter for compliance?**\n\nAnswer text about compliance.\n';
+    expect('FAQ with <3 questions fails under --require-faq', p, false, 'FAQ', { requireFaq: true, ideaId: TEST_IDEA_ID }); }
+
   console.log(`\ninsert-blog-post self-test: ${pass} pass, ${fail} fail`);
   return fail === 0;
 }
@@ -209,11 +330,15 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   if (argv[0] === '--self-test') {
     process.exit(selfTest() ? 0 : 1);
   }
-  const file = argv.find(a => !a.startsWith('-'));
   const validateOnly = argv.includes('--validate-only');
-  if (!file) { console.error('usage: insert-blog-post.mjs <payload.json> [--validate-only] | --self-test'); process.exit(2); }
+  const requireFaq = argv.includes('--require-faq');
+  const ideaIdx = argv.indexOf('--idea');
+  const ideaId = ideaIdx !== -1 ? argv[ideaIdx + 1] : undefined;
+  const ideaValueIdx = ideaIdx !== -1 ? ideaIdx + 1 : -1;
+  const file = argv.find((a, i) => i !== ideaValueIdx && !a.startsWith('-'));
+  if (!file) { console.error('usage: insert-blog-post.mjs <payload.json> [--validate-only] [--require-faq] [--idea <uuid>] | --self-test'); process.exit(2); }
   const payload = JSON.parse(readFileSync(file, 'utf8'));
-  const { errors } = validatePayload(payload);
+  const { errors } = validatePayload(payload, { requireFaq, ideaId });
   if (errors.length) {
     for (const e of errors) console.error(`FAIL ${e}`);
     console.error('\n❌ insert-blog-post failed at insert_gate — nothing written');
