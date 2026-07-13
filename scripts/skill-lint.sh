@@ -93,6 +93,29 @@ hits=$(grep -rn $EXCLUDE -E 'POSTIZ_API_(KEY|URL)|/api/public/v1' scripts .claud
   | grep -vE 'tools/postiz\.mjs|tools/postiz-comment-nudge\.mjs|weekly-review/scripts/gather\.sh|postiz-update\.sh|skill-lint|gate-inventory|lessons\.md|SETUP\.md|\.env')
 [ -n "$hits" ] && fail $'Postiz API used outside tools/postiz.mjs (the only sanctioned path):\n'"$hits"
 
+# 15. Gate scripts must stay wired into the skills that consume them (2026-07-13).
+#     The gates were prose the model retyped by hand; promoting them to scripts only helps
+#     if the skills CALL them. A skill that quietly reverts to hand-rolled greps has
+#     un-mechanized itself — that regression is invisible without this check.
+declare -A GATE_CONSUMERS=(
+  ["scripts/linkedin-gate.sh"]=".claude/skills/repurpose/SKILL.md .claude/skills/write-post/SKILL.md .claude/skills/editorial/SKILL.md .claude/skills/linkedin-publish/SKILL.md .claude/skills/engage-replies/SKILL.md"
+  ["projects/Content-Engine/tools/teardown-gate.py"]=".claude/skills/teardown-generate/SKILL.md"
+  ["projects/Content-Engine/tools/insert-blog-post.mjs"]=".claude/skills/write-post/SKILL.md"
+  ["scripts/validate-brief.mjs"]=".claude/skills/weekly-brief/SKILL.md"
+)
+for gate in "${!GATE_CONSUMERS[@]}"; do
+  [ -f "$gate" ] || { fail "gate script missing: $gate (a skill still expects it)"; continue; }
+  for consumer in ${GATE_CONSUMERS[$gate]}; do
+    [ -f "$consumer" ] || continue
+    grep -q "$(basename "$gate")" "$consumer" || fail "$consumer no longer calls $(basename "$gate") — the gate was un-mechanized"
+  done
+done
+
+# 16. Skill PROSE must not carry gate logic as code-as-spec (assert blocks a model retypes).
+#     Markdown only: asserts inside a skill's own scripts/ are the mechanized form we want.
+hits=$(grep -rn $EXCLUDE --include='*.md' -E '^\s*assert .+, *(f?")' .claude/skills 2>/dev/null | grep -v 'self-test')
+[ -n "$hits" ] && fail $'assert-block in skill prose (promote it to a script and call that — code-as-spec is what a weaker model paraphrases or drops):\n'"$hits"
+
 echo
 echo "skill-lint: $FAILS fail(s), $WARNS warning(s)"
 [ "$FAILS" -eq 0 ]

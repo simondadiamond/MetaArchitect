@@ -1,5 +1,11 @@
 # SOTA blog pipeline — design requirements brief (NotebookLM deep research, 2026-07-13)
 
+status: queued
+goal_id: none
+picked_up_by: nobody yet
+updated: 2026-07-13
+
+> Reference brief, not a standalone workstream — it is consumed by 2026-07-13-blog-masterpiece-handoff.md and its status tracks that handoff.
 > Notebook: 69695efc-7994-40de-a513-3bc491152d1f (81 sources). Query it via mcp__notebooklm-mcp__notebook_query for follow-ups; citation numbers refer to notebook sources.
 > Companion to 2026-07-13-blog-masterpiece-handoff.md.
 

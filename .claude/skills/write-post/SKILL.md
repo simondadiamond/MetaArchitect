@@ -196,17 +196,18 @@ GEO CITABILITY CHECK (required before insert):
 
 LINKEDIN_EXTRACT:
 [Generate per `.claude/skills/repurpose/references/linkedin-playbook.md` — anatomy, hook
- patterns, anti-slop checklist all live there; read it, don't restate it. Then run the
- shared gate `.claude/skills/repurpose/references/linkedin-gate.md` (mechanical greps +
- judgment checks) on the candidate BEFORE writing it to `linkedin_extract`. Gate failure →
- rewrite and re-run; never save a failing candidate, never lower the bar.]
+ patterns, anti-slop checklist all live there; read it, don't restate it. Then gate the
+ candidate BEFORE writing it to `linkedin_extract`: write it to a temp file and run
+ `bash scripts/linkedin-gate.sh <file>` (mechanical checks), plus the judgment checks in
+ `references/linkedin-gate.md` (claim provenance). Gate failure → rewrite and re-run;
+ never save a failing candidate, never lower the bar.]
 ```
 
 ---
 
 ### STEP 7 — Validation Gate, then Insert to Supabase (E)
 
-**Validation gate — check mechanically before the insert. Any failure → error path, nothing written:**
+**Validation gate — `node projects/Content-Engine/tools/insert-blog-post.mjs <payload.json>` enforces every box below and refuses to write on any failure (use `--validate-only` to check without inserting). Do not hand-roll the insert; the script IS the gate:**
 
 - [ ] `pillar` ∈ `failure_taxonomy | state_applied | defensive_arch | meta_layer | regulated_law25` — the Step 1 table is the enum; no other value exists
 - [ ] `cta_type` ∈ `audit | subscribe`
@@ -216,7 +217,7 @@ LINKEDIN_EXTRACT:
 - [ ] Stat provenance (Step 4) holds on the **final** post-editorial text
 - [ ] `linkedin_extract` passed the shared gate (Step 6)
 
-**Insert:** `blog_posts` lives in the **public** schema (website data), so `tools/supabase.mjs` (pipeline schema) doesn't cover it — build a one-off client, the exact pattern from `repurpose` Step 2. Column registry: `projects/Content-Engine/.claude/skills/supabase.md`. Do not insert via the Management API (Cloudflare WAF blocks large payloads; short verification queries are fine). Write the script to a file and run it from `projects/Content-Engine/` — do not embed the post body in a bash heredoc.
+**Insert:** `node projects/Content-Engine/tools/insert-blog-post.mjs <payload.json>` — it validates the payload against every gate above, then writes to `blog_posts` (public schema). Write the payload to a JSON file; never embed the post body in a bash heredoc. Column registry: `projects/Content-Engine/.claude/skills/supabase.md`. Do not insert via the Management API (Cloudflare WAF blocks large payloads; short verification queries are fine).
 
 ```javascript
 import { createClient } from '@supabase/supabase-js';

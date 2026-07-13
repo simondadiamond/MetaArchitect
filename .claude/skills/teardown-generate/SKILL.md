@@ -358,105 +358,23 @@ remediation = [
 
 #### Pre-Write Checklist (must pass before INSERT)
 
-Run these assertions in the script. If any fail, fix the offending field — do NOT INSERT a draft that fails any gate:
+**Run the gate script — do not retype the assertions:**
 
-```python
-# Gate 1: state_scores has all 5 pillars with non-empty reasoning
-for p in ('s','t','a','tol','e'):
-    assert p in state_scores, f"missing pillar: {p}"
-    assert state_scores[p]['score'] in (0,1,2), f"{p}: score must be 0/1/2"
-    assert len(state_scores[p]['reasoning'].split()) >= 20, f"{p}: reasoning too short (need 2-4 sentences)"
-
-# Gate 2: gaps array has >=2 fully-populated entries
-assert len(gaps) >= 2, "need at least 2 gaps"
-for i, g in enumerate(gaps):
-    for k in ('pillar','gap','consequence','severity'):
-        assert g.get(k), f"gap[{i}] missing or empty: {k}"
-    assert g['severity'] in ('high','medium','low'), f"gap[{i}] bad severity"
-
-# Gate 2b: pillar enum — normalize case, then require the literal allowed values
-# (lessons.md 2026-07-05: every enum-constrained field must show its literal allowed values)
-PILLARS = {'s','t','a','tol','e'}
-for i, entry in enumerate(gaps + remediation):
-    entry['pillar'] = str(entry['pillar']).lower()
-    assert entry['pillar'] in PILLARS, \
-        f"entry[{i}] bad pillar {entry['pillar']!r} — must be one of 's','t','a','tol','e'"
-
-# Gate 3: remediation array has >=2 fully-populated entries
-assert len(remediation) >= 2, "need at least 2 remediation items"
-for i, r in enumerate(remediation):
-    for k in ('pillar','recommendation','priority'):
-        assert r.get(k) not in (None,'',[]), f"remediation[{i}] missing or empty: {k}"
-
-# Gate 4: full_content ends with the canonical /score CTA (lessons.md 2026-05-09)
-# (founding CTA above it is conditional — Gate 10b checks the live page at run time)
-assert '[Take the STATE assessment →](/score)' in full_content, \
-    "full_content must end with the canonical /score CTA, not a series description"
-
-# Gate 5: linkedin_post word count is 180-300 (repurpose linkedin playbook, 2026-07-05)
-lp_words = len(linkedin_post.split())
-assert 180 <= lp_words <= 300, f"linkedin_post is {lp_words} words; must be 180-300"
-
-# Gate 6: "Gets Right" section present (credibility gate — gaps must read as diagnosis, not attack)
-assert 'Gets Right' in full_content, "missing 'What [System] Gets Right' section"
-
-# Gate 7: every gap closes with a self-score question
-assert full_content.count('**Score yourself:**') >= len(gaps), \
-    "each gap section must close with a **Score yourself:** line"
-
-# Gate 8: 'What Good Looks Like' section exists and contains a fenced artifact snippet
-assert '## What Good Looks Like' in full_content, "missing '## What Good Looks Like' section"
-wgll = full_content.split('## What Good Looks Like')[1].split('\n## ')[0]
-assert '```' in wgll, "What Good Looks Like must include a fenced artifact snippet"
-
-# Gate 9: FAQ section present
-assert '## FAQ' in full_content, "missing 3-question FAQ section"
-
-# Gate 10: >= 2 question-form H2/H3 headings (AEO)
-import re as _re
-_qh = [h for h in _re.findall(r'^#{2,3} (.+)$', full_content, _re.M) if h.strip().endswith('?')]
-assert len(_qh) >= 2, f"need >= 2 question-form headings, found {len(_qh)}"
-
-# Gate 10b: links (lessons: Ramp teardown 2026-07-05 shipped with zero hyperlinks)
-_links = _re.findall(r'\[[^\]]*\]\((\S+?)\)', full_content)
-for _src in source_urls:  # every research source must be linked
-    assert f']({_src})' in full_content, f"source not linked: {_src}"
-_int = [u for u in _links if u.startswith('/') and u not in ('/score', '/work-with-me')]
-assert _int, "need an internal link beyond the CTA lines (e.g. [teardown](/blog))"
-
-# Founding CTA — conditional on the LIVE page, checked at run time (a temporary condition
-# must be code, not a comment). As of 2026-07-07: /work-with-me is 200, /audit 308-redirects
-# to it — /work-with-me is the founding CTA target.
-import urllib.request as _ur
-try:
-    _page = _ur.urlopen(_ur.Request('https://simonparis.ca/work-with-me',
-                                    headers={'User-Agent': 'Mozilla/5.0'})).read().decode('utf-8', 'replace')
-    founding_live = 'founding' in _page.lower()
-except Exception:
-    founding_live = False   # page unreachable/gone → treat the program as not live
-if founding_live:
-    assert '](/work-with-me)' in full_content, "founding program live: include the founding CTA"
-else:
-    assert '](/work-with-me)' not in full_content, \
-        "founding program not live: drop the founding CTA (keep only the /score CTA)"
-
-assert not _re.search(r'\[[^\]]*\]\(\S+?\)', linkedin_post), \
-    "linkedin_post: no markdown links — LinkedIn strips markdown; if it carries a URL it is bare, max 1 (shared linkedin-gate rule)"
-
-# Gate 10c: em-dash budget (dense em dashes read as generated text)
-_w = len(full_content.split())
-assert full_content.count('—') <= max(8, -(-_w // 150)), \
-    f"{full_content.count('—')} em dashes in {_w} words — vary the punctuation"
-# LinkedIn surfaces: ZERO em dashes (the ICP reads them as the ChatGPT signature)
-assert '—' not in linkedin_post, "linkedin_post: zero em dashes"
-assert '—' not in dm_template, "dm_template: zero em dashes"
-assert all('—' not in h for h in alt_hooks), "alt_hooks: zero em dashes"
-
-# Gate 11: outreach kit populated
-assert 40 <= len(dm_template.split()) <= 80, f"dm_template is {len(dm_template.split())} words; must be 40-80"
-assert '{name}' in dm_template and '{their_pattern}' in dm_template, "dm_template must keep personalization placeholders"
-assert len(alt_hooks) >= 2, "need >= 2 alternate LinkedIn hooks"
+```bash
+python3 projects/Content-Engine/tools/teardown-gate.py <payload.json>
 ```
+
+It enforces Gates 1–11 (5 pillars with >=20-word reasoning, >=2 gaps, lowercase pillar enums,
+/score CTA present, LinkedIn post 180-300 words, Gets Right / FAQ / WGLL + fenced artifact,
+>=2 question headings, every source URL linked, em-dash budget, 0 em dashes in the LI post /
+DM / hooks, DM 40-80 words with placeholders intact, live founding-CTA check) and exits 1
+naming every failure. Fix the offending field and re-run; **never INSERT a draft that fails a
+gate, and never edit the gate to make a draft pass** — the script is the spec, the payload is
+what changes. (`--self-test` proves the gates still fire; `build_upsert_sql` in the same file
+produces the idempotent write below.)
+
+The payload is a JSON file with the keys this skill has been building: `state_scores`, `gaps`,
+`remediation`, `body`, `linkedin_post`, `dm_template`, `alt_hooks`, `source_urls`.
 
 #### Idempotent write (Tol — resume/replace, never duplicate)
 

@@ -36,7 +36,7 @@ Tables live in the **command-center Supabase project** (public schema — REST v
 For each opportunity, read the ORIGINAL post/comment text, then either bless the best pre-draft or rewrite. Every reply must pass:
 
 - **Diagnostic one-liner register** (operating rhythm): 1–3 sentences, adds a mechanism, names a failure mode, or asks the scar-tissue question. A reply is a tiny authority artifact, not applause.
-- **Zero em dashes** (Simon's rule — applies to comments, same as posts).
+- **Zero em dashes** (Simon's rule — applies to comments, same as posts). Check mechanically: write the reply set to a temp file and run `bash scripts/linkedin-gate.sh --comment <file>` (em dashes, AI-tell shapes, banned openers). A failing reply is rewritten, never presented.
 - **No AI-tells**: no "it's not X, it's Y" shape, no "Great post!"/"So true"/"Love this" openers, no restating the post back at it, none of the brand prohibitions (`brand/brand-summary.md`).
 - **Adds something the thread doesn't have** — if the best available reply just agrees, skip the opportunity (mark it, don't force it).
 - **Claim discipline**: any number or incident cited must be one Simon can stand behind (from a teardown, the blog, or verified sources) — never improvise stats in a comment.

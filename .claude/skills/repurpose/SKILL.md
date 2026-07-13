@@ -173,7 +173,7 @@ Every candidate passes this gate **before being shown to Simon** and re-passes i
 ❌ /repurpose failed at candidate_gate — [which check failed on which candidate] — nothing written
 ```
 
-**Run the full shared gate** — `references/linkedin-gate.md` (mechanical greps + judgment checks, including claim provenance, source-number fidelity, no implied incidents, and the `/score` CTA cadence). That file is the single canonical copy of the gate for every LinkedIn-copy producer; never re-derive or fork the checks locally.
+**Run the full shared gate.** Mechanical half: `bash scripts/linkedin-gate.sh <candidate-file>` per candidate (exit 1 = rewrite, never present a failing candidate); `bash scripts/linkedin-gate.sh --cadence` prints CARRY or SKIP for the `/score` CTA. Judgment half (claim provenance, source-number fidelity, no implied incidents): `references/linkedin-gate.md`, which stays the canonical spec. Never re-derive or fork the checks locally — the script IS the greps, transcribing them by hand is how they drift.
 
 **Repurpose-specific checks on top of the shared gate:**
 

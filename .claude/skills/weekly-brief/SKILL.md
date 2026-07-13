@@ -84,6 +84,8 @@ Plus `title` ("Week of {week_start}: <7-word theme>") and `summary_md` — **und
 
 ## Step 4 — Validation gate, then write
 
+**Run the validator, don't eyeball it**: `node scripts/validate-brief.mjs <payload.json> <goals.json>` enforces the whole gate below (3–5 tasks, ranks 1..N with no gaps, payoff + est_minutes on every task, ≥2 distinct payoff kinds, every `goal_id` present in the Step 1 goals snapshot) and exits 1 on any failure. Never POST a payload the script rejects.
+
 Gate (check mechanically before the POST — any failure means fix or ABORT at `write`, never post junk):
 - 3–5 tasks; ranks are 1..N with no gaps; every `task` non-empty; every task has `payoff` and `est_minutes`; at least two distinct `payoff` values across the set; every `goal_id` you include exists in the Step 1 goals response.
 

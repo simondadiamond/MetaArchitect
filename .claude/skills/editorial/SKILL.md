@@ -33,7 +33,7 @@ Present a compact summary of what changed (bullets or a diff) — not the full d
 
 ### PASS 2 — Fidelity Check
 
-**Mechanical greps first** (write the draft to a temp file). Patterns come from `.claude/skills/repurpose/references/linkedin-gate.md`, adapted to blog prose: no word-count or link checks here, and **em dashes are allowed** — the zero-em-dash rule is LinkedIn-scoped, not a blog rule.
+**Mechanical greps first**: write the draft to a temp file and run `bash scripts/linkedin-gate.sh --blog <file>` (blog mode: prohibitions + AI-tells only; no word-count or link checks, and **em dashes are allowed** — the zero-em-dash rule is LinkedIn-scoped). The spec behind the script is `.claude/skills/repurpose/references/linkedin-gate.md`.
 
 ```bash
 grep -inE "excited to share|thrilled to announce|game.chang|revolutionary|groundbreaking|transformational|cutting.edge|state.of.the.art|in today's fast|in the age of ai" draft.md   # must be 0 — brand prohibitions
