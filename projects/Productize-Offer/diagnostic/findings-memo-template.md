@@ -7,6 +7,8 @@
 <!-- Rules for filling this in:
      - 5 pages means 5 pages. If page 3 wants to be longer, the risks aren't named sharply enough yet.
      - Every score cites a pointer the client can check themselves (their artifact, their screen, their call — with timestamp).
+     - Pointers must be checkable, not decorative: the call recording — or timestamped transcript excerpts covering every cited moment — is delivered WITH the memo. Where consent limits sharing, the pointer format becomes "auditor's notes @00:47 — recording held by {CLIENT} attendees."
+     - Single-point-of-failure findings are stated by ROLE ("one engineer carries it"), never by name — the memo circulates beyond the room that earned the trust.
      - Provisional flags appear in three places and must agree: page 1 count, page 2 flags, page 5 table.
      - Voice: diagnostic register. No hedging ("somewhat", "may want to consider"), no reassurance ("overall a solid foundation").
      - EN/FR: deliver in the client's language per booking; structure identical. -->
@@ -24,7 +26,7 @@
 | **Prepared by** | Simon Paris — The Meta Architect, simonparis.ca |
 | **Engagement** | AI Readiness Diagnostic ({N_DAYS} days, {DATE_START}–{DATE_READOUT}) |
 | **Workflow scored** | **{WORKFLOW_NAME}** — {ONE_LINE_WORKFLOW: trigger → LLM step(s) → real-world effect} |
-| **Evidence base** | One {CALL_LENGTH}-min evidence call ({OWNER_NAME} + {ENGINEER_NAME}, recorded), {N_ARTIFACTS} of 6 requested artifacts received within the 48-hour window |
+| **Evidence base** | One {CALL_LENGTH}-min evidence call ({OWNER_NAME} + {ENGINEER_NAME}, recorded — recording delivered with this memo), {N_ARTIFACTS} of 6 requested artifacts received within the 48-hour window |
 | **Not received** | {MISSING_ARTIFACTS: list missing artifacts and the pillar each affected — or "none"} |
 | **Instrument** | STATE scoring rubric — same rubric, same anchors, same scale as the Production AI Audit; reduced evidence depth |
 
@@ -32,7 +34,7 @@
 
 <!-- One paragraph. Score + band in the first sentence. Then: what holds the workflow up today (usually a person or a single mechanism), what the score says about it, and the one sentence the owner will repeat in their own words to their boss. No recommendations here — pages 3–4 carry those. -->
 
-**{WORKFLOW_NAME} scores {TOTAL}/15 — {BAND_NAME}.** {VERDICT_PARAGRAPH: 4–6 sentences. Name what actually carries the workflow (the mechanism or the person), name the failure mode that is currently active and invisible, and state the delta plainly — e.g., "The workflow works because {ENGINEER_NAME} carries it, not because the system holds it."} {N_PROVISIONAL} of the five scores are **provisional** — the rubric's live test for them could not run inside a {N_DAYS}-day engagement; page 5 states exactly which, and exactly what would confirm each.
+**{WORKFLOW_NAME} scores {TOTAL}/15 — {BAND_NAME} ({N_PROVISIONAL} of 5 scores provisional).** {VERDICT_PARAGRAPH: 4–6 sentences. Name what actually carries the workflow (the mechanism or the person — by role, never by name), name the failure mode that is currently active and invisible, and state the delta plainly — e.g., "The workflow works because one engineer carries it, not because the system holds it."} The rubric's live test for the provisional scores could not run at diagnostic evidence depth; page 5 states exactly which, and exactly what would confirm each.
 
 <!-- If A scored N/A: report {TOTAL}/12 with the one-line reason per rubric rule 5. Never rescale, never project. -->
 
@@ -58,7 +60,7 @@ Scale: 0 Absent · 1 Ad-hoc · 2 Systematic · 3 Enforced. A score is awarded on
 <!-- Optional, include only if the client took the public quiz: -->
 {QUIZ_DELTA_LINE: "Your self-assessed score at simonparis.ca/score was {QUIZ_SCORE} — the gap between self-assessment and evidence is itself a finding: '{EXAMPLE: we have logging}' and '{EXAMPLE: we reconstructed last Tuesday's run in 7 minutes}' are different claims."}
 
-**What provisional means here:** the score stands on the evidence collected, but its live test did not run. A provisional 2 has not earned the confidence of a confirmed 2 — and rubric history says untested properties test lower, not higher.
+**What provisional means here:** the score stands on the evidence collected, but its live test did not run. A provisional 2 has not earned the confidence of a confirmed 2 — properties that were built to be tested tend to survive testing; properties that have never been tested tend not to.
 
 ---
 
@@ -129,11 +131,11 @@ A {N_DAYS}-day diagnostic scores one workflow from one evidence call and {N_ARTI
 | {P2_PILLAR} | {P2_SCORE}/3 | {P2_WHY} | {P2_CONFIRM} |
 | {P3_PILLAR} | {P3_SCORE}/3 | {P3_WHY} | {P3_CONFIRM} |
 
-A provisional score can move in either direction under full evidence. In practice they move down more often than up — the properties that survive testing are the ones that were built to be tested.
+A provisional score can move in either direction under full evidence. Properties that were built to be tested tend to survive testing; properties that have never been tested tend not to.
 
 ### Where confirmation happens
 
-The engagement built to close every gap on this page is the **Production AI Audit**: two weeks, codebase and telemetry review, 3–5 engineer interviews, every live test run at full depth, per-pillar scoring across up to three workflows, a 10–20 page findings document, and a 90-day remediation roadmap in place of the three first moves above. It starts from this memo, not from zero. Founding rate $6,500 USD (full $9,500) — terms on request.
+The engagement built to close every gap on this page is the **Production AI Audit**: two weeks, codebase and telemetry review, 3–5 engineer interviews, every live test run at full depth, per-pillar scoring across up to three workflows, a 10–20 page findings document, and a 90-day remediation roadmap in place of the three first moves above — it starts from this memo, not from zero.
 
 ---
 

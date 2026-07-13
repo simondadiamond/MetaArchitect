@@ -1,6 +1,6 @@
 # AI Readiness Diagnostic — Runbook
 
-> How the 2–3 day Diagnostic gets delivered, start to refund-or-readout, by one person alongside a W-2.
+> How the Diagnostic gets delivered — 2–3 days of engagement activity, delivered inside one calendar week — start to refund-or-readout, by one person alongside a W-2.
 > Part of the AI Readiness Diagnostic kit — prices per `../pricing-pinned.md`.
 > Scoring instrument: `../audit/state-scoring-rubric.md` — the SAME rubric as the Production AI Audit, at reduced evidence depth. Never fork it, never invent a "diagnostic scale."
 
@@ -8,9 +8,9 @@
 
 ## What this engagement is
 
-The Diagnostic scores **one production workflow** against the five STATE pillars and hands the client a 5-page findings memo plus a 1-hour readout. It is the cold-offer entry SKU: fixed scope, fixed price ($2,500 founding / $3,500 full — pinned), 2–3 days, EN/FR, better-than-risk-free guarantee.
+The Diagnostic scores **one production workflow** against the five STATE pillars and hands the client a 5-page findings memo plus a 1-hour readout. It is the cold-offer entry SKU: fixed scope, fixed price ($2,500 founding / $3,500 full — pinned), 2–3 days of engagement activity delivered inside one calendar week, EN/FR, better-than-risk-free guarantee.
 
-It starts where the discovery call ends: gates passed, invoice cleared, workflow already named on that call. If the workflow wasn't named at discovery, get it named in the booking email — never burn evidence-call minutes choosing one.
+It starts where the discovery call ends: gates passed, invoice cleared, workflow already named on that call. If the workflow wasn't named at discovery, get it named in the booking email — never burn evidence-call minutes choosing one. The booking email also states, in one line: **the engagement window starts at the evidence call, not the invoice** — a reschedule moves the whole clock with it.
 
 **One workflow. Not 1–3.** The audit scores up to three; the Diagnostic scores exactly one. If the client wants a second workflow scored, that is the audit, and saying so out loud is fine: "Second workflow is audit scope — the Diagnostic buys depth on one, not coverage of two."
 
@@ -52,7 +52,7 @@ Record the call (consent first). The recording is the evidence corroboration for
 
 ### 2. The 48-hour artifact list — 6 items max, nothing blocking
 
-Send at booking, restate at the end of the call. Deadline: 48h after the evidence call. **Whatever hasn't arrived by then, the memo ships without it** — a missing artifact becomes a provisional flag or a lower score under rule 3, and the memo says which.
+Send at booking, restate at the end of the call. The artifact window **opens at booking** and **closes 48h after the evidence call**. **Whatever hasn't arrived by then, the memo ships without it** — a missing artifact becomes a provisional flag or a lower score under rule 3, and the memo says which.
 
 1. **One complete trace** of a single execution, any export format — LLM calls, tool calls, model versions.
 2. **The state schema** — table DDL, type definition, or migration — plus one real sampled row.
@@ -67,27 +67,32 @@ Never add a seventh item, never chase past 48h. Chasing converts a fixed-scope p
 
 ## Day-by-day
 
-Built for evenings-and-a-weekend delivery next to a W-2. Total hands-on: ~10–14 hours.
+Built for evenings-and-a-weekend delivery next to a W-2. Total hands-on: ~10–14 hours — **2–3 days of engagement activity, delivered inside one calendar week.** The arithmetic that makes it honest: the call is day 1, the artifact window closes 48h later (day 3), scoring happens only after that close, and the readout lands within 2 business days of memo delivery.
 
-### Day 1 — Evidence call + artifact review (~4–5 h)
+### Day 1 — Evidence call + first artifact pass (~4–5 h)
 - [ ] Run the evidence call (60–90 min). Live tests per the block table above; timestamps noted in call notes.
 - [ ] Same evening: first pass over artifacts already in hand. For each, note which pillar and which anchor line it speaks to.
 - [ ] Write the **provisional map**: for each pillar — live test ran / partially ran / could not run. This map is drafted on day 1, not discovered during scoring.
 - [ ] Log per STATE (see engagement hygiene below).
 
-### Day 2 — Scoring + memo writing (~4–6 h)
-- [ ] 48h artifact window closes. Final evidence inventory frozen.
+### Day 2 — Artifact intake, window still open (~0–1 h)
+- [ ] File artifacts as they arrive against pillar and anchor line; update the provisional map.
+- [ ] **No scoring yet.** The scoring freeze happens AFTER the artifact window closes, never before — a score set while artifacts can still arrive is a score set on partial evidence by choice.
+
+### Day 3 — Window closes → scoring + memo writing (~4–6 h)
+- [ ] 48h artifact window closes (48h after the evidence call). Final evidence inventory frozen — only now.
 - [ ] Score all five pillars against the rubric. All-criteria rule; torn between levels → take the lower; every score gets one evidence pointer (artifact, call timestamp, or on-screen observation). No pointer, no score above 1.
 - [ ] Apply provisional flags per rubric rule 4. Typical diagnostic pattern: **T and S confirmable** (their live tests ran on screen-share), **Tol provisional** (paper form only — nothing was actually killed), **A provisional or N/A** (30-min drill never ran), **E provisional above 1** (one boundary's code seen, not every gate read).
 - [ ] Write the memo into `findings-memo-template.md`. Pages 1–4 complete tonight; page 5's confirmation table comes straight from the provisional map.
-- [ ] Pick the 2–3 named risks and the three first moves. First moves target the **weakest pillar**, land inside 30 days, and none of them require Simon.
+- [ ] Pick the 2–3 named risks and the three first moves. Each first move targets the **weakest pillar, or removes a named risk**; all land inside 30 days, and none of them require Simon.
 
-### Day 3 (buffer) — Memo polish + readout (~2–3 h)
+### Memo delivery + readout — readout within 2 business days of memo delivery (~2–3 h)
 - [ ] Cold re-read of the memo. Burned-practitioner test on every line; cut anything the owner couldn't act on.
 - [ ] Verify: every number traces to the memo, every score to a pointer, every provisional flag to page 5.
 - [ ] Deliver the memo **before** the readout (same morning is fine) — the readout discusses a document they've held, it doesn't unveil one.
+- [ ] Target the readout within **2 business days of memo delivery** — book the slot at the evidence call so this is a calendar fact, not a negotiation.
 - [ ] Run the 1-hour readout: 10 min verdict + band, 20 min the named risks, 15 min first moves, 15 min scope/limitations + close (below).
-- [ ] If the engagement ran long: day 3 exists as buffer, use it. Never let the Diagnostic breathe past day 3 — a 2–3 day product that takes five days is a different (unpriced) product.
+- [ ] Never let the Diagnostic breathe past one calendar week — a one-week product that takes three is a different (unpriced) product.
 
 ### Engagement hygiene (STATE applies to revenue)
 - [ ] `founding_clients` row transitions: `signed` → `active` at kickoff → `delivered` when the memo is accepted (or the notes doc until the table exists).
@@ -115,7 +120,7 @@ The transition sentence, verbatim — deliver it flat, off the back of page 5, a
 
 > **"If you want the provisional scores confirmed and a 90-day roadmap instead of three first moves, that's the Production AI Audit — two weeks, $6,500 at the founding rate, and it starts from this memo, not from zero."**
 
-Supporting facts if they ask (all pinned): full audit = codebase + telemetry review, 3–5 engineer interviews, per-pillar scoring across up to 3 workflows, 10–20 pp findings doc, 90-day remediation roadmap, 90-min readout. Founding $6,500 / full $9,500 (CAD $9,000 / $13,000). Audit founding carries the full exchange — name that before quoting founding, same rule as discovery.
+Supporting facts if they ask (all pinned): full audit = codebase + telemetry review, 3–5 engineer interviews, per-pillar scoring across up to 3 workflows, 10–20 pp findings doc, 90-day remediation roadmap, 90-min readout. Founding $6,500 / full $9,500 (CAD $9,000 / $13,000). Audit founding carries the full exchange (case-study rights, logo) — name that before quoting founding, same rule as discovery. [If client legal refuses logo/named case study: pause — a regulated-entity exchange variant is a Simon decision, not an on-call improvisation. Full rate remains available without strings.]
 
 Never pitch the audit anywhere but here (ladder §2: audit is pitched at the diagnostic readout, never cold). Never pitch it to a client who has requested a refund. If they say "not now," the +90-day calendar note from the discovery SOP applies — no drip.
 
@@ -124,6 +129,8 @@ Never pitch the audit anywhere but here (ladder §2: audit is pitched at the dia
 ## Guarantee mechanics — how a refund actually runs
 
 Pinned terms: if the findings memo isn't worth the fee, **full refund on request within 14 days of the readout — client keeps every deliverable.** Diagnostic only.
+
+Client-visible version: `guarantee-terms.md` ships attached to the booking invoice.
 
 The operational half nobody writes down:
 
@@ -135,13 +142,13 @@ The operational half nobody writes down:
 6. **No audit pitch.** A refunded client hears nothing further unless they reach out.
 7. **Log it.** `founding_clients` row → `voided`; the slot reopens (it was never delivered-and-debriefed). Write one honest paragraph in the engagement notes: which page failed to be worth $2,500. A refund is the cheapest product review this business will ever buy — the anti-recurrence loop applies to offers, not just code.
 
-The guarantee is affordable because the exposure is 2–3 days of evenings against a $6,500 audit pipeline (ladder §1b.3). Honoring it fast and silently is the mechanism that makes it true rather than decorative.
+The guarantee is affordable because the exposure is a handful of evenings of work against a $6,500 audit pipeline (ladder §1b.3). Honoring it fast and silently is the mechanism that makes it true rather than decorative.
 
 ---
 
 ## Failure modes for the operator
 
 - **Scope creep via helpfulness.** "Can you also look at our other workflow / our prompt library / this one weird trace?" → "That's audit scope." Every time.
-- **Softening a score at the readout.** The score was frozen on day 2 from evidence. Discussion can change the *memo's wording*, never the number.
+- **Softening a score at the readout.** The score was frozen on day 3, after the artifact window closed, from evidence. Discussion can change the *memo's wording*, never the number.
 - **Confirming what wasn't tested.** A pillar whose live test didn't run is provisional even when the story was convincing — engineers sincerely believe in logging they cannot produce (rubric rule 3). The Diagnostic's credibility, and the audit's reason to exist, both live on this line.
 - **Letting the 48h window slide.** Ship on time with gaps flagged, always, over shipping late and complete.
