@@ -1,13 +1,70 @@
 ---
 name: editorial
-description: Use when Simon asks to edit, review, or improve a blog draft or a specific section — or when write-post hands off a completed draft for quality control. Contract - does NOT add new content or change the argument, only improves execution. Do NOT trigger for writing a new post (write-post) or for LinkedIn copy (the shared gate in repurpose/references covers that).
+description: Use when Simon asks to edit, review, or improve a blog draft or a specific section, when write-post hands off a completed draft for quality control, or when the blog pipeline dispatcher advances a blog_ideas row to the editing stage. Contract - does NOT add new content or change the argument, only improves execution. Do NOT trigger for writing a new post (write-post) or for LinkedIn copy (the shared gate in repurpose/references covers that).
 ---
 
 ## Editorial Loop — Three Passes
 
-**Risk tier: low — deliberately exempt.** Read-only: no DB writes, no external API calls. No state object, no pipeline logging; the calling skill (write-post) carries the STATE obligations for the run.
+**Risk tier: low in chat mode — deliberately exempt.** Read-only there: no DB writes, no external API calls, no state object, no pipeline logging; the calling skill (write-post) carries the STATE obligations for the run. **Pipeline stage mode is medium (S + T):** it writes `blog_artifacts` and `pipeline.logs` (still no external API calls) and carries its own state object — see "Pipeline stage mode" below.
 
 Do not skip a pass. Do not batch them. Output discipline: Pass 2's score block is always shown in full; Passes 1 and 3 present a change summary (or diff) and the final text respectively — never re-print the whole draft between passes.
+
+---
+
+## Pipeline stage mode
+
+Triggered when the blog pipeline dispatcher advances a `blog_ideas` row to `'editing'` (or Simon names a specific row). Run the three passes below **unchanged** — this section is only the pipeline entry/exit/logging wrapper around them.
+
+### STATE Init
+
+```javascript
+const state = {
+  workflowId: crypto.randomUUID(),
+  stage: "init",
+  entityType: "idea",
+  entityId: null,          // set to the blog_ideas row id once known
+  startedAt: new Date().toISOString(),
+  lastUpdatedAt: new Date().toISOString(),
+};
+```
+
+### Stage Contract (pipeline mode)
+
+The row must already be at `'editing'` when this skill runs. The `drafting → editing` transition is `blog-draft`'s exit claim — this skill never performs it. Retrying a `failed_editorial` row is the dispatcher/CC retry action's job: it resets the stage BEFORE this skill is invoked; this skill never resets it either.
+
+**Entry — verify, don't lock:**
+
+```javascript
+const { getIdea, claimStage, setStage, latestArtifact, saveArtifact } = await import('./tools/blog-artifacts.mjs');
+const idea = await getIdea(ideaId);
+if (!idea || idea.stage !== 'editing') throw new Error(`row not at editing (found: ${idea?.stage})`);
+```
+
+Any other stage → stop, touch nothing, report the mismatch.
+
+**Load input:**
+
+```javascript
+const draft = await latestArtifact(ideaId, 'draft');
+```
+
+Missing `draft` artifact → `setStage(ideaId, 'failed_editorial')` with a clear message ("no draft found — run blog-draft first"); stop. Do not run the passes against nothing.
+
+**Run Passes 1–3 against `draft.content`.**
+
+**Exit — the success transition IS the atomic claim:** persist TWO artifacts first — the revised full text as a new `draft` version, and the Pass 2 score block + Pass 3 repairs summary as `editorial_report` — then `claimStage(ideaId, 'editing', 'optimizing')`:
+
+```javascript
+await saveArtifact({ ideaId: state.entityId, kind: 'draft', content: revisedContent, meta: { workflowId: state.workflowId } });
+await saveArtifact({ ideaId: state.entityId, kind: 'editorial_report', content: scoreBlockAndRepairsSummary, meta: { workflowId: state.workflowId } });
+const claimed = await claimStage(state.entityId, 'editing', 'optimizing');
+```
+
+If `claimStage` returns `false`, another run already advanced the row — report that this run's artifacts are a redundant extra version and stop; do NOT `setStage`.
+
+**Failure (including the blocking rule in Pass 3):** re-check the row is still at `'editing'` (`getIdea`), then `setStage(ideaId, 'failed_editorial')` — note the failure stage is `failed_editorial`, **not** `failed_editing`. If it already moved, just report.
+
+Log via `logEntry` from `projects/Content-Engine/tools/supabase.mjs`, `step_name: 'blog_editorial'`, `stage` matching whichever phase failed or `'editing'` on success, `output_summary` naming the flagged dimension(s) on a blocking-rule failure or `'draft_revised'` on success.
 
 ---
 
@@ -85,6 +142,12 @@ For each flagged dimension, state:
 - **What you changed**
 - **Why it scores higher now**
 
-If everything scored 7+: declare "Editorial: clean — no repairs needed." and present the final draft.
+If everything scored 7+: declare "Editorial: clean — no repairs needed."
 
-Present the final post after Pass 3 is complete.
+**Blocking rule (all modes):** after repairing, re-score every dimension that was flagged. Any dimension still below 7 after this pass → do not proceed.
+- **Pipeline mode:** do not `claimStage` to `'optimizing'`. Instead `setStage(ideaId, 'failed_editorial')` and put the unrepaired dimension(s) — and why — in the log entry's `output_summary`.
+- **Chat mode:** tell Simon exactly which dimension is unrepairable and why. Never hand back a draft as finished with an unaddressed score below 7.
+
+Never silent-continue past a dimension that's still below 7.
+
+Present the final post only once every dimension is at 7 or above.
