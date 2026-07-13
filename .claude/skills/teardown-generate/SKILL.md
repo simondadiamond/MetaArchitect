@@ -144,10 +144,24 @@ One clean principle, stated plainly.]
 
 ## FAQ
 
-[Exactly 3 questions, phrased the way the ICP would ask an AI assistant — e.g. "Is [System] safe
-for regulated data?", "Does [System] log LLM decisions?", "Does Law 25 apply to [category]?"
-Each answer 2–4 sentences, self-contained and citable on its own (AEO). Across the full post,
-at least 2 H2/H3 headings must be question-form.]
+### Is [System] safe for regulated data?
+
+[Answer — 2–4 sentences, self-contained and citable on its own (AEO).]
+
+### Does [System] log LLM decisions?
+
+[Answer — same rules.]
+
+### [Third question, e.g. "Does Law 25 apply to [category]?"]
+
+[Answer — same rules.]
+
+[Exactly 3 questions, phrased the way the ICP would ask an AI assistant. **Each question MUST be
+its own `### <question>?` heading exactly as shown above** — the downstream insert gate
+(`insert-blog-post.mjs --require-faq`) counts only `### <text>?` or `**<text>?**` lines under
+`## FAQ`; prose-format questions pass every earlier stage and then die at the gate, four stages
+and one Simon review too late. Across the full post, at least 2 H2/H3 headings must be
+question-form — these three count toward that.]
 
 ---
 
@@ -261,8 +275,16 @@ existing = supabase_sql(f"""
     LIMIT 1
 """)
 
+EARLY_STAGES = {'candidate', 'researching', 'drafting',
+                'failed_researching', 'failed_drafting'}
+
 if existing:
     ideaId = existing[0]['id']
+    if existing[0]['stage'] not in EARLY_STAGES:
+        # Row has advanced into the shared tail (editing onward, awaiting_*, promoted_to_post).
+        # STOP — see the stage-safety rule below. Do not proceed, do not touch the stage.
+        raise SystemExit(f"blog_ideas row {ideaId} is at '{existing[0]['stage']}' — past this "
+                         f"skill's stages. Ask Simon to confirm the regenerate before proceeding.")
     print(f"Reusing blog_ideas row {ideaId} (stage: {existing[0]['stage']})")
 else:
     result = supabase_sql(f"""
@@ -281,6 +303,22 @@ else:
 ```
 
 `ideaId` is carried alongside `WORKFLOW_ID` for the rest of this run.
+
+**Runtime note:** the Python and JavaScript snippets in this skill are separate in-session tool
+invocations, not one program — values like `ideaId`, `slug`, and `draft_id` are carried by the
+session (you) between them, never across a language runtime.
+
+**Stage-safety rule (re-invocation on an advanced row):** the `EARLY_STAGES` check above is
+load-bearing. If the paired row's stage is `candidate`, `researching`, `drafting`, or a
+`failed_` variant of those, proceed — that's a fresh run or a legitimate retry of this skill's
+own stages. If the row has moved **past** `drafting` (`editing` onward, any `awaiting_*`,
+`inserting`, `promoted_to_post`, or a failed tail stage), **STOP before touching anything**:
+Step 2's `setStage(ideaId, 'drafting')` would silently revert a row that is mid-tail or done,
+stranding or superseding downstream artifacts nobody asked to redo. This skill is chat-triggered,
+so ask: tell Simon the row's current stage and ask him to confirm the regenerate explicitly —
+confirming means he accepts resetting the row to `'drafting'` and superseding all downstream
+artifacts (the append-only artifact model keeps the old versions readable, but the tail re-runs).
+Never silently revert a stage.
 
 **Stage semantics:** this skill covers the `blog_ideas` row's `'researching'` stage (Step 1) and
 `'drafting'` stage (Steps 2–4) in a single run. The `candidate → researching` start is still

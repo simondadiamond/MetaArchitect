@@ -84,7 +84,9 @@ const outline = await latestArtifact(ideaId, 'outline');
 
 `draft` here is the **post-editorial** draft — `editorial` saves its revised text as a new `draft` version, and `latestArtifact` orders by `created_at desc`, so the newest version (the one editorial revised) is what you get automatically. `outline` supplies the INTERNAL LINK PLAN and the `primary_keyword` (from its persisted `meta`).
 
-**Both are REQUIRED.** Missing either → `failed_optimizing` with a clear message naming which one is missing ("no draft found — run editorial first" / "no outline found — run blog-outline first"); stop. Do not optimize against a partial input set.
+**`draft` is REQUIRED for both post_types.** Missing → `failed_optimizing` ("no draft found — run editorial first"); stop.
+
+**`outline` is REQUIRED only when `idea.post_type === 'article'`.** Missing on an article row → `failed_optimizing` ("no outline found — run blog-outline first"); stop — do not optimize an article against a partial input set. On a **teardown** row (`idea.post_type === 'teardown'`), `outline` will be `null` and that is **expected-absent, never a failure** — teardowns skip the outlining stages entirely; every outline-sourced value below has an explicit teardown branch (PHASE 2 note, PHASE 3 item 1, and the Teardown rows subsection).
 
 ---
 
@@ -101,6 +103,8 @@ const { data: linkMap } = await pub.from('blog_posts')
 ```
 
 For each `[anchor text] → /blog/<slug> — why here` line in the outline's INTERNAL LINK PLAN: keep it only if `<slug>` is still in `linkMap`. If a planned slug's context vanished (post unpublished, slug changed), drop that link — do not invent a replacement — and record it in `meta.skipped_optimizations` (e.g. `"dropped link to /blog/old-slug — no longer published"`).
+
+**Teardown rows:** there is no outline link plan — run the same `linkMap` query, but verify the internal links already present in the **draft body** against it instead (per the Teardown rows subsection): a draft link to a slug not in `linkMap` is dropped and recorded in `meta.skipped_optimizations` the same way.
 
 ---
 
@@ -135,7 +139,13 @@ Work items, in order:
 
    The canonical `geo_citability` attestation keys (do not invent your own names) are defined in `projects/Content-Engine/tools/insert-blog-post.mjs`'s `GEO_BOXES` export — currently `bluf_first_150`, `fact_blocks_open_h2s`, `question_headings_reviewed`, `named_failure_mode_defined`, `distinct_insights_5_to_7`, `entity_density`, `primary_keyword_placed`. Read the export fresh each run in case it's changed. `named_failure_mode_defined` may be `"n/a"` only when `pillar !== 'failure_taxonomy'`. Every other box must be `true` — an unticked box is a reason to fix the post, not to ship the box unticked.
 
-   `pillar` comes from `idea.pillar` (the `getIdea` result from the Stage Contract). `cta_type` comes from the outline artifact's own `CTA TYPE:` line (the outline template `blog-outline` Phase 3 builds) — parse it from there, do not re-derive it. `primary_keyword` comes from `outline.meta.primary_keyword`. **`title` and `slug` start from `outline.meta.title_options` and `outline.meta.working_slug`** — these are what Simon approved at the outline checkpoint, not yours to invent: pick the title from `title_options` (or keep the working slug's implied one) and refine either ONLY if the final draft content genuinely requires it, noting any such refinement in the final report to Simon (same transparency spirit as `meta.skipped_optimizations`). `canonical_url` is always `https://simonparis.ca/blog/<slug>` using the slug chosen in this step. `featured` is `false` unless Simon has explicitly said otherwise for this post.
+   `pillar` comes from `idea.pillar` (the `getIdea` result from the Stage Contract) for both post_types. The remaining fields branch on `idea.post_type`:
+
+   **Article rows:** `cta_type` comes from the outline artifact's own `CTA TYPE:` line (the outline template `blog-outline` Phase 3 builds) — parse it from there, do not re-derive it. `primary_keyword` comes from `outline.meta.primary_keyword`. **`title` and `slug` start from `outline.meta.title_options` and `outline.meta.working_slug`** — these are what Simon approved at the outline checkpoint, not yours to invent: pick the title from `title_options` (or keep the working slug's implied one) and refine either ONLY if the final draft content genuinely requires it, noting any such refinement in the final report to Simon (same transparency spirit as `meta.skipped_optimizations`).
+
+   **Teardown rows** (no outline exists — per the Teardown rows subsection): `title` is the draft's top heading (`"[System Name] STATE Teardown: [subtitle]"` — parse, don't invent); `slug` is `draft.meta.blog_slug` verbatim — never re-derived; `cta_type` is `'audit'`; `primary_keyword` is derived from the system name (volume check optional, `'unverified'` acceptable).
+
+   For both: `canonical_url` is always `https://simonparis.ca/blog/<slug>` using the slug chosen in this step. `featured` is `false` unless Simon has explicitly said otherwise for this post.
 
 2. **AEO structural pass.** Confirm the BLUF sits in the first 150 words, every H2 opens with its 40-50 word fact-block, and headings are question-form where natural — per the SEO/GEO rules canonical at the top of `write-post` SKILL.md. **Fix only mechanically** (move a fact-block back to the top of its section, rephrase a heading into question form) — never rewrite the argument or add a claim that wasn't already in the draft.
 

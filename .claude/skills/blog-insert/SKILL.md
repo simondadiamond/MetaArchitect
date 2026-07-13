@@ -132,11 +132,12 @@ Every metadata field here is `blog-optimize`'s own persisted `meta` verbatim (`o
 
 ```javascript
 import { db } from './tools/supabase.mjs';   // run from projects/Content-Engine/ — db defaults to schema 'pipeline'
+const draft = await latestArtifact(ideaId, 'draft');   // PHASE 1 doesn't load this — the teardown_draft_id lives on the draft artifact's meta (set by teardown-generate at hand-off)
 const { data: teardownDraft, error } = await db.from('teardown_drafts')
   .select('linkedin_post')
-  .eq('id', draft.meta.teardown_draft_id)   // draft = latestArtifact(ideaId, 'draft'); its meta carries teardown_draft_id
+  .eq('id', draft.meta.teardown_draft_id)
   .single();
-if (error || !teardownDraft?.linkedin_post) throw new Error(`no linkedin_post found on teardown_drafts ${draft.meta.teardown_draft_id}`);
+if (error || !teardownDraft?.linkedin_post) throw new Error(`no linkedin_post found on teardown_drafts ${draft?.meta?.teardown_draft_id}`);
 payload.linkedin_extract = teardownDraft.linkedin_post;
 ```
 
