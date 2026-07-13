@@ -13,7 +13,7 @@ description: Use when Simon asks to research a topic for The Meta Architect blog
 
 ### Modes
 
-- **Pipeline mode** — a `blog_ideas` row id is in play, either passed in directly (dispatcher, write-post) or claimed by this skill (see Stage Contract). The research doc is persisted as a `research_doc` artifact on that row.
+- **Pipeline mode** — a `blog_ideas` row id arrives from the dispatcher or write-post, already at stage `'researching'` (see Stage Contract). The research doc is persisted as a `research_doc` artifact on that row.
 - **Standalone mode** — no row. If Simon confirms the topic is headed for a post, create a `blog_ideas` row (`title_working`, best-fit `pillar`, `post_type:'article'`, `stage:'researching'`) and continue as pipeline mode from there. Otherwise write the doc to `docs/research/YYYY-MM-DD-<topic>.md` (kebab-case topic slug) and commit it — **a chat summary alone is no longer an allowed terminal state.**
 
 ### STEP 0 — STATE Init
@@ -44,7 +44,7 @@ await logEntry({ workflow_id: state.workflowId, entity_id: state.entityId, step_
 
 The interface is the **`notebooklm-mcp` MCP tools** — there is no `notebooklm` skill. Auth errors → run `nlm login` via Bash, then retry.
 
-Setup: `notebook_create` named `[topic] — Blog Research [YYYY-MM-DD]` (today's date), then `source_add` for any sources Simon provided.
+Setup: `notebook_create` named `[topic] — Blog Research [YYYY-MM-DD]` (today's date) — **capture the returned notebook id as `notebook_id`** (Phase 3 writes it into the artifact meta) — then `source_add` for any sources Simon provided.
 
 The NLM research flow is **four steps — all four required** (lessons.md 2026-04-05: the first two alone return source metadata and an EMPTY report, never synthesized text):
 
@@ -208,16 +208,23 @@ await saveArtifact({ ideaId: state.entityId, kind: 'research_doc', content, meta
 
 ### Stage Contract (pipeline mode)
 
+The row must already be at `'researching'` when this skill runs. `candidate → researching` is a **human-only** transition (Simon, via CC or by asking directly) — this skill never performs it. Retrying a `failed_*` row is the dispatcher/CC retry action's job: it resets the stage BEFORE this skill is invoked; this skill never resets it either.
+
+**Entry — verify, don't lock:**
+
 ```javascript
-const { claimStage, setStage, getIdea } = await import('./tools/blog-artifacts.mjs');
+const { getIdea, claimStage, setStage, latestArtifact } = await import('./tools/blog-artifacts.mjs');
+const idea = await getIdea(ideaId);
+if (!idea || idea.stage !== 'researching') throw new Error(`row not at researching (found: ${idea?.stage})`);
 ```
 
-Claim the row before starting work:
+Any other stage (`candidate`, `failed_researching`, anything) → stop, touch nothing, report the mismatch. Exclusivity is the dispatcher layer's job (single scheduled dispatcher, one row per fire, overlapping fires skipped) — and a double-run is safe anyway because artifacts are append-only.
 
-1. Try `claimStage(ideaId, 'candidate', 'researching')`.
-2. If that returns `false`, call `getIdea(ideaId)` and check the actual stage: `'researching'` → the row was created pre-claimed (write-post, teardown flows) — proceed. `'failed_researching'` → this is a retry; `claimStage(ideaId, 'failed_researching', 'researching')` then proceed. Any other stage → the row isn't ready for research — stop, touch nothing, report the mismatch.
+**Resume check (Tolerant):** after verifying, `latestArtifact(ideaId, 'research_doc')` — if a doc exists from a prior partial run, review and extend it (re-verify anything stale per the session-verified rule) instead of blindly redoing all the NLM/SERP/volume work.
 
-On success (artifact persisted): `setStage(ideaId, 'outlining')` — this skill handles **article** rows only (`post_type:'article'`); teardown research uses `teardown-generate`'s own path. On failure: `setStage(ideaId, 'failed_researching')`.
+**Exit — the success transition IS the atomic claim:** after persisting the artifact, `claimStage(ideaId, 'researching', 'outlining')`. If it returns `false`, another run already advanced the row — report that this run's artifact is a redundant extra version and stop; do NOT `setStage`. This skill handles **article** rows only (`post_type:'article'`); teardown research uses `teardown-generate`'s own path.
+
+**Failure:** re-check the row is still at `'researching'` (`getIdea`), then `setStage(ideaId, 'failed_researching')`; if it already moved, just report.
 
 Log the run via `logEntry` with `step_name: 'blog_research'`, `stage` matching whichever phase failed or `'persist'` on success.
 
