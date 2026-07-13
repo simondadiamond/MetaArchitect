@@ -163,6 +163,8 @@ Report format — one row per claim from the Phase 2 worklist, in the same order
 | "<claim text>" | <primary URL> | yes/no | yes/no/n-a | PASS/FAIL |
 ```
 
+A claim legitimately repaired in Phase 4 (cut or reattributed) is recorded here as verdict: PASS — the assertion no longer exists as an unverified external-world claim in the final text; only a claim Phase 4 could not repair keeps FAIL, and that branch ends the run at `failed_fact_check` before reaching this table.
+
 "Verbatim sentence found?" means found on THIS run's live fetch (Phase 3) — never "found in the research doc". A FAIL caused by an unreachable source puts the unfetchable URL in the `source URL` cell so Simon can see exactly what couldn't be reached. Append a short gate output summary (pass/fail, any fixes made) below the table.
 
 **Persist the `factcheck_report` artifact in every case, PASS or FAIL** — a report documenting which claims failed and why is exactly what Traceability requires, even on the run that ends at `failed_fact_check`.

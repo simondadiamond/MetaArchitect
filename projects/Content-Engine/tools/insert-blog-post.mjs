@@ -20,19 +20,23 @@
  *       primary_keyword_placed }
  *     (named_failure_mode_defined may be "n/a" for non-failure_taxonomy pillars)
  *   post_type — 'article' | 'teardown', defaults to 'article' when omitted.
- *   canonical_url — must start with 'https://simonparis.ca/blog/'. Optional (but validated
- *     when present) unless --require-faq mode, where it's required.
+ *   canonical_url — parsed with new URL(); must have origin 'https://simonparis.ca' and a
+ *     normalized pathname starting '/blog/' (so '../' traversal is rejected), and no
+ *     whitespace. Optional (but validated when present) unless --require-faq mode, where
+ *     it's required.
  *   source_idea_id — uuid string, the pipeline.blog_ideas row this post came from. Optional
  *     (but validated as a uuid when present) unless --idea <uuid> is passed on the CLI, in
- *     which case it's required and must equal the --idea value.
+ *     which case it's required and must equal the --idea value (case-insensitive).
  *
  * Pipeline (skill) callers pass --require-faq --idea <id>: the gate then also requires
  * canonical_url, source_idea_id (matching --idea), and a '## FAQ' section in body_markdown
- * with at least 3 questions. A "question" is a line matching either '### <text>' or a
- * standalone bold line ending in '?' ('**<text>?**') within the FAQ section (up to the next
- * '## ' heading or end of document) — matches the format blog-optimize/SKILL.md tells authors
- * to produce (3-5 ICP-phrased questions under a '## FAQ' heading). Legacy/manual callers that
- * omit --require-faq and --idea are unaffected — backward compatible.
+ * with at least 3 questions. A "question" is a line ending in '?' in one of two forms:
+ * a '### <text>?' sub-heading, or a standalone bold line '**<text>?**', within the FAQ
+ * section (up to the next '## ' heading or end of document). Non-question headings like
+ * '### Overview' do NOT count — the FAQ feeds FAQPage JSON-LD downstream. Matches the format
+ * blog-optimize/SKILL.md tells authors to produce (3-5 ICP-phrased questions under a
+ * '## FAQ' heading). Legacy/manual callers that omit --require-faq and --idea are
+ * unaffected — backward compatible.
  *
  * blog_posts lives in the PUBLIC schema (website data) — one-off client, never
  * tools/supabase.mjs (pipeline schema) and never the Management API (WAF blocks large
@@ -61,8 +65,10 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 /**
  * Count FAQ questions in body_markdown. Looks for a '## FAQ' heading (case-insensitive),
  * then counts lines within that section (up to the next '## ' heading or end of document)
- * that are either a '### ...' sub-heading or a standalone bold line ending in '?'
- * ('**...?**'). Returns -1 if no '## FAQ' heading is found.
+ * that are actual questions: either a '### ...?' sub-heading or a standalone bold line
+ * ending in '?' ('**...?**'). Both forms must end in '?' — the FAQ feeds FAQPage JSON-LD
+ * downstream, so '### Overview'-style non-question headings do not count.
+ * Returns -1 if no '## FAQ' heading is found.
  */
 export function faqQuestionCount(body) {
   if (typeof body !== 'string') return -1;
@@ -73,7 +79,7 @@ export function faqQuestionCount(body) {
   for (let i = start + 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (/^##\s+/.test(line)) break; // next H2 section ends the FAQ block
-    if (/^###\s+\S.*$/.test(line)) count++;
+    if (/^###\s+\S.*\?$/.test(line)) count++;
     else if (/^\*\*.+\?\*\*$/.test(line)) count++;
   }
   return count;
@@ -118,12 +124,21 @@ export function validatePayload(p, { skipExtractGate = false, requireFaq = false
   const postType = p.post_type ?? 'article';
   if (!POST_TYPES.includes(postType)) err(`post_type ${JSON.stringify(p.post_type)} — must be one of: ${POST_TYPES.join(' | ')}`);
 
-  // canonical_url — required + domain-checked in --require-faq mode; optional-but-validated otherwise
+  // canonical_url — required + domain-checked in --require-faq mode; optional-but-validated otherwise.
+  // Parsed with new URL() so '..' segments normalize before the /blog/ check — a naive
+  // startsWith would accept 'https://simonparis.ca/blog/../evil'.
   if (requireFaq || p.canonical_url !== undefined) {
     if (typeof p.canonical_url !== 'string' || !p.canonical_url.trim()) {
       err(`canonical_url missing or empty${requireFaq ? ' (required in --require-faq mode)' : ''}`);
-    } else if (!p.canonical_url.startsWith(CANONICAL_URL_PREFIX)) {
-      err(`canonical_url ${JSON.stringify(p.canonical_url)} must start with ${CANONICAL_URL_PREFIX}`);
+    } else if (/\s/.test(p.canonical_url)) {
+      err(`canonical_url ${JSON.stringify(p.canonical_url)} contains whitespace`);
+    } else {
+      let u = null;
+      try { u = new URL(p.canonical_url); } catch { /* handled below */ }
+      if (!u) err(`canonical_url ${JSON.stringify(p.canonical_url)} is not a valid URL`);
+      else if (u.origin !== 'https://simonparis.ca' || !u.pathname.startsWith('/blog/')) {
+        err(`canonical_url ${JSON.stringify(p.canonical_url)} must resolve under ${CANONICAL_URL_PREFIX} (normalized: ${u.origin}${u.pathname})`);
+      }
     }
   }
 
@@ -133,7 +148,7 @@ export function validatePayload(p, { skipExtractGate = false, requireFaq = false
       err('source_idea_id missing or empty (required when --idea is passed)');
     } else if (!UUID_RE.test(p.source_idea_id)) {
       err(`source_idea_id ${JSON.stringify(p.source_idea_id)} is not a valid uuid`);
-    } else if (p.source_idea_id !== ideaId) {
+    } else if (p.source_idea_id.toLowerCase() !== ideaId.toLowerCase()) {
       err(`source_idea_id ${JSON.stringify(p.source_idea_id)} does not match --idea ${JSON.stringify(ideaId)}`);
     }
   } else if (p.source_idea_id !== undefined) {
@@ -146,7 +161,7 @@ export function validatePayload(p, { skipExtractGate = false, requireFaq = false
   if (requireFaq) {
     const n = faqQuestionCount(p.body_markdown);
     if (n === -1) err('body_markdown missing a "## FAQ" section (required in --require-faq mode)');
-    else if (n < 3) err(`body_markdown FAQ section has ${n} question(s) — needs >=3 ("### question" or "**question?**" lines)`);
+    else if (n < 3) err(`body_markdown FAQ section has ${n} question(s) — needs >=3 ("### question?" or "**question?**" lines, must end in '?')`);
   }
 
   // tags: non-empty array of kebab-case strings
@@ -305,11 +320,15 @@ function selfTest() {
   expect('missing canonical_url fails under --require-faq', { ...goodPipelinePayload(), canonical_url: undefined }, false, 'canonical_url', { requireFaq: true, ideaId: TEST_IDEA_ID });
   expect('canonical_url wrong domain fails under --require-faq', { ...goodPipelinePayload(), canonical_url: 'https://example.com/blog/foo' }, false, 'canonical_url', { requireFaq: true, ideaId: TEST_IDEA_ID });
   expect('good pipeline payload passes --require-faq --idea', goodPipelinePayload(), true, undefined, { requireFaq: true, ideaId: TEST_IDEA_ID });
+  expect('canonical_url path traversal (../) fails', { ...goodPayload(), canonical_url: 'https://simonparis.ca/blog/../evil' }, false, 'canonical_url');
+  expect('canonical_url with whitespace fails', { ...goodPayload(), canonical_url: 'https://simonparis.ca/blog/foo bar' }, false, 'canonical_url');
 
   // --- source_idea_id (uuid; required + must match --idea when passed) ---
   expect('source_idea_id bad uuid format fails', { ...goodPayload(), source_idea_id: 'not-a-uuid' }, false, 'source_idea_id');
   expect('missing source_idea_id fails when --idea passed', { ...goodPipelinePayload(), source_idea_id: undefined }, false, 'source_idea_id', { ideaId: TEST_IDEA_ID });
   expect('source_idea_id mismatch fails when --idea passed', { ...goodPipelinePayload(), source_idea_id: OTHER_IDEA_ID }, false, 'source_idea_id', { ideaId: TEST_IDEA_ID });
+  { const lower = 'abcdefab-cdef-4abc-8def-abcdefabcdef';
+    expect('source_idea_id uuid match is case-insensitive', { ...goodPipelinePayload(), source_idea_id: lower.toUpperCase() }, true, undefined, { requireFaq: true, ideaId: lower }); }
 
   // --- FAQ (## FAQ heading with >=3 questions, required only under --require-faq) ---
   { const p = goodPipelinePayload(); p.body_markdown = goodPayload().body_markdown;
@@ -319,6 +338,12 @@ function selfTest() {
       + '### What breaks first when an agent has no state?\n\nAnswer text about state.\n\n'
       + '**Why does this matter for compliance?**\n\nAnswer text about compliance.\n';
     expect('FAQ with <3 questions fails under --require-faq', p, false, 'FAQ', { requireFaq: true, ideaId: TEST_IDEA_ID }); }
+  { const p = goodPipelinePayload();
+    p.body_markdown = '## Why does the agent fail?\n\nBody text here.\n\n## FAQ\n\n'
+      + '### Overview\n\nNot a question.\n\n'
+      + '### Background\n\nNot a question.\n\n'
+      + '### Summary\n\nNot a question.\n';
+    expect('FAQ with 3 non-question ### headings fails under --require-faq', p, false, 'FAQ', { requireFaq: true, ideaId: TEST_IDEA_ID }); }
 
   console.log(`\ninsert-blog-post self-test: ${pass} pass, ${fail} fail`);
   return fail === 0;
