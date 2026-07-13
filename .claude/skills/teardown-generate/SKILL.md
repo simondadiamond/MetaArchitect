@@ -247,6 +247,50 @@ slug = re.sub(r'[^a-z0-9]+', '-', candidate['name'].lower()).strip('-')  # e.g. 
 print(f"Loaded: {candidate['name']} (ICP: {candidate['icp_relevance']}, Yield: {candidate['content_yield']}) → slug: {slug}")
 ```
 
+**Find-or-create the paired `blog_ideas` row.** Every teardown run also maintains a row in
+`public.blog_ideas` (`post_type:'teardown'`) so the blog post can ride the shared pipeline tail.
+Find it by an exact marker in `notes` — never by `title_working`, which Simon may edit:
+
+```python
+import json
+
+marker = f"teardown_candidate:{candidate['id']}"
+existing = supabase_sql(f"""
+    SELECT id, stage FROM public.blog_ideas
+    WHERE notes ILIKE '%{marker}%'
+    LIMIT 1
+""")
+
+if existing:
+    ideaId = existing[0]['id']
+    print(f"Reusing blog_ideas row {ideaId} (stage: {existing[0]['stage']})")
+else:
+    result = supabase_sql(f"""
+        INSERT INTO public.blog_ideas (title_working, pillar, post_type, stage, notes, source_links)
+        VALUES (
+          '{candidate['name'].replace("'","''")}',
+          'state_applied',
+          'teardown',
+          'researching',
+          '{marker} — created by teardown-generate',
+          '{json.dumps(candidate.get('sources') or []).replace("'","''")}'::jsonb
+        ) RETURNING id
+    """)
+    ideaId = result[0]['id']
+    print(f"Created blog_ideas row {ideaId} for candidate {candidate['id']}")
+```
+
+`ideaId` is carried alongside `WORKFLOW_ID` for the rest of this run.
+
+**Stage semantics:** this skill covers the `blog_ideas` row's `'researching'` stage (Step 1) and
+`'drafting'` stage (Steps 2–4) in a single run. The `candidate → researching` start is still
+Simon's action — he says "teardown [name]," and that invocation IS the human transition; the row
+may be freshly created at `'researching'` by this very run, which is fine. On starting Step 2,
+`setStage(ideaId, 'drafting')` so the board reflects reality. Teardowns skip `outlining` /
+`awaiting_outline_approval` entirely — the teardown format IS the outline (Blog Post Format
+above), and `teardown-gate.py` enforces its structure the way the outline gate enforces an
+article's.
+
 ### Step 1: Deep source research
 
 Fetch the primary source URL and up to 3 additional sources from `candidate['sources']`. Look for:
@@ -260,9 +304,21 @@ Keep every fetched URL in a `source_urls` list; the pre-write checklist (Gate 10
 each one appears as a markdown link in the post.
 
 **Checkpoint (Tol):** before generation begins, persist the research notes (including
-`source_urls`, key quotes with their URLs, and any preliminary score revisions) to
-`projects/Content-Engine/.tmp/teardown-research-notes-<slug>.md`. If the session crashes
-mid-generation, the rerun resumes from that file instead of re-fetching every source.
+`source_urls`, key quotes with their URLs, and any preliminary score revisions) as a
+`research_doc` artifact on the paired `blog_ideas` row:
+
+```javascript
+const { saveArtifact } = await import('./tools/blog-artifacts.mjs');
+await saveArtifact({
+  ideaId,
+  kind: 'research_doc',
+  content: researchNotes,   // source_urls, quotes, preliminary score revisions
+  meta: { candidate_id: candidate['id'], slug },
+});
+```
+
+If the session crashes mid-generation, the rerun calls `latestArtifact(ideaId, 'research_doc')`
+and resumes from that content instead of re-fetching every source.
 
 **Claim provenance (2026-07-07 lesson — the Ramp 65% + shadow-mode incident):** every
 external-world claim in the article must be traceable to a **verbatim sentence you actually
@@ -283,6 +339,14 @@ the claim. An unsourced claim is a gate failure, not a style issue: derivatives 
 it ends up on LinkedIn.
 
 ### Step 2: Generate the teardown
+
+On starting this step, `setStage(ideaId, 'drafting')` — the `blog_ideas` row moves from
+`researching` to `drafting` here (see Stage Semantics in Step 0):
+
+```javascript
+const { setStage } = await import('./tools/blog-artifacts.mjs');
+await setStage(ideaId, 'drafting');
+```
 
 Using your research, produce:
 
@@ -307,8 +371,8 @@ Using your research, produce:
 
 ### Step 3: Blog slug
 
-Already computed in Step 0 (`slug`) — it also names the Step 1 checkpoint file. Reuse it here;
-don't derive it twice.
+Already computed in Step 0 (`slug`) — it also tags the Step 1 checkpoint artifact's `meta`. Reuse
+it here; don't derive it twice.
 
 ### Step 4: Write draft to Supabase
 
@@ -391,7 +455,7 @@ outreach = {'dm_template': dm_template, 'alt_hooks': alt_hooks}
 
 log_entry = json.dumps({'step': 'generate', 'model': MODEL_ID,
                         'output_summary': 'full teardown generated',
-                        'workflow_id': WORKFLOW_ID}).replace("'", "''")
+                        'workflow_id': WORKFLOW_ID, 'idea_id': ideaId}).replace("'", "''")
 
 existing = supabase_sql(f"""
     SELECT id, status FROM pipeline.teardown_drafts
@@ -443,6 +507,23 @@ else:
     draft_id = result[0]['id']
 
 print(f"Draft written: {draft_id}")
+```
+
+#### Hand off to the shared pipeline tail (blog_ideas)
+
+The blog post is also persisted as a `draft` artifact on the paired `blog_ideas` row, then the
+row is moved to `editing` — from here the shared tail (editorial → blog-optimize →
+blog-factcheck → Simon's final review → blog-insert) takes over:
+
+```javascript
+const { saveArtifact, setStage } = await import('./tools/blog-artifacts.mjs');
+await saveArtifact({
+  ideaId,
+  kind: 'draft',
+  content: full_content,
+  meta: { source: 'teardown-generate', teardown_draft_id: draft_id, blog_slug: slug },
+});
+await setStage(ideaId, 'editing');
 ```
 
 ### Step 4b: Save the post to pipeline.posts (with media)
@@ -507,7 +588,7 @@ supabase_sql(f"""
 supabase_sql(f"""
     INSERT INTO pipeline.logs (workflow_id, entity_id, step_name, stage, output_summary, model_version, status)
     VALUES ('{WORKFLOW_ID}', '{candidate['id']}', 'teardown_generated', 'complete',
-            'Draft {draft_id} written for {candidate["name"]}', '{MODEL_ID}', 'success')
+            'Draft {draft_id} written for {candidate["name"]}; blog_ideas {ideaId} at editing', '{MODEL_ID}', 'success')
 """)
 ```
 
@@ -525,6 +606,10 @@ This skill runs in interactive Sterling sessions; the review surface is the chat
 5. **Blog slug** (the URL it will live at once published)
 6. **Draft ID** in Supabase (for reference)
 
+The blog post now continues through the shared pipeline tail (editorial → optimize → factcheck →
+Simon's review → gated insert) — `full_content` in `teardown_drafts` is no longer the terminal
+blog artifact.
+
 ---
 
 ## STATE Compliance
@@ -532,5 +617,5 @@ This skill runs in interactive Sterling sessions; the review surface is the chat
 - **S**: Draft stored as typed row with structured scores/gaps/remediation — not a free-form blob
 - **T**: workflow_id on draft row and candidate update; logged to pipeline.logs
 - **A**: generation_log captures model and output summary; state_scores.reasoning preserves decision chain
-- **Tol**: Step 1 notes persist to `.tmp/teardown-research-notes-<slug>.md` before generation (crash checkpoint); the Step 4 write is idempotent — an existing non-archived draft for the candidate is updated in place, never duplicated (safe to retry at any stage)
+- **Tol**: Step 1 notes persist as a `research_doc` artifact on the paired `blog_ideas` row before generation (crash checkpoint — rerun reads it back via `latestArtifact`); the Step 4 write is idempotent — an existing non-archived draft for the candidate is updated in place, never duplicated (safe to retry at any stage)
 - **E**: No publish action taken — draft status only; Simon reviews before anything goes live
