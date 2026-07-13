@@ -24,6 +24,14 @@ Command Center has a blog section (idea → outline → generated post). Simon h
 - **GEO** (generative engine optimization): quotable stat-anchored sentences with named sources, clear definitions near the top, structure that LLMs can cite (the post itself should be T1 material for someone else's RAG).
 - **STATE compliance:** medium risk (LLM calls + DB writes) — state object, log every LLM call to `pipeline.logs`, validation gate before any `blog_posts` write. The n8n workflow's fatal flaw was zero gates; don't rebuild that.
 
+## 2b. The gold standard: 2026 state of the art (deep research DONE)
+
+Simon's call: the n8n workflow is a year old — a good bar, **not** the gold standard. A NotebookLM deep research on SOTA AI blog pipelines + SEO/AEO/GEO 2026 is complete:
+
+- **Full design requirements brief:** `docs/handoffs/2026-07-13-sota-blog-pipeline-brief.md` (read it before designing anything).
+- **Notebook for follow-up queries:** `69695efc-7994-40de-a513-3bc491152d1f` (81 sources).
+- Headlines: agentic content ops with distinct research/outliner/writer/SEO-optimizer/fact-checker roles + confidence-gated HITL checkpoints; "Information Gain" as the outline criterion; the one-third human-contribution rule; Google penalizes low-effort not AI per se (E-E-A-T signals are infrastructure); FAQ rich results are DEAD in 2026 (schema deprecations — check the brief before building FAQPage markup); GEO = quotable stats + definitions + citation tracking, llms.txt is contested; AI-content disclosure expectations tightened July 2026.
+
 ## 3. The bar: Simon's 2025 n8n "Blog Maker" (primary artifact)
 
 **Location:** Simon's PC, SSH host `win40` (configured in `~/.ssh/config`), path `C:\repos\n8n workflows\blog-content\` — three files: `Blog Maker.json` (80 nodes), `Blog Writer.json` (69), `Final Blog Assembly.json` (13). Fetch with: `ssh win40 'type "C:\repos\n8n workflows\blog-content\Blog Maker.json"' > local.json`.
