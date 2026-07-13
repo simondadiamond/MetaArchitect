@@ -9,5 +9,20 @@
       "mcp__notebooklm-mcp__notebook_query",
       "mcp__supabase__list_projects"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel 2>/dev/null || echo .)/scripts/hooks/skill-lint-hook.sh\"",
+            "timeout": 30,
+            "statusMessage": "skill-lint (auto-run on skill/brand edits)"
+          }
+        ]
+      }
+    ]
   }
 }
