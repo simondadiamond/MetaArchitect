@@ -42,6 +42,14 @@
 
 ### Before/after (downgrade red-team — Phase 3, pending)
 
+## Build-phase log (2026-07-13, all tranches approved)
+
+- First gate went live and its first denial was against the agent that built it: the bash-guard hook's live-fire test was the builder running `pkill -f` and getting blocked with the lesson citation in the refusal. The gate's first catch was its own author.
+- The red-green harness (45 cases) is itself wired into the Friday lint — the gates re-prove themselves weekly. Gates that guard the estate, guarded by a gate.
+- New lint checks fired red on REAL drift within seconds of existing: the divergent-duplicate check caught the live coo.md `/pattern` divergence on its first run (the exact regression the git-history sweep had found by hand).
+- Credential follow-up: the token flagged for rotation on 07-02 was still returning 200 on 07-13 — the rotation note was itself a prose rule nobody executed. 305 secret occurrences scrubbed from transcripts; rotation runbook handed to Simon (docs/security/2026-07-13-credential-rotation.md).
+- Blog angle: "the fix that says 'handled by hook' in the commit message, where the hook was never written" pairs with "the rotation flag that never rotated" — prose promises fail the same way at every layer, from CLAUDE.md to security notes.
+
 ## Candidate lines / angles
 
 - "Prose rules depend on a model reading, recalling, and choosing to obey them. A 422 doesn't."
