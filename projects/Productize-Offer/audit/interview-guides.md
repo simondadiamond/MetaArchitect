@@ -1,6 +1,6 @@
 # Interview Guides — Production AI Audit
 
-> Question tracks for the 3–5 engineer interviews (45 min each). The interviews exist to gather evidence for `state-scoring-rubric.md` — every answer is an evidence pointer or it's chatter.
+> Question tracks for the 3–5 engineer interviews (60 min each). The interviews exist to gather evidence for `state-scoring-rubric.md` — every answer is an evidence pointer or it's chatter.
 > Part of the Production AI Audit kit — prices per `../pricing-pinned.md`.
 
 ---
@@ -11,7 +11,7 @@
 - **Interview order matters:** Builder first (they know where the bodies are), on-call second (they know which bodies smell), compliance lead last (by then you know which regulatory questions have teeth).
 - **You're scoring the rubric, not filling a transcript.** Each question carries a `[Tell: ...]` — the answer shape that signals a state failure. When you hear a tell, probe it until you have an evidence pointer (file, trace ID, table name, or a verbatim quote you can corroborate later). Rubric rule 3: an uncorroborated interview claim caps the pillar at 1.
 - **Live tests are embedded** where they naturally run in conversation. They're marked ▶ LIVE TEST with the rubric section they feed. A failed live test caps the pillar at 1 (rubric rule 4).
-- 45 minutes is tight. The pillar questions are ordered by evidence value — if you're running long, cut from the bottom of each pillar block, never the live tests.
+- 60 minutes fits the agenda honestly: framing + end-to-end walkthrough ~8 min, live tests ~25 min (they're timed anyway), pillar questions ~22 min, closer 5 min. If you're still running long, cut from the bottom of each pillar block, never the live tests — they're non-negotiable.
 
 ---
 
@@ -36,7 +36,7 @@
 
 ### Opening framing (say this, roughly)
 
-> "This isn't a review of you or your code quality. I audit the system-level properties — what survives a crash, what's reconstructable after the fact — and honestly, the gaps I find are almost always organizational: nobody was ever given time to build the boring parts. Findings are reported at the system level, quotes are anonymized by default, and nothing you say gets attributed to you by name. The more candid you are about what's held together with tape, the more useful the roadmap is to your team — you're the one who'll benefit from the backlog this produces."
+> "This isn't a review of you or your code quality. I audit the system-level properties — what survives a crash, what's reconstructable after the fact — and honestly, the gaps I find are almost always organizational: nobody was ever given time to build the boring parts. Findings are reported at the system level, quotes are anonymized by default, and nothing you say gets attributed to you by name. One method note: I ask everyone the same crash question — divergent answers are a system finding, not a gotcha about either of you. The more candid you are about what's held together with tape, the more useful the roadmap is to your team — you're the one who'll benefit from the backlog this produces."
 
 Then: "Walk me through the workflow end to end, trigger to effect, in five minutes. I'll interrupt a lot."
 
@@ -48,8 +48,8 @@ Then: "Walk me through the workflow end to end, trigger to effect, in five minut
    [Tell: hesitation, or "well, there's also the quick-fix path..." = two shapes to one column — the rubric's classic S=1. Get the file paths of both writers.]
 3. **"What happens to in-flight runs on deploy?"**
    [Tell: "we deploy when nothing's running" / "we try to drain first" = restart means start over → state isn't load-bearing. "They pick up where they were" → ask how, get the mechanism.]
-4. ▶ **LIVE TEST (rubric §S):** "Pick a run that's mid-flight right now — or the most recent crashed one. Using only persisted state — no transcript, no logs — tell me which step it stopped at and what it had produced. I'm timing."
-   [Pass fast and specific = supports S=2–3. Any detour into logs or chat history = the state doesn't answer the question → cap at 1.]
+4. ▶ **LIVE TEST (rubric §S):** "Show me your runs table — I'll pick the row: one that's mid-flight right now, or the most recent crashed one. Using only persisted state — no transcript, no logs — tell me which step it stopped at and what it had produced. I'm timing."
+   [The auditor picks the run, never the engineer — same rule as the rubric's T test. Pass fast and specific = supports S=2–3. Any detour into logs or chat history = the state doesn't answer the question → cap at 1.]
 
 ### T — Traceable
 
@@ -57,40 +57,37 @@ Then: "Walk me through the workflow end to end, trigger to effect, in five minut
    [Tell: "the app logs and grep" = uncorrelated fragments → T≤1. A tracing tool by name → probe: every call? tool calls? model version recorded? the batch path too?]
 6. **"Is there one ID that ties together every LLM call and tool call of a single execution?"**
    [Tell: "you can usually line them up by timestamp" = no correlation ID → T=1 ceiling. Yes → ask for the field name and where it's minted; that's your evidence pointer.]
-7. **"Which parts of the workflow produce no trace at all?"**
-   [Tell: "none, everything's traced" answered instantly = suspicious — nobody knows their dark paths that confidently; schedule the T live test (Track B) against their claim. A named dark path = honest, and a named gap for the findings doc.]
-
 ### A — Auditable *(skip if pillar is N/A per rubric rule 5 — confirm no personal data / no individual decisions first: "Does anything in this workflow read personal data or end in an outcome for a specific person?")*
 
-8. **"Which outputs of this workflow are automated decisions in the legal sense — Law 25's sense? Has anyone written that list down?"**
+7. **"Which outputs of this workflow are automated decisions in the legal sense — Law 25's sense? Has anyone written that list down?"**
    [Tell: "that's more of a legal question" = engineering has never seen the inventory → the inventory probably doesn't exist. Its absence is itself a finding (rubric §A evidence sources).]
-9. **"For a specific decision made last month — could you tell me which prompt version ran? Where is the prompt versioned?"**
+8. **"For a specific decision made last month — could you tell me which prompt version ran? Where is the prompt versioned?"**
    [Tell: "the prompt's in the code, so... git?" = version pinned to the codebase, not the decision → A≤1. Decision records with model+prompt version = A=2 territory; ask to see one.]
 
 ### Tol — Tolerant
 
-10. ▶ **LIVE TEST, part 1 of 2 (rubric §Tol, paper form):** "It crashes at step 6 of 10 — mid-write, worst moment. Walk me through exactly what happens next, step by step: what's in the data, who notices, what runs on restart."
-    [Record the answer verbatim — you will ask the on-call engineer the identical question in Track B. Divergent answers = fail. Tell within this answer: "you'd just re-run it" → "and the work from steps 1–5?" — "it redoes it" = no resume; "it double-writes unless..." = idempotency by luck.]
-11. **"Show me what a stuck run looks like in the data. Who un-sticks it, and how often?"**
+9. ▶ **LIVE TEST, part 1 of 2 (rubric §Tol, paper form):** "It crashes at step 6 of 10 — mid-write, worst moment. Walk me through exactly what happens next, step by step: what's in the data, who notices, what runs on restart."
+   [Record the answer verbatim — you will ask the on-call engineer the identical question in Track B, as disclosed in the framing. Divergent answers = fail. Tell within this answer: "you'd just re-run it" → "and the work from steps 1–5?" — "it redoes it" = no resume; "it double-writes unless..." = idempotency by luck.]
+10. **"Show me what a stuck run looks like in the data. Who un-sticks it, and how often?"**
     [Tell: "there's a script Marc runs" / "I reset the rows by hand most weeks" = the weekly un-wedging ritual, rubric's Tol=1 anchor — and a heroic-engineer flag (calibration note: property carried by one head caps at 1).]
-12. **"Has anyone ever actually killed it mid-run on purpose to watch the recovery?"**
+11. **"Has anyone ever actually killed it mid-run on purpose to watch the recovery?"**
     [Tell: "no, but it should be fine" = reboot test never executed — rubric names this exact gap as the 2-vs-3 line. "Yes" → when, where's the record, is it repeated or a one-time stunt?]
 
 ### E — Explicit
 
-13. ▶ **LIVE TEST (rubric §E, the boundary walk):** "Enumerate every point where LLM output becomes a write or an action. Take your time — I want the full list."
+12. ▶ **LIVE TEST (rubric §E, the boundary walk):** "Enumerate every point where LLM output becomes a write or an action. Take your time — I want the full list."
     [No enumeration possible = fail, cap at 1. If they produce a list: for each boundary — "what's the worst thing the model could emit here, and what stops it?" Then pick one and ask to be shown the actual validation code (screen-share or file path for later). Tell: "the model's pretty reliable on that one" = nothing stops it.]
-14. **"When output fails validation, what happens — every time, on every boundary?"**
+13. **"When output fails validation, what happens — every time, on every boundary?"**
     [Tell: "depends on the call" = inconsistent handling → E=1 anchor verbatim. "Dead-letter + alert" → ask when that alert last fired and who saw it.]
-15. **"Would schema-valid nonsense get through? A well-formed policy number that doesn't exist?"**
+14. **"Would schema-valid nonsense get through? A well-formed policy number that doesn't exist?"**
     [Tell: a pause, then "...yes" = gates check shape, not content — the rubric's named E 2-vs-3 gap. Write it down with the boundary name.]
 
-### Remediation appetite (last 5 minutes — feeds the retainer conversation)
+### Roadmap sizing (last 5 minutes — feeds the roadmap's capacity-assumption line)
 
-16. **"If you got two uninterrupted weeks to fix anything in this system, what would you fix first — and what's stopped that from happening already?"**
-    [Listens for: is the blocker knowledge, or headcount/priority? "We know exactly what to do, no one gets the time" = execution-capacity gap → fractional-retainer shaped. "We're not sure what right looks like" = expertise gap → also retainer-shaped, different pitch.]
-17. **"When this findings doc lands with a 90-day roadmap — who inside the team actually has bandwidth to execute it?"**
-    [Silence or a laugh here is the single strongest retainer signal you will collect all engagement. Note it verbatim.]
+15. **"If you got two uninterrupted weeks to fix anything in this system, what would you fix first — and what's stopped that from happening already?"**
+    [Listens for: is the blocker knowledge, or headcount/priority? The first thing they name is usually a lane-1 candidate; the blocker calibrates the roadmap's capacity assumption.]
+16. **"Who owns execution of a 90-day backlog like the one this audit produces — and what's their current load?"**
+    [The answer feeds the roadmap's capacity line, nothing else. Get numbers where offered — {N} engineers at {X}% allocation is exactly what the roadmap template asks for.]
 
 ---
 
@@ -100,7 +97,7 @@ Then: "Walk me through the workflow end to end, trigger to effect, in five minut
 
 ### Opening framing (say this, roughly)
 
-> "You have the most honest view in the building — you see what the system actually does at 2am, not what the architecture diagram says. Nothing here is a performance review and nothing gets attributed to you by name; findings are system-level and quotes are anonymized by default. War stories are exactly what I'm here for. The worse the story, the better the roadmap your team gets out of this."
+> "You have the most honest view in the building — you see what the system actually does at 2am, not what the architecture diagram says. Nothing here is a performance review and nothing gets attributed to you by name; findings are system-level and quotes are anonymized by default. One method note: I ask everyone the same crash question — divergent answers are a system finding, not a gotcha about either of you. War stories are exactly what I'm here for. The worse the story, the better the roadmap your team gets out of this."
 
 Then start with the question that opens everything:
 
@@ -129,7 +126,7 @@ Then start with the question that opens everything:
 
 ### Tol — Tolerant
 
-8. ▶ **LIVE TEST, part 2 of 2 (rubric §Tol — divergence test):** "It crashes at step 6 of 10, mid-write. Walk me through exactly what happens next." *Ask cold — do not mention you asked the builder.*
+8. ▶ **LIVE TEST, part 2 of 2 (rubric §Tol — divergence test):** "It crashes at step 6 of 10, mid-write. Walk me through exactly what happens next." *Same question the builder got — the method is disclosed in the framing; the answers still have to match.*
    [Score the divergence, not just the answer: builder says "it resumes from the checkpoint," on-call says "I reset the lock column and re-run it" = fail, and the delta itself goes in the findings doc — the system's recovery story lives in individual heads, not in the system.]
 9. **"What's the most annoying recurring un-sticking ritual in your week?"**
    [Tell: any ritual named without hesitation = Tol=1 anchor (the weekly un-wedging). Get frequency and minutes-per-week — that number goes straight into the findings doc's blast-radius line.]
@@ -148,12 +145,10 @@ Then start with the question that opens everything:
 13. **"Has anyone — legal, a customer, an auditor — ever asked you to reconstruct why the system did something to a specific person? How did that go?"**
     [Tell: "legal asked us that once and it took two weeks" = A=1 anchor verbatim. Capture the story; it's the opening paragraph of the Auditable section.]
 
-### Remediation appetite (last 5 minutes)
+### Roadmap sizing (last 5 minutes)
 
 14. **"What's the fix you've been asking for that never gets prioritized?"**
-    [The answer is usually a quick-win candidate for the roadmap's first 30 days — and evidence that the backlog exists but capacity doesn't.]
-15. **"If an outside engineer showed up one day a week just to burn down reliability debt — what would you hand them in week one?"**
-    [A concrete answer = the retainer scoped in the client's own words. Quote it back at the readout.]
+    [Usually a quick-win candidate for the roadmap's first 30 days — and capacity evidence: the backlog exists, the time doesn't. Feeds the roadmap's capacity-assumption line.]
 
 ---
 
@@ -175,8 +170,8 @@ Then start with the question that opens everything:
    [Tell: "it would come through support, I guess" = route designed nowhere → the named A=2 gap at best. A written runbook with a named owner = A=3 territory; ask to see it.]
 4. **"What's the retention policy on decision-relevant records — and does it survive your incident cycle and a regulator's look-back window?"**
    [Tell: "whatever the logging default is" = retention by accident. Get the number; compare against their own incident history from Track B.]
-5. **"Penalties under Law 25 run to C$10M or 2% of global revenue administrative, C$25M or 4% penal. Whose name is on the answer if the CAI asks about this workflow?"**
-   [Tell: no named owner = the finding writes itself. This question also calibrates how seriously the org takes the exposure — watch whether they flinch or shrug; both go in your notes.]
+5. **"Whose name is on the answer if the CAI asks about this workflow?"**
+   [Tell: no named owner = the finding writes itself.]
 
 ### T — Traceable (governance angle)
 
@@ -197,9 +192,7 @@ Then start with the question that opens everything:
 10. **"What's the worst thing this workflow could do to a customer before a human noticed? Has anyone written that scenario down?"**
     [Tell: scenario never enumerated at leadership level = the boundary walk's absence has an organizational twin. If Track A's boundary walk also failed, this becomes a named risk with management's own words as the scenario.]
 
-### Remediation appetite (last 10 minutes — this track decides the retainer)
+### Roadmap sizing (last 10 minutes)
 
-11. **"When the findings doc lands with a prioritized 90-day roadmap — what happens to it? Who owns execution, and what's their current load?"**
-    [Tell: "we'll fit it into the sprint" with no named owner = the roadmap dies in the backlog, and they usually know it. Follow with silence; let them say it.]
-12. **"Would you rather build this capability in-house over two quarters, or buy a day a week of someone who's done it until your team runs it themselves?"**
-    [Ask it exactly this plainly. The answer scopes the readout's final slide: quarterly check-ins vs. the fractional retainer (day-block framing, prices per `../pricing-pinned.md` — never quoted in the interview itself; the pitch belongs at audit delivery, not here).]
+11. **"When the findings doc lands with a prioritized 90-day roadmap — who owns execution of that backlog, and what's their current load?"**
+    [The answer feeds the roadmap's capacity-assumption line — {N} engineers at {X}% allocation — nothing else. Tell: "we'll fit it into the sprint" with no named owner = available capacity is effectively zero; the roadmap's lane-slippage line gets written from this answer.]

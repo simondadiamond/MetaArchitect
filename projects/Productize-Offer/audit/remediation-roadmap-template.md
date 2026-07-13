@@ -47,7 +47,7 @@ Two sequencing rules are already applied:
 
 ## Workflow: {WORKFLOW_1_NAME} — priority table
 
-**Current: {n}/15 ({BAND_NAME}) → projected after 90 days: {n}/15 ({BAND_NAME})** *(projection assumes every item lands; it is a target, not a score — scores only move under re-audit evidence)*
+**Current: {n}/15 ({BAND_NAME}) → projected after 90 days: {n}/15 ({BAND_NAME})** *(projection assumes every item lands; it is a target, not a score — see Re-scoring at the end for how scores actually move)*
 
 | # | Finding ref | Action (ticket-scopeable) | Move | Effort | Depends on | Owner (role) | Disposition | Lane |
 |---|---|---|---|---|---|---|---|---|
@@ -84,12 +84,10 @@ Level 3 on any pillar additionally requires the property to be regression-proof:
 
 ---
 
-## Executing this roadmap — two paths
+## Re-scoring
 
-**Path 1 — in-house.** Your team owns the lanes; the items above are written to be ticket-scoped directly. Recommended cadence: a quarterly check-in against this document — re-run the live tests, mark moves that held, re-prioritize what's left. The risk to manage is the one the audit itself surfaced{IF_APPLICABLE: " (see {RISK_OR_QUOTE_REF})"}: roadmaps without a named owner and protected capacity become backlog sediment. If reliability work has historically lost every sprint-planning fight to feature work, price that pattern into your choice of path.
+Projected scores in this document are targets, not scores. Scores move one way: re-score against the STATE rubric, which you keep with this report. Numbers you produce yourselves are reported as self-scored; an auditor re-score is available on request.
 
-**Path 2 — fractional.** I execute the lanes with your team as the **Fractional LLMOps Engineer** — day-blocks, monthly: **1 day/week at $5,500 USD/month or 2 days/week at $9,000 USD/month at the founding rate** ({FULL_RATE_IF_SLOTS_CLOSED: $7,000 / $12,000 USD full}; CAD at invoice for Canadian entities per `../pricing-pinned.md`). The founding rate holds for the full 6-month term — no mid-term step. Day-blocks mean the quick-wins table above is roughly the first two to three blocks: pillar moves start landing in week one, and your engineers absorb the patterns by working next to them rather than reading about them.
-
-Either path works with this document as written. The difference is time-to-level-2 and who carries the pattern knowledge at the end — decide within {N} weeks, while the findings readout is still fresh in the room.
+Execution support for these lanes exists and is discussed at the readout.
 
 {SIGNOFF_DATE} — Simon Paris, The Meta Architect
