@@ -24,12 +24,12 @@ hits=$(grep -rniE 'simonparis\.ca/readiness|\]\(/readiness\)' $SCOPE 2>/dev/null
 [ -n "$hits" ] && fail $'/readiness used as a CTA target (public CTAs go to /score):\n'"$hits"
 
 # 3. Hardcoded model ids in logging snippets — model_version must be "<current model>", not a lie
-hits=$(grep -rnE "claude-(sonnet|opus|haiku|fable)-[0-9]" $SCOPE 2>/dev/null | grep -viE 'e\.g\.|example|current model')
+hits=$(grep -rnE $EXCLUDE "claude-(sonnet|opus|haiku|fable)-[0-9]" $SCOPE 2>/dev/null | grep -viE 'e\.g\.|example|current model')
 [ -n "$hits" ] && fail $'hardcoded model_version (traceability data that lies when another model runs):\n'"$hits"
 
 # 4. Stale year anchors in search-query templates (lessons 2026-03-31)
 YEAR=$(date +%Y)
-hits=$(grep -rnoE '"?20[0-9]{2} OR 20[0-9]{2}"?' $SCOPE 2>/dev/null | while IFS= read -r line; do
+hits=$(grep -rnoE $EXCLUDE '"?20[0-9]{2} OR 20[0-9]{2}"?' $SCOPE 2>/dev/null | while IFS= read -r line; do
   years=$(echo "$line" | grep -oE '20[0-9]{2}')
   echo "$years" | grep -q "$YEAR" || echo "$line"
 done)
@@ -51,7 +51,7 @@ hits=$(grep -rnE '\([0-9.]+ (months|years) old' .claude/agents 2>/dev/null)
 while IFS= read -r line; do
   f=${line%%:*}; due=$(echo "$line" | grep -oE '20[0-9]{2}-[0-9]{2}' | head -1)
   [ -n "$due" ] && [ "$due" \< "$(date +%Y-%m)" ] && warn "$f re-verify date ($due) has passed — platform claims may be stale"
-done < <(grep -rn 'Re-verify by' $SCOPE 2>/dev/null)
+done < <(grep -rn $EXCLUDE 'Re-verify by' $SCOPE 2>/dev/null)
 
 # --- Checks 9–14 added 2026-07-13 (post-Fable gate inventory, goal 3df3143e) ---
 SCOPE_WIDE="$SCOPE CLAUDE.md"            # root CLAUDE.md was the most-drifted file (R10)
