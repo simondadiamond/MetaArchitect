@@ -11,7 +11,7 @@ description: Use when the blog pipeline dispatcher advances a blog_ideas row to 
 ❌ blog-insert failed at [stage] — [error message] — row set to failed_inserting, safe to retry
 ```
 
-This skill handles **article** rows only (`post_type:'article'`) — teardown rows never reach the `inserting` stage; teardown-generate runs its own separate insert path entirely outside the `blog_ideas` stage machine (its own claim-provenance check happens at generation time, not here).
+This skill handles **both** `post_type` values. Teardown rows reach `inserting` through the same shared tail as articles (editorial → blog-optimize → blog-factcheck → Simon's final review → here); the resulting `blog_posts` row gets `post_type='teardown'` from `idea.post_type`, already flowing through the payload in PHASE 2 with no extra work. The one teardown-specific difference is the LinkedIn extract, handled in PHASE 3 below.
 
 ---
 
@@ -128,7 +128,21 @@ Every metadata field here is `blog-optimize`'s own persisted `meta` verbatim (`o
 
 ### PHASE 3 — Generate and Gate the LinkedIn Extract
 
-This is where the LinkedIn extract is generated — read `.claude/skills/repurpose/references/linkedin-playbook.md` fresh this run for anatomy, hook patterns, and the anti-slop checklist; do not restate it here.
+**Teardown rows (`idea.post_type === 'teardown'`) skip generation entirely.** `teardown-generate` already produced the gated, winning LinkedIn post — it lives in `teardown_drafts.linkedin_post` (also already in `pipeline.posts`, per its Step 4b). Generating a second, independent extract here would just be a worse, unverified copy of work already done and gated. Instead:
+
+```javascript
+import { db } from './tools/supabase.mjs';   // run from projects/Content-Engine/ — db defaults to schema 'pipeline'
+const { data: teardownDraft, error } = await db.from('teardown_drafts')
+  .select('linkedin_post')
+  .eq('id', draft.meta.teardown_draft_id)   // draft = latestArtifact(ideaId, 'draft'); its meta carries teardown_draft_id
+  .single();
+if (error || !teardownDraft?.linkedin_post) throw new Error(`no linkedin_post found on teardown_drafts ${draft.meta.teardown_draft_id}`);
+payload.linkedin_extract = teardownDraft.linkedin_post;
+```
+
+`teardown_drafts` isn't in `supabase.mjs`'s `TABLES` registry — this is the repo's own documented pattern for it (`.claude/skills/repurpose/SKILL.md`), not a new one. No re-gate is needed: it already passed the LinkedIn gate inside `teardown-generate`. Skip the rest of this phase (generation + gating below) for teardown rows and go straight to PHASE 4.
+
+**Article rows: unchanged.** This is where the LinkedIn extract is generated — read `.claude/skills/repurpose/references/linkedin-playbook.md` fresh this run for anatomy, hook patterns, and the anti-slop checklist; do not restate it here.
 
 **Claim provenance for this stage specifically:** every claim the extract makes must trace to a sentence already present in `optimizedDraft.content` — the text `blog-factcheck` just independently re-verified. **Introduce nothing new here.** An extract that sharpens or adds a claim not already sitting in the factcheck-verified body reopens exactly the hole `blog-factcheck` exists to close, one stage later where nothing will catch it.
 

@@ -11,7 +11,21 @@ description: Use when the blog pipeline dispatcher advances a blog_ideas row to 
 ❌ blog-optimize failed at [stage] — [error message] — row set to failed_optimizing, safe to retry
 ```
 
-This skill handles **article** rows only (`post_type:'article'`) — teardown rows never reach the `optimizing` stage.
+This skill handles **both** `post_type` values. Teardown rows arrive at `optimizing` via `teardown-generate`'s handoff (its Step 4 `saveArtifact({ kind: 'draft', ... }); setStage(ideaId, 'editing')`, then `editorial` advances `editing → optimizing`) and share this stage with articles — same process below, with the input differences noted in the subsection immediately after this one.
+
+---
+
+### Teardown rows (`post_type:'teardown'`)
+
+Teardown rows have **no `outline` artifact** — that is expected, not a failure. Teardowns skip `outlining`/`awaiting_outline_approval` entirely (the teardown format IS the outline; see design spec §4). Do **not** fail a teardown row in PHASE 1 for a missing outline. The differences from the article path:
+
+- **Title / slug.** `title` comes from the draft artifact's top heading (teardown format: `"[System Name] STATE Teardown: [subtitle]"`) — parse it from the draft content, don't invent one. `slug` comes from the draft artifact's `meta.blog_slug` (set by `teardown-generate` at hand-off) — **never re-derive it**; reusing it is what keeps the eventual `blog_posts.slug` matching the `teardown_drafts.blog_slug` and the card-image URL already built against it.
+- **`primary_keyword`.** No outline to read it from — derive it from the system name (e.g. `"<system name> STATE teardown"`). The DataForSEO volume check is optional here; `'unverified'` is an acceptable value in the metadata's keyword field for teardown rows.
+- **Internal links.** There is no outline link plan to apply. `teardown-generate`'s own pre-write gate (`teardown-gate.py`, Gate 10b) already enforced 8–12 links including ≥1 internal link before the draft was written. This stage's job for a teardown row is to **verify** those links against the live link map (the same Phase 2 query, unchanged) and only **add** links if the post falls under the 2–5-per-1,000-words floor — there's nothing to "insert a plan" for.
+- **FAQ.** The teardown format ships exactly 3 FAQ questions already (not the 3–5 an article FAQ may have). Verify each answer meets the 80–150-word self-contained rule; if one runs short, extend the **answer**, not the questions — the question count is part of the teardown format and isn't this stage's to change.
+- **`cta_type` / `pillar`.** `cta_type` is `'audit'` for teardowns (they exist to drive `/score`) — don't parse it from a nonexistent outline `CTA TYPE:` line. `pillar` still comes from `idea.pillar` (by convention, `state_applied` for teardowns, same as every other row).
+
+Everything else — voice veto, the mechanical gate (PHASE 4), metadata assembly, `geo_citability`, artifact persist, and the Stage Contract — is identical to the article path.
 
 ---
 
