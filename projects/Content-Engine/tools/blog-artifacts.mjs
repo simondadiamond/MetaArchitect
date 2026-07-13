@@ -19,6 +19,10 @@ export const MACHINE_STAGES = ['researching','outlining','drafting','editing','o
 const STAGES = ['candidate', ...MACHINE_STAGES, 'awaiting_outline_approval','awaiting_final_review','promoted_to_post'];
 const KINDS = ['research_doc','outline','writing_brief','draft','editorial_report','optimized_draft','factcheck_report'];
 
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error('blog-artifacts.mjs: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY required in .env');
+}
+
 const pub = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY,
   { db: { schema: 'public' }, auth: { persistSession: false, autoRefreshToken: false } });
 
@@ -30,7 +34,7 @@ export async function getIdea(ideaId) {
 }
 export async function saveArtifact({ ideaId, kind, content, meta = {} }) {
   if (!KINDS.includes(kind)) throw new Error(`invalid artifact kind: ${kind}`);
-  if (!content?.trim()) throw new Error('artifact content is empty');
+  if (typeof content !== 'string' || !content.trim()) throw new Error('artifact content is empty');
   const { data, error } = await pub.from('blog_artifacts')
     .insert({ idea_id: ideaId, kind, content, meta }).select('id').single();
   if (error) throw error; return data.id;
@@ -127,7 +131,8 @@ if (process.argv[2] === '--self-test') {
       if (!found) throw new Error('listActionable did not include the test row in researching stage');
 
       console.log('SELF-TEST PASS');
-      process.exit(0);
+      // NOTE: no process.exit() here — it would skip the finally cleanup.
+      // The process exits naturally (code 0) after cleanup completes.
     } finally {
       // Cleanup: delete the test row (cascade removes artifacts)
       if (testIdeaId) {
