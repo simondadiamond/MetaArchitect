@@ -1,5 +1,10 @@
 # Handoff — Post-Fable Operating System: Mechanize the Lessons into Gates
 
+status: in-progress
+goal_id: 3df3143e-95b9-4000-81dd-89c18cb827e5
+picked_up_by: coo session 2026-07-12
+updated: 2026-07-13
+
 > Goal: `3df3143e-95b9-4000-81dd-89c18cb827e5` (child of Fable 5 Final Week initiative `646c7760`)
 > Written: 2026-07-12 by COO session. Intended to be handed to a fresh Fable 5 session verbatim.
 > Sibling handoff: `2026-07-12-story-pipeline-overhaul.md` (goal `4af99947`) — COMPLETE as of 2026-07-12 (PRs #58/#80). Its worker-internal gates are prior art to verify, not work to redo — see Constraints.

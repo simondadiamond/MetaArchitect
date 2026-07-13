@@ -1,5 +1,10 @@
 # Handoff: Brain Approvals tab in Command Center
 
+status: done
+goal_id: none
+picked_up_by: build session 2026-07-10 (shipped as Command Center Approvals tab)
+updated: 2026-07-13
+
 **Goal:** a phone-friendly approvals surface so Simon can approve/reject second-brain proposals visually instead of running "apply brain proposals" in a chat session. Speed matters — this is a small feature; build it inline (worktree + implement + verify + PR + one `/code-review` at medium), no SDD ceremony.
 
 ## Context you need (verified 2026-07-10)
