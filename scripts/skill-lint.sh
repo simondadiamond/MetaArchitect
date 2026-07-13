@@ -19,8 +19,9 @@ hits=$(grep -rn $EXCLUDE '/app/data/' $SCOPE 2>/dev/null | grep -v 'skill-lint')
 [ -n "$hits" ] && fail $'/app/data/ container paths (dead on Sterling):\n'"$hits"
 
 # 2. Public CTA pointing at /readiness — must be /score (lessons 2026-05-09)
-#    Lines that state the rule ("never ... /readiness") are allowed.
-hits=$(grep -rniE 'simonparis\.ca/readiness|\]\(/readiness\)' $SCOPE 2>/dev/null | grep -viE 'never|not |don.t|rule|noindex')
+#    Lines that state the rule ("never ... /readiness") are allowed, and so is the
+#    linkedin-gate's own test fixture, which must contain a bad CTA to prove it catches one.
+hits=$(grep -rniE $EXCLUDE 'simonparis\.ca/readiness|\]\(/readiness\)' $SCOPE 2>/dev/null | grep -viE 'never|not |don.t|rule|noindex|linkedin-gate\.sh')
 [ -n "$hits" ] && fail $'/readiness used as a CTA target (public CTAs go to /score):\n'"$hits"
 
 # 3. Hardcoded model ids in logging snippets — model_version must be "<current model>", not a lie
@@ -112,8 +113,13 @@ for gate in "${!GATE_CONSUMERS[@]}"; do
 done
 
 # 16. Skill PROSE must not carry gate logic as code-as-spec (assert blocks a model retypes).
-#     Markdown only: asserts inside a skill's own scripts/ are the mechanized form we want.
-hits=$(grep -rn $EXCLUDE --include='*.md' -E '^\s*assert .+, *(f?")' .claude/skills 2>/dev/null | grep -v 'self-test')
+#     Markdown ONLY — asserts inside a skill's own scripts/ are the mechanized form we want,
+#     so the file list is built explicitly rather than trusting grep's --include.
+hits=""
+while IFS= read -r f; do
+  h=$(grep -nE '^[[:space:]]*assert .+, *(f?")' "$f" 2>/dev/null | grep -v 'self-test' | sed "s|^|$f:|")
+  [ -n "$h" ] && hits+="$h"$'\n'
+done < <(find .claude/skills -name '*.md' -not -path '*/archive/*' 2>/dev/null)
 [ -n "$hits" ] && fail $'assert-block in skill prose (promote it to a script and call that — code-as-spec is what a weaker model paraphrases or drops):\n'"$hits"
 
 echo
