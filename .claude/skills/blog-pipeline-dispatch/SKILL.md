@@ -5,7 +5,7 @@ description: Use when the Command Center schedule fires '/blog-pipeline-dispatch
 
 ## Blog Pipeline Dispatch
 
-**Risk tier: low (S + T)** — reads `blog_ideas` via `listActionable`/`getIdea` and logs to `pipeline.logs`; its only conditional write is the `failed_<stage>` backstop below. It never advances a stage on success — the invoked stage skill does that itself. On any failure:
+**Risk tier: low (S + T)** — reads `blog_ideas` via `listActionable`/`getIdea` and logs to `pipeline.logs`. It has exactly two conditional writes, both re-verified against a fresh `getIdea` first and both to `failed_*`: the teardown-at-outlining anomaly (`failed_outlining`, Protocol step 2) and the skill-exited-without-advancing backstop (`failed_<stage>`, Protocol step 5). It never advances a stage on success — the invoked stage skill does that itself. On any failure:
 
 ```
 ❌ blog-pipeline-dispatch failed at [stage] — [error message] — no lock held, safe to retry
@@ -51,14 +51,14 @@ await logEntry({ workflow_id: state.workflowId, entity_id: state.entityId, step_
 | `stage` | `post_type: article` | `post_type: teardown` |
 |---|---|---|
 | `researching` | `research` | **skip, note**: "teardown research+drafting are Simon-initiated via teardown-generate" |
-| `outlining` | `blog-outline` | anomaly — teardown rows never sit here; `setStage(id, 'failed_outlining')`, reason `"teardown row at outlining — investigate"` |
+| `outlining` | `blog-outline` | anomaly — teardown rows never sit here; re-verify then `setStage(id, 'failed_outlining')`, reason `"teardown row at outlining — investigate"` (Protocol step 2) |
 | `drafting` | `blog-draft` | **skip, note**: same reason as `researching` |
 | `editing` | `editorial` | `editorial` |
 | `optimizing` | `blog-optimize` | `blog-optimize` |
 | `fact_check` | `blog-factcheck` | `blog-factcheck` |
 | `inserting` | `blog-insert` | `blog-insert` |
 
-`listActionable()` (from `./tools/blog-artifacts.mjs`) already filters to the seven machine stages above — human stages (`candidate`, `awaiting_outline_approval`, `awaiting_final_review`) and terminal states (`failed_*`, `promoted_to_post`, `rejected`) never appear in its results.
+`listActionable()` (from `./tools/blog-artifacts.mjs`) already filters to the seven machine stages above — human stages (`candidate`, `awaiting_outline_approval`, `awaiting_final_review`) and terminal states (`failed_*`, `promoted_to_post`) never appear in its results.
 
 ---
 
@@ -68,13 +68,13 @@ await logEntry({ workflow_id: state.workflowId, entity_id: state.entityId, step_
 2. **Pick.** Walk `rows` oldest-first. For each row, look up `(row.stage, row.post_type)` in the map above:
    - Maps to a skill → this is the row. Stop walking.
    - Maps to skip-with-note → log `output_summary: 'skipped <ideaId> (<reason>)'`, continue to the next row.
-   - Maps to the outlining anomaly → `setStage(ideaId, 'failed_outlining')` with the reason above, log `output_summary: 'skipped <ideaId> (teardown row at outlining — investigate)'`, continue to the next row.
+   - Maps to the outlining anomaly → re-verify first: `const fresh = await getIdea(ideaId);` — only if `fresh.stage === 'outlining' && fresh.post_type === 'teardown'` still holds, `setStage(ideaId, 'failed_outlining')` with the reason above and log `output_summary: 'skipped <ideaId> (teardown row at outlining — investigate)'`. If the fresh row no longer matches (a human or retry already moved it), log the mismatch and touch nothing. Continue to the next row either way.
    - No row in the batch is dispatchable → print/log `blog pipeline: nothing actionable`, exit.
 3. **Re-verify.** Immediately before invoking, `const idea = await getIdea(ideaId); if (idea.stage !== expectedStage) → skip this row (another run already claimed it), log the mismatch, exit.`
 4. **Invoke.** Read the mapped skill's SKILL.md and follow it in full on this row. It performs its own terminal `setStage`/`claimStage` — **never call `setStage`/`claimStage` yourself for the success path.**
 5. **Verify the move.** `const after = await getIdea(ideaId);`
    - `after.stage !== expectedStage` → the row moved (or failed_* was set by the stage skill itself) → done.
-   - `after.stage === expectedStage` (unchanged) and it is not already `failed_<stage>` → the dispatcher's **only permitted stage write**: `setStage(ideaId, 'failed_<stage>')`, reason `"skill exited without advancing"`.
+   - `after.stage === expectedStage` (unchanged) → the backstop write: `setStage(ideaId, 'failed_<stage>')`, reason `"skill exited without advancing"`.
 6. **Log** the outcome (`step_name: 'blog_dispatch'`) and **stop** — do not process a second row.
 
 Log `output_summary` values:
@@ -86,4 +86,10 @@ Log `output_summary` values:
 
 ### `--dry-run` mode
 
-Triggered only when the invocation explicitly says dry-run (never by the CC schedule — that always runs live). List the full `listActionable(10)` batch and print, per row, what WOULD happen (dispatch to which skill, or skip with which reason) using the same map and walk order as the live protocol. **Touch nothing and log nothing** — no `getIdea` re-verify, no skill invocation, no `setStage`, no `logEntry` call.
+Triggered only when the invocation explicitly says dry-run (never by the CC schedule — that always runs live). List the full `listActionable(10)` batch and print, per row, what WOULD happen using the same map and walk order as the live protocol — and since only ONE row runs per live fire, mark the rows distinctly:
+
+- the first dispatchable row → `WOULD DISPATCH (this fire): <skill>`
+- later dispatchable rows → `queued behind it (future fires): <skill>`
+- non-dispatchable rows → `would skip: <reason>` (the anomaly row prints as a would-skip too — no write in dry-run)
+
+**Touch nothing and log nothing** — no `getIdea` re-verify, no skill invocation, no `setStage`, no `logEntry` call.
