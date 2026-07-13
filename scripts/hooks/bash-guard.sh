@@ -65,12 +65,22 @@ if { $in_primary || $mentions_primary; } \
 fi
 
 # --- Rule 8: no shell end-run around the propose-only file rules ---
-# The Edit/Write guard (file-guard.sh rules 3-4) is worthless if a model can rewrite the
-# same files with sed/tee/redirect. Born from the 2026-07-13 downgrade red-team, where a
-# mid-tier model rewrote the lint that was failing it.
+# The Edit/Write guard (file-guard.sh rule 3) is worthless if a model can rewrite the same
+# files with sed/tee/redirect. Born from the 2026-07-13 downgrade red-team, where a mid-tier
+# model rewrote the lint that was failing it.
+# Heredoc BODIES are stripped before matching: they are data, not commands, and prose that
+# merely *describes* this rule (a commit message, a lessons.md entry) must not trip it — a
+# gate with false positives gets disabled, which is worse than no gate. The mutating verb
+# must also sit within ~60 chars of the path, i.e. actually be operating on it.
 PROTECTED='\.claude/agents/[^[:space:]]*\.md|brand/[^[:space:]]*\.md|scripts/skill-lint\.sh|scripts/hooks/[^[:space:]]*\.sh'
-if grep -qE "(sed[[:space:]]+-i|tee[[:space:]]|>[[:space:]]*[^[:space:]|]*($PROTECTED)|perl[[:space:]]+-[a-z]*i)" <<<"$cmd" \
-   && grep -qE "($PROTECTED)" <<<"$cmd"; then
+cmd_head=${cmd%%<<*}          # drop heredoc body — data, not command
+# The mutating verb must be a real COMMAND WORD (start of the command or of a segment after
+# ; | && || ), not text inside a quoted argument. Otherwise a commit message or lessons entry
+# that merely quotes "sed -i on brand/foo.md" trips the gate — and a gate that cries wolf on
+# its own documentation is a gate that gets turned off.
+MUTATOR='(^|[;&|(]|&&|\|\|)[[:space:]]*(sed[[:space:]]+-i|perl[[:space:]]+-[a-z]*i|tee([[:space:]]+-a)?[[:space:]])'
+REDIRECT=">>?[[:space:]]*[^[:space:]|]*($PROTECTED)"
+if grep -qE "($MUTATOR|$REDIRECT)" <<<"$cmd_head" && grep -qE "($PROTECTED)" <<<"$cmd_head"; then
   deny "Agent profiles, brand files, and the gate scripts themselves are propose-only — no in-place shell rewrites. Show Simon the diff you want. (A mid-tier model in the downgrade red-team 'fixed' a failing brand check by editing the check; that is what this blocks.)"
 fi
 

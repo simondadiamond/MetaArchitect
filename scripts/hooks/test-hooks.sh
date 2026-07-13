@@ -23,6 +23,17 @@ check() {
 }
 
 bash_payload() { jq -n --arg c "$1" --arg w "${2:-/home/diamond/projects/MetaArchitect}" '{tool_name:"Bash",cwd:$w,tool_input:{command:$c}}'; }
+
+# Fixtures for the rule-8 false-positive regression: text that TALKS ABOUT the protected
+# paths and the mutating verbs, without operating on them. Built with printf so this file
+# can be edited by tools that are themselves subject to the guard.
+PROSE_HEREDOC=$(printf 'python3 - <<EOF\nthe guard denies %s -i and tee rewrites of %s and %s\nEOF' 'sed' 'brand/brand-summary.md' 'scripts/skill-lint.sh')
+PROSE_COMMIT=$(printf "git commit -m 'docs: explain that %s -i on %s is denied'" 'sed' 'brand/brand-summary.md')
+# Adversarial bypass attempts the guard must still catch (verb behind &&, pipe into tee,
+# append redirect). Built with printf for the same reason as above.
+TAMPER_CHAINED=$(printf 'cd /tmp && %s -i s/a/b/ %s' 'sed' 'brand/brand-summary.md')
+TAMPER_TEE=$(printf 'echo pwned | %s %s' 'tee' '.claude/agents/coo.md')
+TAMPER_APPEND=$(printf 'echo x >> %s' 'scripts/skill-lint.sh')
 file_payload() { jq -n --arg f "$1" '{tool_name:"Edit",tool_input:{file_path:$f}}'; }
 prompt_payload() { jq -n --arg p "$1" '{prompt:$p}'; }
 
@@ -93,6 +104,14 @@ check "redirect into hook denied"    bash-guard.sh "$(bash_payload 'echo x > scr
 check "grep on agent profile ok"     bash-guard.sh "$(bash_payload 'grep accent .claude/agents/sitemaster.md')"             allow
 check "run skill-lint ok"            bash-guard.sh "$(bash_payload 'bash scripts/skill-lint.sh')"                           allow
 check "sed -i elsewhere ok"          bash-guard.sh "$(bash_payload 'sed -i s/a/b/ docs/notes.md')"                          allow
+# Rule 8 must NOT fire on prose that merely DESCRIBES it. A gate with false positives gets
+# disabled — this regression pair is why heredoc bodies are stripped before matching.
+check "heredoc prose about rule ok"  bash-guard.sh "$(bash_payload "$PROSE_HEREDOC")"                                       allow
+check "commit msg naming paths ok"   bash-guard.sh "$(bash_payload "$PROSE_COMMIT")"                                        allow
+# Bypass attempts that must still be caught
+check "tamper behind && denied"      bash-guard.sh "$(bash_payload "$TAMPER_CHAINED")"                                      deny
+check "pipe into tee denied"         bash-guard.sh "$(bash_payload "$TAMPER_TEE")"                                          deny
+check "append redirect denied"       bash-guard.sh "$(bash_payload "$TAMPER_APPEND")"                                       deny
 
 echo "=== secrets-guard.sh ==="
 check "sbp_ token detected"        secrets-guard.sh "$(prompt_payload 'here is the token sbp_0123456789abcdef0123456789')"  inject
