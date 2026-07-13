@@ -5,7 +5,7 @@ description: Use when the blog pipeline dispatcher advances a blog_ideas row to 
 
 ## Blog Optimize Process
 
-**Risk tier: medium (S + T + E)** — Supabase reads/writes (`blog_ideas` stage, `blog_artifacts`) in pipeline mode; no external API calls beyond the reasoning done in this session. On any failure:
+**Risk tier: medium (S + T + E)** — Supabase reads/writes (`blog_ideas` stage, `blog_artifacts`, public `blog_posts` link map) in pipeline mode only; no LLM external API calls beyond the reasoning done in this session. On any failure:
 
 ```
 ❌ blog-optimize failed at [stage] — [error message] — row set to failed_optimizing, safe to retry
@@ -100,7 +100,7 @@ Work items, in order:
 
    The canonical `geo_citability` attestation keys (do not invent your own names) are defined in `projects/Content-Engine/tools/insert-blog-post.mjs`'s `GEO_BOXES` export — currently `bluf_first_150`, `fact_blocks_open_h2s`, `question_headings_reviewed`, `named_failure_mode_defined`, `distinct_insights_5_to_7`, `entity_density`, `primary_keyword_placed`. Read the export fresh each run in case it's changed. `named_failure_mode_defined` may be `"n/a"` only when `pillar !== 'failure_taxonomy'`. Every other box must be `true` — an unticked box is a reason to fix the post, not to ship the box unticked.
 
-   `pillar` comes from `idea.pillar` (the `getIdea` result from the Stage Contract). `cta_type` comes from the outline artifact's own `CTA TYPE:` line (the write-post Step 3 template block the outline quoted verbatim in `blog-outline` Phase 3) — parse it from there, do not re-derive it. `primary_keyword` comes from `outline.meta.primary_keyword`. `canonical_url` is always `https://simonparis.ca/blog/<slug>` using the slug you choose in this step. `featured` is `false` unless Simon has explicitly said otherwise for this post.
+   `pillar` comes from `idea.pillar` (the `getIdea` result from the Stage Contract). `cta_type` comes from the outline artifact's own `CTA TYPE:` line (the write-post Step 3 template block the outline quoted verbatim in `blog-outline` Phase 3) — parse it from there, do not re-derive it. `primary_keyword` comes from `outline.meta.primary_keyword`. **`title` and `slug` start from `outline.meta.title_options` and `outline.meta.working_slug`** — these are what Simon approved at the outline checkpoint, not yours to invent: pick the title from `title_options` (or keep the working slug's implied one) and refine either ONLY if the final draft content genuinely requires it, noting any such refinement in the final report to Simon (same transparency spirit as `meta.skipped_optimizations`). `canonical_url` is always `https://simonparis.ca/blog/<slug>` using the slug chosen in this step. `featured` is `false` unless Simon has explicitly said otherwise for this post.
 
 2. **AEO structural pass.** Confirm the BLUF sits in the first 150 words, every H2 opens with its 40-50 word fact-block, and headings are question-form where natural — per the SEO/GEO rules canonical at the top of `write-post` SKILL.md. **Fix only mechanically** (move a fact-block back to the top of its section, rephrase a heading into question form) — never rewrite the argument or add a claim that wasn't already in the draft.
 
@@ -140,6 +140,8 @@ const meta = {
     named_failure_mode_defined, distinct_insights_5_to_7, entity_density, primary_keyword_placed },
   skipped_optimizations,   // array of strings; [] if nothing was vetoed or dropped
 };
+// meta carries workflowId in addition to the insert-stage fields — sibling-skill
+// convention (every artifact records its producing run); the insert script ignores extras.
 await saveArtifact({ ideaId: state.entityId, kind: 'optimized_draft', content: finalBodyMarkdown, meta });
 ```
 
