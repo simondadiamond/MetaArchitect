@@ -28,6 +28,8 @@ const state = {
 };
 ```
 
+Stages: `load_input → pass_1 → pass_2 → pass_3 → persist`.
+
 ### Stage Contract (pipeline mode)
 
 The row must already be at `'editing'` when this skill runs. The `drafting → editing` transition is `blog-draft`'s exit claim — this skill never performs it. Retrying a `failed_editorial` row is the dispatcher/CC retry action's job: it resets the stage BEFORE this skill is invoked; this skill never resets it either.
@@ -40,7 +42,7 @@ const idea = await getIdea(ideaId);
 if (!idea || idea.stage !== 'editing') throw new Error(`row not at editing (found: ${idea?.stage})`);
 ```
 
-Any other stage → stop, touch nothing, report the mismatch.
+Any other stage → stop, touch nothing, report the mismatch. Exclusivity is the dispatcher layer's job (single scheduled dispatcher, one row per fire, overlapping fires skipped) — and a double-run is safe anyway because artifacts are append-only. That safety basis matters here in particular: this skill is also invoked manually on a named row, and an overlap with a dispatcher run resolves the same way — the loser's `claimStage` returns `false` and its artifacts are just a redundant extra version.
 
 **Load input:**
 
@@ -64,7 +66,7 @@ If `claimStage` returns `false`, another run already advanced the row — report
 
 **Failure (including the blocking rule in Pass 3):** re-check the row is still at `'editing'` (`getIdea`), then `setStage(ideaId, 'failed_editorial')` — note the failure stage is `failed_editorial`, **not** `failed_editing`. If it already moved, just report.
 
-Log via `logEntry` from `projects/Content-Engine/tools/supabase.mjs`, `step_name: 'blog_editorial'`, `stage` matching whichever phase failed or `'editing'` on success, `output_summary` naming the flagged dimension(s) on a blocking-rule failure or `'draft_revised'` on success.
+Log via `logEntry` from `projects/Content-Engine/tools/supabase.mjs`, `step_name: 'blog_editorial'`, `stage` matching whichever stage failed or `'persist'` on success, `output_summary` naming the flagged dimension(s) on a blocking-rule failure or `'draft_revised'` on success.
 
 ---
 
