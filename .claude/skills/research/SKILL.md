@@ -1,15 +1,20 @@
 ---
 name: research
-description: Use when Simon asks to research a topic for The Meta Architect blog, when write-post needs research for a new post, or when Simon wants angles/hooks without committing to a full draft. Do NOT trigger for writing the post itself (write-post), editing a draft (editorial), or finding teardown candidates (teardown-research).
+description: Use when Simon asks to research a topic for The Meta Architect blog, when write-post needs research for a new post, or when Simon wants angles/hooks without committing to a full draft — every run persists a durable research doc. Do NOT trigger for writing the post itself (write-post), editing a draft (editorial), or finding teardown candidates (teardown-research).
 ---
 
 ## Research Process
 
-**Risk tier: low (S + T)** — external API calls (NotebookLM), no pipeline writes except `pipeline.logs`. On any failure:
+**Risk tier: medium (S + T + E)** — external API calls (NotebookLM, DataForSEO, WebSearch) plus Supabase writes (`blog_ideas` stage, `blog_artifacts`) in pipeline mode. On any failure:
 
 ```
-❌ research failed at [stage] — [error message] — nothing written except logs, safe to retry
+❌ research failed at [stage] — [error message] — [pipeline mode: row set to failed_researching, safe to retry | standalone mode: nothing written, safe to retry]
 ```
+
+### Modes
+
+- **Pipeline mode** — a `blog_ideas` row id is in play, either passed in directly (dispatcher, write-post) or claimed by this skill (see Stage Contract). The research doc is persisted as a `research_doc` artifact on that row.
+- **Standalone mode** — no row. If Simon confirms the topic is headed for a post, create a `blog_ideas` row (`title_working`, best-fit `pillar`, `post_type:'article'`, `stage:'researching'`) and continue as pipeline mode from there. Otherwise write the doc to `docs/research/YYYY-MM-DD-<topic>.md` (kebab-case topic slug) and commit it — **a chat summary alone is no longer an allowed terminal state.**
 
 ### STEP 0 — STATE Init
 
@@ -18,13 +23,13 @@ const state = {
   workflowId: crypto.randomUUID(),
   stage: "init",
   entityType: "idea",
-  entityId: null,          // stays null for standalone research; set it if a pipeline row triggered this
+  entityId: null,          // set to the blog_ideas row id once known (passed in, claimed, or just-created)
   startedAt: new Date().toISOString(),
   lastUpdatedAt: new Date().toISOString(),
 };
 ```
 
-Stages: `nlm_research → context_pull → summary`. Log every NLM query via `logEntry` from `projects/Content-Engine/tools/supabase.mjs` (run node snippets from `projects/Content-Engine/` — deps + `.env` resolve there):
+Stages: `nlm_research → serp_grounding → keyword_volumes → context_pull → persist`. Log every NLM query via `logEntry` from `projects/Content-Engine/tools/supabase.mjs` (run node snippets from `projects/Content-Engine/` — deps + `.env` resolve there):
 
 ```javascript
 const { logEntry } = await import('./tools/supabase.mjs');
@@ -59,7 +64,7 @@ Query with practitioner-angle questions:
 5. **Production specifics** — Any real incidents, patterns, or mechanisms that anchor this in production reality?
 6. **Regulatory angle** — Does this touch Law 25, OSFI, or EU AI Act? If so, how?
 
-Capture the answers and tier every finding.
+Capture the answers and tier every finding. From the findings + topic, also draft **3–5 candidate primary keywords** (specific technical terms, not generic) — Phases 1b and 1c ground these in real SERP and volume data before they reach the doc.
 
 **Evidence tiers — THE canonical definition. Downstream skills (write-post) point here; do not restate it elsewhere:**
 
@@ -67,6 +72,32 @@ Capture the answers and tier every finding.
 - **T2** — named failure pattern + mechanism → usable as a primary claim (no numbers).
 - **T3** — general principle with specificity → supporting color only.
 - **T4** — inference → never cite as fact. Conclusions drawn from a source's *silence* are the author's — never attribute them to the source.
+
+---
+
+### PHASE 1b — SERP Grounding
+
+For the **top 1–3** keyword candidates, WebSearch what currently ranks. For each result, record: title, URL, one-line angle summary — verbatim into `## SERP Snapshot`. This is the information-gain baseline blog-outline uses to prove the post adds something new.
+
+A missing snapshot is a **gate failure for pipeline runs** — do not persist a pipeline `research_doc` without it. Standalone chat research may skip this with an explicit note in the doc instead.
+
+---
+
+### PHASE 1c — Keyword Volumes
+
+Never block on failure — `keywordVolumes` is contract-guaranteed to never throw.
+
+```javascript
+const { keywordVolumes } = await import('./tools/dataforseo.mjs');
+const candidates = ['keyword one', 'keyword two', 'keyword three'];
+const { ok, volumes, error } = await keywordVolumes(candidates);
+const primary_keyword_candidates = candidates.map(keyword => {
+  const v = ok ? volumes[keyword] : null;
+  return { keyword, volume: v, verified: v != null };
+});
+```
+
+Record each candidate into `## Keyword Candidates` as `keyword — volume N (verified)` or `keyword — volume unverified (<error>)`. The same array, verbatim, is what goes into the artifact `meta.primary_keyword_candidates`.
 
 ---
 
@@ -112,46 +143,84 @@ const { data: adjacent } = await pub.from('blog_posts')
 
 ---
 
-### PHASE 3 — Research Summary
+### PHASE 3 — Persist the Research Doc
 
-Produce a structured summary:
+Build the markdown body with these **exact section headings, in this order**:
 
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-RESEARCH SUMMARY: [topic]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-CORE INSIGHT:
+## Core Insight
 [The one sentence that changes how you'd architect this. Must connect to STATE.]
 
-KEY FAILURE MODES (with evidence tiers):
-  T1: [finding] — "[verbatim source sentence]" — [primary URL]
-  T2: [specific failure mode + mechanism]
-  T3: [supporting context]
+## Evidence (tiered)
+T1: [finding] — "[verbatim source sentence]" — [primary URL]
+T2: [specific failure mode + mechanism]
+T3: [supporting context]
 
-THE WRONG ASSUMPTION MOST ENGINEERS MAKE:
-[What they believe and why it fails]
+## SERP Snapshot
+[title] — [URL] — [one-line angle summary]
+[...one row per Phase 1b result, or "skipped — standalone run" with a reason]
 
-ANGLES (3 post directions this research supports):
-  1. [angle] — best pillar: [pillar]
-  2. [angle] — best pillar: [pillar]
-  3. [angle] — best pillar: [pillar]
+## Keyword Candidates
+[keyword] — volume [N] (verified)
+[keyword] — volume unverified ([error])
 
-HOOK CANDIDATES:
-  [hook type]: [2-3 sentence opener]
-  [hook type]: [2-3 sentence opener]
+## Wrong Assumption
+[What most engineers believe about this and why it fails]
 
-HUMANITY SNIPPET THAT FITS:
-  [quote or "none found"]
+## Angles
+1. [angle] — best pillar: [pillar]
+2. [angle] — best pillar: [pillar]
+3. [angle] — best pillar: [pillar]
 
-EXISTING POSTS TO NOT OVERLAP:
-  [slug] — [why it's adjacent]
+## Hook Candidates
+[hook type]: [2-3 sentence opener]
+[hook type]: [2-3 sentence opener]
 
-EVIDENCE GAPS (things to flag if used):
-  [any T3/T4 findings that need a caveat, any number that failed to reach T1]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## Humanity Snippet
+[quote or "none found"]
+
+## Overlap Check
+[slug] — [why it's adjacent]
+
+## Evidence Gaps
+[any T3/T4 findings that need a caveat, any number that failed to reach T1]
 ```
 
 Every T1 line carries its verbatim sentence + URL — a T1 entry without both is a T3 entry mislabeled.
 
-If this research was triggered by `write-post`, hand the summary back to that skill's Step 3 (Outline). If it was a standalone request, present the summary to Simon and wait for direction.
+**Persist it** — write via `saveArtifact`, never leave it only in chat:
+
+```javascript
+const { saveArtifact } = await import('./tools/blog-artifacts.mjs');
+const meta = {
+  workflowId: state.workflowId,
+  primary_keyword_candidates,   // from Phase 1c, verbatim
+  notebook_id,                  // the NLM notebook id from Phase 1 setup
+};
+await saveArtifact({ ideaId: state.entityId, kind: 'research_doc', content, meta });
+```
+
+**Rule: a pipeline research run that ends without a `research_doc` artifact is a failed run.** If persistence fails, or an upstream gate failed (missing SERP snapshot in pipeline mode), do not fabricate a partial doc — set the row to `failed_researching` and stop.
+
+**Standalone, no-post-intended path:** write `content` to `docs/research/YYYY-MM-DD-<topic>.md` and commit it (`git add` + `git commit`) — this replaces the old chat-only summary as the terminal state for exploratory research.
+
+---
+
+### Stage Contract (pipeline mode)
+
+```javascript
+const { claimStage, setStage, getIdea } = await import('./tools/blog-artifacts.mjs');
+```
+
+Claim the row before starting work:
+
+1. Try `claimStage(ideaId, 'candidate', 'researching')`.
+2. If that returns `false`, call `getIdea(ideaId)` and check the actual stage: `'researching'` → the row was created pre-claimed (write-post, teardown flows) — proceed. `'failed_researching'` → this is a retry; `claimStage(ideaId, 'failed_researching', 'researching')` then proceed. Any other stage → the row isn't ready for research — stop, touch nothing, report the mismatch.
+
+On success (artifact persisted): `setStage(ideaId, 'outlining')` — this skill handles **article** rows only (`post_type:'article'`); teardown research uses `teardown-generate`'s own path. On failure: `setStage(ideaId, 'failed_researching')`.
+
+Log the run via `logEntry` with `step_name: 'blog_research'`, `stage` matching whichever phase failed or `'persist'` on success.
+
+---
+
+If this research was triggered by `write-post`, hand the persisted artifact (its content, following the section headings above) back to that skill's Step 3 (Outline). If it was a standalone request, present the doc to Simon and wait for direction.
