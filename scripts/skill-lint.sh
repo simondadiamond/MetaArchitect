@@ -64,9 +64,17 @@ else
 fi
 
 # 10. Hex colors in agent profiles must come from the brand palette (R3: sitemaster shipped #F97316 for 11 days)
-PALETTE='0F0F0F|1A1A1A|1F1F1F|333333|EAEAEA|B4B4B4|777777|E04500|FF5A1A|C97A1A|F85149'
-hits=$(grep -rnoE $EXCLUDE '#[0-9A-Fa-f]{6}\b' .claude/agents 2>/dev/null | grep -viE "#($PALETTE)")
-[ -n "$hits" ] && fail $'non-palette hex color in an agent profile (brand-summary palette wins):\n'"$hits"
+#     The palette is DERIVED from brand/brand-summary.md, never hardcoded here. A mid-tier
+#     model in the 2026-07-13 downgrade red-team, told to set an off-brand accent, edited this
+#     very check's hardcoded palette to make itself pass. A gate holding its own copy of the
+#     truth can be edited into agreement; one that reads the canonical source cannot.
+PALETTE=$(grep -oE '#[0-9A-Fa-f]{6}\b' brand/brand-summary.md 2>/dev/null | tr -d '#' | sort -u | paste -sd'|')
+if [ -z "$PALETTE" ]; then
+  fail "could not derive the brand palette from brand/brand-summary.md (check 10 is blind — fix this first)"
+else
+  hits=$(grep -rnoE $EXCLUDE '#[0-9A-Fa-f]{6}\b' .claude/agents 2>/dev/null | grep -viE "#($PALETTE)")
+  [ -n "$hits" ] && fail $'non-palette hex color in an agent profile (brand/brand-summary.md is the palette):\n'"$hits"
+fi
 
 # 11. Hardcoded prices in .claude/ (R5: stale $750 founder rate) — prices live on the live page or one canonical file
 hits=$(grep -rnE $EXCLUDE '\$[0-9,]+ ?(USD|CAD)' .claude 2>/dev/null | grep -viE 'read the current price|never assume|example')

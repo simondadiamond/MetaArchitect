@@ -64,6 +64,16 @@ if { $in_primary || $mentions_primary; } \
   deny "Primary checkouts (command-center, simonparis-website) stay on main and untouched — the live :3737 service serves the command-center one (lessons.md 2026-07-04). Do branch work in a git worktree: git worktree add <path> -b <branch> origin/main. Reads, fetch, pull and worktree commands are fine."
 fi
 
+# --- Rule 8: no shell end-run around the propose-only file rules ---
+# The Edit/Write guard (file-guard.sh rules 3-4) is worthless if a model can rewrite the
+# same files with sed/tee/redirect. Born from the 2026-07-13 downgrade red-team, where a
+# mid-tier model rewrote the lint that was failing it.
+PROTECTED='\.claude/agents/[^[:space:]]*\.md|brand/[^[:space:]]*\.md|scripts/skill-lint\.sh|scripts/hooks/[^[:space:]]*\.sh'
+if grep -qE "(sed[[:space:]]+-i|tee[[:space:]]|>[[:space:]]*[^[:space:]|]*($PROTECTED)|perl[[:space:]]+-[a-z]*i)" <<<"$cmd" \
+   && grep -qE "($PROTECTED)" <<<"$cmd"; then
+  deny "Agent profiles, brand files, and the gate scripts themselves are propose-only — no in-place shell rewrites. Show Simon the diff you want. (A mid-tier model in the downgrade red-team 'fixed' a failing brand check by editing the check; that is what this blocks.)"
+fi
+
 # --- Rule 7: restarting the live service to verify unpushed work (deploy topology memory) — ask, not deny ---
 if grep -qE 'systemctl[[:space:]]+--user[[:space:]]+(restart|stop)[[:space:]]+command-center' <<<"$cmd"; then
   ask "This restarts/stops the live :3737 service. To verify unpushed work, run 'npx next start -p <other-port>' from your worktree instead (deploy topology memory). Proceed only if this is a deploy/incident fix."

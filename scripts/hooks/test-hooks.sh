@@ -78,7 +78,21 @@ check "edit website primary denied" file-guard.sh "$(file_payload '/home/diamond
 check "edit in story worktree ok"  file-guard.sh "$(file_payload "$HOME/.story-worktrees/abc/worker/pipeline.ts")" allow
 check "edit MetaArchitect ok"      file-guard.sh "$(file_payload '/home/diamond/projects/MetaArchitect/docs/lessons.md')" allow
 check "brain INDEX.md denied"      file-guard.sh "$(file_payload '/home/diamond/projects/brain/INDEX.md')"   deny
+# file-guard rule 3: agent profiles are propose-only (red-team 2026-07-13)
+check "agent profile edit denied"  file-guard.sh "$(file_payload '/home/diamond/projects/MetaArchitect/.claude/agents/sitemaster.md')" deny
+check "agent profile in worktree denied" file-guard.sh "$(file_payload '/home/diamond/projects/MetaArchitect/.claude/worktrees/x/.claude/agents/coo.md')" deny
+check "skills edit still allowed"  file-guard.sh "$(file_payload '/home/diamond/projects/MetaArchitect/.claude/skills/repurpose/SKILL.md')" allow
 check "brain note ok"              file-guard.sh "$(file_payload '/home/diamond/projects/brain/notes/x.md')" allow
+
+# Rule 8 + file-guard rule 3/4: propose-only files (red-team 2026-07-13) — RED
+check "sed -i on agent profile denied" bash-guard.sh "$(bash_payload "sed -i s/E04500/FF6600/ .claude/agents/sitemaster.md")" deny
+check "sed -i on skill-lint denied"  bash-guard.sh "$(bash_payload "sed -i s/E04500/FF6600/ scripts/skill-lint.sh")"        deny
+check "sed -i on brand file denied"  bash-guard.sh "$(bash_payload "sed -i s/x/y/ brand/brand-summary.md")"                 deny
+check "redirect into hook denied"    bash-guard.sh "$(bash_payload 'echo x > scripts/hooks/bash-guard.sh')"                 deny
+# Rule 8 — GREEN (reading them is fine)
+check "grep on agent profile ok"     bash-guard.sh "$(bash_payload 'grep accent .claude/agents/sitemaster.md')"             allow
+check "run skill-lint ok"            bash-guard.sh "$(bash_payload 'bash scripts/skill-lint.sh')"                           allow
+check "sed -i elsewhere ok"          bash-guard.sh "$(bash_payload 'sed -i s/a/b/ docs/notes.md')"                          allow
 
 echo "=== secrets-guard.sh ==="
 check "sbp_ token detected"        secrets-guard.sh "$(prompt_payload 'here is the token sbp_0123456789abcdef0123456789')"  inject
