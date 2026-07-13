@@ -23,8 +23,10 @@ fail() { echo "FAIL $1 — $2"; FAILS=$((FAILS+1)); }
 
 # Banned-phrase pattern — verbatim from linkedin-gate.md (brand-summary prohibitions + engagement bait)
 BANNED="comment yes|agree\?|thoughts\?|tag (a|someone)|repost if|let that sink in|read that again|excited to share|thrilled to announce|game.chang|revolutionary|groundbreaking|transformational|cutting.edge|state.of.the.art|in today's fast|in the age of ai"
-# LinkedIn's publicly named AI-tell shape: "it's not X, it's Y"
-AI_TELL="it'?s not [^.]{1,60}, (it'?s|it is)"
+# LinkedIn's publicly named AI-tell shape: "it's not X, it's Y". Match the antithesis with
+# contractions expanded and with a period or dash as the pivot, not only a comma —
+# "It is not the model. It is the plumbing." is the same tell wearing a different coat.
+AI_TELL="(it'?s|it is|this is|that'?s|that is) not( about)? [^.!?]{1,60}[,.—-] *(but )?(it'?s|it is)"
 
 check_em_dash() {  # zero em dashes (Simon's call 2026-07-05; ICP reads them as the ChatGPT signature)
   local n; n=$(grep -c '—' "$1" || true)
