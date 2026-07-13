@@ -5,7 +5,7 @@ description: Use when Simon asks to edit, review, or improve a blog draft or a s
 
 ## Editorial Loop — Three Passes
 
-**Risk tier: low in chat mode — deliberately exempt.** Read-only there: no DB writes, no external API calls, no state object, no pipeline logging; the calling skill (write-post) carries the STATE obligations for the run. **Pipeline stage mode is medium (S + T):** it writes `blog_artifacts` and `pipeline.logs` (still no external API calls) and carries its own state object — see "Pipeline stage mode" below.
+**Risk tier: low in chat mode — deliberately exempt.** Read-only there: no DB writes, no external API calls, no state object, no pipeline logging. Chat mode is ONLY the standalone ad-hoc case — Simon hands over draft text with no `blog_ideas` row involved. A write-post run always invokes this skill in pipeline stage mode (the row is real), never the exempt path. **Pipeline stage mode is medium (S + T):** it writes `blog_artifacts` and `pipeline.logs` (still no external API calls) and carries its own state object — see "Pipeline stage mode" below.
 
 Do not skip a pass. Do not batch them. Output discipline: Pass 2's score block is always shown in full; Passes 1 and 3 present a change summary (or diff) and the final text respectively — never re-print the whole draft between passes.
 
