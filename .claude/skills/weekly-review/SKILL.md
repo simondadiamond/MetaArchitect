@@ -63,7 +63,7 @@ Core sources (goals, posts, stories) abort the script. Everything else is option
 ### Step 1b — Skill freshness (recurring gate from the 2026-07-07 audit)
 
 ```bash
-cd /home/diamond/projects/MetaArchitect && ./scripts/skill-lint.sh
+cd /home/diamond/projects/MetaArchitect && ./scripts/gate-selftest.sh
 ```
 
 Surface every `FAIL:` line in Flags and every `warn:` line in the review body (Flags or Lessons context, your call). Lint won't run → note that in Flags; never abort.
@@ -117,7 +117,7 @@ Template (`summary_md`):
 - {date — one-line title, per lessons.md entry this week. None → "None logged — either a clean week or nobody wrote them down."}
 
 ## Flags
-- {risks needing attention: failed stories, needs_review pileups, cadence misses, skipped data sources, Postiz queue drift, skill-lint FAIL lines}
+- {risks needing attention: failed stories, needs_review pileups, cadence misses, skipped data sources, Postiz queue drift, gate-selftest FAIL lines (a failing gate means the estate drifted or the gate did — never silence it)}
 
 ## Next week's top 3
 1. {specific, actionable}
@@ -197,7 +197,7 @@ Then print the **full review markdown in chat** and end with the single most imp
 | `engage` block skipped / zero drafts all week / sweep_post_errors > 0 | SKIP row or FLAG per the diagnostic reading in Step 1 — never abort over engage |
 | `superstars` block skipped | SKIP superstar-list section with note in Flags — never abort |
 | `postiz_drift` skipped (pipeline side) or Postiz side unreadable | SKIP or half-fill the drift row with note in Flags — never abort |
-| `skill-lint.sh` won't run | Note in Flags — never abort |
+| `gate-selftest.sh` won't run | Note in Flags — never abort |
 | `docs/lessons.md` missing | SKIP section with note in review |
 | No MailerLite key found | SKIP subscribers with note in Flags |
 | MailerLite call fails / invalid JSON | SKIP subscribers with note in Flags |

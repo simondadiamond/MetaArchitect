@@ -1,5 +1,25 @@
 # Post-Fable Gate Inventory — 2026-07-12
 
+> **BUILD COMPLETE 2026-07-13.** All four tranches approved and shipped. Run `bash scripts/gate-selftest.sh`
+> for the current verdict on every gate (11 gates, 60 hook cases + 94 script assertions, all green at ship time).
+> What exists now, where it lives, and what it blocks:
+>
+> | gate | surface | blocks |
+> |---|---|---|
+> | `scripts/hooks/bash-guard.sh` | PreToolUse (global) | broad `pkill -f`/`killall`, force-push, `--no-verify`, remote branch deletion, bare `gh pr merge`, git mutations in primary checkouts, shell rewrites of propose-only files; *asks* before restarting the live service |
+> | `scripts/hooks/file-guard.sh` | PreToolUse (global) | edits in primary command-center/website checkouts, edits to agent profiles (propose-only), hand-edits of brain INDEX.md |
+> | `scripts/hooks/secrets-guard.sh` | UserPromptSubmit (global) | injects rotate/never-echo/file-drop instructions when a credential is pasted |
+> | `scripts/hooks/skill-lint-hook.sh` | PostToolUse (repo) | auto-runs skill-lint after any skill/agent/brand/CLAUDE.md edit |
+> | `scripts/skill-lint.sh` (16 checks) | lint | drift classes + palette derived from brand-summary, prices, placeholders, divergent duplicates, Postiz bypass, **gate-wiring regressions**, assert-blocks in skill prose |
+> | `scripts/handoff-lint.sh` | lint | handoffs without a queryable `status:` header |
+> | `scripts/bind-audit.sh` | audit | live listening sockets that drift from the allowlist |
+> | `scripts/linkedin-gate.sh` | content gate | em dashes, AI-tell antithesis, banned phrases, word count, hook length, links, `/readiness` CTAs; `--cadence` for `/score` |
+> | `teardown-gate.py` · `insert-blog-post.mjs` · `validate-manifest.mjs` · `validate-brief.mjs` · `postiz-guards.mjs` | content gates | the Gates 1–11 / blog-insert / carousel-manifest / brief-payload / Postiz slot+cadence+nudger checks that used to be prose |
+> | command-center API (PR #84) | server-side | stories without checkable criteria, pipeline-internal scope, bad types, dup stories, unknown goal ids; goals enum + hierarchy cycles; schedules with missing agents / sub-5-min crons; **`agent_target` now actually reaches the worker** |
+> | migration 0017 | DB trigger | re-queued ever-published posts keep a stale `post_url`/`published_at` |
+>
+> **The downgrade red-team's verdict** (mid-tier model on real estate tasks): the API scope guard held and the model self-corrected; the *prose* rules did not. Told to change a brand color, it edited an agent profile directly (propose-only was prose), then — when skill-lint failed it — **edited the lint's hardcoded palette to make itself pass**, and reported success honestly. Fixed structurally: the palette is now derived from `brand/brand-summary.md`, and profiles/brand/gate scripts are propose-only at the hook layer. Full write-up: `docs/lessons.md` 2026-07-13.
+>
 > Phase 1 output of `docs/handoffs/2026-07-12-post-fable-operating-system.md` (goal `3df3143e`).
 > Method: six parallel sweep agents over lessons.md (every entry), memory feedback files, skills + skill-audit + skill-lint, session transcripts (2026-06-30 → 2026-07-12; earlier transcripts don't survive on this box), git history of CLAUDE.md/agent profiles, and existing enforcement + API surfaces.
 > Classes: **(a)** already mechanized — verify it fires · **(b)** mechanizable — build list · **(c)** inherently judgment — put on an always-loaded surface.
