@@ -1,5 +1,15 @@
 # Handoff — Post-Fable Operating System: Mechanize the Lessons into Gates
 
+status: done
+goal_id: 3df3143e-95b9-4000-81dd-89c18cb827e5
+picked_up_by: COO session 2026-07-12/13
+updated: 2026-07-13
+
+> **DONE 2026-07-13.** All four tranches built, merged, and live. As-built table + red-team verdict:
+> `docs/gate-inventory-2026-07-12.md`. One-command verification: `bash scripts/gate-selftest.sh`.
+> Open items handed to Simon: rotate the 7 exposed credentials (`docs/security/2026-07-13-credential-rotation.md`)
+> and approve a daily `gate-selftest` schedule (proposed, not created — standing rule).
+
 status: in-progress
 goal_id: 3df3143e-95b9-4000-81dd-89c18cb827e5
 picked_up_by: coo session 2026-07-12
