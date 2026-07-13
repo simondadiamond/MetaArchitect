@@ -6,9 +6,9 @@
 
 ## Diagnostic de préparation IA
 
-**Votre système d'IA générative est en production. Pouvez-vous expliquer ses décisions? La Loi 25 dit que vous devez.**
+**Votre système d'IA générative est en production. Le jour où une de ses décisions devient exclusivement automatisée, la Loi 25 exige que vous puissiez l'expliquer. Le pourriez-vous?**
 
-Je suis Simon Paris. Je conçois des systèmes d'IA qui ne cassent pas — et en deux à trois jours, je vous dis exactement où le vôtre va casser.
+Je suis Simon Paris. Je conçois des systèmes d'IA qui ne cassent pas — et en deux à trois jours de travail, livrés à l'intérieur d'une semaine, je vous montre où le vôtre va probablement casser en premier, preuves à l'appui.
 
 ### Ce que c'est
 
@@ -19,16 +19,16 @@ Pas une présentation sur la stratégie IA. Un ingénieur lit vos traces, vos sc
 ### Ce que vous en retirez
 
 - **Une note de constats de cinq pages** : votre score STATE (0–15, avec la preuve derrière chaque chiffre), les deux ou trois modes de défaillance qui comptent, et trois premiers gestes concrets — assez précis pour que vos ingénieurs en fassent des tickets.
-- **Une restitution d'une heure**, en français ou en anglais. Tous les livrables disponibles en français — vos obligations documentaires sous la Loi 25 ne se remplissent pas en anglais.
-- **Une réponse défendable** quand on vous demandera comment vous évaluez vos systèmes d'IA. La Loi 25 exige déjà que vous puissiez divulguer, sur demande, les renseignements personnels utilisés dans une décision fondée sur un traitement automatisé — et les principaux facteurs de cette décision. Si votre système ne peut pas répondre, c'est un constat, pas un détail. Pour les institutions financières fédérales, la ligne directrice E-23 du BSIF (en vigueur mai 2027) ajoute la même exigence sous un autre nom : inventaire de modèles et histoire de validation.
+- **Une présentation des constats d'une heure**, en français ou en anglais. Tous les livrables disponibles en français — vos obligations documentaires sous la Loi 25 ne se remplissent pas en anglais.
+- **Une réponse défendable** quand on vous demandera comment vous évaluez vos systèmes d'IA. Pour toute décision fondée exclusivement sur un traitement automatisé, la Loi 25 exige déjà que vous puissiez divulguer, sur demande, les renseignements personnels utilisés, les raisons, ainsi que les principaux facteurs et paramètres ayant mené à la décision. Si votre système ne peut pas répondre, c'est un constat, pas un détail. Pour les institutions financières fédérales, la ligne directrice E-23 du BSIF (en vigueur mai 2027) ajoute la même exigence sous un autre nom : inventaire des modèles et historique de validation.
 
 ### Ce que ça coûte
 
 **4 800 $ CAD** (3 500 $ US). Fixe. Aucune vente additionnelle en cours de mandat.
 
-**Tarif fondateur : 3 500 $ CAD** (2 500 $ US) pour les cinq premiers clients — pas un rabais, un échange : un court débreffage enregistré après la livraison, un témoignage si vous êtes satisfait, et deux mises en relation si vous pensez que quelqu'un d'autre en a besoin. Après cinq livraisons, le tarif fondateur ferme. Le décompte est réel et vit dans une base de données que je ne modifie pas à la main.
+**Tarif fondateur : 3 500 $ CAD** (2 500 $ US) pour les cinq premiers clients — pas un rabais, un échange : un court débreffage enregistré après la livraison, un témoignage si vous êtes satisfait, et deux mises en relation si vous pensez que quelqu'un d'autre en a besoin. Après cinq livraisons, le tarif fondateur ferme — pas de faux compte à rebours; demandez-moi combien de places restent et je vous le dis.
 
-**La garantie** : si la note de constats ne vaut pas son prix, dites-le dans les 14 jours suivant la restitution — remboursement complet, et vous gardez tous les livrables. Vous risquez une case d'agenda, pas une ligne budgétaire.
+**La garantie** : si la note de constats ne vaut pas son prix, dites-le dans les 14 jours suivant la présentation des constats — remboursement complet, et vous gardez tous les livrables. Les modalités écrites accompagnent la facture. Ce que vous risquez, ce sont quelques heures de vos ingénieurs et les artefacts que vous choisissez de partager — la garantie existe parce que je sais que ce n'est pas rien.
 
 ### Pour qui
 
@@ -52,13 +52,13 @@ Si une décision est fondée exclusivement sur un traitement automatisé de rens
 Un outil installé et une propriété tenue, ce sont deux affirmations différentes. Mon test : je choisis une exécution de la semaine dernière — votre ingénieur peut-il produire la trace complète en dix minutes? Quelqu'un peut-il dire quelle version du modèle et du prompt a produit une sortie précise rendue au client? Dans la plupart des équipes, la réponse est « en principe ». Le diagnostic mesure la distance entre « en principe » et « maintenant ».
 
 **C'est un appel de vente déguisé pour un mandat plus gros?**
-Le diagnostic est tarifé pour tenir debout tout seul — c'est à ça que sert la garantie. Si vos scores justifient un audit plus profond, la note le montrera en preuves, et je le dirai une fois, à la restitution. Sinon, je dirai ça aussi. Je ne vends jamais de mandat récurrent à froid.
+Le diagnostic est tarifé pour tenir debout tout seul — c'est à ça que sert la garantie. Si vos scores justifient un audit plus profond, la note le montrera en preuves, et je le dirai une fois, à la présentation des constats. Sinon, je dirai ça aussi. Je ne vends jamais de mandat récurrent à froid.
 
 **De quels accès avez-vous besoin?**
-À ce palier : un appel de 60 à 90 minutes avec les gens qui ont bâti et qui opèrent le flux, des partages d'écran de vos traces et schémas, et ce que vous pouvez exporter — un post-mortem, une trace, un schéma d'état. Aucun accès au code source requis. Tout ce qui est partagé est détruit après le mandat; je signe votre entente de confidentialité sans discussion.
+À ce palier : un appel de 60 à 90 minutes avec les gens qui ont bâti et qui opèrent le flux, des partages d'écran de vos traces et schémas, et ce que vous pouvez exporter — un post-mortem, une trace, un schéma d'état, caviardés là où ils touchent des renseignements personnels. Aucun accès au code source requis. Tout ce qui est partagé est détruit dans les 7 jours suivant la présentation des constats, avec confirmation écrite; je signe votre entente de confidentialité sans discussion.
 
 **Qui fait le travail?**
 Moi. Pas d'associés, pas de sous-traitance. C'est écrit dans l'énoncé de travail.
 
-**Et après la restitution?**
+**Et après la présentation des constats?**
 Vous corrigez avec votre propre équipe — les premiers gestes de la note sont écrits pour ça. Si vous voulez la version profonde — tous les flux, entrevues d'ingénieurs, revue de code, feuille de route de remédiation sur 90 jours — c'est l'Audit IA de production, et la note vous aura déjà montré s'il se justifie.

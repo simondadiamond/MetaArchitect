@@ -12,7 +12,7 @@
 - [ ] Findings doc draft-complete; final version ships within 2 business days after this call
 - [ ] One-page scorecard ready to screen-share. No slide deck — present from the scorecard and the doc. A deck says agency; a findings doc says engineer
 - [ ] Room check with the buyer beforehand: buyer + at least one scored-workflow owner. If risk/compliance wants in, good — the A-pillar section is written for them
-- [ ] Know your close before you dial in: which risk is the retainer's month-one anchor, and whether this org smelled like monthly-budget or training-budget during the interviews
+- [ ] Rank the block-4 risks by expected loss — regulatory exposure, then blast radius — and rank them BEFORE thinking about the close. Only after the ranking is frozen, note which risk a retainer's month one would attack, and whether this org smelled like monthly-budget or training-budget during the interviews. The risks choose the pitch; the pitch never chooses the risks
 - [ ] If they took the simonparis.ca/score quiz pre-engagement, have both numbers side by side — the delta is a finding (rubric: self-assessed runs optimistic)
 
 ---
@@ -29,7 +29,7 @@
 | 6. The close | 1:15–1:25 | Who executes the roadmap — retainer, training, or your team |
 | 7. Logistics | 1:25–1:30 | What ships when, debrief scheduling, first quarterly review |
 
-Timing discipline: if block 3 runs long, compress block 2 retroactively — never block 4 or 6. The last 15 minutes are why the readout exists.
+Timing discipline: if block 3 runs long, compress block 2 retroactively — never block 4. The readout exists so the roadmap leaves the room with an owner. Block 6 is conditional — it only happens at a readout that landed; block 4 is never conditional.
 
 ### Block 1 — Opening frame (0:00–0:05)
 
@@ -58,7 +58,7 @@ Rules:
 - A scored N/A → "x out of 12" with the one-line reason. Never rescale.
 - Credit what's real. A 2 on Traceable is genuinely systematic — say so. An audit that finds nothing good reads as a sales document.
 - Fixes made mid-audit: name them as remediation-in-progress, score unchanged. "You fixed it during the audit" is a compliment and a data point.
-- Disputes: go to the evidence pointer, re-read the anchor, hold the line. If genuinely new evidence surfaces, it goes in the final doc as a note — the score does not move on this call.
+- Disputes: go to the evidence pointer, re-read the anchor, hold the line. The score does not move on this call — but if corroborated new evidence lands before the final doc ships, the score moves there, with a visible change-log entry. Evidence rules even when it's inconvenient for the presenter.
 
 ### Block 4 — The 2–3 risks that matter (0:45–1:00)
 
@@ -89,17 +89,19 @@ Wait for the yes. Then:
 
 > "The way I work is day-blocks. One day a week, I'm your fractional LLMOps engineer — I take the top of this roadmap and build it down with your team, starting with [risk #1]. At the founding rate that's $5,500 a month, and the founding terms hold for the six-month term. If it's working and you want to go faster, two days a week is $9,000 — the per-day math gets better, deliberately."
 
-(Canadian entity: quote it, then add "invoiced in CAD — $7,500 a month" per pricing-pinned CAD terms.)
+(Canadian entity: quote CAD from the first sentence — "$7,500 a month at the founding rate, $12,500 for two days a week" — per pricing-pinned CAD terms. The FR one-pager already quotes CAD-first; the readout matches. USD figures on request.)
 
 **The Team Training downsell — when monthly budget isn't there, verbatim:**
 
-> "If a monthly line item doesn't fit this year's budget, there's a one-day version: Agentic Development for Teams. I spend a full day hands-on with your engineers, in this codebase, working the top items on this roadmap together. That's $4,500 at the founding rate — for a team of fifteen that's $300 a head, which is less than most conference tickets. Half-day version exists at $3,000 if the scope is one workflow."
+> "If a monthly line item doesn't fit this year's budget, there's a one-day version: Agentic Development for Teams. I spend a full day hands-on with your engineers, in this codebase, working the top items on this roadmap together. That's $4,500 at the founding rate — for your team of [N — their actual engineer count, learned during the audit] that's $[4,500/N] a head, which is less than most conference tickets. Half-day version exists at $3,000 if the scope is one workflow."
+
+(Do the per-head math on their real headcount before the call. A six-person team hears "$750 a head" — still say it; it's honest and it still clears an L&D line. Invented team sizes get caught by anyone who can divide.)
 
 Training usually clears on an L&D budget without the committee — say so if procurement pain came up during the audit.
 
 **Handling "we'll fix it ourselves" — verbatim:**
 
-> "That's a fine outcome — the roadmap was built for exactly that. Two things stay open. As a founding client you've got a quarterly architecture review with me for the next twelve months — let's put the first one on the calendar now, about ninety days out, right when the month-three items should be done. And when you've closed the top three items, re-run the live tests from the findings doc with your own team. If the scores move, you'll know the fixes are real. If they don't, you know where I am."
+> "That's a fine outcome — the roadmap was built for exactly that. Two things stay open. As a founding client you've got a quarterly architecture review with me for the next twelve months — it's in your SOW — so let's put the first one on the calendar now, about ninety days out, right when the month-three items should be done. And when you've closed the top three items, re-run the live tests from the findings doc with your own team. If the scores move, you'll know the fixes are real. If they don't, you know where I am."
 
 Book that quarterly review before the call ends. It's the door that stays open, and it costs nothing to hold.
 

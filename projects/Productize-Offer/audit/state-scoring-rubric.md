@@ -49,7 +49,7 @@ The jump that matters commercially is 1→2 (ad-hoc→systematic): that's where 
 
 *Explicit state schemas, not implicit context.* Failure mode prevented: context rot — the agent loses track of where it is, older state silently drops, behavior degrades with no error signal.
 
-**Live test:** pick a run that is mid-flight or recently crashed. Ask the engineer to tell you, from persisted state only — no transcript, no chat history, no log spelunking — exactly which step it stopped at and what it had produced so far. Time them.
+**Live test:** have them show you the runs table and pick the run yourself — mid-flight or recently crashed, never their golden-path pick. Ask the engineer to tell you, from persisted state only — no transcript, no chat history, no log spelunking — exactly which step it stopped at and what it had produced so far. Time them.
 
 **Evidence sources:** state schema definitions (types, migrations, table DDL), a sampled state row vs. the actual execution position, how each step reads/writes state, what happens to state on deploy/restart.
 

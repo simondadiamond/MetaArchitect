@@ -12,7 +12,9 @@
 - Level moves use the rubric's anchor jumps ("Tol 1→2"). Never promise a jump of 2 levels in one item — split it; the rubric's all-criteria rule means each level is earned separately.
 - Effort tags in engineer-days: **S ≤ 2**, **M ≤ 10**, **L > 10**. If an item feels like L, it's usually two items.
 - Lanes are calendar (days 0–30 / 31–60 / 61–90), not sprints — the client maps to their own cadence.
-- Prices in the closing section come from `../pricing-pinned.md` only. Founding vs. full per current slot status. Never "Fractional AI Reliability Lead" externally — the public name is **Fractional LLMOps Engineer**.
+- Every item carries a **disposition**: `fix` / `accept-with-signoff` / `out-of-scope`. Default is fix. `accept-with-signoff` names the accepting role in the Owner column — that's what lets the client's risk register formally accept an item instead of leaving it unlabeled.
+- Every lane carries a capacity-assumption line (format below), sourced from the interviews.
+- No prices and no pitch anywhere in this document. Execution support gets exactly one factual line in the closing section; the offer conversation lives in `readout-structure.md` and happens at the readout — never in the engineers' document.
 
 ---
 
@@ -37,7 +39,7 @@ Two sequencing rules are already applied:
 
 | # | Finding ref | Action | Move | Effort |
 |---|---|---|---|---|
-| QW-1 | {EV-nn / RISK_NAME} | {e.g. "Add a correlation ID minted at trigger time and threaded through every LLM and tool call — field `run_id`, propagated via {MECHANISM}"} | {T 1→2} | S |
+| QW-1 | {EV-nn / RISK_NAME} | {e.g. "Add a correlation ID minted at trigger time and threaded through every LLM and tool call — field `run_id`, propagated via {MECHANISM}"} | {T 1→2 (partial — completes with the model-version + I/O logging item {REF})} | S |
 | QW-2 | {…} | {e.g. "Route the {N} unhandled parse-failure paths to the existing dead-letter queue instead of `except: pass` — files listed in EV-{nn}"} | {E 0→1} | S |
 | QW-3 | {…} | {…} | {…} | S |
 
@@ -47,15 +49,20 @@ Two sequencing rules are already applied:
 
 **Current: {n}/15 ({BAND_NAME}) → projected after 90 days: {n}/15 ({BAND_NAME})** *(projection assumes every item lands; it is a target, not a score — scores only move under re-audit evidence)*
 
-| # | Finding ref | Action (ticket-scopeable) | Move | Effort | Depends on | Owner (role) | Lane |
-|---|---|---|---|---|---|---|---|
-| W1-01 | {RISK_NAME / EV-nn} | {SPECIFIC ACTION: the mechanism, the table/file/boundary by name, and the acceptance check — e.g. "Create `decision_records` table (personal data used, principal factors, model + prompt version, reviewer); write one record per claim decision at step 6; acceptance: the 30-minute drill passes on a record from the previous day"} | {A 0→1} | {S/M/L} | {— or W1-nn} | {e.g. backend eng, W1 team} | {0–30} |
-| W1-02 | {…} | {…} | {Tol 1→2} | M | W1-01 | {…} | {0–30} |
-| W1-03 | {…} | {…} | {S 1→2} | M | — | {…} | {31–60} |
-| W1-04 | {…} | {…} | {E 2→3} | L | W1-02 | {…} | {61–90} |
-| … | | | | | | | |
+| # | Finding ref | Action (ticket-scopeable) | Move | Effort | Depends on | Owner (role) | Disposition | Lane |
+|---|---|---|---|---|---|---|---|---|
+| W1-01 | {RISK_NAME / EV-nn} | {SPECIFIC ACTION: the mechanism, the table/file/boundary by name, and the acceptance check — e.g. "Create `decision_records` table (personal data used, principal factors, model + prompt version, reviewer); write one record per claim decision at step 6; acceptance: the 30-minute drill passes on a record from the previous day"} | {A 0→1} | {S/M/L} | {— or W1-nn} | {e.g. backend eng, W1 team} | {fix} | {0–30} |
+| W1-02 | {…} | {…} | {Tol 1→2} | M | W1-01 | {…} | {fix} | {0–30} |
+| W1-03 | {…} | {…} | {S 1→2} | M | — | {…} | {fix / accept-with-signoff ({SIGNING_ROLE}) / out-of-scope} | {31–60} |
+| W1-04 | {…} | {…} | {E 2→3} | L | W1-02 | {…} | {fix} | {61–90} |
+| … | | | | | | | | |
 
 **Lane summary:** days 0–30: {N} items, ~{N} eng-days | 31–60: {N} items, ~{N} eng-days | 61–90: {N} items, ~{N} eng-days
+
+**Capacity assumptions** *(mandatory, one line per lane — the numbers come from the interviews' roadmap-sizing questions, never from optimism)*:
+- Days 0–30: assumes {N} engineers at {X}% allocation — per interview evidence, current available capacity is {Y}; under that constraint, items {LIST or "none"} slip to the next lane.
+- Days 31–60: {same format}
+- Days 61–90: {same format}
 
 ## Workflow: {WORKFLOW_2_NAME} — priority table
 

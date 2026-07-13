@@ -4,7 +4,7 @@
 
 ---
 
-Every Production AI Audit scores your workflows against this instrument. This excerpt is public because a scoring rubric you can't inspect is a vibe with a letterhead. The full version (all five pillars anchored at four levels, with the evidence rules and calibration record) is one of the artifacts you keep after an audit.
+Every Production AI Audit scores your workflows against this instrument. This excerpt is public because a scoring rubric you can't inspect is a vibe with a letterhead. The full version is one of the artifacts you keep after an audit: all five pillars anchored at four levels, the evidence rules, and the reproducibility protocol the rubric is tested under (two scorers, same evidence, independently, must land within one point on every pillar — or the rubric gets fixed, not the score).
 
 ## What gets scored
 
@@ -27,7 +27,7 @@ Documentation says what a team intended. Live tests say what is true. One per pi
 
 - **Structured**: pick a run that crashed. From persisted state only (no transcript, no log spelunking), can your engineer name the exact step it stopped at?
 - **Traceable**: I pick an execution from last week (not you). Complete trace: every LLM call, tool call, input, output, model version. Under ten minutes?
-- **Auditable**: the 30-minute drill. One real automated decision that affected a person: what personal data was used, what were the principal factors, what model and prompt version ran? Law 25 assumes you can answer.
+- **Auditable**: the 30-minute drill. One real decision about a person your system made or shaped: what personal data was used, what were the principal factors, what model and prompt version ran? For decisions made exclusively by automated processing, Law 25 assumes you can answer.
 - **Tolerant**: the reboot test. Kill the workflow mid-run in a safe environment and watch the restart. Paper form: ask two engineers separately what happens after a crash at step 6 of 10. Divergent answers are a result.
 - **Explicit**: the boundary walk. Enumerate every point where model output becomes a write or an action. For each: what is the worst thing the model could emit here, and what stops it? No enumeration is a fail.
 
@@ -52,6 +52,16 @@ What the four levels look like in the wild, for one pillar of five:
 
 ## The aggregate
 
-Five pillars, 0 to 15 per workflow. 6/15 is the most common first score I see claimed as "production-ready." The band names (Critical Risk, High Risk, Developing, Production-Ready, STATE-Compliant) do the honest work in front of your leadership that "it mostly works" cannot.
+Five pillars, 0 to 15 per workflow:
 
-Want to see where you'd land before anyone reads your traces? The free self-assessment at simonparis.ca/score runs the short form of this instrument. Self-assessed scores usually run 2 to 4 points optimistic. That delta is a finding too.
+| Total | Band |
+|---|---|
+| 0 to 5 | Critical Risk |
+| 6 to 8 | High Risk |
+| 9 to 11 | Developing |
+| 12 to 14 | Production-Ready |
+| 15 | STATE-Compliant |
+
+The instrument is deliberately hard to max: 15 means every live test passed, witnessed. The band names do the honest work in front of your leadership that "it mostly works" cannot.
+
+Want to see where you'd land before anyone reads your traces? The free self-assessment at simonparis.ca/score runs the short form of this instrument. Expect your self-score to run optimistic: "we have logging" and "we can produce last Tuesday's trace in ten minutes" are different claims, and only one of them survives a live test. The audit measures that delta, and the delta is a finding too.

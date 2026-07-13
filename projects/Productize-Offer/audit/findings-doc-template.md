@@ -12,7 +12,8 @@
 - Every score cites at least one evidence pointer, mirrored in the Evidence Register (Appendix A). No pointer = no score (rubric rule 3).
 - Named risks follow the fixed format below. Risk names are specific and memorable — "The Consumed-Email Dead End", never "reliability gap". If the name could apply to any company, rename it.
 - Live tests not run for access reasons: mark the pillar "untested — score provisional" (rubric rule 4) and list in Limitations.
-- Length discipline: exec summary 1 page, methodology half a page, each workflow chapter 3–5 pages, appendices as long as the evidence demands.
+- Length discipline: exec summary 1 page, methodology half a page, each workflow chapter 3–5 pages — single-workflow engagements: 4–6 pages for the one chapter. The By-the-numbers block and the Evidence Register are mandatory, so a single-workflow doc still lands ≥10 pages; the 10–20 pp promise holds either way. Appendices as long as the evidence demands.
+- The model-fit verdict in the exec summary is a conclusion, not boilerplate — see the fill rule there. An audit that can never conclude "partly the model" is marketing.
 
 ---
 
@@ -53,7 +54,7 @@
 **3. {RISK_NAME_3_OR_DELETE}** — {ONE_SENTENCE_SCENARIO}.
 *In CFO terms: {ONE_SENTENCE}.*
 
-**What this is not:** none of these are model problems. {MODEL_NAME} is performing within normal bounds. The findings are architecture: state, traces, recovery, and boundaries — all fixable with ordinary engineering, sequenced in the accompanying 90-day remediation roadmap.
+{MODEL_FIT_VERDICT — conditional, not boilerplate. Include the following ONLY if the evidence supports it: "**What this is not:** none of these are model problems. {MODEL_NAME} is performing within normal bounds. The findings are architecture: state, traces, recovery, and boundaries — all fixable with ordinary engineering, sequenced in the accompanying 90-day remediation roadmap." If the evidence shows a model-fit problem — capability ceiling, wrong model class for the task, systematic accuracy failures on in-scope inputs — write that finding here instead, even though it's off-thesis. An audit that can never conclude "partly the model" is marketing.}
 
 **Bottom line:** {ONE_SENTENCE_VERDICT — the single line the sponsor will repeat internally, e.g. "The system works because two engineers keep it working; the roadmap's first 30 days convert that from a staffing fact into an architecture fact."}
 
@@ -78,6 +79,18 @@ We score workflows, not the company. An organization does not have a STATE score
 **Trigger → effect:** {ONE_LINE, e.g. "inbound email → LLM extraction → claim record created in {CORE_SYSTEM}; human adjuster downstream"}
 **Volume:** {N/day or N/month} | **Personal data in path:** {YES/NO} | **Risk tier (state-framework.md):** {Medium/High}
 **Score: {n}/15 {or /12, with one-line reason A is N/A} — {BAND_NAME}**
+
+**By the numbers** *(mandatory in every workflow chapter — these come from the telemetry review)*
+
+| | |
+|---|---|
+| Executions sampled | {N} over {DATE_RANGE} |
+| Stuck runs found | {N} (row IDs redacted here; retained in working notes) |
+| Executions with a complete trace | {N}% |
+| Dark-path volume | {N}/{PERIOD} through untraced paths ({PATH_NAMES or "none found"}) |
+| Retry volume | {N}/{PERIOD}; {N} exhausted to dead-letter or manual handling |
+
+{Fill rule: if these numbers cannot be produced, the "telemetry review" line comes out of the evidence-base table on the cover page. No numbers, no claim.}
 
 ### 3.1 S — Structured: {n} ({ANCHOR_NAME})
 
@@ -161,9 +174,9 @@ We score workflows, not the company. An organization does not have a STATE score
 | {WORKFLOW_1} | {n} | {n} | {n/N/A} | {n} | {n} | {n}/{15 or 12} | {BAND} | {LIST or "none"} |
 | {WORKFLOW_2} | {n} | {n} | {n/N/A} | {n} | {n} | {n}/{15 or 12} | {BAND} | {LIST or "none"} |
 
-**Benchmark:** Median STATE score for comparable workflows: {X}/15 — sample basis: {Y, e.g. "n={N} audited workflows plus {N} public post-mortem reconstructions"}. **ESTIMATED — this benchmark is directional until the audit base reaches n≥10; it is presented for orientation, not ranking.** {DELETE THE ESTIMATED MARKER ONLY WHEN n≥10.}
+**Orientation — named public failures:** {MAP 2–3 OF THE CLIENT'S KEY GAPS TO NAMED PUBLIC INCIDENTS OR POST-MORTEMS, one line each — e.g. "the failure mode in {PUBLIC_INCIDENT}'s published post-mortem is your Tol=1: a mid-run crash that silently loses work." Fill rule: real, verifiable public sources only — a published post-mortem, incident write-up, or regulator finding, named and citable. Never a composite, never "companies we've seen."} *(A statistical benchmark line returns to this section only once the audit base reaches n≥10 audited workflows.)*
 
-{IF_QUIZ_TAKEN: **Self-assessment delta:** {CLIENT_NAME}'s simonparis.ca/score self-assessment scored {n}/10 ({QUIZ_BAND}); the evidence-based audit lands at {n}/15 ({BAND}). The delta is itself a finding — "we have logging" and "we can reconstruct last Tuesday's execution in ten minutes" are different claims, and the gap between them is where incidents live.}
+{IF_QUIZ_TAKEN: **Self-assessment delta:** {CLIENT_NAME}'s simonparis.ca/score self-assessment scored {n}/10 ({QUIZ_BAND}); the evidence-based audit lands at {n}/15 ({BAND}). The delta is itself a finding. Fill rule: paraphrase the logging-vs-reconstruction gap in the client's own nouns — their tool, their table, their incident. Never reuse the rubric's canned phrasing verbatim; the rubric owns that sentence.}
 
 The two jumps that matter (per rubric): **Ad-hoc→Systematic** is where a workflow stops depending on the specific engineers who built it; **Systematic→Enforced** is where "we thought we had that" stops appearing in post-mortems. The remediation roadmap sequences both.
 
@@ -188,9 +201,9 @@ The two jumps that matter (per rubric): **Ad-hoc→Systematic** is where a workf
 
 | # | Role | Relationship to workflow(s) | Date | Duration |
 |---|---|---|---|---|
-| 1 | {e.g. Senior engineer — original author, W1} | builder | {DATE} | {45 min} |
-| 2 | {e.g. Platform engineer — on-call rotation} | operations | {DATE} | {45 min} |
-| 3 | {e.g. Engineering manager — compliance liaison} | platform/compliance | {DATE} | {45 min} |
+| 1 | {e.g. Senior engineer — original author, W1} | builder | {DATE} | {60 min} |
+| 2 | {e.g. Platform engineer — on-call rotation} | operations | {DATE} | {60 min} |
+| 3 | {e.g. Engineering manager — compliance liaison} | platform/compliance | {DATE} | {60 min} |
 
 ## Appendix C — Limitations
 

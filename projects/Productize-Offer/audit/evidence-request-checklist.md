@@ -8,7 +8,9 @@
 
 The audit scores what runs, not what's documented. Every item below feeds a specific test I will run during the two weeks. Items marked **BLOCKING** must be in place before Day 1 or Day 1 moves — the schedule has no slack for waiting on access. Items marked **by Day 3** or **by Day 8** can trail the kickoff.
 
-If you can't provide an item, that's fine — every item has a fallback, and in two cases the absence of the item is itself a result the audit will report. Nothing here is a test of your team. It's the raw material.
+If you can't provide an item, that's fine — every item has a fallback, and in three cases (items 5, 6, and 8) the absence of the item is itself a result the audit will report.
+
+**A note on access at regulated orgs:** if your third-party-risk process takes weeks — and at most insurers and FIs it does — don't wait for it. The screen-share form of every test, where your engineer drives and I direct, is the default path for regulated environments; direct access is the accelerator, not the requirement. Say which path you're on at the scoping call and the schedule is built around it.
 
 ---
 
@@ -22,11 +24,11 @@ If you can't provide an item, that's fine — every item has a fallback, and in 
 
 ## 2. Trace / log access, or exports · **BLOCKING**
 
-**Provide:** read access to your tracing/logging stack (Langfuse, LangSmith, OTel backend, homegrown table — whatever you have), or an export covering the last 2–4 weeks of executions for the scored workflows.
+**Provide:** read access to your tracing/logging stack (Langfuse, LangSmith, OTel backend, homegrown table — whatever you have). If access can't be granted, an export works — **de-identified or redacted by default**: traces at a regulated org carry customer data, and I don't want your raw PII any more than your privacy office wants me holding it. Masked fields don't hurt the test; the test measures whether the trace exists and connects, not what your customers are named.
 
-**Why:** the Traceable live test is me picking a real execution from last week and clocking how long it takes to produce its complete trace — every LLM call, tool call, and model version.
+**Why:** the Traceable live test is me picking a real execution from last week and clocking how long it takes to produce its complete trace — every LLM call, tool call, and model version. Note for your privacy office: any transfer of personal information to me is covered by the SOW's service-provider terms (Law 25 art. 18.3-style contractual clauses), all client material stays on an encrypted machine in Canada, and if your PIA process needs to look at this engagement first, that's a normal and correct answer — item 8 is where we talk about it.
 
-**Fallback:** your engineer runs the trace pull on a screen-share while I watch and time it. That's actually the stronger form of the test.
+**Fallback:** your engineer runs the trace pull on a screen-share while I watch and time it. That's actually the stronger form of the test, and for most regulated clients it's the default.
 
 ## 3. The 1–3 workflows to be scored, with named owners · **BLOCKING**
 
@@ -89,9 +91,11 @@ Engineers, not managers. Managers are welcome to sit in; they can't take the tes
 
 - **Read-only, always.** I never hold write access to anything of yours. Access is scoped to the named repos and the tracing stack, ideally as a guest identity in your tenant that you can watch and revoke.
 - **Where access is impossible, you drive.** Every live test has a screen-share form where your engineer's hands are on the keyboard. Slower, equally valid, sometimes stronger.
-- **During the engagement** all client material stays on one encrypted machine. Nothing is pasted into third-party tools; no client code or data is used to train anything.
+- **During the engagement** all client material stays on one encrypted machine, in Canada. No client material enters any hosted model or third-party tool — analysis tooling is local-only and enumerated in the SOW's security schedule. No client code or data is used to train anything.
 - **After final acceptance, within 7 days:** local clones, trace exports, and any credentials are destroyed or revoked — you should also revoke from your side; I'll remind you.
-- **What I retain:** the findings doc, the scorecards, interview notes, and redacted evidence pointers — the material the founding case-study process draws on, which you review before anything is published (per the SOW's founding terms: factual corrections incorporated, 5 business days).
+- **What I retain:** the findings doc, the scorecards, and interview notes (attributed by role, never by name). Retained 24 months for the quarterly review perk, then destroyed.
+
+**Founding clients only — the case-study process** is a separate track with its own SOW terms: you review before anything is published, factual corrections are incorporated within 5 business days, and the source material is the recorded debrief — not your code, not your traces.
 
 ---
 

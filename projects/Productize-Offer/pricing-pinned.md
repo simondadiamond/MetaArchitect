@@ -19,6 +19,8 @@
 - **Diagnostic guarantee** (better-than-risk-free, §1b.3): if the findings memo isn't worth the fee, full refund on request within 14 days of the readout — client keeps every deliverable. Diagnostic only.
 - **Founding exchange, tiered** (Amendment 3): Diagnostic = approval-required testimonial + 30-min recorded debrief + 2 warm intros if satisfied. Audit & Retainer = full founding-doc §5 exchange (recorded 45-min debrief, case-study rights, logo, 1 reference call/quarter × 4), lawyer-reviewed SOW. Training = testimonial + 30-min recorded debrief + anonymized case-study rights.
 - **No mid-term price step** (Amendment 2): founding retainer rate holds the 6-month term; steps to full at renewal with 60 days' notice.
+- **Founding perk — quarterly architecture review** (founding doc §4): every founding client gets one 60-min architecture review per quarter for 12 months after delivery, locked in the SOW. The readout script relies on this; it is a real calendar commitment (~4 h/client/year).
+- **Diagnostic duration, stated honestly**: 2–3 days of engagement activity, delivered inside one calendar week (evidence call day 1, artifact window 48 h, scoring after the window closes, readout same week). Client-facing copy never says a bare "2–3 days" that reads as elapsed time.
 - **Sales motion**: cold offer = Diagnostic ONLY. Audit pitched at diagnostic readout. Retainer AND Training pitched at audit delivery (goal `46d6fc61`) — never cold.
 - **Naming**: never "Fractional AI Reliability Lead" externally.
 - **Price floor $2,000** — nothing smaller than the Diagnostic is ever offered; price objection → trade scope, not price.
