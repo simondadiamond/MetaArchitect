@@ -1,6 +1,6 @@
 # Handoff — Offer-Ladder Sales Artifacts: Audit Methodology + Diagnostic Collateral
 
-status: ready
+status: queued
 goal_id: e18c302f-e395-4f56-aecc-283262b5ab38
 updated: 2026-07-13
 
