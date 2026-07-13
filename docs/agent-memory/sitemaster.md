@@ -9,3 +9,5 @@
 
 ## Session lessons
 - (none yet)
+- (2026-07-12) Executed the story-pipeline overhaul handoff: before implementing any handoff workstream, check the target repo's git log first — workstream 1 (pgid teardown + port guard) had already shipped as PR #58 the day before the handoff was written. Reading the code before the plan saved a full duplicate implementation.
+- (2026-07-12) Live-proof pattern for pipeline merge logic: queue a real story, then land a deliberately conflicting one-line PR to main while it verifies — deterministic way to exercise the DIRTY-PR path on live infrastructure without waiting for an accident.
