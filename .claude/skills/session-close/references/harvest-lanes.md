@@ -12,6 +12,10 @@ below auto-executes without Simon's approval (board reply or CC Approvals tab).
 Work that maps to a goal row: propose check-off, `in_progress` flip, or one-liner append
 (no `notes` column — append to `description`). New scope that surfaced mid-session →
 propose a new goal row or a story (root CLAUDE.md routing). Access: memory `goals-table-access`.
+**Traceability gate** (2026-07-13, from "what are those mailerlite dashboard email fixes???"):
+every proposed goal item names its source evidence — the file, commit, message, or command
+from THIS session that produced it — phrased in words Simon would recognize from the session.
+Can't cite the evidence → don't propose it.
 
 ## 2. Lessons — `docs/lessons.md` → read by future agents
 Something broke or a mistake happened. The anti-recurrence trio is all-or-nothing:
@@ -70,7 +74,10 @@ Check for an existing memory to update before creating; propose deletions for me
 A genuine, specific lived moment from the session, first person, craft-don't-transcribe
 (extract and rewrite into one publishable sentence naming what Simon was doing + what he
 realized — never a verbatim quote, never invented feelings). **Never fabricate; no real
-moment → no snippet.** The research skill ranks snippets by topic overlap and reuses them in drafts.
+moment → no snippet.** Quality gate (2026-07-13, from "snippet kinda sucks lol"): the moment
+must pass the same recall test as brain facts — Simon reads it and recognizes the exact moment
+without explanation. Generic ("I realized reliability matters") → drop; a skipped snippet beats
+a weak one. The research skill ranks snippets by topic overlap and reuses them in drafts.
 
 ## 9. Content seed — `pipeline.sessions` (slim row) → read by weekly-review every Friday
 One row per session: `core_insight` (1 sentence tied to State Beats Intelligence),

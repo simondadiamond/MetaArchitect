@@ -1,6 +1,6 @@
 ---
 name: weekly-review
-description: Use when Simon says "weekly review", "/weekly-review", "how did this week go", asks for a Friday or end-of-week wrap-up, or wants the week's operating numbers before planning next week.
+description: Use when Simon says "weekly review", "/weekly-review", "how did this week go", asks for a Friday or end-of-week wrap-up, or wants the week's operating numbers before planning next week. Do NOT trigger for the forward-looking "what should I do this week" Monday brief (that's weekly-brief).
 ---
 
 # /weekly-review

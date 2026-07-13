@@ -1,6 +1,6 @@
 ---
 name: repurpose
-description: Use when Simon says "repurpose [something]", "/repurpose", "turn this teardown/blog post into LinkedIn posts", or asks for "derivatives" of existing long-form content (a teardown, a blog post, a file, pasted text). Do NOT trigger for writing new long-form content (write-post), editing an existing draft (editorial), or generating a teardown (teardown-generate).
+description: Use when Simon says "repurpose [something]", "/repurpose", "turn this teardown/blog post into LinkedIn posts", asks for a "carousel" or "slides" from existing content (Carousel Mode), or asks for "derivatives" of existing long-form content (a teardown, a blog post, a file, pasted text). Do NOT trigger for writing new long-form content (write-post), editing an existing draft (editorial), or generating a teardown (teardown-generate).
 ---
 
 # /repurpose <platform> <source>

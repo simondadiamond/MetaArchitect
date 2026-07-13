@@ -26,6 +26,10 @@ Your job is to push Simon toward his goals, keep him on the roadmap, and make su
 
 5. **Session close.** When Simon says "end session", "wrap up", or equivalent: run the `session-close` skill — the 10-lane harvest ritual (goals, lessons, friction, scripts, handoff, brain, memory, snippet, content seed, hygiene). It is the canonical close; `/pattern` is its content-lanes-only mode. Sessions that end without it are caught by the daily session sweep (same lanes, CC Approvals tab).
 
+6. **Answer the question asked.** A yes/no question gets yes or no as the first word, then detail. Any content fix handed to Simon includes literal discriminator strings ("the correct version contains X; the wrong one contains Y") — he once deleted the correct post twice for lack of them (lessons.md 2026-07-07). Live LinkedIn shares and on-device UI behavior are reported as "pending Simon's live check", never "verified" — agents have no read access to the ground truth.
+
+7. **Critique contract.** When Simon asks to stress-test, audit, or sanity-check a plan or strategy, repo and brand docs are claims under test, not ground truth. Produce at least 3 specific, attackable weaknesses with evidence, and form your verdict before restating his framing. Echoing the plan back approvingly is a failure mode he has called out (transcript 2026-07-02).
+
 **STATE Framework:** All pipeline work operates at medium risk minimum (S + T + E). Any command that writes to Airtable or calls an external API must have a state object, log every LLM/API call, and validate all output before writing. See `brand/state-framework.md` for the full spec.
 
 **Current phase:** Query the Supabase `goals` table (`simonparis.ca/admin/goals`) to find out. Don't assume.
@@ -78,7 +82,10 @@ curl -s -X POST http://100.105.85.5:3737/api/stories \
 ```
 
 - `target_repo` (required): `command-center` | `simonparis-website` — the only registered targets (`worker/targets.ts` in the command-center repo)
-- `agent_target` (optional): `sitemaster` for website UI work
+- `agent_target` (**always set it — pick deterministically, never leave it unset**):
+  - **UI / front-end work → `sitemaster`** — anything touching pages, components, styling, layout, copy, or the funnel. When you pick `sitemaster`, the description MUST spell out brand acceptance criteria: default/hover/selected/active states, `#E04500` actions, `#C97A1A` links (never blue), zero border-radius, dark mode.
+  - **Everything else → `coo`.**
+  - A forgotten `agent_target` is how front-end stories ship off-brand — this is not optional.
 - `goal_id` (optional): links a `goals` row — the goal flips `in_progress` on start, `done` on merge
 - `auto_merge` (optional): omit to use the global default from `pipeline_settings`
 - If the API is down: `systemctl --user start command-center`. Don't insert into `stories` directly — the API applies validation and defaults.
@@ -130,7 +137,11 @@ Full details: `projects/command-center/README.md` ("Story worker") and `docs/sup
 - All pushes: `git push origin <branch>` will now use gh token automatically
 - If auth ever breaks: `echo "ghp_TOKEN" | gh auth login --with-token` — do NOT paste tokens in chat
 
-**Worktrees are mandatory for code work in shared checkouts** (Simon's rule, 2026-07-04): any session doing code changes in `projects/command-center/` (or any repo other sessions may touch) works in a `git worktree`, not the primary checkout. The primary checkout stays on `main` and nobody runs `git checkout <branch>` in it — concurrent sessions have collided here (lessons.md 2026-07-04). The live service on :3737 runs from `~/command-center`, which is a SYMLINK to the primary checkout — the service serves whatever branch/state that checkout holds (another reason it must stay on `main`). Verify unpushed work with a local `next start` on another port; the story-worker (and, once PR #14 lands, a deploy-sync timer) handles pull/build/restart after merges.
+**Worktrees are mandatory for code work in shared checkouts** (Simon's rule, 2026-07-04): any session doing code changes in `projects/command-center/` (or any repo other sessions may touch) works in a `git worktree`, not the primary checkout. The primary checkout stays on `main` and nobody runs `git checkout <branch>` in it — concurrent sessions have collided here (lessons.md 2026-07-04). The live service on :3737 runs from `~/command-center`, which is a SYMLINK to the primary checkout — the service serves whatever branch/state that checkout holds (another reason it must stay on `main`). Verify unpushed work with a local `next start` on another port; the story-worker and the `deploy-sync` timer (active, fires every ~3 min) handle pull/build/restart after merges — never restart the live service to test unpushed changes.
+
+**Mechanical guards are live** (2026-07-13, goal `3df3143e`): PreToolUse hooks in `~/.claude/settings.json` deny broad `pkill -f`, force-push, `--no-verify`, remote branch deletion, bare `gh pr merge`, and git/file mutations in the primary command-center and simonparis-website checkouts. Scripts + red-green harness: `scripts/hooks/` (run `test-hooks.sh` after editing them; skill-lint check 9 re-verifies every Friday). If a hook blocks a legitimately needed command, don't work around it — surface it to Simon.
+
+**Secrets**: never paste credentials into chat (they land in plaintext transcripts — a `secrets-guard` hook now watches for this). When one is needed, have Simon write it to a file and tell you the path. Write secrets to the exact filename he names — never substitute a convention like `.env.local` — and never echo values into output.
 
 **simonparis.ca website** lives at `projects/simonparis-website/` (own git repo, gitignored from root).
 - GitHub: `github.com/simondadiamond/simonparis-website` (private)

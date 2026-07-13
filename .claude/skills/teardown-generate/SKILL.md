@@ -1,6 +1,6 @@
 ---
 name: teardown-generate
-description: Use when Simon selects a candidate and says "teardown [name]", "generate the teardown", or asks to turn a pipeline.teardown_candidates row into a full teardown. Do NOT trigger for finding/scoring new candidates (teardown-research) or for making derivatives of an already-generated teardown (repurpose).
+description: Use when Simon selects a candidate and says "teardown [name]", "generate the teardown", or asks to turn a pipeline.teardown_candidates row into a full teardown. Router rule: if [name] is NOT already in pipeline.teardown_candidates, that's teardown-research first — check before generating. Do NOT trigger for finding/scoring new candidates (teardown-research) or for making derivatives of an already-generated teardown (repurpose).
 ---
 
 # /teardown-generate

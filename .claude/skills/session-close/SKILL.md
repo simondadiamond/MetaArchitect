@@ -1,6 +1,6 @@
 ---
 name: session-close
-description: Use when Simon says "end session", "wrap up", "/end", "we're done", or equivalent — also at the natural end of any session that produced real output (propose it). /pattern and /log route here too (content-lanes-only mode). Do NOT trigger mid-session for a single task completing.
+description: Use when Simon says "end session", "wrap up", "/end", "we're done", "that's everything", "call it a night", "good work today", or equivalent — also at the natural end of any session that produced real output (propose it). /pattern and /log route here too (content-lanes-only mode). Do NOT trigger mid-session for a single task completing.
 ---
 
 # /session-close — the harvest ritual

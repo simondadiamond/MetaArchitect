@@ -1,6 +1,6 @@
 ---
 name: engage-replies
-description: Use when Simon says "engage queue", "/engage", "what should I reply to", "draft my comments", or wants his daily ICP superstar-list commenting pass done. Do NOT trigger for writing posts (repurpose/write-post) or for adding/removing superstar targets (that's a data edit).
+description: Use when Simon says "engage queue", "/engage", "what should I reply to", "draft my comments", "anything worth commenting on today?", "morning LinkedIn pass", or wants his daily ICP superstar-list commenting pass done. Do NOT trigger for writing posts (repurpose/write-post) or for adding/removing superstar targets (that's a data edit).
 ---
 
 # /engage-replies — gated consumer of the engage queue
