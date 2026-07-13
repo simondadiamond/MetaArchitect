@@ -2,7 +2,13 @@
 # handoff-lint.sh — every handoff in docs/handoffs/ must carry a status header.
 # Rationale: handoffs without state get re-executed (or silently rot) once nobody
 # remembers which ones landed. Template: docs/handoffs/TEMPLATE.md. Valid values:
-#   status: queued | in-progress | done | abandoned
+#   status: queued | in_progress | done | abandoned
+# `in-progress` and `blocked` are accepted too, and a trailing parenthetical is fine
+# ("status: done (feeds the design brainstorm)"). The estate — and the goals table —
+# says in_progress with an underscore; the first cut of this lint demanded a hyphen and
+# failed two perfectly good handoffs written by another session the same day. A gate that
+# invents its own vocabulary manufactures violations, and a gate that cries wolf gets
+# turned off. Match how people actually write, and only fail what is genuinely missing.
 # Exit 0 = clean; exit 1 = offenders listed. Born 2026-07-13 (post-Fable gate build,
 # goal 3df3143e). Run it from anywhere; weekly-review is a natural home.
 #
@@ -17,10 +23,10 @@ lint_dir() {
     [ -e "$f" ] || continue
     [ "$(basename "$f")" = "TEMPLATE.md" ] && continue
     found=1
-    if grep -qE '^status: (queued|in-progress|done|abandoned)[[:space:]]*$' "$f"; then
-      echo "PASS $(basename "$f") ($(grep -m1 -oE '^status: [a-z-]+' "$f" | cut -d' ' -f2))"
+    if grep -qiE '^status:[[:space:]]*(queued|in[-_]progress|done|abandoned|blocked)\b' "$f"; then
+      echo "PASS $(basename "$f") ($(grep -m1 -oiE '^status:[[:space:]]*[a-z_-]+' "$f" | awk '{print $2}'))"
     else
-      echo "FAIL $(basename "$f") — no valid 'status:' line (need: status: queued|in-progress|done|abandoned)"
+      echo "FAIL $(basename "$f") — no valid 'status:' line (need: status: queued|in_progress|done|blocked|abandoned)"
       bad=$((bad+1))
     fi
   done
@@ -52,6 +58,20 @@ self_test() {
     echo "PASS self-test: valid status accepted (TEMPLATE.md exempt)"; tpass=$((tpass+1))
   else
     echo "FAIL self-test: valid status rejected"; tfail=$((tfail+1))
+  fi
+  # GREEN: the forms real sessions actually write — underscore (the goals-table spelling)
+  # and a trailing parenthetical. The first cut of this lint failed both. Regression guard.
+  printf '# Handoff — underscore\n\nstatus: in_progress\n' > "$dir/good.md"
+  if lint_dir "$dir" >/dev/null 2>&1; then
+    echo "PASS self-test: in_progress (underscore) accepted"; tpass=$((tpass+1))
+  else
+    echo "FAIL self-test: in_progress (underscore) rejected — the estate spells it this way"; tfail=$((tfail+1))
+  fi
+  printf '# Handoff — annotated\n\nstatus: done (feeds the design brainstorm)\n' > "$dir/good.md"
+  if lint_dir "$dir" >/dev/null 2>&1; then
+    echo "PASS self-test: trailing parenthetical accepted"; tpass=$((tpass+1))
+  else
+    echo "FAIL self-test: trailing parenthetical rejected"; tfail=$((tfail+1))
   fi
   rm -rf "$dir"
   echo

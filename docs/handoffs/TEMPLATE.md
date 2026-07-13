@@ -6,7 +6,8 @@ picked_up_by: [session/agent + date once someone starts, else "nobody yet"]
 updated: [YYYY-MM-DD — bump whenever status changes]
 
 > The four lines above are the REQUIRED header block — `scripts/handoff-lint.sh` fails any
-> handoff without a valid `status:` line (queued | in-progress | done | abandoned).
+> handoff without a valid `status:` line (queued | in_progress | done | blocked | abandoned —
+> the same vocabulary as the goals table; a trailing note like "done (superseded)" is fine).
 > Update `status` + `updated` at pickup and at completion; a stale `queued` on finished work
 > sends the next session off to redo it.
 
