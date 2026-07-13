@@ -1,8 +1,8 @@
 # Handoff — Command Center blog creation: make it a masterpiece
 
-status: queued
+status: in_progress
 goal_id: none
-picked_up_by: nobody yet
+picked_up_by: blog-writer session 2026-07-13
 updated: 2026-07-13
 
 **From session:** 2026-07-11/12 (COO worktree `ade/coo-f25d292c`)
