@@ -28,7 +28,7 @@ const state = {
 };
 ```
 
-Stages: `load_inputs → compose_brief → execute_brief → persist`. Log via `logEntry` from `projects/Content-Engine/tools/supabase.mjs` (run node snippets from `projects/Content-Engine/` — deps + `.env` resolve there), `step_name: 'blog_draft'`, `stage` matching whichever phase failed or the relevant success point:
+Stages: `load_inputs → compose_brief → execute_brief`. Log via `logEntry` from `projects/Content-Engine/tools/supabase.mjs` (run node snippets from `projects/Content-Engine/` — deps + `.env` resolve there), `step_name: 'blog_draft'`, `stage` matching whichever phase failed or the relevant success point:
 
 ```javascript
 const { logEntry } = await import('./tools/supabase.mjs');
@@ -38,8 +38,8 @@ await logEntry({ workflow_id: state.workflowId, entity_id: state.entityId, step_
 ```
 
 **Log `blog_draft` TWICE per successful run** — once for the brief, once for the draft:
-- After Phase 1: `output_summary: 'brief_composed'`
-- After Phase 2: `output_summary: 'draft_written'`
+- After Phase 2: `output_summary: 'brief_composed'`
+- After Phase 3: `output_summary: 'draft_written'`
 
 ---
 
@@ -57,7 +57,7 @@ if (!idea || idea.stage !== 'drafting') throw new Error(`row not at drafting (fo
 
 Any other stage (`awaiting_outline_approval`, `failed_drafting`, anything) → stop, touch nothing, report the mismatch. Exclusivity is the dispatcher layer's job (single scheduled dispatcher, one row per fire, overlapping fires skipped) — and a double-run is safe anyway because artifacts are append-only.
 
-**Resume check (Tolerant):** after verifying, `latestArtifact(ideaId, 'writing_brief')` — if a brief exists from a prior crashed run, compare its `created_at` against `latestArtifact(ideaId, 'outline').created_at`. If the brief is newer than (or same-run as) the outline, the outline hasn't changed since — reuse the existing brief and skip straight to Phase 2 (say so in 2-3 lines in the report). If the outline is newer than the brief, the brief is stale — recompose it (Phase 1) before drafting.
+**Resume check (Tolerant):** after verifying, `latestArtifact(ideaId, 'writing_brief')` — if a brief exists from a prior crashed run, compare its `created_at` against `latestArtifact(ideaId, 'outline').created_at`. If the brief is newer than (or same-run as) the outline, the outline hasn't changed since — reuse the existing brief and skip straight to Phase 3 (Execute) — say so in 2-3 lines in the report. A reused brief still gets a log entry for THIS run (`step_name: 'blog_draft'`, `output_summary: 'brief_reused (artifact <id>)'`) so Traceability holds. If the outline is newer than the brief, the brief is stale — recompose it (Phase 2) before drafting.
 
 **Exit — the success transition IS the atomic claim:** after persisting the `draft` artifact, `claimStage(ideaId, 'drafting', 'editing')`. If it returns `false`, another run already advanced the row — report that this run's artifact is a redundant extra version and stop; do NOT `setStage`.
 
@@ -100,7 +100,7 @@ await saveArtifact({ ideaId: state.entityId, kind: 'writing_brief', content: bri
 
 Log `blog_draft` with `output_summary: 'brief_composed'`.
 
-A pipeline run that ends without a `writing_brief` artifact is a failed run — do not proceed to Phase 2 without persisting it first.
+A pipeline run that ends without a `writing_brief` artifact is a failed run — do not proceed to Phase 3 without persisting it first.
 
 ---
 
