@@ -57,7 +57,10 @@ Missing `draft` artifact → `setStage(ideaId, 'failed_editorial')` with a clear
 **Exit — the success transition IS the atomic claim:** persist TWO artifacts first — the revised full text as a new `draft` version, and the Pass 2 score block + Pass 3 repairs summary as `editorial_report` — then `claimStage(ideaId, 'editing', 'optimizing')`:
 
 ```javascript
-await saveArtifact({ ideaId: state.entityId, kind: 'draft', content: revisedContent, meta: { workflowId: state.workflowId } });
+// Carry the input draft's meta forward (same convention as blog-factcheck's repair path):
+// downstream consumers read the NEWEST draft version's meta, so producer fields — e.g.
+// teardown-generate's { source, teardown_draft_id, blog_slug } — must survive re-versioning.
+await saveArtifact({ ideaId: state.entityId, kind: 'draft', content: revisedContent, meta: { ...draft.meta, workflowId: state.workflowId } });
 await saveArtifact({ ideaId: state.entityId, kind: 'editorial_report', content: scoreBlockAndRepairsSummary, meta: { workflowId: state.workflowId } });
 const claimed = await claimStage(state.entityId, 'editing', 'optimizing');
 ```

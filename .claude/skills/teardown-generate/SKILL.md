@@ -286,6 +286,11 @@ if existing:
         raise SystemExit(f"blog_ideas row {ideaId} is at '{existing[0]['stage']}' — past this "
                          f"skill's stages. Ask Simon to confirm the regenerate before proceeding.")
     print(f"Reusing blog_ideas row {ideaId} (stage: {existing[0]['stage']})")
+    if existing[0]['stage'] == 'candidate':
+        # This invocation IS Simon's candidate → researching transition — reflect it on the
+        # board, matching the create branch below (which inserts at 'researching').
+        supabase_sql(f"UPDATE public.blog_ideas SET stage = 'researching' WHERE id = '{ideaId}'")
+        print(f"blog_ideas row {ideaId}: candidate → researching")
 else:
     result = supabase_sql(f"""
         INSERT INTO public.blog_ideas (title_working, pillar, post_type, stage, notes, source_links)
@@ -318,7 +323,8 @@ stranding or superseding downstream artifacts nobody asked to redo. This skill i
 so ask: tell Simon the row's current stage and ask him to confirm the regenerate explicitly —
 confirming means he accepts resetting the row to `'drafting'` and superseding all downstream
 artifacts (the append-only artifact model keeps the old versions readable, but the tail re-runs).
-Never silently revert a stage.
+On Simon's explicit confirmation, `setStage(ideaId, 'drafting')` first, then re-run this skill —
+the row is then inside `EARLY_STAGES` and the guard passes. Never silently revert a stage.
 
 **Stage semantics:** this skill covers the `blog_ideas` row's `'researching'` stage (Step 1) and
 `'drafting'` stage (Steps 2–4) in a single run. The `candidate → researching` start is still

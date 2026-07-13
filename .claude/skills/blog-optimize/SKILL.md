@@ -104,7 +104,7 @@ const { data: linkMap } = await pub.from('blog_posts')
 
 For each `[anchor text] → /blog/<slug> — why here` line in the outline's INTERNAL LINK PLAN: keep it only if `<slug>` is still in `linkMap`. If a planned slug's context vanished (post unpublished, slug changed), drop that link — do not invent a replacement — and record it in `meta.skipped_optimizations` (e.g. `"dropped link to /blog/old-slug — no longer published"`).
 
-**Teardown rows:** there is no outline link plan — run the same `linkMap` query, but verify the internal links already present in the **draft body** against it instead (per the Teardown rows subsection): a draft link to a slug not in `linkMap` is dropped and recorded in `meta.skipped_optimizations` the same way.
+**Teardown rows:** there is no outline link plan — run the same `linkMap` query, but verify the internal links already present in the **draft body** against it instead (per the Teardown rows subsection): a draft link to a slug not in `linkMap` is dropped and recorded in `meta.skipped_optimizations` the same way. This drop rule applies **only to `/blog/<slug>` post links** — CTA links (`/score`, `/work-with-me`) and the `/blog` index link are not `linkMap` entries and must never be dropped (the `/score` CTA is gate-required; removing it would fail the row downstream).
 
 ---
 
