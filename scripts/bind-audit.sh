@@ -59,6 +59,22 @@ notify() {  # $1 = message
     -d "$1" >/dev/null && echo "(ntfy sent)" || echo "(ntfy send failed)"
 }
 
+# The story-worker's verify stage boots a dev server on VERIFY_PORT for the length of one
+# verify run, so that listener is legitimate-but-transient and must not be allowlisted
+# outright — a squatter on the same port is exactly what port-guard exists to catch
+# (lessons.md 2026-07-11). Same test the worker uses: it is ours only if the owning process
+# lives in a story worktree. Anything else on that port is still drift.
+VERIFY_PORT=4123
+STORY_WORKTREES="${STORY_WORKTREES:-$HOME/.story-worktrees}"
+transient_verify() {  # $1 = port. 0 = a real in-flight verify owns it.
+  [ "$1" = "$VERIFY_PORT" ] || return 1
+  local pid cwd
+  pid=$(ss -tlnpH 2>/dev/null | grep ":$1 " | grep -oE 'pid=[0-9]+' | head -1 | cut -d= -f2)
+  [ -n "$pid" ] || return 1
+  cwd=$(readlink "/proc/$pid/cwd" 2>/dev/null) || return 1
+  case "$cwd" in "$STORY_WORKTREES"/*) return 0 ;; *) return 1 ;; esac
+}
+
 audit() {  # $1 = file with ss output; NO_NOTIFY=1 suppresses ntfy (self-test)
   local bad="" line addr port
   [ -f "$ALLOWLIST" ] || { echo "FAIL: allowlist $ALLOWLIST not found"; return 1; }
@@ -66,6 +82,8 @@ audit() {  # $1 = file with ss output; NO_NOTIFY=1 suppresses ntfy (self-test)
     [ -z "$addr" ] && continue
     if allowed "$addr" "$port"; then
       echo "PASS $addr:$port"
+    elif [ -z "${BIND_AUDIT_FIXTURE:-}" ] && transient_verify "$port"; then
+      echo "PASS $addr:$port — story verify in flight (owner cwd is a story worktree)"
     else
       echo "FAIL $addr:$port — not in bind-allowlist.txt"
       bad="$bad $addr:$port"
@@ -81,6 +99,17 @@ audit() {  # $1 = file with ss output; NO_NOTIFY=1 suppresses ntfy (self-test)
   fi
   echo "bind-audit: clean (all non-loopback listeners allowlisted)"
   return 0
+}
+
+# A squatter on the verify port that is NOT a story worktree must still FAIL — prove it.
+verify_port_squatter_test() {
+  local dir; dir=$(mktemp -d)
+  printf 'State Recv-Q Send-Q Local:Port Peer\nLISTEN 0 511 *:%s *:*\n' "$VERIFY_PORT" > "$dir/squat.txt"
+  if BIND_AUDIT_FIXTURE=1 NO_NOTIFY=1 audit "$dir/squat.txt" >/dev/null 2>&1; then
+    echo "FAIL self-test: verify-port squatter accepted"; rm -rf "$dir"; return 1
+  fi
+  echo "PASS self-test: verify-port squatter still flagged (transient exception is owner-checked)"
+  rm -rf "$dir"; return 0
 }
 
 self_test() {
@@ -124,6 +153,8 @@ EOF
     echo "warn self-test: ss unavailable — live check skipped"
   fi
   rm -rf "$dir"
+  # RED: the transient-verify exception must be owner-checked, not a blanket port allow
+  if verify_port_squatter_test; then tpass=$((tpass+1)); else tfail=$((tfail+1)); fi
   echo
   echo "bind-audit self-test: $tpass pass, $tfail fail"
   [ "$tfail" -eq 0 ]
