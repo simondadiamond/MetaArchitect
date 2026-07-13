@@ -1,0 +1,64 @@
+# Diagnostic de préparation IA — One-Pager (FR)
+
+> Actif de vente destiné aux clients. Envoyé aux prospects après l'appel de qualification de 15 minutes, ou en deuxième contact. Prix selon `../pricing-pinned.md`. {BOOKING_LINK} = URL de réservation de Simon — à remplacer avant l'envoi. Version FR autonome (pas une traduction) : l'angle principal est la Loi 25.
+
+---
+
+## Diagnostic de préparation IA
+
+**Votre système d'IA générative est en production. Pouvez-vous expliquer ses décisions? La Loi 25 dit que vous devez.**
+
+Je suis Simon Paris. Je conçois des systèmes d'IA qui ne cassent pas — et en deux à trois jours, je vous dis exactement où le vôtre va casser.
+
+### Ce que c'est
+
+Une évaluation à portée fixe et à prix fixe d'**un flux de travail LLM en production**, notée selon le cadre STATE — les cinq propriétés qui séparent un système de production d'un prototype convaincant : état **S**tructuré, exécution **T**raçable, décisions **A**uditables, **T**olérance aux pannes, frontières **E**xplicites.
+
+Pas une présentation sur la stratégie IA. Un ingénieur lit vos traces, vos schémas et votre historique d'incidents, exécute des tests en direct avec votre équipe en partage d'écran, et note ce qui existe réellement.
+
+### Ce que vous en retirez
+
+- **Une note de constats de cinq pages** : votre score STATE (0–15, avec la preuve derrière chaque chiffre), les deux ou trois modes de défaillance qui comptent, et trois premiers gestes concrets — assez précis pour que vos ingénieurs en fassent des tickets.
+- **Une restitution d'une heure**, en français ou en anglais. Tous les livrables disponibles en français — vos obligations documentaires sous la Loi 25 ne se remplissent pas en anglais.
+- **Une réponse défendable** quand on vous demandera comment vous évaluez vos systèmes d'IA. La Loi 25 exige déjà que vous puissiez divulguer, sur demande, les renseignements personnels utilisés dans une décision fondée sur un traitement automatisé — et les principaux facteurs de cette décision. Si votre système ne peut pas répondre, c'est un constat, pas un détail. Pour les institutions financières fédérales, la ligne directrice E-23 du BSIF (en vigueur mai 2027) ajoute la même exigence sous un autre nom : inventaire de modèles et histoire de validation.
+
+### Ce que ça coûte
+
+**4 800 $ CAD** (3 500 $ US). Fixe. Aucune vente additionnelle en cours de mandat.
+
+**Tarif fondateur : 3 500 $ CAD** (2 500 $ US) pour les cinq premiers clients — pas un rabais, un échange : un court débreffage enregistré après la livraison, un témoignage si vous êtes satisfait, et deux mises en relation si vous pensez que quelqu'un d'autre en a besoin. Après cinq livraisons, le tarif fondateur ferme. Le décompte est réel et vit dans une base de données que je ne modifie pas à la main.
+
+**La garantie** : si la note de constats ne vaut pas son prix, dites-le dans les 14 jours suivant la restitution — remboursement complet, et vous gardez tous les livrables. Vous risquez une case d'agenda, pas une ligne budgétaire.
+
+### Pour qui
+
+Un flux d'IA générative qui tourne **aujourd'hui** devant de vrais utilisateurs ou de vraies équipes, qui touche des renseignements personnels, des données financières ou des données de santé, avec un humain nommément responsable quand il déraille. Si ce n'est pas encore vous, l'évaluation STATE gratuite à **simonparis.ca/score** est le point de départ honnête.
+
+### Comment ça commence
+
+Un appel de qualification de 15 minutes : {BOOKING_LINK}. Deux issues — soit c'est pertinent et je vous dis exactement la suite, soit ça ne l'est pas et je vous dis où chercher à la place.
+
+---
+
+## FAQ
+
+**Peut-on vraiment évaluer quelque chose de sérieux en deux ou trois jours?**
+Un flux de travail, oui. Le diagnostic utilise la même grille de notation que mon audit de deux semaines, sur une base de preuves réduite : un appel approfondi avec le responsable du flux et un ingénieur, plus les artefacts que vous pouvez partager en 48 heures. Quand un score ne peut pas être confirmé en direct, la note le marque *provisoire* et précise ce qui le confirmerait. Vous recevez une carte honnête, pas une fausse précision.
+
+**Qu'est-ce que la Loi 25 exige concrètement de notre système d'IA?**
+Si une décision est fondée exclusivement sur un traitement automatisé de renseignements personnels, vous devez en informer la personne, et sur demande : divulguer les renseignements utilisés, les raisons et les principaux facteurs de la décision, et offrir la possibilité de faire valoir ses observations auprès d'un humain. Sanctions administratives jusqu'à 10 M$ ou 2 % du chiffre d'affaires mondial. La question du diagnostic est simple : si la Commission d'accès à l'information vous écrivait demain, en combien de temps pourriez-vous répondre?
+
+**On a déjà LangSmith / Langfuse / OTel. Que trouveriez-vous de plus?**
+Un outil installé et une propriété tenue, ce sont deux affirmations différentes. Mon test : je choisis une exécution de la semaine dernière — votre ingénieur peut-il produire la trace complète en dix minutes? Quelqu'un peut-il dire quelle version du modèle et du prompt a produit une sortie précise rendue au client? Dans la plupart des équipes, la réponse est « en principe ». Le diagnostic mesure la distance entre « en principe » et « maintenant ».
+
+**C'est un appel de vente déguisé pour un mandat plus gros?**
+Le diagnostic est tarifé pour tenir debout tout seul — c'est à ça que sert la garantie. Si vos scores justifient un audit plus profond, la note le montrera en preuves, et je le dirai une fois, à la restitution. Sinon, je dirai ça aussi. Je ne vends jamais de mandat récurrent à froid.
+
+**De quels accès avez-vous besoin?**
+À ce palier : un appel de 60 à 90 minutes avec les gens qui ont bâti et qui opèrent le flux, des partages d'écran de vos traces et schémas, et ce que vous pouvez exporter — un post-mortem, une trace, un schéma d'état. Aucun accès au code source requis. Tout ce qui est partagé est détruit après le mandat; je signe votre entente de confidentialité sans discussion.
+
+**Qui fait le travail?**
+Moi. Pas d'associés, pas de sous-traitance. C'est écrit dans l'énoncé de travail.
+
+**Et après la restitution?**
+Vous corrigez avec votre propre équipe — les premiers gestes de la note sont écrits pour ça. Si vous voulez la version profonde — tous les flux, entrevues d'ingénieurs, revue de code, feuille de route de remédiation sur 90 jours — c'est l'Audit IA de production, et la note vous aura déjà montré s'il se justifie.
