@@ -99,9 +99,9 @@ hits=$(grep -rn $EXCLUDE -E 'POSTIZ_API_(KEY|URL)|/api/public/v1' scripts .claud
 #     if the skills CALL them. A skill that quietly reverts to hand-rolled greps has
 #     un-mechanized itself — that regression is invisible without this check.
 declare -A GATE_CONSUMERS=(
-  ["scripts/linkedin-gate.sh"]=".claude/skills/repurpose/SKILL.md .claude/skills/write-post/SKILL.md .claude/skills/editorial/SKILL.md .claude/skills/linkedin-publish/SKILL.md .claude/skills/engage-replies/SKILL.md"
+  ["scripts/linkedin-gate.sh"]=".claude/skills/repurpose/SKILL.md .claude/skills/editorial/SKILL.md .claude/skills/linkedin-publish/SKILL.md .claude/skills/engage-replies/SKILL.md .claude/skills/blog-optimize/SKILL.md .claude/skills/blog-factcheck/SKILL.md .claude/skills/blog-insert/SKILL.md"
   ["projects/Content-Engine/tools/teardown-gate.py"]=".claude/skills/teardown-generate/SKILL.md"
-  ["projects/Content-Engine/tools/insert-blog-post.mjs"]=".claude/skills/write-post/SKILL.md"
+  ["projects/Content-Engine/tools/insert-blog-post.mjs"]=".claude/skills/blog-insert/SKILL.md"
   ["scripts/validate-brief.mjs"]=".claude/skills/weekly-brief/SKILL.md"
 )
 for gate in "${!GATE_CONSUMERS[@]}"; do

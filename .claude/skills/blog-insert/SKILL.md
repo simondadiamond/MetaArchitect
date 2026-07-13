@@ -128,7 +128,7 @@ Every metadata field here is `blog-optimize`'s own persisted `meta` verbatim (`o
 
 ### PHASE 3 — Generate and Gate the LinkedIn Extract
 
-Read `.claude/skills/repurpose/references/linkedin-playbook.md` fresh this run for anatomy, hook patterns, and the anti-slop checklist — do not restate it here. This mirrors `write-post` Step 6's `LINKEDIN_EXTRACT` block exactly; that pointer covers the format.
+This is where the LinkedIn extract is generated — read `.claude/skills/repurpose/references/linkedin-playbook.md` fresh this run for anatomy, hook patterns, and the anti-slop checklist; do not restate it here.
 
 **Claim provenance for this stage specifically:** every claim the extract makes must trace to a sentence already present in `optimizedDraft.content` — the text `blog-factcheck` just independently re-verified. **Introduce nothing new here.** An extract that sharpens or adds a claim not already sitting in the factcheck-verified body reopens exactly the hole `blog-factcheck` exists to close, one stage later where nothing will catch it.
 
@@ -197,8 +197,29 @@ await logEntry({ workflow_id: state.workflowId, entity_id: post.id, step_name: '
   model_version: '<the id of the model that actually ran>', status: 'success' });
 ```
 
-**Report to Simon:** use `write-post` SKILL.md **STEP 8**'s report block verbatim as the format — title, pillar, CTA, word/read-time, slug, preview URL, Supabase dashboard link, the `UPDATE blog_posts SET status='published', published_at=NOW() WHERE slug='<slug>';` publish SQL (this post's slug), confirmation the LinkedIn extract sits in `linkedin_extract` ready to copy, and a `Notes:` line for anything needing attention (slug adjusted, `skipped_optimizations` inherited from `optimized_draft.meta` worth resurfacing, or the resume-check/duplicate-row situations above). Read that block fresh each run rather than duplicating it here.
+**Report to Simon** in this exact format — the `Notes:` line is for anything needing attention (slug adjusted, `skipped_optimizations` inherited from `optimized_draft.meta` worth resurfacing, or the resume-check/duplicate-row situations above):
 
-<!-- task-12 note: when write-post is rewritten as orchestrator, move Step 8's report block here and flip the pointer -->
+```
+✍️ Blog draft ready
+
+"[title]"
+
+Pillar: [label]
+CTA: [audit → /score | subscribe → email form]
+~[X] min read / [N] words
+
+Slug: /blog/[slug]
+Preview (after publish): https://simonparis.ca/blog/[slug]
+Supabase: https://supabase.com/dashboard/project/ashwrqkoijzvakdmfskj/editor
+
+TO PUBLISH:
+  UPDATE blog_posts
+  SET status = 'published', published_at = NOW()
+  WHERE slug = '[slug]';
+
+LinkedIn extract is in the linkedin_extract field — ready to copy.
+
+Notes: [anything needing Simon's attention]
+```
 
 **Rule: a pipeline insert run that ends without a verified `blog_posts` row is a failed run.** If the gate never passed or the post-insert verify fails, do not fabricate a report — set the row to `failed_inserting` and stop.

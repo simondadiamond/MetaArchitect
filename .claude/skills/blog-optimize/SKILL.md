@@ -94,13 +94,34 @@ For each `[anchor text] → /blog/<slug> — why here` line in the outline's INT
 
 Work items, in order:
 
-1. **Metadata block.** Read `.claude/skills/write-post/SKILL.md` Step 6 fresh this run for the field definitions (title/slug/excerpt/seo_title/seo_description/reading_time_minutes/tags rules + the GEO CITABILITY CHECK). Do not restate the spec here — read it fresh each run so drift in write-post is inherited, not duplicated.
+1. **Metadata block.** Populate these fields:
 
-   <!-- task-12 note: when write-post is rewritten as orchestrator, move the Step 6 field spec here and flip the pointer -->
+   ```
+   TITLE:            [final chosen title]
+   SLUG:             [kebab-case, ≤60 chars, no stop words]
+   EXCERPT:          [40–80 words. Hook + mechanism. A reason to read, not a summary.]
+   SEO_TITLE:        [title | The Meta Architect — ≤60 chars total]
+   SEO_DESCRIPTION:  [120–155 chars. Names the problem and the reader type. Specific.]
+   READING_TIME:     [ceil(word_count / 225)] minutes
+   PILLAR:           [enum value]
+   CTA_TYPE:         [audit | subscribe]
+   FEATURED:         false  [true only if Simon explicitly says so]
+   PRIMARY_KEYWORD:  [the 501-2,400 volume term — confirm it appears in title + first H2 + body]
+   TAGS:             [include both brand terms (state-beats-intelligence) and search terms (llmops, production-ai)]
+
+   GEO CITABILITY CHECK (required before insert):
+     [ ] BLUF: core insight in first 150 words
+     [ ] Every H2 opens with a 40-50 word standalone fact-block
+     [ ] H2/H3 headings reviewed — question-based where natural
+     [ ] Named failure mode defined (failure_taxonomy posts)
+     [ ] 5-7 distinct non-obvious insights confirmed
+     [ ] Entity density: specific tools/versions/error codes named throughout
+     [ ] Primary keyword in title, first H2, and naturally in body
+   ```
 
    The canonical `geo_citability` attestation keys (do not invent your own names) are defined in `projects/Content-Engine/tools/insert-blog-post.mjs`'s `GEO_BOXES` export — currently `bluf_first_150`, `fact_blocks_open_h2s`, `question_headings_reviewed`, `named_failure_mode_defined`, `distinct_insights_5_to_7`, `entity_density`, `primary_keyword_placed`. Read the export fresh each run in case it's changed. `named_failure_mode_defined` may be `"n/a"` only when `pillar !== 'failure_taxonomy'`. Every other box must be `true` — an unticked box is a reason to fix the post, not to ship the box unticked.
 
-   `pillar` comes from `idea.pillar` (the `getIdea` result from the Stage Contract). `cta_type` comes from the outline artifact's own `CTA TYPE:` line (the write-post Step 3 template block the outline quoted verbatim in `blog-outline` Phase 3) — parse it from there, do not re-derive it. `primary_keyword` comes from `outline.meta.primary_keyword`. **`title` and `slug` start from `outline.meta.title_options` and `outline.meta.working_slug`** — these are what Simon approved at the outline checkpoint, not yours to invent: pick the title from `title_options` (or keep the working slug's implied one) and refine either ONLY if the final draft content genuinely requires it, noting any such refinement in the final report to Simon (same transparency spirit as `meta.skipped_optimizations`). `canonical_url` is always `https://simonparis.ca/blog/<slug>` using the slug chosen in this step. `featured` is `false` unless Simon has explicitly said otherwise for this post.
+   `pillar` comes from `idea.pillar` (the `getIdea` result from the Stage Contract). `cta_type` comes from the outline artifact's own `CTA TYPE:` line (the outline template `blog-outline` Phase 3 builds) — parse it from there, do not re-derive it. `primary_keyword` comes from `outline.meta.primary_keyword`. **`title` and `slug` start from `outline.meta.title_options` and `outline.meta.working_slug`** — these are what Simon approved at the outline checkpoint, not yours to invent: pick the title from `title_options` (or keep the working slug's implied one) and refine either ONLY if the final draft content genuinely requires it, noting any such refinement in the final report to Simon (same transparency spirit as `meta.skipped_optimizations`). `canonical_url` is always `https://simonparis.ca/blog/<slug>` using the slug chosen in this step. `featured` is `false` unless Simon has explicitly said otherwise for this post.
 
 2. **AEO structural pass.** Confirm the BLUF sits in the first 150 words, every H2 opens with its 40-50 word fact-block, and headings are question-form where natural — per the SEO/GEO rules canonical at the top of `write-post` SKILL.md. **Fix only mechanically** (move a fact-block back to the top of its section, rephrase a heading into question form) — never rewrite the argument or add a claim that wasn't already in the draft.
 

@@ -66,7 +66,7 @@ Query with practitioner-angle questions:
 
 Capture the answers and tier every finding. From the findings + topic, also draft **3–5 candidate primary keywords** (specific technical terms, not generic) — Phases 1b and 1c ground these in real SERP and volume data before they reach the doc.
 
-**Evidence tiers — THE canonical definition. Downstream skills (write-post) point here; do not restate it elsewhere:**
+**Evidence tiers — THE canonical definition. Downstream skills (blog-draft) point here; do not restate it elsewhere:**
 
 - **T1** — named entity + specific metric + primary source. A T1 finding MUST carry (a) the **verbatim source sentence**, quoted exactly, and (b) the **primary source URL** — both fetched live this session. Scope qualifiers ("more than", "at Ramp itself", "since deployment") are part of the finding — record them verbatim. **Only T1-anchored numbers may appear as stats in downstream drafts.**
 - **T2** — named failure pattern + mechanism → usable as a primary claim (no numbers).
@@ -230,4 +230,4 @@ Log the run via `logEntry` with `step_name: 'blog_research'`, `stage` matching w
 
 ---
 
-If this research was triggered by `write-post`, hand the persisted artifact (its content, following the section headings above) back to that skill's Step 3 (Outline). If it was a standalone request, present the doc to Simon and wait for direction.
+If this research was triggered by `write-post`'s orchestrator, the Stage Contract above already closed this run out (`claimStage` to `'outlining'`) — the orchestrator continues on to the `blog-outline` skill itself. If this was a standalone request, present the doc to Simon and wait for direction.
