@@ -34,6 +34,11 @@ PROSE_COMMIT=$(printf "git commit -m 'docs: explain that %s -i on %s is denied'"
 TAMPER_CHAINED=$(printf 'cd /tmp && %s -i s/a/b/ %s' 'sed' 'brand/brand-summary.md')
 TAMPER_TEE=$(printf 'echo pwned | %s %s' 'tee' '.claude/agents/coo.md')
 TAMPER_APPEND=$(printf 'echo x >> %s' 'scripts/skill-lint.sh')
+# Fake credential literals for the secrets-guard Bash arm. Assembled from parts so that this
+# fixture file never itself contains a credential-shaped string — the exact mistake the guard
+# was built to catch (lessons.md 2026-07-13: the scrubber re-leaked what it scrubbed).
+SECRET_LITERAL_CMD=$(printf 'curl -H "Authorization: Bearer %s%s" https://api.supabase.com/v1/projects' 'sbp_' '0123456789abcdef0123456789abcdef')
+JWT_LITERAL_CMD=$(printf 'curl -H "apikey: %s.%s.%s" "$URL/rest/v1/posts"' 'eyJhbGciOiJIUzI1NiJ9' 'eyJyb2xlIjoic2VydmljZV9yb2xlIn0' 'sig')
 file_payload() { jq -n --arg f "$1" '{tool_name:"Edit",tool_input:{file_path:$f}}'; }
 prompt_payload() { jq -n --arg p "$1" '{prompt:$p}'; }
 
@@ -120,6 +125,14 @@ check "JWT detected"               secrets-guard.sh "$(prompt_payload 'key: eyJh
 check "password= detected"         secrets-guard.sh "$(prompt_payload 'the password=hunter2 for the box')"                  inject
 check "normal prompt silent"       secrets-guard.sh "$(prompt_payload 'fix the nav color on /blog please')"                 allow
 check "word password alone silent" secrets-guard.sh "$(prompt_payload 'add a password reset flow to the app')"              allow
+# Bash arm (lessons.md 2026-07-13): the AGENT must not put credential literals in a command —
+# the scrubber that cleaned the last leak re-leaked them exactly this way. RED:
+check "secret literal in bash denied" secrets-guard.sh "$(bash_payload "$SECRET_LITERAL_CMD")"                              deny
+check "jwt literal in bash denied"    secrets-guard.sh "$(bash_payload "$JWT_LITERAL_CMD")"                                 deny
+# GREEN — the sanctioned path: read from env/file, never interpolate the value itself
+check "env-var secret use allowed"    secrets-guard.sh "$(bash_payload 'curl -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" "$URL/rest/v1/posts"')" allow
+check "source .env allowed"           secrets-guard.sh "$(bash_payload 'set -a && source .env && set +a && node tools/postiz.mjs list')"      allow
+check "cat-file secret use allowed"   secrets-guard.sh "$(bash_payload 'curl -H "Authorization: Bearer $(cat ~/.supabase/access-token)" https://api.supabase.com/v1/projects')" allow
 
 echo "=== skill-lint-hook.sh ==="
 # Green path only here: a clean repo edit produces no output. (Red path is
