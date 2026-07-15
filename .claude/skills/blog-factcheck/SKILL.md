@@ -62,7 +62,7 @@ Any other stage (`optimizing`, `failed_fact_check`, anything) → stop, touch no
 
 **Exit — the success transition IS the atomic claim:** after persisting the `factcheck_report` artifact with an all-PASS verdict, `claimStage(ideaId, 'fact_check', 'awaiting_final_review')`. If it returns `false`, another run already advanced the row — report that this run's artifact is a redundant extra version and stop; do NOT `setStage`.
 
-**Failure:** re-check the row is still at `'fact_check'` (`getIdea`), then `setStage(ideaId, 'failed_fact_check')`; if it already moved, just report.
+**Failure:** re-check the row is still at `'fact_check'` (`getIdea`), then `setStage(ideaId, 'failed_fact_check', '<the error message>')` — the reason lands in `blog_ideas.last_error` and shows in Command Center's failure panel; if it already moved, just report.
 
 ---
 

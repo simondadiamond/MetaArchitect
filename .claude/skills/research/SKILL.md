@@ -224,7 +224,7 @@ Any other stage (`candidate`, `failed_researching`, anything) → stop, touch no
 
 **Exit — the success transition IS the atomic claim:** after persisting the artifact, `claimStage(ideaId, 'researching', 'outlining')`. If it returns `false`, another run already advanced the row — report that this run's artifact is a redundant extra version and stop; do NOT `setStage`. This skill handles **article** rows only (`post_type:'article'`); teardown research uses `teardown-generate`'s own path.
 
-**Failure:** re-check the row is still at `'researching'` (`getIdea`), then `setStage(ideaId, 'failed_researching')`; if it already moved, just report.
+**Failure:** re-check the row is still at `'researching'` (`getIdea`), then `setStage(ideaId, 'failed_researching', '<the error message>')` — the reason lands in `blog_ideas.last_error` and shows in Command Center's failure panel; if it already moved, just report.
 
 Log the run via `logEntry` with `step_name: 'blog_research'`, `stage` matching whichever phase failed or `'persist'` on success.
 

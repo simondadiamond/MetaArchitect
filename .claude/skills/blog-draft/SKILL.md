@@ -61,7 +61,7 @@ Any other stage (`awaiting_outline_approval`, `failed_drafting`, anything) → s
 
 **Exit — the success transition IS the atomic claim:** after persisting the `draft` artifact, `claimStage(ideaId, 'drafting', 'editing')`. If it returns `false`, another run already advanced the row — report that this run's artifact is a redundant extra version and stop; do NOT `setStage`.
 
-**Failure:** re-check the row is still at `'drafting'` (`getIdea`), then `setStage(ideaId, 'failed_drafting')`; if it already moved, just report.
+**Failure:** re-check the row is still at `'drafting'` (`getIdea`), then `setStage(ideaId, 'failed_drafting', '<the error message>')` — the reason lands in `blog_ideas.last_error` and shows in Command Center's failure panel; if it already moved, just report.
 
 ---
 

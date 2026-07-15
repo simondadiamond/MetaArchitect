@@ -71,7 +71,7 @@ Any other stage (`editing`, `failed_optimizing`, anything) → stop, touch nothi
 
 **Exit — the success transition IS the atomic claim:** after persisting the `optimized_draft` artifact, `claimStage(ideaId, 'optimizing', 'fact_check')`. If it returns `false`, another run already advanced the row — report that this run's artifact is a redundant extra version and stop; do NOT `setStage`.
 
-**Failure:** re-check the row is still at `'optimizing'` (`getIdea`), then `setStage(ideaId, 'failed_optimizing')`; if it already moved, just report.
+**Failure:** re-check the row is still at `'optimizing'` (`getIdea`), then `setStage(ideaId, 'failed_optimizing', '<the error message>')` — the reason lands in `blog_ideas.last_error` and shows in Command Center's failure panel; if it already moved, just report.
 
 ---
 
