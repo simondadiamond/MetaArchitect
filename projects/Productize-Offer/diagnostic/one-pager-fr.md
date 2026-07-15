@@ -43,7 +43,7 @@ Un appel de qualification de 15 minutes : {BOOKING_LINK}. Deux issues — soit c
 ## FAQ
 
 **Peut-on vraiment évaluer quelque chose de sérieux en deux ou trois jours?**
-Un flux de travail, oui. Le diagnostic utilise la même grille de notation que mon audit de deux semaines, sur une base de preuves réduite : un appel approfondi avec le responsable du flux et un ingénieur, plus les artefacts que vous pouvez partager en 48 heures. Quand un score ne peut pas être confirmé en direct, la note le marque *provisoire* et précise ce qui le confirmerait. Vous recevez une carte honnête, pas une fausse précision.
+Un flux de travail, oui — et le travail commence avant même qu'on se parle. Une fois la facture réglée, le responsable du flux remplit un questionnaire structuré (environ 30 minutes, bâti sur la même grille de notation que mon audit de deux semaines). Je l'analyse avant l'appel; nos 60 à 90 minutes ensemble servent donc à vérifier des affirmations en partage d'écran — « montrez-moi la trace de mardi » — pas à me faire expliquer ce que fait votre système. Ajoutez les artefacts que vous pouvez partager en 48 heures, et voilà la base de preuves. Quand un score ne peut pas être confirmé en direct, la note le marque *provisoire* et précise ce qui le confirmerait. Vous recevez une carte honnête, pas une fausse précision.
 
 **Qu'est-ce que la Loi 25 exige concrètement de notre système d'IA?**
 Si une décision est fondée exclusivement sur un traitement automatisé de renseignements personnels, vous devez en informer la personne, et sur demande : divulguer les renseignements utilisés, les raisons et les principaux facteurs de la décision, et offrir la possibilité de faire valoir ses observations auprès d'un humain. Sanctions administratives jusqu'à 10 M$ ou 2 % du chiffre d'affaires mondial. La question du diagnostic est simple : si la Commission d'accès à l'information vous écrivait demain, en combien de temps pourriez-vous répondre?
@@ -55,7 +55,7 @@ Un outil installé et une propriété tenue, ce sont deux affirmations différen
 Le diagnostic est tarifé pour tenir debout tout seul — c'est à ça que sert la garantie. Si vos scores justifient un audit plus profond, la note le montrera en preuves, et je le dirai une fois, à la présentation des constats. Sinon, je dirai ça aussi. Je ne vends jamais de mandat récurrent à froid.
 
 **De quels accès avez-vous besoin?**
-À ce palier : un appel de 60 à 90 minutes avec les gens qui ont bâti et qui opèrent le flux, des partages d'écran de vos traces et schémas, et ce que vous pouvez exporter — un post-mortem, une trace, un schéma d'état, caviardés là où ils touchent des renseignements personnels. Aucun accès au code source requis. Tout ce qui est partagé est détruit dans les 7 jours suivant la présentation des constats, avec confirmation écrite; je signe votre entente de confidentialité sans discussion.
+À ce palier : un questionnaire structuré de 30 minutes rempli par le responsable du flux, puis un appel de 60 à 90 minutes avec les gens qui ont bâti et qui opèrent le flux — partages d'écran de vos traces et schémas — plus ce que vous pouvez exporter : un post-mortem, une trace, un schéma d'état, caviardés là où ils touchent des renseignements personnels. Aucun accès au code source requis. Tout ce qui est partagé est détruit dans les 7 jours suivant la présentation des constats, avec confirmation écrite; je signe votre entente de confidentialité sans discussion.
 
 **Qui fait le travail?**
 Moi. Pas d'associés, pas de sous-traitance. C'est écrit dans l'énoncé de travail.

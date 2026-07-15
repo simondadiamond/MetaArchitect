@@ -10,6 +10,8 @@
      - Pointers must be checkable, not decorative: the call recording — or timestamped transcript excerpts covering every cited moment — is delivered WITH the memo. Where consent limits sharing, the pointer format becomes "auditor's notes @00:47 — recording held by {CLIENT} attendees."
      - Single-point-of-failure findings are stated by ROLE ("one engineer carries it"), never by name — the memo circulates beyond the room that earned the trust.
      - Provisional flags appear in three places and must agree: page 1 count, page 2 flags, page 5 table.
+     - Intake answers (state_readiness_diagnostic) are self-report: cite them only as "intake, confirmed on call @{TS}" or "intake claim — NOT confirmed live" (which is a provisional flag, never a confirmed pointer). Where the confirmed score differs from the intake's self-assessment, state the delta plainly, without gloating — it is evidence.
+     - Analyzer-prefilled text is a draft: every score and sentence re-judged by hand before it survives. No analyzer output ships unreviewed.
      - Voice: diagnostic register. No hedging ("somewhat", "may want to consider"), no reassurance ("overall a solid foundation").
      - EN/FR: deliver in the client's language per booking; structure identical. -->
 
@@ -26,7 +28,7 @@
 | **Prepared by** | Simon Paris — The Meta Architect, simonparis.ca |
 | **Engagement** | AI Readiness Diagnostic ({N_DAYS} days, {DATE_START}–{DATE_READOUT}) |
 | **Workflow scored** | **{WORKFLOW_NAME}** — {ONE_LINE_WORKFLOW: trigger → LLM step(s) → real-world effect} |
-| **Evidence base** | One {CALL_LENGTH}-min evidence call ({OWNER_NAME} + {ENGINEER_NAME}, recorded — recording delivered with this memo), {N_ARTIFACTS} of 6 requested artifacts received within the 48-hour window |
+| **Evidence base** | STATE intake completed by {OWNER_NAME} ({INTAKE_DATE}), one {CALL_LENGTH}-min confirmation call ({OWNER_NAME} + {ENGINEER_NAME}, recorded — recording delivered with this memo), {N_ARTIFACTS} of 6 requested artifacts received within the 48-hour window |
 | **Not received** | {MISSING_ARTIFACTS: list missing artifacts and the pillar each affected — or "none"} |
 | **Instrument** | STATE scoring rubric — same rubric, same anchors, same scale as the Production AI Audit; reduced evidence depth |
 
@@ -113,7 +115,7 @@ These are first moves, not a roadmap. They move **{WEAKEST_PILLAR}** (your weake
 
 ### What this diagnostic could not see
 
-A {N_DAYS}-day diagnostic scores one workflow from one evidence call and {N_ARTIFACTS} artifacts. Structurally outside its reach:
+A {N_DAYS}-day diagnostic scores one workflow from one intake, one confirmation call, and {N_ARTIFACTS} artifacts. Structurally outside its reach:
 
 - **The codebase.** One boundary's validation code was read ({ARTIFACT_REF}); the other {N_BOUNDARIES_UNREAD} enumerated LLM→action boundaries were described, not inspected. Described gates and real gates diverge — that divergence is the most common audit finding.
 - **Failure behavior, observed.** The reboot test ran in paper form — nobody killed a live run and watched the restart. Systems that resume on the whiteboard and systems that resume in production are different populations.
