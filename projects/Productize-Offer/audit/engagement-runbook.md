@@ -21,6 +21,7 @@ Nothing below starts until the SOW is signed. Everything below finishes before D
 
 **Same day the SOW is signed:**
 - [ ] Send `evidence-request-checklist.md` to the buyer (it's written to be forwarded to their team — send it whole)
+- [ ] Send each scored workflow's owner the **/readiness intake link** (private page, ~30 min per workflow) — checklist item 0, BLOCKING
 - [ ] Confirm the 1–3 scored workflows and named owners are in the SOW verbatim (rubric: workflows get scored, not companies)
 - [ ] Book the Day 1 scoping call (60 min)
 - [ ] Book the Day 12 readout (90 min) — yes, now; the buyer's calendar two weeks out is emptier than it will ever be
@@ -29,6 +30,7 @@ Nothing below starts until the SOW is signed. Everything below finishes before D
 **No later than 2 business days before Day 1:**
 - [ ] Verify repo access works — actually clone/browse, don't trust the invite email
 - [ ] Verify trace/log access works — actually run one query
+- [ ] Intakes submitted for every scored workflow → run the intake analyzer (`../intake-analyzer-spec.md`); its per-workflow briefs (provisional read, optimistic-claim flags, show-me asks) feed the Day 1 scoping call and the interview prep on Days 2–3. Analyzer output is preparation, never scoring — rubric rule 3 holds
 - [ ] Confirm the week-1 founding feedback call is on the calendar for Day 5 (30 min — contractual, founding-client-program.md §5)
 
 **Gate:** any BLOCKING item on the evidence checklist still open 2 business days out → call the buyer and move Day 1. Starting blind burns the only slack the plan has.

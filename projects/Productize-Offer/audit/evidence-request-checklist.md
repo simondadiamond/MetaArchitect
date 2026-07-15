@@ -14,6 +14,14 @@ If you can't provide an item, that's fine — every item has a fallback, and in 
 
 ---
 
+## 0. STATE intake questionnaire — one per scored workflow · **BLOCKING**
+
+**Provide:** each scored workflow's owner completes the private intake at simonparis.ca/readiness (~30 minutes, EN or FR). The link comes with the SOW confirmation.
+
+**Why:** it's the structured version of the first hour of questions I would otherwise spend your engineers' interview time asking. I arrive at the interviews already holding your team's own description of state, traces, decision records, failure handling, and output boundaries — so the hour goes to evidence, not orientation. Where the intake's answers and the live tests disagree, that gap is usually the most useful finding in the report.
+
+**Fallback:** none worth having — it's thirty minutes on a web form. If it genuinely can't happen, the Day 1 scoping call grows by an hour per workflow, and that hour comes out of review depth.
+
 ## 1. Repo access — read-only, scoped · **BLOCKING**
 
 **Provide:** read-only access to the repositories behind the workflows being scored. Scoped to those repos — I don't need the monorepo. Guest account in your tenant preferred over a code export.
@@ -103,6 +111,7 @@ Engineers, not managers. Managers are welcome to sit in; they can't take the tes
 
 | # | Item | Deadline |
 |---|---|---|
+| 0 | STATE intake completed, one per scored workflow | **Before Day 1** |
 | 1 | Read-only repo access, scoped | **Before Day 1** |
 | 2 | Trace/log access or exports | **Before Day 1** |
 | 3 | 1–3 named workflows + owners, in the SOW | **Before Day 1** |
@@ -112,4 +121,4 @@ Engineers, not managers. Managers are welcome to sit in; they can't take the tes
 | 7 | Architecture diagrams | Whenever |
 | 8 | Compliance context | Day 8 |
 
-Items 1–4 gate the start date. Everything else has a fallback. Questions go to Simon directly — there's no intake team, which is rather the point.
+Items 0–4 gate the start date. Everything else has a fallback. Questions go to Simon directly — there's no intake team, which is rather the point.

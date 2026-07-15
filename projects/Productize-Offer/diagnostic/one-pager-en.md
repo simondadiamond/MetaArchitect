@@ -43,7 +43,7 @@ A 15-minute fit check: {BOOKING_LINK}. Two outcomes — either this is a fit and
 ## FAQ
 
 **Can you actually assess anything real in two or three days?**
-One workflow, yes. The diagnostic runs the same scoring rubric as my two-week audit, on a reduced evidence base: one deep evidence call with your workflow owner and an engineer, plus the artifacts you can share in 48 hours. Where a score can't be confirmed live, the memo marks it *provisional* and says exactly what would confirm it. You get an honest map, not false precision.
+One workflow, yes — and the work starts before we ever talk. Once the invoice clears, your workflow owner completes a structured intake (about 30 minutes, built from the same scoring rubric as my two-week audit). I analyze it before the call, so our 60–90 minutes together are spent verifying claims on a screen-share — "show me Tuesday's trace" — not asking what your system does. Add the artifacts you can share in 48 hours, and that's the evidence base. Where a score can't be confirmed live, the memo marks it *provisional* and says exactly what would confirm it. You get an honest map, not false precision.
 
 **We already have LangSmith / Langfuse / OTel. What would you find?**
 Tooling installed and property held are different claims. The test I run: pick an execution from last week — can your engineer produce the complete trace in ten minutes? Can anyone say which model and prompt version produced a specific output that reached a customer? In most shops the answer is "in principle." The diagnostic measures the distance between "in principle" and "right now."
@@ -52,7 +52,7 @@ Tooling installed and property held are different claims. The test I run: pick a
 The diagnostic is priced to stand on its own — that's what the guarantee is for. If your scores warrant a deeper audit, the memo will show it in evidence, and I'll say so once, at the readout. If they don't, I'll say that too. I don't pitch retainers cold, ever.
 
 **What do you need access to?**
-At this tier: a 60–90 minute call with the people who built and run the workflow, screen-shares of your traces and schemas, and whatever you can export — a post-mortem, a sample trace, a state schema, redacted where they touch personal data. No repository access required. Anything shared is destroyed within 7 days of the readout, confirmed in writing; happy to sign your NDA.
+At this tier: a 30-minute structured intake completed by your workflow owner, then a 60–90 minute call with the people who built and run the workflow — screen-shares of your traces and schemas — plus whatever you can export: a post-mortem, a sample trace, a state schema, redacted where they touch personal data. No repository access required. Anything shared is destroyed within 7 days of the readout, confirmed in writing; happy to sign your NDA.
 
 **Why should our risk and compliance people care?**
 Because "can we log why the agent did this?" is now their question too. The memo gives them the artifact they never have: an evidence-based statement of what your system can and cannot answer about its own behavior — the raw material for NIST AI RMF mapping, SOC 2 conversations, EU AI Act scoping, or a regulator asking about automated decisions.

@@ -10,18 +10,18 @@
 
 The Diagnostic scores **one production workflow** against the five STATE pillars and hands the client a 5-page findings memo plus a 1-hour readout. It is the cold-offer entry SKU: fixed scope, fixed price ($2,500 founding / $3,500 full — pinned), 2–3 days of engagement activity delivered inside one calendar week, EN/FR, better-than-risk-free guarantee.
 
-It starts where the discovery call ends: gates passed, invoice cleared, workflow already named on that call. If the workflow wasn't named at discovery, get it named in the booking email — never burn evidence-call minutes choosing one. The booking email also states, in one line: **the engagement window starts at the evidence call, not the invoice** — a reschedule moves the whole clock with it.
+It starts where the discovery call ends: gates passed, invoice cleared, workflow already named on that call. If the workflow wasn't named at discovery, get it named in the booking email — never burn call minutes choosing one. The booking email carries three things: the **/readiness intake link** (private page — the workflow owner completes it, ~30 minutes, before anything is scheduled), the **guarantee-terms sheet**, and one line of clock-setting: **the engagement window starts at the confirmation call, not the invoice** — and the call is scheduled no earlier than 2 business days after the intake lands, because those two days are where the analysis happens.
 
 **One workflow. Not 1–3.** The audit scores up to three; the Diagnostic scores exactly one. If the client wants a second workflow scored, that is the audit, and saying so out loud is fine: "Second workflow is audit scope — the Diagnostic buys depth on one, not coverage of two."
 
-**Evidence depth is the whole difference.** The rubric's anchors, all-criteria rule, and live tests apply unchanged. What changes: the audit gathers evidence from the codebase, telemetry, and 3–5 interviews over two weeks; the Diagnostic gets one call and whatever artifacts arrive in 48 hours. Consequence: several pillar scores will carry the rubric's rule-4 flag — **"untested — score provisional."** That is not a defect to hide. The memo says it plainly, page 1 and page 5, and converting provisional scores to confirmed ones is an explicit reason the Production AI Audit exists.
+**Evidence depth is the whole difference.** The rubric's anchors, all-criteria rule, and live tests apply unchanged. What changes: the audit gathers evidence from the codebase, telemetry, and 3–5 interviews over two weeks; the Diagnostic gets the intake, one call, and whatever artifacts arrive in 48 hours. Consequence: several pillar scores will carry the rubric's rule-4 flag — **"untested — score provisional."** That is not a defect to hide. The memo says it plainly, page 1 and page 5, and converting provisional scores to confirmed ones is an explicit reason the Production AI Audit exists.
 
 ## What the Diagnostic does NOT do
 
 Say these at booking so the readout contains zero surprises:
 
 - **No codebase review.** One validation-code snippet may arrive as an artifact; nobody clones a repo.
-- **No interviews beyond the evidence call.** One call, two people. No follow-up interview loop.
+- **No interviews beyond the confirmation call.** One call, two people. No follow-up interview loop.
 - **No remediation roadmap.** The memo names **three first moves** — the audit produces the 90-day roadmap.
 - **No re-scoring.** Fixes made after evidence collection are noted as remediation-in-progress (rubric calibration note); the score describes evidence-collection time.
 - Nothing smaller exists. Price objection → trade scope, not price ($2,000 floor, pinned).
@@ -30,11 +30,19 @@ Say these at booking so the readout contains zero surprises:
 
 ## The evidence base
 
-Two inputs. Both are bounded on purpose.
+Three inputs. All bounded on purpose.
 
-### 1. The evidence call — 60–90 min, day 1
+### 0. The STATE intake — /readiness, before anything is scheduled
+
+The workflow owner completes the private intake at simonparis.ca/readiness: five pillar sections plus engagement context, ~30 structured and narrative questions, EN/FR. Responses land in `state_readiness_diagnostic`; the intake analyzer (`../intake-analyzer-spec.md`) turns them into three prep artifacts — a **provisional scorecard** with per-answer rationale, the **call brief** (what to verify, which claims read optimistic, the exact show-me asks), and a **pre-filled memo skeleton**.
+
+The discipline that keeps this honest: intake answers are self-report. Under rubric rule 3 they confirm nothing on their own — their entire job is to make the call surgical. You walk in holding their own description of state, traces, decisions, failure handling, and boundaries; the call spends its minutes on evidence, not orientation. The optimism gap between what the intake claims and what the screen-share shows is not friction — it's usually finding #1.
+
+### 1. The confirmation call — 60–90 min, day 1 of the engagement window
 
 Attendees: the **workflow owner** (the accountable human from discovery gate 4) plus **one engineer who has been paged for this workflow**. Not a delegate, not a manager who "can speak to it." If the engineer can't attend, reschedule the call, not the requirement.
+
+Run the call **from the brief** — every block below opens with a claim you already hold from the intake, and the block's only job is show-me: confirm it or break it. Nothing on this call is improvised; the questions were written two days ago from their own answers.
 
 The call runs the rubric's live tests **conversationally** — same tests, screen-share instead of environment access:
 
@@ -52,7 +60,7 @@ Record the call (consent first). The recording is the evidence corroboration for
 
 ### 2. The 48-hour artifact list — 6 items max, nothing blocking
 
-Send at booking, restate at the end of the call. The artifact window **opens at booking** and **closes 48h after the evidence call**. **Whatever hasn't arrived by then, the memo ships without it** — a missing artifact becomes a provisional flag or a lower score under rule 3, and the memo says which.
+Send at booking, restate at the end of the call. The artifact window **opens at booking** and **closes 48h after the confirmation call**. **Whatever hasn't arrived by then, the memo ships without it** — a missing artifact becomes a provisional flag or a lower score under rule 3, and the memo says which.
 
 1. **One complete trace** of a single execution, any export format — LLM calls, tool calls, model versions.
 2. **The state schema** — table DDL, type definition, or migration — plus one real sampled row.
@@ -67,10 +75,16 @@ Never add a seventh item, never chase past 48h. Chasing converts a fixed-scope p
 
 ## Day-by-day
 
-Built for evenings-and-a-weekend delivery next to a W-2. Total hands-on: ~10–14 hours — **2–3 days of engagement activity, delivered inside one calendar week.** The arithmetic that makes it honest: the call is day 1, the artifact window closes 48h later (day 3), scoring happens only after that close, and the readout lands within 2 business days of memo delivery.
+Built for evenings-and-a-weekend delivery next to a W-2. Total hands-on: ~11–15 hours — **2–3 days of engagement activity, delivered inside one calendar week from the confirmation call.** The arithmetic that makes it honest: intake and analysis happen before the window opens, the call is day 1, the artifact window closes 48h later (day 3), scoring happens only after that close, and the readout lands within 2 business days of memo delivery.
 
-### Day 1 — Evidence call + first artifact pass (~4–5 h)
-- [ ] Run the evidence call (60–90 min). Live tests per the block table above; timestamps noted in call notes.
+### Day 0 — Intake analysis (before the call is scheduled, ~1–2 h)
+- [ ] Intake submitted → run the analyzer (`../intake-analyzer-spec.md`); it produces the provisional scorecard, the call brief, and the memo skeleton.
+- [ ] Read the scorecard **skeptically** — it is a draft by an LLM working from self-report. Re-judge every proposed score against the rubric anchors yourself; the analyzer proposes, the auditor disposes. Mark the two or three claims that smell most optimistic; those get the longest show-me blocks on the call.
+- [ ] Finalize the call brief and schedule the confirmation call (≥2 business days after intake submission — the buffer is the analysis time, and it's also what makes you the most prepared person on the call).
+- [ ] Log per STATE (analyzer runs are LLM calls; they log like any other pipeline stage).
+
+### Day 1 — Confirmation call + first artifact pass (~4–5 h)
+- [ ] Run the confirmation call (60–90 min). Live tests per the block table above; timestamps noted in call notes.
 - [ ] Same evening: first pass over artifacts already in hand. For each, note which pillar and which anchor line it speaks to.
 - [ ] Write the **provisional map**: for each pillar — live test ran / partially ran / could not run. This map is drafted on day 1, not discovered during scoring.
 - [ ] Log per STATE (see engagement hygiene below).
@@ -80,17 +94,18 @@ Built for evenings-and-a-weekend delivery next to a W-2. Total hands-on: ~10–1
 - [ ] **No scoring yet.** The scoring freeze happens AFTER the artifact window closes, never before — a score set while artifacts can still arrive is a score set on partial evidence by choice.
 
 ### Day 3 — Window closes → scoring + memo writing (~4–6 h)
-- [ ] 48h artifact window closes (48h after the evidence call). Final evidence inventory frozen — only now.
+- [ ] 48h artifact window closes (48h after the confirmation call). Final evidence inventory frozen — only now.
 - [ ] Score all five pillars against the rubric. All-criteria rule; torn between levels → take the lower; every score gets one evidence pointer (artifact, call timestamp, or on-screen observation). No pointer, no score above 1.
 - [ ] Apply provisional flags per rubric rule 4. Typical diagnostic pattern: **T and S confirmable** (their live tests ran on screen-share), **Tol provisional** (paper form only — nothing was actually killed), **A provisional or N/A** (30-min drill never ran), **E provisional above 1** (one boundary's code seen, not every gate read).
-- [ ] Write the memo into `findings-memo-template.md`. Pages 1–4 complete tonight; page 5's confirmation table comes straight from the provisional map.
+- [ ] Write the memo into `findings-memo-template.md`, starting from the analyzer's pre-filled skeleton — every pre-filled score and sentence is re-judged by hand before it survives. Pages 1–4 complete tonight; page 5's confirmation table comes straight from the provisional map.
+- [ ] Where the confirmed score differs from the intake's self-assessment, say so in the memo — the optimism delta is evidence, stated without gloating.
 - [ ] Pick the 2–3 named risks and the three first moves. Each first move targets the **weakest pillar, or removes a named risk**; all land inside 30 days, and none of them require Simon.
 
 ### Memo delivery + readout — readout within 2 business days of memo delivery (~2–3 h)
 - [ ] Cold re-read of the memo. Burned-practitioner test on every line; cut anything the owner couldn't act on.
 - [ ] Verify: every number traces to the memo, every score to a pointer, every provisional flag to page 5.
 - [ ] Deliver the memo **before** the readout (same morning is fine) — the readout discusses a document they've held, it doesn't unveil one.
-- [ ] Target the readout within **2 business days of memo delivery** — book the slot at the evidence call so this is a calendar fact, not a negotiation.
+- [ ] Target the readout within **2 business days of memo delivery** — book the slot at the confirmation call so this is a calendar fact, not a negotiation.
 - [ ] Run the 1-hour readout: 10 min verdict + band, 20 min the named risks, 15 min first moves, 15 min scope/limitations + close (below).
 - [ ] Never let the Diagnostic breathe past one calendar week — a one-week product that takes three is a different (unpriced) product.
 
@@ -152,3 +167,5 @@ The guarantee is affordable because the exposure is a handful of evenings of wor
 - **Softening a score at the readout.** The score was frozen on day 3, after the artifact window closed, from evidence. Discussion can change the *memo's wording*, never the number.
 - **Confirming what wasn't tested.** A pillar whose live test didn't run is provisional even when the story was convincing — engineers sincerely believe in logging they cannot produce (rubric rule 3). The Diagnostic's credibility, and the audit's reason to exist, both live on this line.
 - **Letting the 48h window slide.** Ship on time with gaps flagged, always, over shipping late and complete.
+- **Trusting the analyzer.** The intake analysis is preparation, never scoring. An analyzer-proposed score that reaches the memo without a human re-judgment against the anchors is the fabricated-empirics failure in a new costume — the client bought an auditor, not a form-grader.
+- **Skipping the intake to "move fast."** A call without the brief is the winging-it the flow was redesigned to kill. If the owner won't spend 30 minutes on the intake, that reluctance is itself gate-1 information — raise it before the call, don't absorb it.
