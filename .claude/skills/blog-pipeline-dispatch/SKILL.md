@@ -51,7 +51,7 @@ await logEntry({ workflow_id: state.workflowId, entity_id: state.entityId, step_
 | `stage` | `post_type: article` | `post_type: teardown` |
 |---|---|---|
 | `researching` | `research` | **skip, note**: "teardown research+drafting are Simon-initiated via teardown-generate" |
-| `outlining` | `blog-outline` | anomaly — teardown rows never sit here; re-verify then `setStage(id, 'failed_outlining')`, reason `"teardown row at outlining — investigate"` (Protocol step 2) |
+| `outlining` | `blog-outline` | anomaly — teardown rows never sit here; re-verify then `setStage(id, 'failed_outlining', 'teardown row at outlining — investigate')` (Protocol step 2) |
 | `drafting` | `blog-draft` | **skip, note**: same reason as `researching` |
 | `editing` | `editorial` | `editorial` |
 | `optimizing` | `blog-optimize` | `blog-optimize` |
@@ -68,13 +68,13 @@ await logEntry({ workflow_id: state.workflowId, entity_id: state.entityId, step_
 2. **Pick.** Walk `rows` oldest-first. For each row, look up `(row.stage, row.post_type)` in the map above:
    - Maps to a skill → this is the row. Stop walking.
    - Maps to skip-with-note → log `output_summary: 'skipped <ideaId> (<reason>)'`, continue to the next row.
-   - Maps to the outlining anomaly → re-verify first: `const fresh = await getIdea(ideaId);` — only if `fresh.stage === 'outlining' && fresh.post_type === 'teardown'` still holds, `setStage(ideaId, 'failed_outlining')` with the reason above and log `output_summary: 'skipped <ideaId> (teardown row at outlining — investigate)'`. If the fresh row no longer matches (a human or retry already moved it), log the mismatch and touch nothing. Continue to the next row either way.
+   - Maps to the outlining anomaly → re-verify first: `const fresh = await getIdea(ideaId);` — only if `fresh.stage === 'outlining' && fresh.post_type === 'teardown'` still holds, `setStage(ideaId, 'failed_outlining', 'teardown row at outlining — investigate')` and log `output_summary: 'skipped <ideaId> (teardown row at outlining — investigate)'`. If the fresh row no longer matches (a human or retry already moved it), log the mismatch and touch nothing. Continue to the next row either way.
    - No row in the batch is dispatchable → print/log `blog pipeline: nothing actionable`, exit.
 3. **Re-verify.** Immediately before invoking, `const idea = await getIdea(ideaId); if (idea.stage !== expectedStage) → skip this row (another run already claimed it), log the mismatch, exit.`
 4. **Invoke.** Read the mapped skill's SKILL.md and follow it in full on this row. It performs its own terminal `setStage`/`claimStage` — **never call `setStage`/`claimStage` yourself for the success path.**
 5. **Verify the move.** `const after = await getIdea(ideaId);`
    - `after.stage !== expectedStage` → the row moved (or failed_* was set by the stage skill itself) → done.
-   - `after.stage === expectedStage` (unchanged) → the backstop write: `setStage(ideaId, 'failed_<stage>')`, reason `"skill exited without advancing"`.
+   - `after.stage === expectedStage` (unchanged) → the backstop write: `setStage(ideaId, 'failed_<stage>', 'skill exited without advancing')`.
 6. **Log** the outcome (`step_name: 'blog_dispatch'`) and **stop** — do not process a second row.
 
 Log `output_summary` values:

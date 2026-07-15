@@ -57,7 +57,7 @@ Any other stage (`researching`, `failed_outlining`, anything) → stop, touch no
 
 **Exit — the success transition IS the atomic claim:** after persisting the artifact, `claimStage(ideaId, 'outlining', 'awaiting_outline_approval')`. If it returns `false`, another run already advanced the row — report that this run's artifact is a redundant extra version and stop; do NOT `setStage`.
 
-**Failure:** re-check the row is still at `'outlining'` (`getIdea`), then `setStage(ideaId, 'failed_outlining')`; if it already moved, just report.
+**Failure:** re-check the row is still at `'outlining'` (`getIdea`), then `setStage(ideaId, 'failed_outlining', '<the error message>')` — the reason lands in `blog_ideas.last_error` and shows in Command Center's failure panel; if it already moved, just report.
 
 ---
 

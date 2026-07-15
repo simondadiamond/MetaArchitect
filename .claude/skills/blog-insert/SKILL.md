@@ -71,7 +71,7 @@ If `existingPost` is found, a prior run already inserted the post and crashed (o
 
 **Exit — the success transition IS the atomic claim:** after the insert is verified (fresh insert or the resume-check's existing row), `claimStage(ideaId, 'inserting', 'promoted_to_post')`. If it returns `false`, another run already advanced the row past `inserting` — **and this run may have just inserted a second `blog_posts` row for the same idea, since that insert is not append-only-safe.** Report this exact situation to Simon explicitly (idea id, both post row ids if a fresh insert happened here, which one is now orphaned) so he can clean it up by hand; do NOT `setStage` or touch `status` in this branch.
 
-**Failure:** re-check the row is still at `'inserting'` (`getIdea`), then `setStage(ideaId, 'failed_inserting')`; if it already moved, just report.
+**Failure:** re-check the row is still at `'inserting'` (`getIdea`), then `setStage(ideaId, 'failed_inserting', '<the error message>')` — the reason lands in `blog_ideas.last_error` and shows in Command Center's failure panel; if it already moved, just report.
 
 ---
 
