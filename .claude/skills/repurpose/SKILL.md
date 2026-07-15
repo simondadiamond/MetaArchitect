@@ -1,6 +1,6 @@
 ---
 name: repurpose
-description: Use when Simon says "repurpose [something]", "/repurpose", "turn this teardown/blog post into LinkedIn posts", asks for a "carousel" or "slides" from existing content (Carousel Mode), or asks for "derivatives" of existing long-form content (a teardown, a blog post, a file, pasted text). Do NOT trigger for writing new long-form content (write-post), editing an existing draft (editorial), or generating a teardown (teardown-generate).
+description: Use when Simon says "repurpose [something]", "/repurpose", "turn this teardown/blog post into LinkedIn posts", asks for a "carousel" or "slides" from existing content (Carousel Mode), asks for "derivatives" of existing long-form content (a teardown, a blog post, a file, pasted text), or when the scheduled sweep fires "/repurpose --auto" (Scheduled Mode — no interactive approval; gate-passing candidates saved as drafts). Do NOT trigger for writing new long-form content (write-post), editing an existing draft (editorial), or generating a teardown (teardown-generate).
 ---
 
 # /repurpose <platform> <source>
@@ -187,6 +187,8 @@ Every candidate passes this gate **before being shown to Simon** and re-passes i
 
 ## Step 6 — Present for Approval (STOP)
 
+**Scheduled Mode replaces this step — see that section.** In every interactive invocation, this stop is mandatory.
+
 Show Simon the candidates and **stop**. Nothing is written to `pipeline.posts` before an explicit pick.
 
 ```
@@ -253,6 +255,22 @@ Never touch the source row (`teardown_drafts` / `blog_posts`) from this skill.
    Full run record: projects/Content-Engine/.tmp/repurpose-<date>-<slug>.md
    Next: schedule via the linkedin-publish skill (tools/postiz.mjs) — Tue/Thu 10:30 ET slots; the nudger pings the first comment at publish time; stay 20 min post-publish per playbook
 ```
+
+---
+
+## Scheduled Mode — `/repurpose --auto` (2026-07-15, Simon's ask)
+
+Fired by the Command Center schedule "Auto-repurpose published posts" — every published blog post gets LinkedIn derivatives without Simon kicking it off. **Only the `--auto` flag enters this mode**; a bare `/repurpose` invocation is always interactive.
+
+**What changes vs. interactive mode — exactly two things:**
+1. **Discovery replaces Step 2's explicit source.** Query `blog_posts` for `status='published'` rows, newest first. A post is already processed if `pipeline.logs` has a `step_name: 'repurpose_draft_created'` entry whose `output_summary` contains its slug (that's Step 7's existing provenance convention — keep writing the slug there or dedup breaks). Process **at most one unprocessed post per fire** (bounded runs; the cron clears any backlog across fires). No unprocessed posts → log a `repurpose_auto_sweep` entry (`output_summary: 'no unprocessed published posts'`) and exit silently.
+2. **Step 6's interactive stop is replaced by the gate.** Every candidate that passes the full Step 5 gate is saved via Step 7 unchanged. A candidate failing the gate gets ONE rewrite + re-gate; still failing → drop it and note it in the run record. **Never lower the bar to hit the count.** Simon's approval moves downstream: drafts sit in `pipeline.posts` as `status: 'drafted'`, he reviews and schedules them from Command Center → Content → Social. Nothing in this mode schedules, publishes, or touches Postiz.
+
+**Candidate counts (Step 3/4 override):** `post_type = 'article'` → 3 candidates; `post_type = 'teardown'` → 4 (the teardown report gives it more angles: scored-receipts, gap-found, pillar-by-pillar, what-they-got-right). Same rule as ever: each candidate a different angle, different hook pattern.
+
+**Everything else is unchanged and mandatory:** Step 0 STATE init, playbook read, Step 5 full-gate per candidate (including the `/score` cadence check across the batch — at most ONE candidate in the batch carries the `/score` CTA, and only if the last 2 LinkedIn rows in `pipeline.posts` don't), Step 7 save shape + logging + run record, Step 8 report (the report lands in the schedule's run log instead of chat).
+
+**Dedup warning:** the `linkedin_extract` generated at insert time lives on the `blog_posts` row — Step 5's no-verbatim-reuse check applies to it (≥6-word sentences), same as `teardown_drafts.linkedin_post`.
 
 ---
 
