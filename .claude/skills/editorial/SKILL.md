@@ -32,7 +32,7 @@ Stages: `load_input → pass_1 → pass_2 → pass_3 → persist`.
 
 ### Stage Contract (pipeline mode)
 
-The row must already be at `'editing'` when this skill runs. The `drafting → editing` transition is `blog-draft`'s exit claim — this skill never performs it. Retrying a `failed_editorial` row is the dispatcher/CC retry action's job: it resets the stage BEFORE this skill is invoked; this skill never resets it either.
+The row must already be at `'editing'` when this skill runs. The `drafting → editing` transition is `blog-draft`'s exit claim — this skill never performs it. Retrying a `failed_editing` row is the dispatcher/CC retry action's job: it resets the stage BEFORE this skill is invoked; this skill never resets it either.
 
 **Entry — verify, don't lock:**
 
@@ -50,7 +50,7 @@ Any other stage → stop, touch nothing, report the mismatch. Exclusivity is the
 const draft = await latestArtifact(ideaId, 'draft');
 ```
 
-Missing `draft` artifact → `setStage(ideaId, 'failed_editorial', 'no draft found — run blog-draft first')`; stop. Do not run the passes against nothing.
+Missing `draft` artifact → `setStage(ideaId, 'failed_editing', 'no draft found — run blog-draft first')`; stop. Do not run the passes against nothing.
 
 **Run Passes 1–3 against `draft.content`.**
 
@@ -67,7 +67,7 @@ const claimed = await claimStage(state.entityId, 'editing', 'optimizing');
 
 If `claimStage` returns `false`, another run already advanced the row — report that this run's artifacts are a redundant extra version and stop; do NOT `setStage`.
 
-**Failure (including the blocking rule in Pass 3):** re-check the row is still at `'editing'` (`getIdea`), then `setStage(ideaId, 'failed_editorial', '<the error message>')` — the reason lands in `blog_ideas.last_error`; note the failure stage is `failed_editorial`, **not** `failed_editing`. If it already moved, just report.
+**Failure (including the blocking rule in Pass 3):** re-check the row is still at `'editing'` (`getIdea`), then `setStage(ideaId, 'failed_editing', '<the error message>')` — the reason lands in `blog_ideas.last_error`; note the failure stage is `failed_editing` — the `failed_<stage>` convention, matching the row's `editing` stage, so CC offers Retry. If it already moved, just report.
 
 Log via `logEntry` from `projects/Content-Engine/tools/supabase.mjs`, `step_name: 'blog_editorial'`, `stage` matching whichever stage failed or `'persist'` on success, `output_summary` naming the flagged dimension(s) on a blocking-rule failure or `'draft_revised'` on success.
 
@@ -150,7 +150,7 @@ For each flagged dimension, state:
 If everything scored 7+: declare "Editorial: clean — no repairs needed."
 
 **Blocking rule (all modes):** after repairing, re-score every dimension that was flagged. Any dimension still below 7 after this pass → do not proceed.
-- **Pipeline mode:** do not `claimStage` to `'optimizing'`. Instead `setStage(ideaId, 'failed_editorial', '<unrepaired dimension(s) and why>')` and put the unrepaired dimension(s) — and why — in the log entry's `output_summary`.
+- **Pipeline mode:** do not `claimStage` to `'optimizing'`. Instead `setStage(ideaId, 'failed_editing', '<unrepaired dimension(s) and why>')` and put the unrepaired dimension(s) — and why — in the log entry's `output_summary`.
 - **Chat mode:** tell Simon exactly which dimension is unrepairable and why. Never hand back a draft as finished with an unaddressed score below 7.
 
 Never silent-continue past a dimension that's still below 7.
