@@ -11,7 +11,21 @@ description: Use when the blog pipeline dispatcher advances a blog_ideas row to 
 ❌ blog-optimize failed at [stage] — [error message] — row set to failed_optimizing, safe to retry
 ```
 
-This skill handles **article** rows only (`post_type:'article'`) — teardown rows never reach the `optimizing` stage.
+This skill handles **both** `post_type` values. Teardown rows arrive at `optimizing` via `teardown-generate`'s handoff (its Step 4 `saveArtifact({ kind: 'draft', ... }); setStage(ideaId, 'editing')`, then `editorial` advances `editing → optimizing`) and share this stage with articles — same process below, with the input differences noted in the subsection immediately after this one.
+
+---
+
+### Teardown rows (`post_type:'teardown'`)
+
+Teardown rows have **no `outline` artifact** — that is expected, not a failure. Teardowns skip `outlining`/`awaiting_outline_approval` entirely (the teardown format IS the outline; see design spec §4). Do **not** fail a teardown row in PHASE 1 for a missing outline. The differences from the article path:
+
+- **Title / slug.** `title` comes from the draft artifact's top heading (teardown format: `"[System Name] STATE Teardown: [subtitle]"`) — parse it from the draft content, don't invent one. `slug` comes from the draft artifact's `meta.blog_slug` (set by `teardown-generate` at hand-off) — **never re-derive it**; reusing it is what keeps the eventual `blog_posts.slug` matching the `teardown_drafts.blog_slug` and the card-image URL already built against it.
+- **`primary_keyword`.** No outline to read it from — derive it from the system name (e.g. `"<system name> STATE teardown"`). The DataForSEO volume check is optional here; `'unverified'` is an acceptable value in the metadata's keyword field for teardown rows.
+- **Internal links.** There is no outline link plan to apply. `teardown-generate`'s own pre-write gate (`teardown-gate.py`, Gate 10b) already enforced 8–12 links including ≥1 internal link before the draft was written. This stage's job for a teardown row is to **verify** those links against the live link map (the same Phase 2 query, unchanged) and only **add** links if the post falls under the 2–5-per-1,000-words floor — there's nothing to "insert a plan" for.
+- **FAQ.** The teardown format ships exactly 3 FAQ questions already (not the 3–5 an article FAQ may have). Verify each answer meets the 80–150-word self-contained rule; if one runs short, extend the **answer**, not the questions — the question count is part of the teardown format and isn't this stage's to change.
+- **`cta_type` / `pillar`.** `cta_type` is `'audit'` for teardowns (they exist to drive `/score`) — don't parse it from a nonexistent outline `CTA TYPE:` line. `pillar` still comes from `idea.pillar` (by convention, `state_applied` for teardowns, same as every other row).
+
+Everything else — voice veto, the mechanical gate (PHASE 4), metadata assembly, `geo_citability`, artifact persist, and the Stage Contract — is identical to the article path.
 
 ---
 
@@ -57,7 +71,7 @@ Any other stage (`editing`, `failed_optimizing`, anything) → stop, touch nothi
 
 **Exit — the success transition IS the atomic claim:** after persisting the `optimized_draft` artifact, `claimStage(ideaId, 'optimizing', 'fact_check')`. If it returns `false`, another run already advanced the row — report that this run's artifact is a redundant extra version and stop; do NOT `setStage`.
 
-**Failure:** re-check the row is still at `'optimizing'` (`getIdea`), then `setStage(ideaId, 'failed_optimizing')`; if it already moved, just report.
+**Failure:** re-check the row is still at `'optimizing'` (`getIdea`), then `setStage(ideaId, 'failed_optimizing', '<the error message>')` — the reason lands in `blog_ideas.last_error` and shows in Command Center's failure panel; if it already moved, just report.
 
 ---
 
@@ -70,7 +84,9 @@ const outline = await latestArtifact(ideaId, 'outline');
 
 `draft` here is the **post-editorial** draft — `editorial` saves its revised text as a new `draft` version, and `latestArtifact` orders by `created_at desc`, so the newest version (the one editorial revised) is what you get automatically. `outline` supplies the INTERNAL LINK PLAN and the `primary_keyword` (from its persisted `meta`).
 
-**Both are REQUIRED.** Missing either → `failed_optimizing` with a clear message naming which one is missing ("no draft found — run editorial first" / "no outline found — run blog-outline first"); stop. Do not optimize against a partial input set.
+**`draft` is REQUIRED for both post_types.** Missing → `failed_optimizing` ("no draft found — run editorial first"); stop.
+
+**`outline` is REQUIRED only when `idea.post_type === 'article'`.** Missing on an article row → `failed_optimizing` ("no outline found — run blog-outline first"); stop — do not optimize an article against a partial input set. On a **teardown** row (`idea.post_type === 'teardown'`), `outline` will be `null` and that is **expected-absent, never a failure** — teardowns skip the outlining stages entirely; every outline-sourced value below has an explicit teardown branch (PHASE 2 note, PHASE 3 item 1, and the Teardown rows subsection).
 
 ---
 
@@ -88,19 +104,48 @@ const { data: linkMap } = await pub.from('blog_posts')
 
 For each `[anchor text] → /blog/<slug> — why here` line in the outline's INTERNAL LINK PLAN: keep it only if `<slug>` is still in `linkMap`. If a planned slug's context vanished (post unpublished, slug changed), drop that link — do not invent a replacement — and record it in `meta.skipped_optimizations` (e.g. `"dropped link to /blog/old-slug — no longer published"`).
 
+**Teardown rows:** there is no outline link plan — run the same `linkMap` query, but verify the internal links already present in the **draft body** against it instead (per the Teardown rows subsection): a draft link to a slug not in `linkMap` is dropped and recorded in `meta.skipped_optimizations` the same way. This drop rule applies **only to `/blog/<slug>` post links** — CTA links (`/score`, `/work-with-me`) and the `/blog` index link are not `linkMap` entries and must never be dropped (the `/score` CTA is gate-required; removing it would fail the row downstream).
+
 ---
 
 ### PHASE 3 — Apply the Optimizations
 
 Work items, in order:
 
-1. **Metadata block.** Read `.claude/skills/write-post/SKILL.md` Step 6 fresh this run for the field definitions (title/slug/excerpt/seo_title/seo_description/reading_time_minutes/tags rules + the GEO CITABILITY CHECK). Do not restate the spec here — read it fresh each run so drift in write-post is inherited, not duplicated.
+1. **Metadata block.** Populate these fields:
 
-   <!-- task-12 note: when write-post is rewritten as orchestrator, move the Step 6 field spec here and flip the pointer -->
+   ```
+   TITLE:            [final chosen title]
+   SLUG:             [kebab-case, ≤60 chars, no stop words]
+   EXCERPT:          [40–80 words. Hook + mechanism. A reason to read, not a summary.]
+   SEO_TITLE:        [title | The Meta Architect — ≤60 chars total]
+   SEO_DESCRIPTION:  [120–155 chars. Names the problem and the reader type. Specific.]
+   READING_TIME:     [ceil(word_count / 225)] minutes
+   PILLAR:           [enum value]
+   CTA_TYPE:         [audit | subscribe]
+   FEATURED:         false  [true only if Simon explicitly says so]
+   PRIMARY_KEYWORD:  [the 501-2,400 volume term — confirm it appears in title + first H2 + body]
+   TAGS:             [include both brand terms (state-beats-intelligence) and search terms (llmops, production-ai)]
+
+   GEO CITABILITY CHECK (required before insert):
+     [ ] BLUF: core insight in first 150 words
+     [ ] Every H2 opens with a 40-50 word standalone fact-block
+     [ ] H2/H3 headings reviewed — question-based where natural
+     [ ] Named failure mode defined (failure_taxonomy posts)
+     [ ] 5-7 distinct non-obvious insights confirmed
+     [ ] Entity density: specific tools/versions/error codes named throughout
+     [ ] Primary keyword in title, first H2, and naturally in body
+   ```
 
    The canonical `geo_citability` attestation keys (do not invent your own names) are defined in `projects/Content-Engine/tools/insert-blog-post.mjs`'s `GEO_BOXES` export — currently `bluf_first_150`, `fact_blocks_open_h2s`, `question_headings_reviewed`, `named_failure_mode_defined`, `distinct_insights_5_to_7`, `entity_density`, `primary_keyword_placed`. Read the export fresh each run in case it's changed. `named_failure_mode_defined` may be `"n/a"` only when `pillar !== 'failure_taxonomy'`. Every other box must be `true` — an unticked box is a reason to fix the post, not to ship the box unticked.
 
-   `pillar` comes from `idea.pillar` (the `getIdea` result from the Stage Contract). `cta_type` comes from the outline artifact's own `CTA TYPE:` line (the write-post Step 3 template block the outline quoted verbatim in `blog-outline` Phase 3) — parse it from there, do not re-derive it. `primary_keyword` comes from `outline.meta.primary_keyword`. **`title` and `slug` start from `outline.meta.title_options` and `outline.meta.working_slug`** — these are what Simon approved at the outline checkpoint, not yours to invent: pick the title from `title_options` (or keep the working slug's implied one) and refine either ONLY if the final draft content genuinely requires it, noting any such refinement in the final report to Simon (same transparency spirit as `meta.skipped_optimizations`). `canonical_url` is always `https://simonparis.ca/blog/<slug>` using the slug chosen in this step. `featured` is `false` unless Simon has explicitly said otherwise for this post.
+   `pillar` comes from `idea.pillar` (the `getIdea` result from the Stage Contract) for both post_types. The remaining fields branch on `idea.post_type`:
+
+   **Article rows:** `cta_type` comes from the outline artifact's own `CTA TYPE:` line (the outline template `blog-outline` Phase 3 builds) — parse it from there, do not re-derive it. `primary_keyword` comes from `outline.meta.primary_keyword`. **`title` and `slug` start from `outline.meta.title_options` and `outline.meta.working_slug`** — these are what Simon approved at the outline checkpoint, not yours to invent: pick the title from `title_options` (or keep the working slug's implied one) and refine either ONLY if the final draft content genuinely requires it, noting any such refinement in the final report to Simon (same transparency spirit as `meta.skipped_optimizations`).
+
+   **Teardown rows** (no outline exists — per the Teardown rows subsection): `title` is the draft's top heading (`"[System Name] STATE Teardown: [subtitle]"` — parse, don't invent); `slug` is `draft.meta.blog_slug` verbatim — never re-derived; `cta_type` is `'audit'`; `primary_keyword` is derived from the system name (volume check optional, `'unverified'` acceptable).
+
+   For both: `canonical_url` is always `https://simonparis.ca/blog/<slug>` using the slug chosen in this step. `featured` is `false` unless Simon has explicitly said otherwise for this post.
 
 2. **AEO structural pass.** Confirm the BLUF sits in the first 150 words, every H2 opens with its 40-50 word fact-block, and headings are question-form where natural — per the SEO/GEO rules canonical at the top of `write-post` SKILL.md. **Fix only mechanically** (move a fact-block back to the top of its section, rephrase a heading into question form) — never rewrite the argument or add a claim that wasn't already in the draft.
 

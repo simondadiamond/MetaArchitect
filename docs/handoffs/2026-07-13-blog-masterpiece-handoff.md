@@ -1,9 +1,9 @@
 # Handoff — Command Center blog creation: make it a masterpiece
 
-status: in_progress
+status: done (pipeline built + e2e post published 2026-07-15 at /blog/meta-prompting-three-layer-contract; all 10 UI stories merged; follow-ups tracked in session close-out: pillar seeding, teardown e2e, derivatives)
 goal_id: none
 picked_up_by: blog-writer session 2026-07-13
-updated: 2026-07-13
+updated: 2026-07-15
 
 **From session:** 2026-07-11/12 (COO worktree `ade/coo-f25d292c`)
 **For:** fresh session, any agent. Read this whole file before acting.
@@ -74,3 +74,19 @@ Simon's call: the n8n workflow is a year old — a good bar, **not** the gold st
 2. Compare against section 3's feature bar; write the gap list.
 3. Brainstorm/design the pipeline with Simon (he wants to be in the loop on this one — it's his flagship content system), then split: CC code → stories where clean, skills/agents → session work.
 4. First deliverable candidate: a `research` skill upgrade that persists a durable research document (evidence-tiered, URL-verified) — Simon explicitly asked for this regardless of the rest.
+
+## Queued stories (2026-07-13 build session)
+
+Command Center (`command-center`):
+- `f471ff8e` promote action (ideas → blog_ideas) — coo
+- `eb7be899` stage-transition API routes — coo
+- `1cbec2b5` pipeline board on /blog (depends on eb7be899) — sitemaster
+- `dcda7824` artifact viewer (depends on the board) — sitemaster
+
+Website (`simonparis-website`, all sitemaster):
+- `6962d862` real /llms.txt route
+- `30b37c18` FAQ render + FAQPage JSON-LD
+- `6cbf1814` Person sameAs + Organization knowsAbout schema
+- `dd2cf63a` "Last updated" label
+- `ea9b6b27` teardown badge + /blog/teardowns index
+- `bf000eac` cta_body drift reconciliation

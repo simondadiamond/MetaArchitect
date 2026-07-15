@@ -11,7 +11,7 @@ description: Use when the blog pipeline dispatcher advances a blog_ideas row to 
 ❌ blog-insert failed at [stage] — [error message] — row set to failed_inserting, safe to retry
 ```
 
-This skill handles **article** rows only (`post_type:'article'`) — teardown rows never reach the `inserting` stage; teardown-generate runs its own separate insert path entirely outside the `blog_ideas` stage machine (its own claim-provenance check happens at generation time, not here).
+This skill handles **both** `post_type` values. Teardown rows reach `inserting` through the same shared tail as articles (editorial → blog-optimize → blog-factcheck → Simon's final review → here); the resulting `blog_posts` row gets `post_type='teardown'` from `idea.post_type`, already flowing through the payload in PHASE 2 with no extra work. The one teardown-specific difference is the LinkedIn extract, handled in PHASE 3 below.
 
 ---
 
@@ -71,7 +71,7 @@ If `existingPost` is found, a prior run already inserted the post and crashed (o
 
 **Exit — the success transition IS the atomic claim:** after the insert is verified (fresh insert or the resume-check's existing row), `claimStage(ideaId, 'inserting', 'promoted_to_post')`. If it returns `false`, another run already advanced the row past `inserting` — **and this run may have just inserted a second `blog_posts` row for the same idea, since that insert is not append-only-safe.** Report this exact situation to Simon explicitly (idea id, both post row ids if a fresh insert happened here, which one is now orphaned) so he can clean it up by hand; do NOT `setStage` or touch `status` in this branch.
 
-**Failure:** re-check the row is still at `'inserting'` (`getIdea`), then `setStage(ideaId, 'failed_inserting')`; if it already moved, just report.
+**Failure:** re-check the row is still at `'inserting'` (`getIdea`), then `setStage(ideaId, 'failed_inserting', '<the error message>')` — the reason lands in `blog_ideas.last_error` and shows in Command Center's failure panel; if it already moved, just report.
 
 ---
 
@@ -128,7 +128,22 @@ Every metadata field here is `blog-optimize`'s own persisted `meta` verbatim (`o
 
 ### PHASE 3 — Generate and Gate the LinkedIn Extract
 
-Read `.claude/skills/repurpose/references/linkedin-playbook.md` fresh this run for anatomy, hook patterns, and the anti-slop checklist — do not restate it here. This mirrors `write-post` Step 6's `LINKEDIN_EXTRACT` block exactly; that pointer covers the format.
+**Teardown rows (`idea.post_type === 'teardown'`) skip generation entirely.** `teardown-generate` already produced the gated, winning LinkedIn post — it lives in `teardown_drafts.linkedin_post` (also already in `pipeline.posts`, per its Step 4b). Generating a second, independent extract here would just be a worse, unverified copy of work already done and gated. Instead:
+
+```javascript
+import { db } from './tools/supabase.mjs';   // run from projects/Content-Engine/ — db defaults to schema 'pipeline'
+const draft = await latestArtifact(ideaId, 'draft');   // PHASE 1 doesn't load this — the teardown_draft_id lives on the draft artifact's meta (set by teardown-generate at hand-off)
+const { data: teardownDraft, error } = await db.from('teardown_drafts')
+  .select('linkedin_post')
+  .eq('id', draft.meta.teardown_draft_id)
+  .single();
+if (error || !teardownDraft?.linkedin_post) throw new Error(`no linkedin_post found on teardown_drafts ${draft?.meta?.teardown_draft_id}`);
+payload.linkedin_extract = teardownDraft.linkedin_post;
+```
+
+`teardown_drafts` isn't in `supabase.mjs`'s `TABLES` registry — this is the repo's own documented pattern for it (`.claude/skills/repurpose/SKILL.md`), not a new one. No re-gate is needed: it already passed the LinkedIn gate inside `teardown-generate`. Skip the rest of this phase (generation + gating below) for teardown rows and go straight to PHASE 4.
+
+**Article rows: unchanged.** This is where the LinkedIn extract is generated — read `.claude/skills/repurpose/references/linkedin-playbook.md` fresh this run for anatomy, hook patterns, and the anti-slop checklist; do not restate it here.
 
 **Claim provenance for this stage specifically:** every claim the extract makes must trace to a sentence already present in `optimizedDraft.content` — the text `blog-factcheck` just independently re-verified. **Introduce nothing new here.** An extract that sharpens or adds a claim not already sitting in the factcheck-verified body reopens exactly the hole `blog-factcheck` exists to close, one stage later where nothing will catch it.
 
@@ -197,8 +212,29 @@ await logEntry({ workflow_id: state.workflowId, entity_id: post.id, step_name: '
   model_version: '<the id of the model that actually ran>', status: 'success' });
 ```
 
-**Report to Simon:** use `write-post` SKILL.md **STEP 8**'s report block verbatim as the format — title, pillar, CTA, word/read-time, slug, preview URL, Supabase dashboard link, the `UPDATE blog_posts SET status='published', published_at=NOW() WHERE slug='<slug>';` publish SQL (this post's slug), confirmation the LinkedIn extract sits in `linkedin_extract` ready to copy, and a `Notes:` line for anything needing attention (slug adjusted, `skipped_optimizations` inherited from `optimized_draft.meta` worth resurfacing, or the resume-check/duplicate-row situations above). Read that block fresh each run rather than duplicating it here.
+**Report to Simon** in this exact format — the `Notes:` line is for anything needing attention (slug adjusted, `skipped_optimizations` inherited from `optimized_draft.meta` worth resurfacing, or the resume-check/duplicate-row situations above):
 
-<!-- task-12 note: when write-post is rewritten as orchestrator, move Step 8's report block here and flip the pointer -->
+```
+✍️ Blog draft ready
+
+"[title]"
+
+Pillar: [label]
+CTA: [audit → /score | subscribe → email form]
+~[X] min read / [N] words
+
+Slug: /blog/[slug]
+Preview (after publish): https://simonparis.ca/blog/[slug]
+Supabase: https://supabase.com/dashboard/project/ashwrqkoijzvakdmfskj/editor
+
+TO PUBLISH:
+  UPDATE blog_posts
+  SET status = 'published', published_at = NOW()
+  WHERE slug = '[slug]';
+
+LinkedIn extract is in the linkedin_extract field — ready to copy.
+
+Notes: [anything needing Simon's attention]
+```
 
 **Rule: a pipeline insert run that ends without a verified `blog_posts` row is a failed run.** If the gate never passed or the post-insert verify fails, do not fabricate a report — set the row to `failed_inserting` and stop.

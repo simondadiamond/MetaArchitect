@@ -1,0 +1,3 @@
+
+## 2026-07-14 — Story verification leaves test rows in production tables
+The pipeline-board and promote-action stories (1cbec2b5, f471ff8e) verified themselves by seeding rows into public.blog_ideas/ideas ("SEED · <stage>", "VERIFY story …") and left them there. Two landed on machine stages, so the blog dispatcher burned real fires on junk (stage skills correctly failed them — gates held). Rule: any story whose verify step seeds rows into a production table MUST delete them in the same verify step, and story descriptions for DB-touching UI work should say so explicitly. Cleanup done by hand 2026-07-14 (14 blog_ideas + 2 ideas rows).

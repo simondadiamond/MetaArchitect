@@ -5,7 +5,7 @@ description: Use when Simon asks to edit, review, or improve a blog draft or a s
 
 ## Editorial Loop — Three Passes
 
-**Risk tier: low in chat mode — deliberately exempt.** Read-only there: no DB writes, no external API calls, no state object, no pipeline logging; the calling skill (write-post) carries the STATE obligations for the run. **Pipeline stage mode is medium (S + T):** it writes `blog_artifacts` and `pipeline.logs` (still no external API calls) and carries its own state object — see "Pipeline stage mode" below.
+**Risk tier: low in chat mode — deliberately exempt.** Read-only there: no DB writes, no external API calls, no state object, no pipeline logging. Chat mode is ONLY the standalone ad-hoc case — Simon hands over draft text with no `blog_ideas` row involved. A write-post run always invokes this skill in pipeline stage mode (the row is real), never the exempt path. **Pipeline stage mode is medium (S + T):** it writes `blog_artifacts` and `pipeline.logs` (still no external API calls) and carries its own state object — see "Pipeline stage mode" below.
 
 Do not skip a pass. Do not batch them. Output discipline: Pass 2's score block is always shown in full; Passes 1 and 3 present a change summary (or diff) and the final text respectively — never re-print the whole draft between passes.
 
@@ -32,7 +32,7 @@ Stages: `load_input → pass_1 → pass_2 → pass_3 → persist`.
 
 ### Stage Contract (pipeline mode)
 
-The row must already be at `'editing'` when this skill runs. The `drafting → editing` transition is `blog-draft`'s exit claim — this skill never performs it. Retrying a `failed_editorial` row is the dispatcher/CC retry action's job: it resets the stage BEFORE this skill is invoked; this skill never resets it either.
+The row must already be at `'editing'` when this skill runs. The `drafting → editing` transition is `blog-draft`'s exit claim — this skill never performs it. Retrying a `failed_editing` row is the dispatcher/CC retry action's job: it resets the stage BEFORE this skill is invoked; this skill never resets it either.
 
 **Entry — verify, don't lock:**
 
@@ -50,21 +50,24 @@ Any other stage → stop, touch nothing, report the mismatch. Exclusivity is the
 const draft = await latestArtifact(ideaId, 'draft');
 ```
 
-Missing `draft` artifact → `setStage(ideaId, 'failed_editorial')` with a clear message ("no draft found — run blog-draft first"); stop. Do not run the passes against nothing.
+Missing `draft` artifact → `setStage(ideaId, 'failed_editing', 'no draft found — run blog-draft first')`; stop. Do not run the passes against nothing.
 
 **Run Passes 1–3 against `draft.content`.**
 
 **Exit — the success transition IS the atomic claim:** persist TWO artifacts first — the revised full text as a new `draft` version, and the Pass 2 score block + Pass 3 repairs summary as `editorial_report` — then `claimStage(ideaId, 'editing', 'optimizing')`:
 
 ```javascript
-await saveArtifact({ ideaId: state.entityId, kind: 'draft', content: revisedContent, meta: { workflowId: state.workflowId } });
+// Carry the input draft's meta forward (same convention as blog-factcheck's repair path):
+// downstream consumers read the NEWEST draft version's meta, so producer fields — e.g.
+// teardown-generate's { source, teardown_draft_id, blog_slug } — must survive re-versioning.
+await saveArtifact({ ideaId: state.entityId, kind: 'draft', content: revisedContent, meta: { ...draft.meta, workflowId: state.workflowId } });
 await saveArtifact({ ideaId: state.entityId, kind: 'editorial_report', content: scoreBlockAndRepairsSummary, meta: { workflowId: state.workflowId } });
 const claimed = await claimStage(state.entityId, 'editing', 'optimizing');
 ```
 
 If `claimStage` returns `false`, another run already advanced the row — report that this run's artifacts are a redundant extra version and stop; do NOT `setStage`.
 
-**Failure (including the blocking rule in Pass 3):** re-check the row is still at `'editing'` (`getIdea`), then `setStage(ideaId, 'failed_editorial')` — note the failure stage is `failed_editorial`, **not** `failed_editing`. If it already moved, just report.
+**Failure (including the blocking rule in Pass 3):** re-check the row is still at `'editing'` (`getIdea`), then `setStage(ideaId, 'failed_editing', '<the error message>')` — the reason lands in `blog_ideas.last_error`; note the failure stage is `failed_editing` — the `failed_<stage>` convention, matching the row's `editing` stage, so CC offers Retry. If it already moved, just report.
 
 Log via `logEntry` from `projects/Content-Engine/tools/supabase.mjs`, `step_name: 'blog_editorial'`, `stage` matching whichever stage failed or `'persist'` on success, `output_summary` naming the flagged dimension(s) on a blocking-rule failure or `'draft_revised'` on success.
 
@@ -80,6 +83,7 @@ Goal: improve rhythm and remove crutch language without touching the argument or
 - Remove crutch transitions: "Additionally", "Furthermore", "Moreover", "In conclusion", "To summarize", "Moving on to", "It's also worth mentioning"
 - Fix passive voice in diagnostic statements: "the error is thrown" → "the agent throws the error"
 - Tighten any paragraph over 5 sentences — break or cut
+- **Em-dash density (hard rule, lesson 2026-07-15):** count em-dashes and words; more than 4 per 1000 words fails the insert gate (`EM_DASH_MAX_PER_1000` in `tools/insert-blog-post.mjs`). Rewrite with periods, commas, colons, or parentheses; keep only the few that genuinely earn their place (a punchline beat, a closing question). The first published post shipped at 20/1000 and Simon caught it live — human practitioner prose runs 1–3/1000.
 
 **What NOT to do:**
 - Do not soften diagnostic statements
@@ -92,7 +96,7 @@ Present a compact summary of what changed (bullets or a diff) — not the full d
 
 ### PASS 2 — Fidelity Check
 
-**Mechanical greps first**: write the draft to a temp file and run `bash scripts/linkedin-gate.sh --blog <file>` (blog mode: prohibitions + AI-tells only; no word-count or link checks, and **em dashes are allowed** — the zero-em-dash rule is LinkedIn-scoped). The spec behind the script is `.claude/skills/repurpose/references/linkedin-gate.md`.
+**Mechanical greps first**: write the draft to a temp file and run `bash scripts/linkedin-gate.sh --blog <file>` (blog mode: prohibitions + AI-tells only; no word-count or link checks; the zero-em-dash rule is LinkedIn-scoped, but blog em-dashes are capped — density over 4 per 1000 words fails the insert gate, so check it here: `grep -o '—' <file> | wc -l` against the word count and send anything over back to Pass 1). The spec behind the script is `.claude/skills/repurpose/references/linkedin-gate.md`.
 
 ```bash
 grep -inE "excited to share|thrilled to announce|game.chang|revolutionary|groundbreaking|transformational|cutting.edge|state.of.the.art|in today's fast|in the age of ai" draft.md   # must be 0 — brand prohibitions
@@ -147,7 +151,7 @@ For each flagged dimension, state:
 If everything scored 7+: declare "Editorial: clean — no repairs needed."
 
 **Blocking rule (all modes):** after repairing, re-score every dimension that was flagged. Any dimension still below 7 after this pass → do not proceed.
-- **Pipeline mode:** do not `claimStage` to `'optimizing'`. Instead `setStage(ideaId, 'failed_editorial')` and put the unrepaired dimension(s) — and why — in the log entry's `output_summary`.
+- **Pipeline mode:** do not `claimStage` to `'optimizing'`. Instead `setStage(ideaId, 'failed_editing', '<unrepaired dimension(s) and why>')` and put the unrepaired dimension(s) — and why — in the log entry's `output_summary`.
 - **Chat mode:** tell Simon exactly which dimension is unrepairable and why. Never hand back a draft as finished with an unaddressed score below 7.
 
 Never silent-continue past a dimension that's still below 7.

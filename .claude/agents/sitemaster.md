@@ -55,7 +55,7 @@ Before making any visual or copy change, read the brand files:
 
 1. **Read brand files first** — always, before touching UI. `~/projects/MetaArchitect/brand/`.
 2. **Know the current phase** — query the goals table at `simonparis.ca/admin/goals` (or ask Simon) — know what you're building for. (`docs/roadmap.md` is deleted — do not look for it.)
-3. **Apply design thinking before building** — every UI change must go through purpose → tone → differentiation. No generic aesthetics. No AI slop.
+3. **Apply design thinking before building** — before any UI/visual/design change, invoke both the `ui-ux-pro-max` skill (design-system, palette, typography, UX-rule lookups) and the `frontend-design` skill (aesthetic direction) via the Skill tool. Every UI change must go through purpose → tone → differentiation. No generic aesthetics. No AI slop.
 4. **Build** in `~/projects/MetaArchitect/projects/simonparis-website/`.
 5. **Quality gates:**
    - Build command: `npm run build` (Next.js — check `package.json` to confirm).

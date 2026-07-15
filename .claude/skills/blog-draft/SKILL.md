@@ -37,7 +37,7 @@ await logEntry({ workflow_id: state.workflowId, entity_id: state.entityId, step_
   model_version: '<the id of the model that actually ran>', status: 'success' });
 ```
 
-**Log `blog_draft` TWICE per successful run** — once for the brief, once for the draft:
+**Log `blog_draft` TWICE per successful run** — once for the brief (`brief_composed`, or `brief_reused` on resume), once for the draft:
 - After Phase 2: `output_summary: 'brief_composed'`
 - After Phase 3: `output_summary: 'draft_written'`
 
@@ -61,7 +61,7 @@ Any other stage (`awaiting_outline_approval`, `failed_drafting`, anything) → s
 
 **Exit — the success transition IS the atomic claim:** after persisting the `draft` artifact, `claimStage(ideaId, 'drafting', 'editing')`. If it returns `false`, another run already advanced the row — report that this run's artifact is a redundant extra version and stop; do NOT `setStage`.
 
-**Failure:** re-check the row is still at `'drafting'` (`getIdea`), then `setStage(ideaId, 'failed_drafting')`; if it already moved, just report.
+**Failure:** re-check the row is still at `'drafting'` (`getIdea`), then `setStage(ideaId, 'failed_drafting', '<the error message>')` — the reason lands in `blog_ideas.last_error` and shows in Command Center's failure panel; if it already moved, just report.
 
 ---
 
@@ -87,9 +87,29 @@ Assemble the brief from:
 3. **The internal link plan** — copy the outline artifact's `INTERNAL LINK PLAN` section verbatim; the writer places these links, it does not invent new ones.
 4. **ICP pain points** — pull the relevant frustration(s) from `brand/icp.md` (the 5 Core Frustrations / Language That Lands) that this post's angle speaks to.
 5. **Voice rules** — pointer, not restatement: instruct the writer to hold to `brand/brand-summary.md`'s Prohibitions list and the burned-practitioner / specificity / thesis-alignment tests. Do not copy the prohibitions list into the brief; point at the file.
-6. **The write-post Step 4 rule block, copied in verbatim** — read `.claude/skills/write-post/SKILL.md` Step 4 fresh this run (voice/structure rules, stat-provenance origin gate, evidence-tiering operational rule, code-block rules, 800–1,800 word range) and copy its full text into the composed brief. Do not paraphrase — quote it. This is what makes the brief self-contained without this skill file duplicating write-post's rules.
+6. **The drafting rules below, copied in verbatim into the composed brief.** Do not paraphrase — quote them. This is what makes the brief self-contained without a fresh writer needing chat history or repo access.
 
-<!-- task-12 note: when write-post is rewritten as orchestrator, move the Step 4 rule block here and flip the pointer -->
+**Drafting Rules (quote verbatim into every brief — item 6 above):**
+
+**Structure:**
+- No `# h1` in body. Use `## h2` as the top-level heading.
+- Apply the five SEO/GEO rules (canonical at the top of `.claude/skills/write-post/SKILL.md`) — primary keyword, BLUF, fact-blocks, insight count, named failure mode. They are stated once there; do not improvise variants.
+- End on a pointed question OR a one-line STATE tie-in. Not both.
+- 800–1800 words. Most strong posts land at 1000–1400. Do not pad to hit length.
+
+**Voice:** `brand/brand-summary.md` is canonical — its Prohibitions list plus the burned-practitioner / specificity / thesis tests. Don't restate the list here; the shared LinkedIn gate greps the fixed phrases mechanically for the extract (`blog-insert`'s job), and editorial Pass 2 greps them for the blog prose.
+
+**Stat provenance (E — the origin gate; the 2026-07-07 Ramp 65% incident started in this layer):**
+- Every external number, process narrative ("ran in shadow mode"), or attributed statement ("ZenML says…") must trace to a **verbatim sentence fetched from a primary source in this session**, and the draft links that primary URL where the claim appears.
+- Quote at source precision with scope qualifiers intact ("more than 65%", "at Ramp itself", "since deployment") — dropping a qualifier changes the claim.
+- Conclusions drawn from a source's *silence* are the author's — never put them in the source's mouth.
+- Untraceable → cut. A punchier line is never worth an unattributable claim.
+
+**Evidence tiering:** the canonical T1–T4 definitions live in the `research` skill (Phase 1) — do not restate them. The operational rule: only T1-anchored numbers (verbatim source sentence + primary URL) may appear as stats; T2 patterns may carry primary claims without numbers; T3 is supporting color; T4 is never presented as fact.
+
+**Code blocks:**
+- Always annotate: ` ```typescript `, ` ```python `, ` ```sql `, ` ```bash `
+- One point per block. Under 30 lines. Bad pattern vs. good pattern = two blocks with commentary between.
 
 **Persist the brief:**
 
@@ -110,7 +130,7 @@ Write the full post following **ONLY** the brief composed in Phase 2. Do not imp
 
 **A needed deviation means the brief was wrong, not that improvisation is permitted.** If, while drafting, something in the brief turns out to be missing, ambiguous, or unworkable: stop drafting, fix the brief artifact first (`saveArtifact` a new `writing_brief` version — append, never edit in place), then resume drafting from the corrected brief. Never silently deviate and never patch the gap only in the draft.
 
-Format: full post markdown, no `# h1`, `##` top-level headings — per the brief's copied-in write-post Step 4 structure rules.
+Format: full post markdown, no `# h1`, `##` top-level headings — per the brief's copied-in drafting rules (Phase 2, item 6).
 
 **Persist the draft:**
 

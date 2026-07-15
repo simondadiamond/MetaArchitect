@@ -45,17 +45,41 @@ export async function latestArtifact(ideaId, kind) {
     .order('created_at', { ascending: false }).limit(1).maybeSingle();
   if (error) throw error; return data;
 }
-export async function setStage(ideaId, stage) {
+// last_error rides along with every stage write: failed_* records the reason,
+// any other stage clears it. Tolerates the column not existing yet (42703)
+// so this code and the DDL can deploy in either order.
+function stagePatch(stage, reason) {
+  const patch = { stage, updated_at: new Date().toISOString() };
+  patch.last_error = /^failed_/.test(stage)
+    ? String(reason ?? 'no failure reason recorded').slice(0, 2000)
+    : null;
+  return patch;
+}
+// Postgres reports the missing column as 42703; PostgREST reports an unknown
+// payload column as PGRST204 ("could not find the 'last_error' column").
+const isMissingLastError = e =>
+  (e?.code === '42703' || e?.code === 'PGRST204') && /last_error/.test(e.message ?? '');
+
+export async function setStage(ideaId, stage, reason) {
   if (!okStage(stage)) throw new Error(`invalid stage: ${stage}`);
-  const { error } = await pub.from('blog_ideas')
-    .update({ stage, updated_at: new Date().toISOString() }).eq('id', ideaId);
+  const patch = stagePatch(stage, reason);
+  let { error } = await pub.from('blog_ideas').update(patch).eq('id', ideaId);
+  if (isMissingLastError(error)) {
+    delete patch.last_error;
+    ({ error } = await pub.from('blog_ideas').update(patch).eq('id', ideaId));
+  }
   if (error) throw error;
 }
-export async function claimStage(ideaId, fromStage, toStage) {
+export async function claimStage(ideaId, fromStage, toStage, reason) {
   if (!okStage(toStage)) throw new Error(`invalid stage: ${toStage}`);
-  const { data, error } = await pub.from('blog_ideas')
-    .update({ stage: toStage, updated_at: new Date().toISOString() })
-    .eq('id', ideaId).eq('stage', fromStage).select('id');
+  const patch = stagePatch(toStage, reason);
+  let { data, error } = await pub.from('blog_ideas')
+    .update(patch).eq('id', ideaId).eq('stage', fromStage).select('id');
+  if (isMissingLastError(error)) {
+    delete patch.last_error;
+    ({ data, error } = await pub.from('blog_ideas')
+      .update(patch).eq('id', ideaId).eq('stage', fromStage).select('id'));
+  }
   if (error) throw error; return (data ?? []).length === 1;
 }
 export async function listActionable(limit = 10) {
@@ -123,6 +147,24 @@ if (process.argv[2] === '--self-test') {
         throw new Error('Expected setStage to reject invalid stage');
       } catch (e) {
         if (!e.message.includes('invalid stage')) throw e;
+      }
+
+      // 7b. Test: failed_* records last_error, recovery clears it
+      //     (skips the assertions if the last_error column isn't applied yet)
+      await setStage(testIdeaId, 'failed_researching', 'self-test failure reason');
+      let afterFail = await getIdea(testIdeaId);
+      if ('last_error' in afterFail) {
+        if (afterFail.last_error !== 'self-test failure reason') {
+          throw new Error(`last_error not recorded on failure (got: ${afterFail.last_error})`);
+        }
+        await setStage(testIdeaId, 'researching');
+        afterFail = await getIdea(testIdeaId);
+        if (afterFail.last_error !== null) {
+          throw new Error('last_error not cleared on recovery');
+        }
+      } else {
+        console.log('note: last_error column not applied yet — fallback path exercised instead');
+        await setStage(testIdeaId, 'researching');
       }
 
       // 8. Test: listActionable includes our test row (it's in 'researching')

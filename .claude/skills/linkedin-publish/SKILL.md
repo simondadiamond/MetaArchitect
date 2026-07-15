@@ -50,6 +50,7 @@ Images: upload each PNG first, collect the `{id, path}` objects into a JSON arra
 - Tool errors are loud and name the failed step. An `edit` that deletes but fails to recreate marks the row `sync_state: 'missing'` and ntfy-pings — **fix it immediately** (re-`schedule` the row); never leave a deleted-not-recreated post overnight.
 - Postiz unreachable → check the stack: `docker ps | grep postiz` (7 containers incl. temporal), then `~/projects/postiz/SETUP.md` ops notes. Remember the LinkedIn scope patch must be re-run after every image pull.
 - LinkedIn channel disconnected (standard apps get no refresh token — re-auth ~every 60 days): tell Simon to reconnect in Postiz UI; posts already queued survive re-auth.
+- **Post stuck in QUEUE past its slot, everything green** (lessons.md 2026-07-14): after a host reboot, `restart: always` ignores `depends_on` ordering — the postiz orchestrator races Temporal, fails its one connection attempt, never retries, and reports healthy with ZERO workers polling. Diagnose: `docker exec temporal tctl --address temporal:7233 taskqueue describe --taskqueue linkedin` — no pollers = this failure. Fix: `docker restart postiz` (NOT `pm2 restart orchestrator` alone — that orphans the old Nest child on port 3002 and the new one crashloops on EADDRINUSE; if you already did, kill the orphan pid holding 3002 first). The pending publish fires immediately on worker reconnect — warn Simon before restarting if a stale post going live late matters.
 
 ## Error format
 

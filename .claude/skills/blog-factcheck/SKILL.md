@@ -11,7 +11,7 @@ description: Use when the blog pipeline dispatcher advances a blog_ideas row to 
 ❌ blog-factcheck failed at [stage] — [error message] — row set to failed_fact_check, safe to retry
 ```
 
-This skill handles **article** rows only (`post_type:'article'`) — teardown rows never reach the `fact_check` stage (teardown-generate runs its own claim-provenance check at generation time, in its own Step 1).
+This skill handles **both** `post_type` values. Teardown rows carry a `research_doc` artifact too — `teardown-generate` Step 1 persists one before generation, same kind, same shape (`source_urls`, verbatim quotes, preliminary score notes) — so the protocol below runs unchanged for a teardown row. `teardown-generate`'s own generation-time claim-provenance check (its Step 1, "Claim provenance") is the *first* layer of defense against exactly the 2026-07-07 failure class; this stage is the *independent second layer*, re-verified against the FINAL text after editorial and optimize have both touched it. That is defense in depth, not redundancy to skip — a teardown row does not get a pass on this stage because it was already checked once upstream.
 
 **Why this skill exists.** On 2026-07-07, a fabricated "more than 65%" Ramp stat, a sharpened "shadow mode" process narrative, and a false ZenML attribution passed through editorial's Pass 2 (dimension 9, stat provenance) unchallenged and shipped into a live blog page and four scheduled LinkedIn posts before anyone caught it (`docs/lessons.md` 2026-07-07). That incident is the reason this stage exists at all: a dedicated, independent tripwire whose only job is re-verifying every external-world claim in the FINAL text against a primary source — not trusting what upstream stages already claimed to have checked.
 
@@ -62,7 +62,7 @@ Any other stage (`optimizing`, `failed_fact_check`, anything) → stop, touch no
 
 **Exit — the success transition IS the atomic claim:** after persisting the `factcheck_report` artifact with an all-PASS verdict, `claimStage(ideaId, 'fact_check', 'awaiting_final_review')`. If it returns `false`, another run already advanced the row — report that this run's artifact is a redundant extra version and stop; do NOT `setStage`.
 
-**Failure:** re-check the row is still at `'fact_check'` (`getIdea`), then `setStage(ideaId, 'failed_fact_check')`; if it already moved, just report.
+**Failure:** re-check the row is still at `'fact_check'` (`getIdea`), then `setStage(ideaId, 'failed_fact_check', '<the error message>')` — the reason lands in `blog_ideas.last_error` and shows in Command Center's failure panel; if it already moved, just report.
 
 ---
 

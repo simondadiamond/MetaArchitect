@@ -125,7 +125,7 @@ named `blog_ideas` row for testing and manual runs.
    Artifact: `draft`.
 4. **editorial** (existing skill, run as a stage): three passes unchanged.
    New blocking rule: any fidelity dimension still `< 7` after Pass 3 →
-   `failed_editorial`, never silent continue. Artifact: `editorial_report`
+   `failed_editing`, never silent continue. Artifact: `editorial_report`
    (scores + changes) alongside the revised `draft`.
 5. **blog-optimize**: metadata (write-post Step 6 block) + `canonical_url` +
    AEO alignment (answer-first fact-blocks confirmed, question-form H2/H3

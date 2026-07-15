@@ -24,3 +24,4 @@ Content-pipeline gates live next to their tools in `projects/Content-Engine/tool
 - ../projects/Content-Engine/tools/insert-blog-post.mjs — write-post Step 7 gate + public.blog_posts insert (`<payload.json> [--validate-only]`) (born 2026-07-13)
 - ../projects/Content-Engine/tools/validate-manifest.mjs — carousel C3 manifest gate (`<manifest.json> <draftId|scores.json>`) (born 2026-07-13)
 - ../projects/Content-Engine/tools/postiz-guards.mjs — pure guards for postiz.mjs: ±2h slot conflicts, ISO-week cadence, nudger liveness, edit-content linkedin-gate run (born 2026-07-13)
+- postiz-worker-watchdog.sh — heals the silent reboot-race where the postiz orchestrator loses its Temporal workers but reports healthy (lessons.md 2026-07-14): temporal healthy + postiz past warmup + zero pollers on linkedin/main queues → docker restart postiz + ntfy, re-verify, exit 1 if still dead; `--dry-run`, `--self-test`; scheduled */10 min via Command Center (born 2026-07-14)

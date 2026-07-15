@@ -57,7 +57,7 @@ Any other stage (`researching`, `failed_outlining`, anything) → stop, touch no
 
 **Exit — the success transition IS the atomic claim:** after persisting the artifact, `claimStage(ideaId, 'outlining', 'awaiting_outline_approval')`. If it returns `false`, another run already advanced the row — report that this run's artifact is a redundant extra version and stop; do NOT `setStage`.
 
-**Failure:** re-check the row is still at `'outlining'` (`getIdea`), then `setStage(ideaId, 'failed_outlining')`; if it already moved, just report.
+**Failure:** re-check the row is still at `'outlining'` (`getIdea`), then `setStage(ideaId, 'failed_outlining', '<the error message>')` — the reason lands in `blog_ideas.last_error` and shows in Command Center's failure panel; if it already moved, just report.
 
 ---
 
@@ -91,11 +91,53 @@ const { data: linkMap } = await pub.from('blog_posts')
 
 ### PHASE 3 — Build the Outline
 
-<!-- task-12 note: when write-post is rewritten as orchestrator, move the Step 3 template here and flip the pointer -->
+Produce this outline before any drafting begins:
 
-**Template**: the outline template is write-post Step 3 — read `.claude/skills/write-post/SKILL.md` Step 3 and produce exactly that block (pillar, CTA, title options, working slug, primary keyword, named failure mode, hook, thesis, BLUF, fact-block argument structure, insight count, evidence planned, humanity snippet, code block, estimate). Do not restate or paraphrase the template here — read it fresh each run so drift in write-post is inherited, not duplicated.
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BLOG POST OUTLINE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PILLAR:   [enum] — [label]
+CTA TYPE: [audit | subscribe]
 
-Then append these **two new sections**, in this order, after the write-post Step 3 block:
+TITLE OPTIONS:
+  1. ...
+  2. ...
+  3. ...
+
+WORKING SLUG: [kebab-case, ≤60 chars]
+PRIMARY KEYWORD: [the 501-2,400 volume term this post targets — SEO/GEO rule 1]
+NAMED FAILURE MODE: [specific name for the failure mode, or "n/a" for non-taxonomy posts]
+
+HOOK TYPE: [contrarian | stat_lead | question | story_open | provocative_claim]
+HOOK DRAFT: [2-3 sentences. Specific named failure mode or contrarian claim.]
+
+THESIS: [one sentence connecting to "state beats intelligence"]
+
+BLUF STATEMENT: [the core insight in ≤2 sentences — this goes in the first 150 words]
+
+ARGUMENT STRUCTURE:
+  ## [Section 1 — question-based heading where natural]
+     FACT-BLOCK: [40-50 word standalone statement that opens this section]
+     → what engineers assume / why that assumption fails
+  ## [Section 2 — question-based heading where natural]
+     FACT-BLOCK: [40-50 word standalone statement]
+     → what's actually happening / the architecture insight
+  ## [Section 3 — question-based heading where natural]
+     FACT-BLOCK: [40-50 word standalone statement]
+     → concrete pattern or checklist / code block if applicable
+  ## [Section 4 — close, optional]
+     → STATE tie-in or pointed question
+
+DISTINCT INSIGHTS COUNT: [X] — must be 5-7 non-obvious claims
+EVIDENCE PLANNED: [specific failure modes / mechanisms — Tier 1 or 2 only]
+HUMANITY SNIPPET: [which one and how it slots in, or "none"]
+CODE BLOCK: [yes/no — language: typescript | python | sql | bash]
+ESTIMATED: ~[X] words / ~[Y] min read
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Then append these **two new sections**, in this order, after the outline block above:
 
 ```
 INFORMATION GAIN:

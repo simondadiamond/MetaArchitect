@@ -108,6 +108,14 @@ export function runLinkedinGate(text) {
   }
 }
 
+/** Em-dash density in prose. Exported for tests and for the editorial skill's Pass 1 check. */
+export const EM_DASH_MAX_PER_1000 = 4;
+export function emDashDensity(body) {
+  const count = (body.match(/—/g) ?? []).length;
+  const words = body.split(/\s+/).filter(Boolean).length;
+  return { count, words, per1000: words ? Math.round((count / words) * 10000) / 10 : 0 };
+}
+
 /**
  * The Step 7 mechanical gate. Returns { errors: [] } — empty array = safe to insert.
  * Pure except for the linkedin_extract sub-gate (spawns scripts/linkedin-gate.sh, still offline).
@@ -176,6 +184,20 @@ export function validatePayload(p, { skipExtractGate = false, requireFaq = false
   // required content fields
   for (const k of ['title', 'excerpt', 'body_markdown', 'seo_title', 'seo_description']) {
     if (typeof p[k] !== 'string' || !p[k].trim()) err(`${k} missing or empty`);
+  }
+
+  // em-dash density — the #1 AI tell. The first published post shipped with 43
+  // em-dashes in 2152 words (20/1000) and Simon caught it live (2026-07-15).
+  // Human practitioner prose runs 1-3 per 1000 words; the gate allows 4.
+  if (typeof p.body_markdown === 'string' && p.body_markdown.trim()) {
+    const d = emDashDensity(p.body_markdown);
+    if (d.per1000 > EM_DASH_MAX_PER_1000 && d.count > 2) {
+      err(`body_markdown has ${d.count} em-dashes in ${d.words} words (${d.per1000}/1000; max ${EM_DASH_MAX_PER_1000}) — rewrite with periods, commas, colons, or parentheses; keep only the few that earn their place`);
+    }
+  }
+  for (const k of ['excerpt', 'seo_description']) {
+    const n = typeof p[k] === 'string' ? (p[k].match(/—/g) ?? []).length : 0;
+    if (n > 1) err(`${k} has ${n} em-dashes — max 1`);
   }
   if (!Number.isInteger(p.reading_time_minutes) || p.reading_time_minutes < 1) err('reading_time_minutes must be a positive integer');
   if (typeof p.featured !== 'boolean') err('featured must be boolean (true only if Simon explicitly says so)');
