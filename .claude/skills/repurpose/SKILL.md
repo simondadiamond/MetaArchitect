@@ -178,7 +178,8 @@ Every candidate passes this gate **before being shown to Simon** and re-passes i
 **Repurpose-specific checks on top of the shared gate:**
 
 - [ ] Candidates are actually distinct: different hook patterns, different angles, and (for teardowns) none duplicates the draft's existing `linkedin_post` angle
-- [ ] **No sentence (≥6 words) reused verbatim from the source's existing derivative posts** (`teardown_drafts.linkedin_post`, `outreach.alt_hooks`, `blog_posts.linkedin_extract`). Quoting the *source system's* evidence is fine; recycling your own shipped post lines is not — the 2026-07-05 test run caught two of these on the first pass. Check mechanically: split candidates into sentences and search each against the shipped texts.
+- [ ] **No sentence (≥6 words) reused verbatim from SHIPPED derivative posts.** A derivative counts as shipped when its `pipeline.posts` row is `published` or `scheduled` (or has a `postiz_id`), or — for `blog_posts.linkedin_extract` — when the post's `linkedin_post_url` is set. Quoting the *source system's* evidence is fine; recycling your own shipped post lines is not — the 2026-07-05 test run caught two of these on the first pass. Check mechanically: split candidates into sentences and search each against the shipped texts.
+- [ ] **Donor rule for UNSHIPPED drafts** (Simon's call 2026-07-15 — best material flows to the post that earns it): a line sitting in a still-drafted derivative (`pipeline.posts` status `drafted`, or an unposted `teardown_drafts.linkedin_post` / `linkedin_extract`) may be **claimed** by the candidate whose angle it truly belongs to. Claiming is a transfer, not a copy: in the same run, rewrite the donor draft without the claimed line(s) (update `draft_content` / the source column), or mark the donor `rejected` if the claim guts it. Log the transfer (`pipeline.logs`, `step_name: 'repurpose_line_claimed'`, donor id + claiming candidate in `output_summary`). Never leave the same ≥6-word sentence live in two draft rows.
 - [ ] First comment adds mechanism or the link — the post stands alone without it
 - [ ] **Set-level dedupe** (2026-07-06 review): across the full set *including the teardown's own `linkedin_post`*, no two posts share their lesson paragraph's core dichotomy or closing move — serialized posts each carry ONE distinct payload; the reader of Monday's post must not get déjà vu Wednesday
 - [ ] **First comments as a set**: zero em dashes (same rule as bodies), structures varied (never the same "link + payoff clause" template every time), `/score` CTA cadence per the shared gate
@@ -270,7 +271,7 @@ Fired by the Command Center schedule "Auto-repurpose published posts" — every 
 
 **Everything else is unchanged and mandatory:** Step 0 STATE init, playbook read, Step 5 full-gate per candidate (including the `/score` cadence check across the batch — at most ONE candidate in the batch carries the `/score` CTA, and only if the last 2 LinkedIn rows in `pipeline.posts` don't), Step 7 save shape + logging + run record, Step 8 report (the report lands in the schedule's run log instead of chat).
 
-**Dedup warning:** the `linkedin_extract` generated at insert time lives on the `blog_posts` row — Step 5's no-verbatim-reuse check applies to it (≥6-word sentences), same as `teardown_drafts.linkedin_post`.
+**Dedup warning:** the `linkedin_extract` generated at insert time lives on the `blog_posts` row — Step 5's reuse checks apply to it same as `teardown_drafts.linkedin_post`: hands off its lines if it shipped (`linkedin_post_url` set), claimable under the donor rule while it's still unposted.
 
 ---
 
