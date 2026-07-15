@@ -14,7 +14,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
@@ -32,6 +32,25 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!SUPABASE_URL || !SERVICE_KEY) {
   throw new Error('supabase.mjs: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY required in .env');
+}
+
+/**
+ * Best-effort ntfy ping to Simon. NTFY_URL comes from the loaded .env, falling
+ * back to command-center's .env (its canonical home — same fallback memory-janitor.sh
+ * uses). A failed or unconfigured ping must never fail the calling operation.
+ */
+const NTFY_ENV_FILE = '/home/diamond/command-center/.env';
+export async function ntfy(msg) {
+  try {
+    let url = process.env.NTFY_URL;
+    if (!url) {
+      const line = readFileSync(NTFY_ENV_FILE, 'utf8').split('\n').find(l => l.startsWith('NTFY_URL='));
+      url = line?.slice('NTFY_URL='.length).trim();
+    }
+    if (!url) return false;
+    await fetch(url, { method: 'POST', body: String(msg).slice(0, 300), signal: AbortSignal.timeout(10_000) });
+    return true;
+  } catch { return false; }
 }
 
 /** Raw client for advanced use. Default schema = pipeline. */
