@@ -23,7 +23,7 @@ const state = {
   workflowId: crypto.randomUUID(),
   stage: "init",
   entityType: "idea",
-  entityId: null,          // set to the blog_ideas row id once known (passed in, claimed, or just-created)
+  entityId: null,          // set to the blog_ideas row id once known (passed in or just-created)
   startedAt: new Date().toISOString(),
   lastUpdatedAt: new Date().toISOString(),
 };

@@ -37,7 +37,7 @@ await logEntry({ workflow_id: state.workflowId, entity_id: state.entityId, step_
   model_version: '<the id of the model that actually ran>', status: 'success' });
 ```
 
-**Log `blog_draft` TWICE per successful run** — once for the brief, once for the draft:
+**Log `blog_draft` TWICE per successful run** — once for the brief (`brief_composed`, or `brief_reused` on resume), once for the draft:
 - After Phase 2: `output_summary: 'brief_composed'`
 - After Phase 3: `output_summary: 'draft_written'`
 
