@@ -83,6 +83,7 @@ Goal: improve rhythm and remove crutch language without touching the argument or
 - Remove crutch transitions: "Additionally", "Furthermore", "Moreover", "In conclusion", "To summarize", "Moving on to", "It's also worth mentioning"
 - Fix passive voice in diagnostic statements: "the error is thrown" → "the agent throws the error"
 - Tighten any paragraph over 5 sentences — break or cut
+- **Em-dash density (hard rule, lesson 2026-07-15):** count em-dashes and words; more than 4 per 1000 words fails the insert gate (`EM_DASH_MAX_PER_1000` in `tools/insert-blog-post.mjs`). Rewrite with periods, commas, colons, or parentheses; keep only the few that genuinely earn their place (a punchline beat, a closing question). The first published post shipped at 20/1000 and Simon caught it live — human practitioner prose runs 1–3/1000.
 
 **What NOT to do:**
 - Do not soften diagnostic statements
@@ -95,7 +96,7 @@ Present a compact summary of what changed (bullets or a diff) — not the full d
 
 ### PASS 2 — Fidelity Check
 
-**Mechanical greps first**: write the draft to a temp file and run `bash scripts/linkedin-gate.sh --blog <file>` (blog mode: prohibitions + AI-tells only; no word-count or link checks, and **em dashes are allowed** — the zero-em-dash rule is LinkedIn-scoped). The spec behind the script is `.claude/skills/repurpose/references/linkedin-gate.md`.
+**Mechanical greps first**: write the draft to a temp file and run `bash scripts/linkedin-gate.sh --blog <file>` (blog mode: prohibitions + AI-tells only; no word-count or link checks; the zero-em-dash rule is LinkedIn-scoped, but blog em-dashes are capped — density over 4 per 1000 words fails the insert gate, so check it here: `grep -o '—' <file> | wc -l` against the word count and send anything over back to Pass 1). The spec behind the script is `.claude/skills/repurpose/references/linkedin-gate.md`.
 
 ```bash
 grep -inE "excited to share|thrilled to announce|game.chang|revolutionary|groundbreaking|transformational|cutting.edge|state.of.the.art|in today's fast|in the age of ai" draft.md   # must be 0 — brand prohibitions
