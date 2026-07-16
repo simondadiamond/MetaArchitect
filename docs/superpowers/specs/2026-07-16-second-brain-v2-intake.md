@@ -56,6 +56,19 @@ Queued kinds that remain: note **edits/corrections**, and the other 9 lanes' `ta
 - Fact bodies: no provenance narration, no connective prose. Reference cards may stay dense (every clause a lookup value); decision/lesson facts are 1 crisp sentence + mechanism.
 - INDEX lines for evidence notes carry an `[evidence]` marker so `brain find` can label without opening the file.
 
+## Addendum (same day): semantic recall fallback
+
+OB1's one architectural idea we adopted beyond intake — as a *fallback*, never a replacement:
+`brain find` stays deterministic-lexical first; when scoring isn't confident it embeds the
+question (gte-small, 384-dim, via a Supabase `embed` edge function — zero external keys) and
+calls `match_brain_entries` (pgvector RPC). Threshold 0.82, calibrated live: related queries
+scored 0.826–0.849, noise ≤ 0.803. Results are labeled `[semantic match — similarity N]`.
+`brain sync` embeds changed notes (sha256 embed-hash gate) and prunes rows whose local note
+was dropped. Lexical confidence also gained a guard (≥2 matched keywords or score ≥ 6) so a
+single weak substring hit ("time" ⊂ "full-time") can't confidently return the wrong note and
+block the fallback. Bench lane 1: 13/15, both failures pre-date this work (2026-07-12 note
+edit shadowed the sterling note; baseline is from 07-07 — proposal filed).
+
 ## What we deliberately did NOT copy
 
 - **claude-obsidian's frontmatter/metadata surface** (status lifecycles, addresses, key_claims, mode routers) — metadata soup for a per-file brain. Its winning ideas are behavioral: declarative rewrite, skip-list-in-the-generator, length caps.
