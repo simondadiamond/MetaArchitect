@@ -85,7 +85,7 @@ If the system only works moving forward, it is a demo. If it survives state tran
 
 **Diagnostic question**: "If this workflow crashes at step 6 of 10 right now — does it resume from step 6 or restart from step 1?"
 
-**Evidence**: Enterprises are rebuilding production AI agent systems every 90 days (Cleanlab, 2025).
+**Evidence**: 70% of regulated enterprises — and 41% of unregulated enterprises — replace at least part of their AI agent stack every three months (Cleanlab, "AI Agents in Production 2025").
 
 ---
 
