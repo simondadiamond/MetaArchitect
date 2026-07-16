@@ -681,22 +681,21 @@
     <div class="divider divider--strong"></div>
 
     <div class="h2">Where existing frameworks stop</div>
-    <p class="body-text" style="margin-bottom:12px;">The gap matrix — mapped against the five pillars.</p>
+    <p class="body-text" style="margin-bottom:12px;">Orchestration and observability tools, evaluated against the same five reliability properties.</p>
 
     <table class="dtable" style="margin-bottom:14px;">
       <tr><th style="width:34%">Framework</th><th class="center">S</th><th class="center">T</th><th class="center">A</th><th class="center">Tol</th><th class="center">E</th></tr>
-      <tr><td class="strong">LangGraph</td><td class="center"><span class="dot dot--strong"></span></td><td class="center"><span class="dot dot--partial"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--strong"></span></td><td class="center"><span class="dot dot--partial"></span></td></tr>
-      <tr><td class="strong">DataStates-LLM</td><td class="center"><span class="dot dot--strong"></span></td><td class="center"><span class="dot dot--partial"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--strong"></span></td><td class="center"><span class="dot dot--partial"></span></td></tr>
+      <tr><td class="strong">LangGraph</td><td class="center"><span class="dot dot--partial"></span></td><td class="center"><span class="dot dot--partial"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--strong"></span></td><td class="center"><span class="dot dot--partial"></span></td></tr>
       <tr><td class="strong">W&amp;B Weave</td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--strong"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--partial"></span></td></tr>
-      <tr><td class="strong">LangSmith</td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--strong"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--partial"></span></td></tr>
+      <tr><td class="strong">LangSmith</td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--strong"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--absent"></span></td></tr>
       <tr><td class="strong">Arize Phoenix</td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--strong"></span></td><td class="center"><span class="dot dot--partial"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--absent"></span></td></tr>
-      <tr><td class="strong">OpenTelemetry GenAI</td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--strong"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--partial"></span></td></tr>
+      <tr><td class="strong">OpenTelemetry GenAI</td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--strong"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--absent"></span></td></tr>
     </table>
     <p class="body-text" style="font-size:10px; color:var(--text-muted); margin-bottom:14px; display:flex; align-items:center; gap:20px;"><span style="display:flex;align-items:center;gap:6px;"><span class="dot dot--strong"></span> Strong</span><span style="display:flex;align-items:center;gap:6px;"><span class="dot dot--partial"></span> Partial</span><span style="display:flex;align-items:center;gap:6px;"><span class="dot dot--absent"></span> Absent</span></p>
 
     <div class="stat-callout">
       <div class="stat-num" style="font-size:20px; min-width:70px;">A</div>
-      <div class="stat-text">is unowned by every framework on this table. Not renamed — nonexistent. That's not a marketing claim about STATE. That's a literature gap in the tools you're already using.</div>
+      <div class="stat-text">is the weakest-covered pillar here — absent outright in four of five, and even Arize Phoenix's partial credit is prompt/model versioning plus manual annotations, not a native decision-record artifact. That's not a marketing claim about STATE. That's a gap in the tools you're already using.</div>
     </div>
   </div>
   <div class="page-footer">
