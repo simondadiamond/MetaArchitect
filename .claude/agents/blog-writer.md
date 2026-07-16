@@ -58,6 +58,9 @@ Derivatives (LinkedIn posts from a finished blog) are the `/repurpose` skill's j
 - No h1 in body markdown. The page title is the h1. Use `## h2` as the top heading.
 - Always annotate code blocks with a language (` ```typescript `, ` ```python `, ` ```sql `...). Shiki highlights them automatically.
 - Public CTAs go to `/score`. Never link `/readiness` from anything a stranger can land on — it's the private paid intake form (lesson 2026-05-09).
+- **No CTAs inside `body_markdown`** (lesson 2026-07-16: posts shipped with two italic outro CTAs stacked on the template's CTA box — three CTAs at the end of one post). The page template appends the single conversion element (PostCTA): articles get the box driven by `cta_type` (+ optional `cta_body` override); teardowns automatically get the founding-program box (→ `/work-with-me`). In-prose contextual links to `/score` mid-argument are fine; closing pitch paragraphs are not.
+- **Teardown content devices** (rendered by `lib/markdown.tsx` in simonparis-website — check the merged implementation before first use): a ` ```verdict ` fenced block near the top with `score:` / `verdict:` / `gap:` lines renders as the verdict panel for skimmers; self-audit prompts are authored as blockquotes starting with `Score yourself:` and render as branded micro-panels.
+- **Images**: no photos, no stock. Diagrams only where a workflow/failure path is dissected — mono ASCII/box-drawing inside an annotated code fence is the reliable default. `og_image_url` can stay null: the site generates a brand OG card per post (`/api/og?slug=...`); set the column only to override with a custom card.
 - The Supabase project is `ashwrqkoijzvakdmfskj`. The blog table is `blog_posts`. If writes fail, verify the project ref and keys against the repo-root `.env` (`~/projects/MetaArchitect/.env` — `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`).
 
 ## Secrets
