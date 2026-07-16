@@ -42,28 +42,39 @@ Before listing a workstream as owed, check the target repo's git log — if it a
 cite the commit/PR instead (lesson 2026-07-12: a handoff listed pgid teardown as owed a day
 after PR #58 delivered it; only a pre-plan code read prevented a duplicate implementation).
 
-## 6. Brain facts — `brain save` / note edit → read by `brain find`
-Durable facts about Simon's life/business/infra: decisions, numbers, dates, paths, people.
-Bar (all three, else drop — no fixed cap, quality is the gate):
-- **Atomic** — one fact, concrete, standalone.
-- **Recall test** — you can name the realistic future question where `brain find` surfaces
-  this note AND it changes the next action. Can't name the trigger question → it's trivia, drop.
-  (This is the gate that kills "nice to know" saves — if you can't say *when* it's read, it isn't saved.)
-- **Non-derivable test** — not trivially re-discoverable from the live system in seconds
-  (`ls` the dir, read the config, `git log`). Save the non-obvious *decision or gotcha*, not the
-  discoverable inventory: when a candidate mixes both (device is X, and the gotcha is Y), lead with
-  the durable gotcha and cite the inventory only as example context — never enumerate it as the fact.
-- **Shape (write the fact, not its story)** — length is free and does not affect STATE compliance
-  (the save *pipeline* is what's compliant), but terser recalls better. Two shapes: a *reference card*
-  (paths/commands/decisions) may be dense because every clause is a lookup value; a *decision/lesson*
-  fact is one crisp sentence + the mechanism (~1–2 lines). Cut provenance narration and connective
-  prose — the proposal's `detail` field carries the why for the approval; the saved fact does not.
+## 6. Brain facts — `brain save --status evidence` (auto) / note edit (queued) → read by `brain find`
+**v2 intake (spec 2026-07-16): brain facts do NOT queue for approval.** Candidates that clear
+the contract below save immediately as `status: evidence` notes — searchable but labeled
+unconfirmed; the weekly promote/prune digest is where Simon confirms or kills them. Facts Simon
+states or explicitly confirms in an interactive session save without `--status` (confirmed —
+his word is the gate). Corrections to a **confirmed** note still queue (`kind: "edit"`), always.
+
+**Extraction contract** — you are extracting durable long-term memories, not summarizing a
+session. **Returning zero facts is the expected outcome for most sessions**; 1–3 means a rich
+session; hard cap 8.
+- **Atomic + self-contained** — one fact, ≤280 chars, declarative present tense, stands alone
+  months from now. Write the knowledge, not the conversation: never "the session explored X" —
+  always "X works by Y."
+- **REJECT** (never save, never propose): questions-as-memories ("Simon asked about X");
+  generic advice; encyclopedia facts; anything re-derivable from the live system in seconds
+  (`ls` the dir, read the config, `git log`); transient scheduling; session narration; vague
+  interest statements ("Simon cares about X"); fragments that don't stand alone.
+- **Recall test** — name the realistic future question where `brain find` surfaces this note
+  AND it changes the next action. Can't name the trigger question → trivia, drop.
+- **Importance 0–6, strict** — most qualifying facts are 3; 6 is Simon-flagged only, never
+  self-assigned. Below 3 → drop silently: no evidence save, no proposal, no mention.
+- **Provenance is one snippet, never narration** — `--snippet "<≤140-char quote/command from
+  the transcript>"` and `--source sweep:<transcript-id-8>`. Fact bodies carry zero provenance
+  prose, zero connective prose. Reference cards (paths/commands) may be dense — every clause a
+  lookup value; decision/lesson facts are one crisp sentence + the mechanism.
 Boundary: how-Claude-works → lane 7; things the repo/git already records don't qualify.
 **Mandatory contradiction pre-check per candidate** — `brain find "<key terms>"`:
 - same fact → drop (already known)
-- newer/changed → propose an edit to that note, not a duplicate
-- session contradicts an existing note → propose the correction even unasked; a confidently
-  wrong note is worse than a missing one. Security/posture corrections cite the verifying command + date.
+- refines an existing **evidence** note → edit that evidence note directly (still unconfirmed)
+- newer/changed vs a **confirmed** note → queue an edit proposal, never a duplicate save
+- contradicts a **confirmed** note → do NOT save the evidence; queue the correction even
+  unasked — a confidently wrong note is worse than a missing one. Security/posture corrections
+  cite the verifying command + date.
 
 ## 7. Auto-memory — Claude memory dir → read by future Claude sessions
 How Claude should operate for Simon: corrections he gave, confirmed approaches, workflow

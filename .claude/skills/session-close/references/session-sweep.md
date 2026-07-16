@@ -9,6 +9,10 @@ Simon approves in the CC `/brain` Approvals tab or via "apply proposals" in any 
 ## 1. Candidates
 
 - `~/.claude/projects/*/` top-level `*.jsonl` files (skip subdirectories like `tasks/`).
+- **Skip story-pipeline transcript dirs** — any project dir whose name contains
+  `story-worktrees` (e.g. `-home-diamond--story-worktrees-*`). Their outcomes are already
+  recorded by the story board, `story_events`, and PRs; the pipeline's own audit trail IS the
+  harvest (v2 intake, 2026-07-16). Mark them processed without digesting.
 - Skip any path already in `~/projects/brain/.reconciler/processed.json` — unless its
   last-line timestamp has advanced since it was recorded (session resumed → re-harvest).
 - Read the LAST line's `timestamp` field for last activity (append-only JSONL — file
@@ -28,8 +32,11 @@ turns has nothing to harvest), continue with the next.
 Judge each digest against ALL lanes in `harvest-lanes.md` — identical quality bars to the
 interactive close. Sweep-specific notes:
 
-- **Lane 6 (brain)**: run the `brain find` contradiction pre-check per candidate — same
-  drop/update/correct logic.
+- **Lane 6 (brain)**: facts that clear the lane-6 extraction contract are saved DIRECTLY —
+  `brain save "<fact>" --domain <d> --status evidence --source sweep:<transcript-id-8>
+  --snippet "<quote>"` — never queued. Run the `brain find` contradiction pre-check per
+  candidate first; only corrections to confirmed notes become proposals (`kind: "edit"`).
+  Zero facts from a session is the expected outcome, not a failure.
 - **Lane 10 (hygiene)**: the sweep can't clean up asynchronously — findings become
   proposals too ("test row X from session Y still live in pipeline.posts").
 - **Lane 1 (goals)**: propose the exact PATCH; never apply it.
@@ -40,14 +47,21 @@ interactive close. Sweep-specific notes:
 Append to `~/projects/brain/.reconciler/proposals.json` (never clobber pending entries;
 full schema in `~/projects/brain/RECONCILER.md`). Kinds:
 
-- brain fact → `kind: "save"` + ready-to-run `argv` (the only kind the Approvals tab executes directly)
-- brain note correction → `kind: "edit"` + `edit: {target_slug, instruction}`
+- brain fact → **not a proposal** (v2 intake): saved directly as an evidence note, see §3
+- brain note correction (confirmed notes only) → `kind: "edit"` + `edit: {target_slug, instruction}`
 - every other lane → `kind: "task"` + `lane` + `summary` + `detail` carrying the EXACT
   action (the goal PATCH body, the `git mv`, the story POST body, the handoff outline) —
   approval queues it `approved_pending_apply`; the next interactive session executes it.
 
-Every proposal: `id` (uuidgen), `created` (ISO), `lane`, `detail` citing which transcript
-it came from.
+**Proposal format v2 — the proposal is the action, not a write-up.** Simon reviews these on
+his phone; each must be a 3-second decision:
+- `summary` ≤ 100 chars, the action in words Simon would recognize from the session.
+- `detail` ≤ 500 chars, action-first. Provenance is ONE trailing token —
+  `[src: <transcript-id-8> <date>]` — never a sentence, never pre-check narration.
+- Never inline full documents (lessons.md entries, SQL bodies, multi-step trios) into
+  `detail` — carry the 2–3 sentence essence; the applying session writes the full artifact.
+
+Every proposal: `id` (uuidgen), `created` (ISO), `lane`.
 
 ## 5. Close out
 
