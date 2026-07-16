@@ -121,18 +121,24 @@ Each pillar scores 0–2 based on the two diagnostic questions:
 
 ## Gap Matrix — Where Existing Frameworks Stop
 
+Independently fact-checked 2026-07-16 against each project's official docs/spec/repo (see `docs/lessons.md` for the verification method). DataStates-LLM was removed — it's a real system, but it's an HPC checkpointing library for LLM *training* (Argonne-affiliated, arXiv:2406.10707), not an agent/production-reliability tool, and doesn't belong in a comparison with the other five.
+
 | Framework | S | T | A | Tol | E |
 |-----------|---|---|---|-----|---|
-| LangGraph | ✅ | ◑ | ❌ | ✅ | ◑ |
-| DataStates-LLM | ✅ | ◑ | ❌ | ✅ | ◑ |
+| LangGraph | ◑ | ◑ | ❌ | ✅ | ◑ |
 | W&B Weave | ❌ | ✅ | ❌ | ❌ | ◑ |
-| LangSmith | ❌ | ✅ | ❌ | ❌ | ◑ |
+| LangSmith | ❌ | ✅ | ❌ | ❌ | ❌ |
 | Arize Phoenix | ❌ | ✅ | ◑ | ❌ | ❌ |
-| OpenTelemetry GenAI | ❌ | ✅ | ❌ | ❌ | ◑ |
+| OpenTelemetry GenAI | ❌ | ✅ | ❌ | ❌ | ❌ |
 
 ✅ Strong | ◑ Partial | ❌ Absent
 
-**Key finding**: Auditable (A) is genuinely unowned by every existing tool and framework. Explicit boundary ontology does not exist anywhere in the current literature. This is where STATE fills real gaps rather than renaming documented patterns.
+Notes from verification:
+- LangGraph S is Partial, not Strong — typed-state scaffolding exists, but there's no built-in "stage" tracker; you implement that yourself.
+- LangSmith E and OpenTelemetry GenAI E are Absent, not Partial — LangSmith's rules/evaluators run async, after the trace completes, not as a pre-write gate (the gate feature lives in a separate LangChain package); OTel is pure instrumentation with no control-flow concept to gate anything.
+- Arize Phoenix A=Partial rests on prompt/model versioning plus manual annotations — real but thin; the product's actual audit-log/governance feature is the paid Arize AX tier, not open-source Phoenix.
+
+**Key finding**: Auditable (A) is the weakest-covered pillar across every framework here — absent outright in four of five, and even Phoenix's partial credit is versioning plus manual annotations, not a native decision-record artifact. This is where STATE fills a real gap rather than renaming a documented pattern.
 
 ---
 
