@@ -50,7 +50,7 @@ A white-label LinkedIn ghostwriting service for AI/dev-tool founders, powered by
 
 ## Open items
 
-- **Simon's strengths/weaknesses profile — asked 3x, never delivered.** Get the 5-minute voice dump, structure it, `brain save --domain personal`. It decides anglo-first vs Quebec-first attack order.
+- ~~Simon's strengths/weaknesses profile~~ **DONE 2026-07-17** — saved as 5 brain notes (`brain find "Simon profile"`, tags: profile). Key facts: prompter/systems-builder not a prose writer; failure modes are analysis paralysis + optimizing past good-enough + project-stacking overload (guard the timebox); the CPA/auditor credential belongs to Valerie (his girlfriend), NOT Simon — she's a compliance domain expert adjacent to the Law 25 pillar. **Attack order decided: anglo AI/dev-tool founders first** (English content credential, profile-as-demo, higher rates), Quebec bilingual as second wave/upsell.
 - Postiz analytics API check (feeds the feedback-loop decision).
 - First-prospect shortlist (candidates likely already in engage_targets — the superstar list in command-center Supabase).
 - Contract template (ownership split: client owns posts, Simon owns engine/prompts/pipeline).
