@@ -1,0 +1,64 @@
+{
+  "id": "11111111-1111-4111-8111-111111111111",
+  "submitted_at": "2026-07-16T14:00:00Z",
+  "system_name": "Claims Intake Summarizer",
+  "role": "Engineering Manager, Claims Platform",
+  "company_size": "201–1000",
+  "industry": "Insurance",
+  "system_description": "An email arrives in the claims inbox, an LLM extracts the claimant, policy number and loss details, and a claim record is created in our core system. A human adjuster reviews every claim downstream before payment.",
+  "prod_status": "In production",
+  "regulations": ["Law 25 (Québec)"],
+  "email": "fixture@example.com",
+  "referral_source": null,
+  "locale": "en",
+  "user_agent": "fixture",
+  "pillar_structured": {
+    "q1": "Each step writes to a Postgres intake_runs table with a typed status enum that is updated per step. There is also a quick-fix path a contractor added that writes free-form JSON into the same table for certain forwarded emails.",
+    "q2": "The email is already marked consumed, so no claim gets created and nothing retries. We restart the workflow from the top and clean up any partial rows by hand.",
+    "q3": 1,
+    "q3_detail": "The intake_runs DDL defines the fields for the main path. The quick-fix path bypasses it entirely.",
+    "q4": 3,
+    "q5": ""
+  },
+  "pillar_traceable": {
+    "q1": "We open Langfuse and pull the session by correlation ID. Every production call is traced with inputs, outputs and model version, with 90-day retention.",
+    "q2": ["Langfuse"],
+    "q2_capture": ["Full prompt", "Full response", "Model version", "Tool calls", "Session ID"],
+    "q3": 0,
+    "q4": 3,
+    "q5": 4,
+    "q6": "The nightly batch re-processor does not emit traces yet — it predates the Langfuse rollout."
+  },
+  "pillar_auditable": {
+    "q1": "Honestly it would take an engineer a day or two to reconstruct the answer from traces. We have never received one, and there is no written procedure for it.",
+    "q2": 2,
+    "q3": 1,
+    "q4": 2,
+    "q5": 2,
+    "q6": "Law 25 — claimants are Québec residents and personal data flows through the extraction step."
+  },
+  "pillar_tolerant": {
+    "q1": "A crash mid-run leaves the email marked consumed with no claim created. On-call re-injects the stuck emails by hand, roughly a weekly ritual.",
+    "q2": 3,
+    "q3": 1,
+    "q4": 1,
+    "q5": 1,
+    "q6": "The LLM client has 429 backoff, but there is no resume — a failed run is a manual cleanup."
+  },
+  "pillar_explicit": {
+    "q1": "The extraction output is parsed against a Zod schema before the claim write. Invalid output goes to a dead-letter queue and pages the on-call channel.",
+    "q2": 0,
+    "q2_detail": "A schema-valid extraction contained a policy number that does not exist; it created an orphan claim that an adjuster caught two days later.",
+    "q3": 0,
+    "q4": 3,
+    "q5": 2,
+    "q6": 4,
+    "q7": ""
+  },
+  "engagement_context": {
+    "q1": "Risk committee review lands in September; the AI intake path is on the agenda and the CTO presents.",
+    "q2": "We added Langfuse last year and wrote the Zod gate after the orphan-claim incident. The batch path and resume behaviour keep slipping down the backlog.",
+    "q3": "One senior engineer at roughly half time for the next two months, plus me for reviews.",
+    "q4": "A crash we can resume from, traces on every path including batch, and an answer we could give a regulator inside a day."
+  }
+}

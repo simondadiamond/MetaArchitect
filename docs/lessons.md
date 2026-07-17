@@ -642,6 +642,18 @@ Building the command-center Schedules ticker: `instrumentation.ts` with early-re
 **The generalizable rule:** never hardcode a default-branch name in tooling that operates across repos — resolve it from `origin/HEAD`. And when a second component reimplements a job an existing component already does (worktree creation existed in the story-worker), the reimplementation must inherit the original's hard-won parameters, not just its happy path.
 **Where documented:** This entry; command-center `term-daemon/worktree.ts` + `term-daemon/__tests__/worktree.test.ts`.
 
+## 2026-07-17 — Headless `claude -p` silently defaults to Haiku; quote-verbatim gates then fail runs
+
+**What happened:** The intake analyzer's live acceptance runs (goal a528feab) failed twice at the score stage: headless `claude -p` resolved to claude-haiku-4-5 by default, which quoted question labels instead of client answers and tripped the quote-verbatim gate on both attempts. A separate run then died at the skeleton stage on a 300s spawn timeout — the full-memo generation is the longest single call.
+
+**Root cause:** Two unstated assumptions: (1) that headless CLI calls use a strong model — the CLI's `-p` default can resolve to Haiku, and nothing in the tool pinned or surfaced the model until the pipeline.logs `model_version` column showed it; (2) that 300s covers any single generation — it doesn't cover a 5-page memo skeleton.
+
+**Fix applied:** `--model` / `ANALYZER_MODEL` passthrough on `tools/intake-analyzer.mjs`; diagnostic-runbook Day 0 command pins `--model claude-sonnet-5` for engagement runs; default LLM timeout raised to 600s with 900s for the skeleton stage. The quote gate was also rebalanced (one substantial phrase required; short select answers allowed alongside) because select-heavy pillars have little narrative to quote — that part was a gate-design bug, not a model bug.
+
+**The generalizable rule:** any tool that shells out to `claude -p` must pin its model explicitly (or consciously accept the default and log `model_version` per call, which is what caught this). Timeouts scale with the longest expected generation, not the average one.
+
+**Where documented:** This entry; `projects/Productize-Offer/diagnostic/diagnostic-runbook.md` Day 0; `tools/intake-analyzer.mjs` header.
+
 ## 2026-07-16 — Story verify stage promoted a production brain note: the fixture was named in the story description
 
 **What happened:** The Evidence-view story (command-center PR #104) shipped correctly, but its verify stage ran `brain promote` against the real note `strategic-frame-adopted-2026-07-02-the-state-scored-teardown` — because the story's verify criteria literally named that production row as the thing to click. The verifier even showed good instincts (it reverted its first promote, and created + dropped its own throwaway note for the Drop test), but the final promote was left in place: an auto-harvested, unreviewed fact became "confirmed" without Simon's gate. Caught same-session by a `doctor` count (`evidence=0` where 1 was expected); status restored and re-synced within the hour.

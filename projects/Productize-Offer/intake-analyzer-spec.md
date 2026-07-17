@@ -1,7 +1,7 @@
 # STATE Intake Analyzer — Build Spec
 
 > Turns a completed /readiness intake into Simon's pre-engagement kit: provisional scorecard, call brief, memo skeleton.
-> Status: SPEC — approved direction 2026-07-15 (Simon: intake-first flow, "make it cohesive"). Build is a follow-up session.
+> Status: BUILT 2026-07-17 (goal a528feab) — `tools/intake-analyzer.mjs` in this folder. Run: `node projects/Productize-Offer/tools/intake-analyzer.mjs --row <uuid>` (repo root; needs `.env` + `node_modules` — in a worktree, symlink both from the primary checkout). Tests: `node --test tools/test/analyzer.test.mjs` (stubbed, no network).
 > Consumers: `diagnostic/diagnostic-runbook.md` (Day 0) and `audit/engagement-runbook.md` (Phase 0). Scoring authority: `audit/state-scoring-rubric.md` — this tool proposes, the auditor disposes.
 
 ---
