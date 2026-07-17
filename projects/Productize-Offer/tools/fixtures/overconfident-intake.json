@@ -1,0 +1,64 @@
+{
+  "id": "22222222-2222-4222-8222-222222222222",
+  "submitted_at": "2026-07-16T15:00:00Z",
+  "system_name": "Contract Copilot",
+  "role": "Head of Engineering",
+  "company_size": "51–200",
+  "industry": "LegalTech SaaS",
+  "system_description": "An agent that reads inbound contracts, extracts key terms, and updates our CRM records automatically so account managers see deal risk without opening the document.",
+  "prod_status": "In production",
+  "regulations": ["None"],
+  "email": "fixture@example.com",
+  "referral_source": null,
+  "locale": "en",
+  "user_agent": "fixture",
+  "pillar_structured": {
+    "q1": "The agent keeps everything in the conversation context; the framework handles memory for us, so we have never needed a separate state store.",
+    "q2": "We would just kick it off again — it has never been a problem in practice.",
+    "q3": 0,
+    "q3_detail": "It is implicit in the prompts; the model knows which fields it needs.",
+    "q4": 5,
+    "q5": ""
+  },
+  "pillar_traceable": {
+    "q1": "We would grep the application logs on the pod, or ask whichever engineer deployed that day — they usually remember what changed.",
+    "q2": ["Application logs only"],
+    "q2_capture": ["Full response"],
+    "q3": 0,
+    "q4": 1,
+    "q5": 5,
+    "q6": ""
+  },
+  "pillar_auditable": {
+    "q1": "Legal has never asked; we could pull something together from the logs if it ever came up.",
+    "q2": 0,
+    "q2_detail": ["Timestamp", "Output"],
+    "q3": 0,
+    "q4": 3,
+    "q5": 5,
+    "q6": ""
+  },
+  "pillar_tolerant": {
+    "q1": "Someone restarts the service and the agent picks the work back up on its own as far as we can tell.",
+    "q2": 3,
+    "q3": 0,
+    "q4": 0,
+    "q5": 5,
+    "q6": ""
+  },
+  "pillar_explicit": {
+    "q1": "The model output goes straight into the CRM update; it is very reliable in practice so we have not needed a validation layer.",
+    "q2": 1,
+    "q3": 3,
+    "q4": 1,
+    "q5": 1,
+    "q6": 5,
+    "q7": ""
+  },
+  "engagement_context": {
+    "q1": "A major enterprise customer is running a vendor security review of us this quarter.",
+    "q2": "We tightened some prompts after a bad extraction last spring; that mostly fixed it.",
+    "q3": "The whole team can pitch in if needed, we move fast.",
+    "q4": "The vendor review passes and nobody has to think about this system again."
+  }
+}
