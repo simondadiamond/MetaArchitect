@@ -7,6 +7,8 @@ import { checkCompleteness, decodeIntake, loadMessages } from '../lib/form-schem
 import { validatedLLMCall, parseJsonBlock, StageError } from '../lib/llm.mjs';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { buildScorePrompt, extractSection, RUBRIC_PATH } from '../lib/prompts.mjs';
+import { validateScore } from '../lib/validate.mjs';
 
 const TOOLS = join(dirname(fileURLToPath(import.meta.url)), '..');
 const cal = JSON.parse(readFileSync(join(TOOLS, 'fixtures', 'calibration-intake.json'), 'utf8'));
@@ -65,4 +67,35 @@ test('validatedLLMCall throws StageError after two invalid attempts', async () =
     StageError,
   );
   delete process.env.STUB_LLM_MODE;
+});
+
+// ── Task 3: score stage ───────────────────────────────────────────────────────
+
+const decodedCal = decodeIntake(cal, loadMessages('en'));
+
+test('extractSection pulls exactly one pillar section', () => {
+  const md = readFileSync(RUBRIC_PATH, 'utf8');
+  const tol = extractSection(md, 'T — Tolerant');
+  assert.match(tol, /Reboot Test/);
+  assert.doesNotMatch(tol, /E — Explicit/);
+});
+
+test('score prompt embeds rubric anchors, rules, and the pillar answers', () => {
+  const p = buildScorePrompt({ pillarKey: 'structured', decoded: decodedCal, locale: 'en' });
+  assert.match(p, /STATE-SCORE-TASK/);
+  assert.match(p, /All-criteria rule|award only if ALL hold/i);
+  assert.match(p, /quick-fix path a contractor added/);
+  assert.doesNotMatch(p, /Reboot Test/); // other pillars' sections stay out
+});
+
+test('validateScore accepts the stub score and rejects violations', () => {
+  const good = { language: 'en', level: 1, anchor: 'Ad-hoc', confidence: 'MED',
+    rationale: 'A persisted status exists on the main path, but a second path bypasses the schema entirely.',
+    quotes: ['a quick-fix path a contractor added that writes free-form JSON'], optimism_flags: [] };
+  validateScore(good, decodedCal.transcriptText, 'en'); // no throw
+  assert.throws(() => validateScore({ ...good, anchor: 'Systematic' }, decodedCal.transcriptText, 'en'), /anchor/);
+  assert.throws(() => validateScore({ ...good, level: 4 }, decodedCal.transcriptText, 'en'), /level/);
+  assert.throws(() => validateScore({ ...good, quotes: ['never said this by anyone'] }, decodedCal.transcriptText, 'en'), /quote/);
+  assert.throws(() => validateScore({ ...good, quotes: [] }, decodedCal.transcriptText, 'en'), /quote/);
+  assert.throws(() => validateScore({ ...good, language: 'fr' }, decodedCal.transcriptText, 'en'), /language/);
 });
