@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 export class StageError extends Error {}
 
 /** Shell out to the claude CLI (Max subscription — house rule: never the SDK). */
-export function callClaude(prompt, { timeoutMs = 300_000 } = {}) {
+export function callClaude(prompt, { timeoutMs = 600_000 } = {}) {
   const cmd = process.env.ANALYZER_CLAUDE_CMD ?? 'claude';
   const model = process.env.ANALYZER_MODEL; // unset → CLI default; the run's actual model is logged either way
   const res = spawnSync(cmd, ['-p', '--output-format', 'json', ...(model ? ['--model', model] : [])], {
@@ -34,7 +34,7 @@ export function parseJsonBlock(text) {
  * retry carrying the validator's complaint; still invalid → StageError.
  * Never a silent continue. Every attempt is logged (T).
  */
-export async function validatedLLMCall({ prompt, validate, stepName, log }) {
+export async function validatedLLMCall({ prompt, validate, stepName, log, timeoutMs }) {
   // Logging is T, not E: a logging failure must never discard a validated
   // result or trigger a retry — it degrades to stderr and the run continues.
   const safeLog = async (fields) => {
@@ -46,7 +46,7 @@ export async function validatedLLMCall({ prompt, validate, stepName, log }) {
       : `${prompt}\n\nYour previous output was rejected by a validation gate: ${lastErr}\nReturn ONLY the corrected JSON object.`;
     let model = 'unknown';
     try {
-      const res = callClaude(p);
+      const res = callClaude(p, timeoutMs ? { timeoutMs } : {});
       model = res.model;
       const parsed = parseJsonBlock(res.text);
       validate(parsed); // throws with a reason

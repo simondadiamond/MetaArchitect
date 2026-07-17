@@ -117,6 +117,7 @@ try {
     prompt: buildSkeletonPrompt({ scorecard, decoded, row, locale }),
     validate: (o) => validateSkeleton(o, template, locale),
     stepName: 'skeleton', log,
+    timeoutMs: 900_000, // writing the full memo skeleton is the longest single generation
   });
 
   // 5 — deliver (artifacts stay OUT of the repo; overwrite-on-rerun)
