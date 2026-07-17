@@ -211,6 +211,11 @@ Identify the 2–3 least-covered categories from the table above. If `category_c
 
 ### Step 4: Web research
 
+**Vault check first**: before WebFetching any URL, `brain source find "<url>"` (the brain CLI,
+`~/projects/brain` — see its CLAUDE.md rule 5). A hit returns the source's verified claims with
+verbatim quotes — reuse them (retrieved ≤ 90 days) instead of re-fetching; cite the `src-*`
+slug in the candidate's `sources` entry. Exit 1 = unknown source, fetch away.
+
 For each selected category:
 1. Run 2 targeted WebSearch queries
 2. For each result with a promising title/snippet, WebFetch the primary URL
@@ -317,6 +322,23 @@ for c in qualified:
     c['db_id'] = result[0]['id'] if result else None
     print(f"  ✓ Inserted: {c['name']} → {c['db_id']}")
 ```
+
+### Step 6.5: Vault write-back
+
+For each QUALIFIED candidate, write its load-bearing sources into the brain's sources vault —
+every source whose fetched sentences shaped `description`, `interesting_gap`, or
+`teardown_angle` (typically 2–4 per candidate, never the full `sources_fetched` list):
+
+```bash
+brain source add --url "<url>" --title "<source title>" --domain business \
+  --tags "teardown,<company-slug>" --source "skill:teardown-research" \
+  --claims '[{"confidence":"high","assertion":"<claim, scope qualifiers intact>","quote":"<verbatim fetched sentence>"}]'
+```
+
+high = verbatim sentence fetched this run (quote required); medium = paraphrase of a fetched
+sentence; low = inference. A known canonical URL merges — never duplicates. This is how the
+next teardown gets cheaper; skipping it re-creates the re-verify-from-scratch tax. Write-back
+failure is reported, non-fatal.
 
 ### Step 7: Log the run
 

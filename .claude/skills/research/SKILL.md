@@ -40,6 +40,23 @@ await logEntry({ workflow_id: state.workflowId, entity_id: state.entityId, step_
 
 ---
 
+### PHASE 0.5 — Sources Vault Check (before any crawl)
+
+The brain's sources vault (`~/projects/brain`, CLAUDE.md rule 5) caches previously verified
+sources and their claims so research compounds instead of re-crawling. Before Phase 1:
+
+```bash
+brain source find "<topic>"           # topic mode — known sources on this subject
+brain source find "<candidate-url>"   # url mode — exit 1 = never crawled, proceed
+```
+
+- A **high-confidence vault claim with `retrieved` ≤ 90 days** is directly usable as a T1
+  finding: carry its verbatim quote + URL into `## Evidence (tiered)` and note the `src-*` slug.
+  Older than 90 days → re-fetch that ONE URL to re-verify (then `brain source add` bumps
+  `retrieved`) — never a full re-crawl.
+- Vault hits shrink the crawl; they don't replace discovery — the NLM deep dive still runs for
+  what the vault doesn't cover.
+
 ### PHASE 1 — NotebookLM Deep Dive
 
 The interface is the **`notebooklm-mcp` MCP tools** — there is no `notebooklm` skill. Auth errors → run `nlm login` via Bash, then retry.
@@ -53,7 +70,7 @@ The NLM research flow is **four steps — all four required** (lessons.md 2026-0
 3. `research_import` — add the discovered sources to the notebook.
 4. `notebook_query` — synthesis happens HERE. A finding exists only once `notebook_query` returns a non-empty answer.
 
-**Session-verified rule (lessons.md 2026-03-17):** a finding counts only if produced by a live NLM or web call in THIS session. Never carry findings forward from compacted context — if the session compacted mid-research, re-run the queries before anything flows downstream.
+**Session-verified rule (lessons.md 2026-03-17):** a finding counts only if produced by a live NLM or web call in THIS session. Never carry findings forward from compacted context — if the session compacted mid-research, re-run the queries before anything flows downstream. **Vault claims are the one exception** (Phase 0.5): a persisted verbatim quote + URL retrieved ≤ 90 days ago is a durable record, not session memory.
 
 Query with practitioner-angle questions:
 
@@ -203,6 +220,27 @@ await saveArtifact({ ideaId: state.entityId, kind: 'research_doc', content, meta
 **Rule: a pipeline research run that ends without a `research_doc` artifact is a failed run.** If persistence fails, or an upstream gate failed (missing SERP snapshot in pipeline mode), do not fabricate a partial doc — set the row to `failed_researching` and stop.
 
 **Standalone, no-post-intended path:** write `content` to `docs/research/YYYY-MM-DD-<topic>.md` and commit it (`git add` + `git commit`) — this replaces the old chat-only summary as the terminal state for exploratory research.
+
+---
+
+### PHASE 3.5 — Vault Write-Back (every mode, after persist)
+
+Write back every source that produced a T1/T2 finding — typically 2–6 per run, never the full
+fetch list:
+
+```bash
+brain source add --url "<url>" --title "<source title>" --domain business \
+  --tags "<topic-tags>" --source "skill:research" --artifacts "nlm:<notebook_id>" \
+  --claims '[{"confidence":"high","assertion":"<claim, scope qualifiers intact>","quote":"<verbatim fetched sentence>"}]'
+```
+
+- Confidence maps to tiers: **high** = verbatim sentence fetched this session (T1 — quote
+  required), **medium** = paraphrase of a fetched sentence (T2), **low** = inference (T4).
+- A known canonical URL merges claims automatically — never a duplicate note.
+- The NLM `notebook_id` goes on at least the primary source via `--artifacts` (a lost notebook
+  id once cost a 40-source re-crawl).
+- Write-back failure is non-fatal: report it and continue — never roll back the research doc
+  over a vault error.
 
 ---
 

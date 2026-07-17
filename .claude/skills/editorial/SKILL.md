@@ -115,7 +115,7 @@ Then score each dimension 0–10. Anything below 7 is flagged for repair.
 | 6 | **Prohibition check** | Zero banned phrases per `brand/brand-summary.md` Prohibitions? The grep above catches the fixed strings; judgment catches the rest (hedged thesis, vague lessons without mechanism, passive-voice diagnostics). |
 | 7 | **Hook strength** | Would a burned SRE keep reading after the first paragraph — or skim past it? |
 | 8 | **CTA alignment** | Does the natural next action at the end of the post match the declared CTA type? |
-| 9 | **Stat provenance** | Does every external number, process narrative, or attributed statement trace to a verbatim primary-source sentence whose URL is linked in the draft — scope qualifiers ("more than", "at X itself") intact? (The Ramp 65% passed through editorial unchallenged — lessons.md 2026-07-07.) |
+| 9 | **Stat provenance** | Does every external number, process narrative, or attributed statement trace to a verbatim primary-source sentence whose URL is linked in the draft — scope qualifiers ("more than", "at X itself") intact? (The Ramp 65% passed through editorial unchallenged — lessons.md 2026-07-07.) Check the sources vault first: `brain source find "<url or claim topic>"` — a high-confidence vault claim (retrieved ≤ 90 days) with matching quote settles the check; cite its `src-*` slug in your notes. A claim NOT in the vault needs its source fetched — and once verified, write it back (`brain source add`, brain CLAUDE.md rule 5). |
 
 Report the scores:
 ```
