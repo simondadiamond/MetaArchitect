@@ -5,7 +5,8 @@ export class StageError extends Error {}
 /** Shell out to the claude CLI (Max subscription — house rule: never the SDK). */
 export function callClaude(prompt, { timeoutMs = 300_000 } = {}) {
   const cmd = process.env.ANALYZER_CLAUDE_CMD ?? 'claude';
-  const res = spawnSync(cmd, ['-p', '--output-format', 'json'], {
+  const model = process.env.ANALYZER_MODEL; // unset → CLI default; the run's actual model is logged either way
+  const res = spawnSync(cmd, ['-p', '--output-format', 'json', ...(model ? ['--model', model] : [])], {
     input: prompt, encoding: 'utf8', timeout: timeoutMs, maxBuffer: 32 * 1024 * 1024,
   });
   if (res.error) throw new StageError(`claude spawn failed: ${res.error.message}`);

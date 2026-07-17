@@ -6,6 +6,7 @@
  *
  *   node intake-analyzer.mjs --row <uuid>            # live row (needs .env + node_modules)
  *   node intake-analyzer.mjs --fixture <path> [--no-db-log] [--out <dir>]
+ *   --model <id> (or ANALYZER_MODEL) pins the claude CLI model; unset uses its default.
  */
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, writeFileSync, readFileSync, statSync } from 'node:fs';
@@ -24,8 +25,10 @@ const flag = (name) => { const i = args.indexOf(name); return i === -1 ? null : 
 const rowId = flag('--row');
 const fixturePath = flag('--fixture');
 const outFlag = flag('--out');
+const modelFlag = flag('--model');
+if (modelFlag) process.env.ANALYZER_MODEL = modelFlag;
 const noDbLog = args.includes('--no-db-log');
-const misparsed = [rowId, fixturePath, outFlag].some(v => v?.startsWith('--'));
+const misparsed = [rowId, fixturePath, outFlag, modelFlag].some(v => v?.startsWith('--'));
 if (!!rowId === !!fixturePath || misparsed) {
   console.error('usage: node intake-analyzer.mjs (--row <uuid> | --fixture <path>) [--out <dir>] [--no-db-log]');
   process.exit(2);
