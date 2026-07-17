@@ -7,8 +7,10 @@ import { checkCompleteness, decodeIntake, loadMessages } from '../lib/form-schem
 import { validatedLLMCall, parseJsonBlock, StageError } from '../lib/llm.mjs';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { buildScorePrompt, extractSection, RUBRIC_PATH } from '../lib/prompts.mjs';
-import { validateScore } from '../lib/validate.mjs';
+import { buildScorePrompt, buildBriefPrompt, extractSection, RUBRIC_PATH } from '../lib/prompts.mjs';
+import { validateScore, validateBrief } from '../lib/validate.mjs';
+import { renderBrief } from '../lib/render.mjs';
+import { spawnSync } from 'node:child_process';
 
 const TOOLS = join(dirname(fileURLToPath(import.meta.url)), '..');
 const cal = JSON.parse(readFileSync(join(TOOLS, 'fixtures', 'calibration-intake.json'), 'utf8'));
@@ -98,4 +100,39 @@ test('validateScore accepts the stub score and rejects violations', () => {
   assert.throws(() => validateScore({ ...good, quotes: ['never said this by anyone'] }, decodedCal.transcriptText, 'en'), /quote/);
   assert.throws(() => validateScore({ ...good, quotes: [] }, decodedCal.transcriptText, 'en'), /quote/);
   assert.throws(() => validateScore({ ...good, language: 'fr' }, decodedCal.transcriptText, 'en'), /language/);
+});
+
+// ── Task 4: brief stage ───────────────────────────────────────────────────────
+
+function stubOutput(marker) {
+  const r = spawnSync('node', [STUB], { input: marker, encoding: 'utf8' });
+  return JSON.parse(JSON.parse(r.stdout).result);
+}
+
+test('validateBrief accepts the stub brief, rejects vague or unranked blocks', () => {
+  const good = stubOutput('CALL-BRIEF-TASK');
+  validateBrief(good, 'en'); // no throw
+  const vague = structuredClone(good);
+  vague.blocks.tolerant.ask = 'Discuss their approach to failure handling in general terms.';
+  assert.throws(() => validateBrief(vague, 'en'), /screen-share|actionable/i);
+  const dupRank = structuredClone(good);
+  dupRank.blocks.explicit.rank = 1;
+  assert.throws(() => validateBrief(dupRank, 'en'), /rank/);
+  const missing = structuredClone(good);
+  delete missing.blocks.auditable;
+  assert.throws(() => validateBrief(missing, 'en'), /auditable/);
+});
+
+test('renderBrief orders blocks by rank and carries flags + hardest asks', () => {
+  const md = renderBrief({ brief: stubOutput('CALL-BRIEF-TASK'), row: cal, workflowId: 'wf-test' });
+  assert.ok(md.indexOf('STRUCTURED') < md.indexOf('EXPLICIT')); // rank 1 before rank 5
+  assert.match(md, /Do not skip under time pressure/);
+  assert.match(md, /show-me ask/i);
+});
+
+test('brief prompt embeds the runbook call-block table', () => {
+  const scorecard = { pillars: {}, total: 7 };
+  const p = buildBriefPrompt({ scorecard, decoded: decodedCal, locale: 'en' });
+  assert.match(p, /CALL-BRIEF-TASK/);
+  assert.match(p, /the state ask|trace pull/i);
 });
