@@ -156,3 +156,57 @@ test('skeleton prompt carries the template and the no-invention rule', () => {
   assert.match(p, /NEVER invent a fact/);
   assert.match(p, /PAGE 1 — Engagement & Verdict/);
 });
+
+// ── Task 6: CLI end-to-end (stubbed) ──────────────────────────────────────────
+
+function runCli(cliArgs, env = {}) {
+  return spawnSync('node', [join(TOOLS, 'intake-analyzer.mjs'), ...cliArgs], {
+    encoding: 'utf8',
+    env: { ...process.env, ANALYZER_CLAUDE_CMD: STUB, STUB_LLM_MODE: 'valid', ...env },
+  });
+}
+const CAL = join(TOOLS, 'fixtures', 'calibration-intake.json');
+
+test('usage error when neither/both of --row and --fixture', () => {
+  assert.equal(runCli([]).status, 2);
+});
+
+test('partial intake fails at fetch naming the missing fields', () => {
+  const out = mkdtempSync(join(tmpdir(), 'ia-'));
+  const r = runCli(['--fixture', join(TOOLS, 'fixtures', 'partial-intake.json'), '--out', out, '--no-db-log']);
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /❌ intake-analyzer failed at fetch/);
+  assert.match(r.stderr, /pillar_tolerant\.q1/);
+  assert.match(r.stderr, /never analyze a partial intake silently/);
+});
+
+test('persistently invalid LLM output → error path in ❌ format at score', () => {
+  const out = mkdtempSync(join(tmpdir(), 'ia-'));
+  const r = runCli(['--fixture', CAL, '--out', out, '--no-db-log'], { STUB_LLM_MODE: 'invalid' });
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /❌ intake-analyzer failed at score — score_structured: invalid LLM output after retry/);
+  assert.match(r.stderr, /safe to retry/);
+});
+
+test('invalid-once → retry recovers and the run completes', () => {
+  const out = mkdtempSync(join(tmpdir(), 'ia-'));
+  const r = runCli(['--fixture', CAL, '--out', out, '--no-db-log'],
+    { STUB_LLM_MODE: 'invalid-once', STUB_STATE_FILE: join(out, 'count') });
+  assert.equal(r.status, 0, r.stderr);
+});
+
+test('valid run writes all three artifacts + run-state with required banners/tags', () => {
+  const out = mkdtempSync(join(tmpdir(), 'ia-'));
+  const r = runCli(['--fixture', CAL, '--out', out, '--no-db-log']);
+  assert.equal(r.status, 0, r.stderr);
+  const sc = readFileSync(join(out, 'provisional-scorecard.md'), 'utf8');
+  assert.match(sc, /PROVISIONAL — scored from self-report only; confirms nothing \(rubric rule 3\)\. For engagement prep, never client delivery\./);
+  assert.match(sc, /Proposed total: 5\/15/); // stub scores every pillar 1
+  assert.match(sc, /bands are earned live/);
+  assert.match(readFileSync(join(out, 'call-brief.md'), 'utf8'), /show-me ask/i);
+  assert.match(readFileSync(join(out, 'memo-skeleton.md'), 'utf8'), /\[ANALYZER — re-judge\]/);
+  const rs = JSON.parse(readFileSync(join(out, 'run-state.json'), 'utf8'));
+  assert.equal(rs.state.stage, 'done');
+  assert.equal(rs.state.entityType, 'intake');
+  assert.equal(rs.scorecard.total, 5);
+});
