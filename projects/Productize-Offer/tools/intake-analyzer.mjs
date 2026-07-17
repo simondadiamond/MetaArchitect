@@ -25,7 +25,8 @@ const rowId = flag('--row');
 const fixturePath = flag('--fixture');
 const outFlag = flag('--out');
 const noDbLog = args.includes('--no-db-log');
-if (!!rowId === !!fixturePath) {
+const misparsed = [rowId, fixturePath, outFlag].some(v => v?.startsWith('--'));
+if (!!rowId === !!fixturePath || misparsed) {
   console.error('usage: node intake-analyzer.mjs (--row <uuid> | --fixture <path>) [--out <dir>] [--no-db-log]');
   process.exit(2);
 }
@@ -46,8 +47,13 @@ let _logEntry = null;
 async function log(fields) {
   const entry = { workflow_id: state.workflowId, entity_id: state.entityId, stage: state.stage, ...fields };
   if (noDbLog) { console.error(`[log] ${entry.step_name} ${entry.status} — ${entry.output_summary ?? ''}`); return; }
-  if (!_logEntry) ({ logEntry: _logEntry } = await import(SUPABASE_MJS));
-  await _logEntry(entry);
+  // Logging is T, not E: a pipeline.logs outage degrades to stderr, it never aborts the analysis.
+  try {
+    if (!_logEntry) ({ logEntry: _logEntry } = await import(SUPABASE_MJS));
+    await _logEntry(entry);
+  } catch (e) {
+    console.error(`[log-error] ${entry.step_name}: ${e.message}`);
+  }
 }
 async function setStage(stage) {
   state.stage = stage;
@@ -76,6 +82,9 @@ try {
   }
   const locale = row.locale;
   const decoded = decodeIntake(row, loadMessages(locale));
+  if (decoded.unrecognized.length) {
+    throw new StageError(`intake incomplete — select answers with no matching option: ${decoded.unrecognized.join(', ')} — never analyze a partial intake silently`);
+  }
   await log({ step_name: 'fetch_complete', status: 'success', output_summary: `row ${row.id} (${locale}) decoded, ${decoded.transcriptText.length} chars` });
 
   // 2 — score (one gated LLM call per pillar)
@@ -123,15 +132,15 @@ try {
     writeFileSync(p, content);
     if (statSync(p).size === 0) throw new StageError(`delivered file is empty: ${name}`);
   }
-  state.stage = 'done';
-  state.lastUpdatedAt = new Date().toISOString();
+  await setStage('done');
   writeFileSync(join(outDir, 'run-state.json'), JSON.stringify({ state, scorecard }, null, 2));
   await log({ step_name: 'run_summary', status: 'success', output_summary: `provisional total ${scorecard.total}/15; artifacts in ${outDir}` });
   console.log(`✔ intake-analyzer — 3 artifacts written to ${outDir}`);
   console.log(`  provisional total: ${scorecard.total}/15 — PROVISIONAL; re-judge every score against the anchors before it goes anywhere`);
 } catch (err) {
-  const msg = err instanceof StageError ? err.message : (err?.stack ?? String(err));
-  try { await log({ step_name: 'run_failed', status: 'error', output_summary: String(msg).slice(0, 500) }); } catch { /* logging must not mask the failure */ }
+  const msg = err instanceof StageError ? err.message : String(err?.message ?? err);
+  await log({ step_name: 'run_failed', status: 'error', output_summary: msg.slice(0, 500) });
   console.error(`❌ intake-analyzer failed at ${state.stage} — ${msg} — safe to retry (outputs overwrite on rerun)`);
+  if (!(err instanceof StageError) && err?.stack) console.error(err.stack);
   process.exit(1);
 }

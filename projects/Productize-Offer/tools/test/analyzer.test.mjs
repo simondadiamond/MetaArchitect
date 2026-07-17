@@ -9,7 +9,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { buildScorePrompt, buildBriefPrompt, buildSkeletonPrompt, extractSection, RUBRIC_PATH, MEMO_TEMPLATE_PATH } from '../lib/prompts.mjs';
 import { validateScore, validateBrief, validateSkeleton } from '../lib/validate.mjs';
-import { renderBrief } from '../lib/render.mjs';
+import { renderBrief, renderScorecard } from '../lib/render.mjs';
 import { spawnSync } from 'node:child_process';
 
 const TOOLS = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -209,4 +209,102 @@ test('valid run writes all three artifacts + run-state with required banners/tag
   assert.equal(rs.state.stage, 'done');
   assert.equal(rs.state.entityType, 'intake');
   assert.equal(rs.scorecard.total, 5);
+});
+
+// ── Review fixes: regression coverage ─────────────────────────────────────────
+
+import { FORM_DEF } from '../lib/form-schema.mjs';
+
+test('FORM_DEF stays in sync with both locales of the readiness form copy', () => {
+  for (const locale of ['en', 'fr']) {
+    const msgs = loadMessages(locale);
+    const byKey = Object.fromEntries(msgs.pillars.map(p => [p.key, p]));
+    for (const [key, qs] of Object.entries(FORM_DEF)) {
+      const copy = byKey[key];
+      assert.ok(copy, `${locale}: pillar ${key} missing from messages`);
+      for (const q of qs) {
+        const qc = copy.questions[q.id];
+        assert.ok(qc?.label, `${locale}: ${key}.${q.id} has no label in messages`);
+        if (q.type === 'select') assert.ok(Array.isArray(qc.options) && qc.options.length >= 2, `${locale}: ${key}.${q.id} select lacks options`);
+        if (q.type === 'scale') assert.ok(qc.scaleLow && qc.scaleHigh, `${locale}: ${key}.${q.id} scale lacks endpoint labels`);
+      }
+      const qids = new Set(qs.flatMap(q => [q.id, q.followUp?.id].filter(Boolean)));
+      for (const qid of Object.keys(copy.questions)) {
+        assert.ok(qids.has(qid), `${locale}: messages has ${key}.${qid} unknown to FORM_DEF`);
+      }
+    }
+  }
+});
+
+test('out-of-range select index is reported as unrecognized, out-of-range scale fails completeness', () => {
+  const bad = structuredClone(cal);
+  bad.pillar_structured.q3 = 9;        // only 4 options exist
+  bad.pillar_traceable.q5 = 42;        // scale is 1–5
+  assert.ok(checkCompleteness(bad).includes('pillar_traceable.q5'));
+  const d = decodeIntake(bad, loadMessages('en'));
+  assert.deepEqual(d.unrecognized, ['pillar_structured.q3']);
+});
+
+test('FR vous-form asks pass the screen-share gate', () => {
+  const frBrief = stubOutput('CALL-BRIEF-TASK');
+  frBrief.language = 'fr';
+  const frAsks = [
+    'Montrez-moi la ligne intake_runs d’une exécution en cours, à l’écran.',
+    'Partagez votre écran et affichez la trace complète d’une exécution de la semaine dernière.',
+    'Ouvrez le code de validation à la frontière d’écriture de la réclamation.',
+    'Exécutez la requête et montrez-moi le verrou dans la table, étape par étape.',
+    'Choisissez une décision du mois dernier et affichez, à l’écran, les données personnelles utilisées.',
+  ];
+  Object.values(frBrief.blocks).forEach((b, i) => { b.ask = frAsks[i]; });
+  validateBrief(frBrief, 'fr'); // must not throw
+});
+
+test('validateBrief rejects extra blocks and non-string flags', () => {
+  const extra = stubOutput('CALL-BRIEF-TASK');
+  extra.blocks.summary = { note: 'wrap-up' };
+  assert.throws(() => validateBrief(extra, 'en'), /unexpected blocks/);
+  const objFlags = stubOutput('CALL-BRIEF-TASK');
+  objFlags.top_flags = [{ flag: 'stage-confidence 4/5' }];
+  assert.throws(() => validateBrief(objFlags, 'en'), /top_flags/);
+});
+
+test('quote gate survives em-dash→hyphen and accent drift', () => {
+  const good = {
+    language: 'en', level: 1, anchor: 'Ad-hoc', confidence: 'HIGH',
+    rationale: 'The client names a manual weekly recovery ritual, which caps the pillar at the ad-hoc anchor.',
+    quotes: ['Law 25 - claimants are Quebec residents'],   // intake has "Law 25 — claimants are Québec residents"
+    optimism_flags: [],
+  };
+  validateScore(good, decodedCal.transcriptText, 'en'); // must not throw
+});
+
+test('parseJsonBlock skips braces in preamble prose', () => {
+  assert.deepEqual(parseJsonBlock('Applying rule {3} of the rubric: {"a":1}'), { a: 1 });
+});
+
+test('skeleton placeholder gate ignores prose braces without terminator, still catches inventions', () => {
+  const good = stubOutput('MEMO-SKELETON-TASK');
+  const withProse = { ...good, markdown: good.markdown + '\nThe state object looks like {WORKFLOW was here' };
+  validateSkeleton(withProse, template, 'en'); // "{WORKFLOW " has no } or : terminator — not a token
+  const invented = { ...good, markdown: good.markdown + '\n{MADE_UP_FIELD}' };
+  assert.throws(() => validateSkeleton(invented, template, 'en'), /invented placeholder/);
+});
+
+test('FR skeleton pending gate and renderers produce French scaffolding', () => {
+  const frRow = { ...cal, locale: 'fr' };
+  const frSkeleton = { language: 'fr', markdown: stubOutput('MEMO-SKELETON-TASK').markdown.replace(/pending call/g, 'à confirmer sur l’appel') };
+  validateSkeleton(frSkeleton, template, 'fr');
+  const frDecoded = decodeIntake(frRow, loadMessages('fr'));
+  const score = { language: 'fr', level: 1, anchor: 'Ad-hoc', confidence: 'MED', rationale: 'x'.repeat(50), quotes: ['a'], optimism_flags: [] };
+  const sc = renderScorecard({ scorecard: { pillars: { structured: score }, total: 1 }, row: frRow, decoded: frDecoded, workflowId: 'wf' });
+  assert.match(sc, /PROVISOIRE — noté à partir de l’auto-déclaration/);
+  assert.doesNotMatch(sc, /PROVISIONAL — scored from self-report/);
+  const frB = stubOutput('CALL-BRIEF-TASK');
+  const br = renderBrief({ brief: frB, row: frRow, workflowId: 'wf' });
+  assert.match(br, /Brief d’appel de confirmation/);
+});
+
+test('valueless --out is a usage error, not a silent fallback', () => {
+  const r = runCli(['--fixture', CAL, '--out', '--no-db-log']);
+  assert.equal(r.status, 2);
 });

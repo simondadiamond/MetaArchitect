@@ -80,7 +80,8 @@ export function checkCompleteness(row) {
       const bad =
         q.type === 'textarea' ? (!v || String(v).trim() === '') :
         q.type === 'multiSelect' ? (!Array.isArray(v) || v.length === 0) :
-        typeof v !== 'number';
+        q.type === 'scale' ? (!Number.isInteger(v) || v < 1 || v > 5) :
+        (!Number.isInteger(v) || v < 0); // select: index range-checked against options at decode
       if (bad) missing.push(`${col}.${q.id}`);
     }
   }
@@ -107,6 +108,7 @@ const isEmpty = (v) =>
 export function decodeIntake(row, messages) {
   const byKey = Object.fromEntries(messages.pillars.map(p => [p.key, p]));
   const pillars = [];
+  const unrecognized = []; // select indices with no matching option — analyzing them would be silent fabrication
   for (const [key, qs] of Object.entries(FORM_DEF)) {
     const copy = byKey[key];
     const answers = row[PILLAR_COLUMNS[key]] || {};
@@ -119,8 +121,12 @@ export function decodeIntake(row, messages) {
         answer = '(not answered)';
       } else if (q.type === 'select') {
         const opts = qCopy.options ?? [];
-        answer = typeof raw === 'number' && opts[raw] !== undefined
-          ? opts[raw] : `(unrecognized option: ${JSON.stringify(raw)})`;
+        if (typeof raw === 'number' && opts[raw] !== undefined) {
+          answer = opts[raw];
+        } else {
+          answer = `(unrecognized option: ${JSON.stringify(raw)})`;
+          unrecognized.push(`${PILLAR_COLUMNS[key]}.${q.id}`);
+        }
       } else if (q.type === 'scale') {
         answer = `${raw}/5  (1 = "${qCopy.scaleLow}", 5 = "${qCopy.scaleHigh}")`;
       } else if (q.type === 'multiSelect') {
@@ -160,5 +166,5 @@ export function decodeIntake(row, messages) {
     ...pillars.flatMap(p => p.qa.map(q => `${q.label}\n${q.answer}`)),
     ...engagement.map(q => `${q.label}\n${q.answer}`),
   ].join('\n\n');
-  return { intro, pillars, engagement, transcriptText };
+  return { intro, pillars, engagement, transcriptText, unrecognized };
 }
