@@ -7,8 +7,8 @@ import { checkCompleteness, decodeIntake, loadMessages } from '../lib/form-schem
 import { validatedLLMCall, parseJsonBlock, StageError } from '../lib/llm.mjs';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { buildScorePrompt, buildBriefPrompt, extractSection, RUBRIC_PATH } from '../lib/prompts.mjs';
-import { validateScore, validateBrief } from '../lib/validate.mjs';
+import { buildScorePrompt, buildBriefPrompt, buildSkeletonPrompt, extractSection, RUBRIC_PATH, MEMO_TEMPLATE_PATH } from '../lib/prompts.mjs';
+import { validateScore, validateBrief, validateSkeleton } from '../lib/validate.mjs';
 import { renderBrief } from '../lib/render.mjs';
 import { spawnSync } from 'node:child_process';
 
@@ -135,4 +135,24 @@ test('brief prompt embeds the runbook call-block table', () => {
   const p = buildBriefPrompt({ scorecard, decoded: decodedCal, locale: 'en' });
   assert.match(p, /CALL-BRIEF-TASK/);
   assert.match(p, /the state ask|trace pull/i);
+});
+
+// ── Task 5: skeleton stage ────────────────────────────────────────────────────
+
+const template = readFileSync(MEMO_TEMPLATE_PATH, 'utf8');
+
+test('validateSkeleton accepts stub, rejects invented placeholders and missing tags', () => {
+  const good = stubOutput('MEMO-SKELETON-TASK');
+  validateSkeleton(good, template, 'en'); // no throw
+  const invented = { ...good, markdown: good.markdown + '\n{MADE_UP_FIELD}' };
+  assert.throws(() => validateSkeleton(invented, template, 'en'), /invented placeholder/);
+  const untagged = { ...good, markdown: good.markdown.replaceAll('[ANALYZER — re-judge]', '') };
+  assert.throws(() => validateSkeleton(untagged, template, 'en'), /re-judge/);
+});
+
+test('skeleton prompt carries the template and the no-invention rule', () => {
+  const p = buildSkeletonPrompt({ scorecard: { pillars: {}, total: 7 }, decoded: decodedCal, row: cal, locale: 'en' });
+  assert.match(p, /MEMO-SKELETON-TASK/);
+  assert.match(p, /NEVER invent a fact/);
+  assert.match(p, /PAGE 1 — Engagement & Verdict/);
 });
