@@ -15,7 +15,7 @@ The confirmation call must never be improvised. The analyzer reads the client's 
 ## Input
 
 - Source: `state_readiness_diagnostic` table (simonparis-website Supabase project) — one row per submission: intro block (system name, role, company size, industry, prod status, regulations[]), five pillar sections (structured/traceable/auditable/tolerant/explicit: textarea narratives, selects, multiSelects, confidence scales), engagement context (4 narratives).
-- Trigger: manual (`node tools/intake-analyzer.mjs --row <uuid>` or a slash command) after the ntfy "New /readiness submission" ping. No cron, no auto-fire — an engagement tool runs when an engagement exists.
+- Trigger: automatic, attempt-once (Simon's call 2026-07-17, superseding the manual-only line — the intake is post-payment, so a submission IS an engagement). `tools/intake-watch.mjs` runs every 15 min via Command Center schedule: new rows get a `watch_dispatch` marker in `pipeline.logs`, one analyzer run, and an ntfy with the outcome. Any row with an existing logs entry is never auto-retried — after a failure, reruns are manual: `node tools/intake-analyzer.mjs --row <uuid> --model claude-sonnet-5`.
 - Locale: EN or FR row → all three outputs in the same language.
 
 ## Pipeline (STATE medium risk: S + T + E mandatory)
