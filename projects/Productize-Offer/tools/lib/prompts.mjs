@@ -67,7 +67,8 @@ ${qa}
 ## Your task
 1. Apply the anchors to the claims exactly as stated. All-criteria rule; torn between two levels → take the lower.
 2. Optimism flags: any claim that pattern-matches "tooling installed ≠ property held". The classic tell is a confidence scale of 4–5 alongside a narrative that describes ad-hoc practice. Flag each with the claim and why it reads optimistic. An empty array is a valid answer.
-3. ${langLine(locale)}
+3. Quotes are copied character-for-character from the A: answer lines above — never from the question text. Include at least one substantial narrative phrase (a dozen characters or more); short select answers ("No", "Yes for all") may appear only alongside it.
+4. ${langLine(locale)}
 
 Return ONLY a JSON object (no markdown fence, no prose) with exactly this shape:
 {"language":"${locale}","level":<integer 0-3>,"anchor":"<Absent|Ad-hoc|Systematic|Enforced — must match the level>","rationale":"<3-6 sentences applying the anchor criteria to their answers>","quotes":["<phrases copied character-for-character from the answers above; at least one>"],"confidence":"<LOW|MED|HIGH>","optimism_flags":[{"claim":"…","why":"…"}]}`;

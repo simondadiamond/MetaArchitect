@@ -308,3 +308,16 @@ test('valueless --out is a usage error, not a silent fallback', () => {
   const r = runCli(['--fixture', CAL, '--out', '--no-db-log']);
   assert.equal(r.status, 2);
 });
+
+test('short select-answer quotes pass only alongside a substantial phrase', () => {
+  const base = {
+    language: 'en', level: 1, anchor: 'Ad-hoc', confidence: 'HIGH',
+    rationale: 'Call-level retries only; the client describes a weekly manual recovery ritual for stuck runs.',
+    optimism_flags: [],
+  };
+  validateScore({ ...base, quotes: ['No', 'On-call re-injects the stuck emails by hand'] }, decodedCal.transcriptText, 'en');
+  assert.throws(
+    () => validateScore({ ...base, quotes: ['No'] }, decodedCal.transcriptText, 'en'),
+    /substantial phrase/,
+  );
+});

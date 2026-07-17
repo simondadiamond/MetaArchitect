@@ -18,10 +18,15 @@ export function validateScore(obj, transcriptText, locale) {
   if (typeof obj.rationale !== 'string' || obj.rationale.trim().length < 40) throw new Error('rationale missing or too thin');
   if (!Array.isArray(obj.quotes) || obj.quotes.length < 1) throw new Error('at least one client quote required');
   const hay = norm(transcriptText);
+  // Select-heavy pillars legitimately quote short answers ("No", "Yes for all"),
+  // so the anti-fabrication weight sits on requiring ONE substantial phrase.
+  let substantial = false;
   for (const q of obj.quotes) {
-    if (typeof q !== 'string' || q.trim().length < 8) throw new Error('quote too short to be evidence');
+    if (typeof q !== 'string' || q.trim().length < 2) throw new Error('empty quote');
     if (!hay.includes(norm(q))) throw new Error(`quote not found verbatim in the intake: "${String(q).slice(0, 60)}"`);
+    if (q.trim().length >= 12) substantial = true;
   }
+  if (!substantial) throw new Error('at least one quote must be a substantial phrase (≥12 chars) from the answers');
   if (!['LOW', 'MED', 'HIGH'].includes(obj.confidence)) throw new Error('confidence must be LOW|MED|HIGH');
   if (!Array.isArray(obj.optimism_flags)) throw new Error('optimism_flags must be an array');
   for (const f of obj.optimism_flags) {
