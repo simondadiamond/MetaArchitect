@@ -48,7 +48,9 @@ const headers = { apikey: SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${SU
 async function ntfy(title, body) {
   if (!NTFY_URL) { console.log(`[ntfy skipped] ${title}: ${body}`); return; }
   try {
-    await fetch(NTFY_URL, { method: 'POST', headers: { Title: title }, body, signal: AbortSignal.timeout(10_000) });
+    // HTTP headers are ByteStrings — anything beyond latin1 in Title throws.
+    const asciiTitle = title.replace(/[^\x20-\x7e]/g, '-');
+    await fetch(NTFY_URL, { method: 'POST', headers: { Title: asciiTitle }, body, signal: AbortSignal.timeout(10_000) });
   } catch (e) { console.error(`[ntfy failed] ${e.message}`); }
 }
 
