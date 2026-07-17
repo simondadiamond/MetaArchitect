@@ -51,6 +51,7 @@ A white-label LinkedIn ghostwriting service for AI/dev-tool founders, powered by
 ## Open items
 
 - ~~Simon's strengths/weaknesses profile~~ **DONE 2026-07-17** — saved as 5 brain notes (`brain find "Simon profile"`, tags: profile). Key facts: prompter/systems-builder not a prose writer; failure modes are analysis paralysis + optimizing past good-enough + project-stacking overload (guard the timebox); the CPA/auditor credential belongs to Valerie (his girlfriend), NOT Simon — she's a compliance domain expert adjacent to the Law 25 pillar. **Attack order decided: anglo AI/dev-tool founders first** (English content credential, profile-as-demo, higher rates), Quebec bilingual as second wave/upsell.
+- **Sales profile (added later 2026-07-17, brain: simon-sales-profile):** fully bilingual; prior sales experience; consultative listen-first style (surface real needs → present a solution covering them, friend-not-salesman posture); natural rapport — people open up within minutes. Implication: the close step is de-risked, and the monthly client call doubles as the content-mining mechanism — his rapport talent extracts the stories/details the pipeline turns into posts. Sales motion should be DM → short discovery call → proposal, playing to this, not a pitch deck.
 - Postiz analytics API check (feeds the feedback-loop decision).
 - First-prospect shortlist (candidates likely already in engage_targets — the superstar list in command-center Supabase).
 - Contract template (ownership split: client owns posts, Simon owns engine/prompts/pipeline).
