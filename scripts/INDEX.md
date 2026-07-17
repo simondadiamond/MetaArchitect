@@ -25,3 +25,5 @@ Content-pipeline gates live next to their tools in `projects/Content-Engine/tool
 - ../projects/Content-Engine/tools/validate-manifest.mjs — carousel C3 manifest gate (`<manifest.json> <draftId|scores.json>`) (born 2026-07-13)
 - ../projects/Content-Engine/tools/postiz-guards.mjs — pure guards for postiz.mjs: ±2h slot conflicts, ISO-week cadence, nudger liveness, edit-content linkedin-gate run (born 2026-07-13)
 - postiz-worker-watchdog.sh — heals the silent reboot-race where the postiz orchestrator loses its Temporal workers but reports healthy (lessons.md 2026-07-14): temporal healthy + postiz past warmup + zero pollers on linkedin/main queues → docker restart postiz + ntfy, re-verify, exit 1 if still dead; `--dry-run`, `--self-test`; scheduled */10 min via Command Center (born 2026-07-14)
+- blog-hero-figure/render.mjs — hero-figure SVG → 2:1 PNG @2x with brand fonts baked in (`<figure.svg> <out.png>`); the render half of the hero-figure skill loop (born 2026-07-16)
+- blog-hero-figure/publish.mjs — upload hero PNG+SVG to public blog-assets bucket and set blog_posts.hero_image_url/alt (`<slug> <png> <svg> "<alt>"`); refuses unknown slugs (born 2026-07-16)

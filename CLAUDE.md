@@ -116,7 +116,7 @@ curl -s -X POST http://100.105.85.5:3737/api/schedules \
 
 1. **Code change in a registered target repo** (command-center or simonparis-website — NOT this MetaArchitect repo). Agent profiles (`.claude/agents/*.md`), brand files, skills, and CLAUDE.md live in MetaArchitect — edits to them are session work, never stories. The `~/.claude/agents/*.md` files are symlinks into this repo, so "upgrade agent X" always means a MetaArchitect edit. A story whose subject file isn't in the chosen `target_repo` will (correctly) fail at planning.
 2. **Small/medium**: describable in a few sentences, expected to touch ~1–5 files
-3. **Checkable success criteria**: the verify stage must be able to judge pass/fail by driving the running app or reading test output — "make it nicer" doesn't qualify, "the nav links render in #C97A1A on /blog" does
+3. **Checkable success criteria**: the verify stage must be able to judge pass/fail by driving the running app or reading test output — "make it nicer" doesn't qualify, "the nav links render in #C97A1A on /blog" does. If a criterion drives a MUTATING action (a button that promotes/deletes/publishes), it must tell the verifier to create its own disposable fixture and clean it up — never name a production row/note/record as the click target (lessons.md 2026-07-16: a verify stage promoted a real brain note it was told to click)
 4. **No open design decisions**: if you'd need to ask Simon something mid-task, resolve it in chat first, then queue
 
 ### Keep in-session when ANY of these hold

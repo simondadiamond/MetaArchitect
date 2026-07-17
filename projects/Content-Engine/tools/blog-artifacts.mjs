@@ -1,5 +1,6 @@
 // tools/blog-artifacts.mjs — blog pipeline artifacts + stage transitions (public schema).
 import { createClient } from '@supabase/supabase-js';
+import { ntfy } from './supabase.mjs';
 import { config } from 'dotenv';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -60,6 +61,25 @@ function stagePatch(stage, reason) {
 const isMissingLastError = e =>
   (e?.code === '42703' || e?.code === 'PGRST204') && /last_error/.test(e.message ?? '');
 
+// Human-checkpoint notification (2026-07-15): every transition INTO an awaiting_*
+// stage pings Simon via ntfy. Lives here — the single choke point both blog-outline
+// and blog-factcheck route through — so no skill can forget to notify. Best-effort:
+// a failed ping never fails the transition.
+const GATE_LABELS = {
+  awaiting_outline_approval: 'outline approval',
+  awaiting_final_review: 'final review',
+};
+async function notifyCheckpoint(ideaId, stage) {
+  if (!stage.startsWith('awaiting_')) return;
+  try {
+    const { data } = await pub.from('blog_ideas')
+      .select('title_working, post_type').eq('id', ideaId).maybeSingle();
+    const title = (data?.title_working ?? ideaId).slice(0, 80);
+    const kind = data?.post_type === 'teardown' ? 'Teardown' : 'Blog post';
+    await ntfy(`${kind} "${title}" awaits ${GATE_LABELS[stage] ?? stage} — CC /blog`);
+  } catch { /* never fail the transition over a ping */ }
+}
+
 export async function setStage(ideaId, stage, reason) {
   if (!okStage(stage)) throw new Error(`invalid stage: ${stage}`);
   const patch = stagePatch(stage, reason);
@@ -69,6 +89,7 @@ export async function setStage(ideaId, stage, reason) {
     ({ error } = await pub.from('blog_ideas').update(patch).eq('id', ideaId));
   }
   if (error) throw error;
+  await notifyCheckpoint(ideaId, stage);
 }
 export async function claimStage(ideaId, fromStage, toStage, reason) {
   if (!okStage(toStage)) throw new Error(`invalid stage: ${toStage}`);
@@ -80,7 +101,10 @@ export async function claimStage(ideaId, fromStage, toStage, reason) {
     ({ data, error } = await pub.from('blog_ideas')
       .update(patch).eq('id', ideaId).eq('stage', fromStage).select('id'));
   }
-  if (error) throw error; return (data ?? []).length === 1;
+  if (error) throw error;
+  const claimed = (data ?? []).length === 1;
+  if (claimed) await notifyCheckpoint(ideaId, toStage);
+  return claimed;
 }
 export async function listActionable(limit = 10) {
   const { data, error } = await pub.from('blog_ideas')
