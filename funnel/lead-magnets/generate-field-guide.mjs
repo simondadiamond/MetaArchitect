@@ -4,9 +4,11 @@ import { dirname, join } from 'path';
 import { mkdirSync } from 'fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const htmlPath = join(__dirname, 'state-field-guide.html');
-const pdfPath = join(__dirname, 'state-field-guide.pdf');
-const previewDir = join(__dirname, '.preview');
+const variant = process.argv[2] === 'fr' ? 'fr' : 'en';
+const base = variant === 'fr' ? 'state-field-guide-fr' : 'state-field-guide';
+const htmlPath = join(__dirname, `${base}.html`);
+const pdfPath = join(__dirname, `${base}.pdf`);
+const previewDir = join(__dirname, '.preview', variant);
 mkdirSync(previewDir, { recursive: true });
 
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
