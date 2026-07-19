@@ -1,6 +1,7 @@
 # Handoff — Workflow Rescue Launch Kit
 
-status: killed (2026-07-19, Simon's call — do NOT execute)
+status: abandoned
+<!-- killed 2026-07-19, Simon's call — do NOT execute -->
 goal_id: f7cddc35-304f-44b5-a90e-b50542d31614 (archived)
 updated: 2026-07-19
 

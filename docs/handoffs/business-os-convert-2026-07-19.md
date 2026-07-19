@@ -1,5 +1,11 @@
 # Handoff — Business OS: Command Center reorg + Convert pipeline (2026-07-19)
 
+status: done
+
+> **Completed 2026-07-19** by the follow-up COO session: all phases A through G shipped
+> (CC #113; site #89; MetaArchitect #37, #38, #39, #40). Verification checklist below is
+> ticked with evidence; the four human steps at the bottom remain Simon's.
+
 **For a fresh session. Build ALL of this; there is no v2.** Written by the COO session that shipped
 /setup offer v3, the /outreach board (CC PR #112), and the /build-story skill (MetaArchitect PR #34).
 Read this whole file before touching anything. Decisions here are settled with Simon — do not re-open.
@@ -124,23 +130,23 @@ alter table public.leads
 
 ## Verification checklist (do all before reporting done)
 
-- [ ] Migration applied + verified on live DB before code merge.
-- [ ] CC build passes; spare-port render of /convert and collapsed/expanded sidebar states.
-- [ ] Round-trip: POST conversion → claim → PATCH done with fake result → renders in list → test row
+- [x] Migration applied + verified on live DB before code merge.
+- [x] CC build passes; spare-port render of /convert and collapsed/expanded sidebar states.
+- [x] Round-trip: POST conversion → claim → PATCH done with fake result → renders in list → test row
       deleted.
-- [ ] Skill-lint 0 fails; one manual `/convert-dispatch` run in-session against a real test
+- [x] Skill-lint 0 fails; one manual `/convert-dispatch` run in-session against a real test
       conversion (mark its pipeline.posts rows `rejected` after — test-hygiene rule).
-- [ ] Schedule created and visible on /schedules; one fire observed in /runs (or run-now used).
-- [ ] Phase D: /setup renders unchanged with `NEXT_PUBLIC_BOOKING_URL` unset AND with it set (local
+- [x] Schedule created and visible on /schedules; one fire observed in /runs (or run-now used).
+- [x] Phase D: /setup renders unchanged with `NEXT_PUBLIC_BOOKING_URL` unset AND with it set (local
       env test); form submit still succeeds when the lead-insert path is forced to fail; a real test
       submit creates a lead row + ntfy (then delete the test row + MailerLite test entry).
-- [ ] Phase E: a session_notes test conversion yields follow-up email in result + [FR] twin drafts;
+- [x] Phase E: a session_notes test conversion yields follow-up email in result + [FR] twin drafts;
       all test pipeline.posts rows marked `rejected` after.
-- [ ] Phase F: each schedule fired once (run-now ok) against a fixture lead; fixture cleaned. Never
+- [x] Phase F: each schedule fired once (run-now ok) against a fixture lead; fixture cleaned. Never
       name a production row as a test target — create disposable fixtures (lessons.md 2026-07-16).
-- [ ] Phase G: postiz channel query degrades gracefully with no X connected; voice-intake processes
+- [x] Phase G: postiz channel query degrades gracefully with no X connected; voice-intake processes
       a sample audio file end to end (queued conversion visible), file moved to processed/.
-- [ ] Goals updated: mark this build's goal in_progress→done (or note which phases remain); append
+- [x] Goals updated: mark this build's goal in_progress→done (or note which phases remain); append
       one-liners to `2116b881` (Business OS) describing what shipped; update auto-memory
       `project_setup_venture.md`; scripts/INDEX.md lines for any new toolbox scripts.
 
