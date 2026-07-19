@@ -17,7 +17,7 @@ Canvas: `1360×680` viewBox (2:1). Reuse this skeleton:
 
 - Background: `#0F0F0F` + 40px grid pattern of `#1A1A1A` hairlines
 - Boxes: fill `#1A1A1A`, stroke `#333333`, zero radius
-- Text: `font-family="'Roboto Mono', monospace"`; eyebrow 13px letter-spacing 2 `#777777` at top-left (x=140, y=86); labels 12-13px `#B4B4B4`/`#EAEAEA`; annotations 11-12px `#777777`
+- Text: `font-family="'Roboto Mono', monospace"`. **Type floor (hard rule, lesson 2026-07-19): nothing below 20px on the 1360 canvas** — the figure displays at 680px (half size), so 20px canvas = 10px rendered. Eyebrow 22px letter-spacing 3 `#777777` at top-left (x=80, y=92); primary labels 24-26px `#EAEAEA`; secondary labels 20-21px `#B4B4B4`/`#777777`. If text doesn't fit, cut words — never size. The first pilot shipped with 11-13px labels and was unreadable in the column.
 - Arrows: 1.5px `#777777` or `#333333` with small chevron markers; dashed = failed/blocked/naive path
 - **Exactly one orange (`#E04500`) element** — the thing the post says is right
 - Red (`#F85149`) only for failures/consequences
@@ -37,7 +37,7 @@ Read the PNG (the image, not the file listing) and critique against this checkli
 2. One orange element only; red only on failure; every other color from the palette
 3. No text overflows its box; no line crossings at meaningful points; labels don't collide
 4. Vertically balanced on the canvas (no floating in the top half)
-5. Legible at 680px wide (the reading column) — squint test on the PNG at half size
+5. **Column-width proof (mandatory, not a squint test):** composite the PNG into a page at `width:680px` via a data URI (`<img src="data:image/png;base64,...">` — file:// URLs don't load in the sandboxed browser), screenshot it, Read the screenshot, and confirm every label is readable and nothing clips the canvas edge. A figure that has not passed this render does not ship.
 6. Zero border-radius, no gradients, no shadows, no emoji glyphs beyond ✕
 
 ## 4. Publish
