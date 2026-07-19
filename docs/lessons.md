@@ -701,3 +701,19 @@ Building the command-center Schedules ticker: `instrumentation.ts` with early-re
 **Fix applied:** Guarded operations (gh pr merge by number) now run standalone; the merge-wait-verify loop promoted to `scripts/pr-merge-when-green.sh` so it stops being re-improvised. One-liner appended to goal 2116b881.
 **The generalizable rule:** never pack a hook-guarded command into a compound chain, and never let a grep-on-output be a load-bearing link in `&&` — run the risky step alone, check its result, then proceed.
 **Where documented:** This entry; `scripts/pr-merge-when-green.sh` + scripts/INDEX.md; goal 2116b881.
+
+## 2026-07-19 — Non-ASCII in HTTP header values throws: an em-dash in an ntfy Title killed the watcher's ping
+
+**What happened:** The intake-watcher's success notification never reached Simon on its first live run — `fetch` threw `Cannot convert argument to a ByteString` because the Title header contained an em-dash (charcode 8212). The analyzer run itself succeeded; only the ping died, which is the worst failure shape for a notification: silent from the recipient's side.
+**Root cause:** HTTP header values are latin1 ByteStrings; anything above charcode 255 is illegal. Brand voice loves em-dashes, so any header built from generated or brand-styled text carries this landmine. Two more callers had it latent: `scripts/outreach-stale-nudge.mjs` and `projects/Content-Engine/tools/postiz-comment-nudge.mjs` (post hooks routinely contain em-dashes).
+**Fix applied:** All three ntfy callers now ASCII-sanitize the Title (`replace(/[^\x20-\x7e]/g,'-')`); rich text stays in the body, which is sent as UTF-8 and renders fine. Caught live by the watcher E2E (MetaArchitect PR #31).
+**The generalizable rule:** never put generated or brand-styled text into an HTTP header value unsanitized — headers are ASCII territory, bodies are UTF-8 territory. And test the notification path itself, not just the work it reports on.
+**Where documented:** This entry; the three ntfy call sites.
+
+## 2026-07-19 — Follow-up commits on a squash-merged branch make the next PR unmergeable
+
+**What happened:** After PR #29 was squash-merged, a small fix was committed on the same branch and opened as PR #30 — GitHub reported CONFLICTING/DIRTY and it could not be merged. The branch's pre-squash history no longer relates cleanly to main once the squash rewrote it as one commit. Cost: a dead PR and ~10 minutes.
+**Root cause:** Squash-merge severs the ancestry between the branch and main. The old branch keeps its original commits; replaying them alongside a follow-up produces conflicts against the squashed copy. Force-push repair is hook-denied on this machine (by design).
+**Fix applied:** Closed #30, cherry-picked the fix onto a fresh branch off origin/main, merged as PR #31 cleanly.
+**The generalizable rule:** after a squash-merge, the branch is dead — never push follow-ups from it. New work, however small, starts from a fresh branch off updated origin/main (cherry-pick if the commit already exists).
+**Where documented:** This entry.

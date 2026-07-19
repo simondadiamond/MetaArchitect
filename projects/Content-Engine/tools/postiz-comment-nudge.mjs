@@ -26,7 +26,8 @@ const API = process.env.POSTIZ_API_URL, KEY = process.env.POSTIZ_API_KEY, NTFY =
 if (!API || !KEY || !NTFY) { console.error('missing POSTIZ_API_URL / POSTIZ_API_KEY / NTFY_URL'); process.exit(1); }
 
 async function ping(title, body) {
-  const r = await fetch(NTFY, { method: 'POST', headers: { Title: title, Priority: 'high', Tags: 'speech_balloon' }, body });
+  // HTTP header values are latin1 ByteStrings — non-ASCII (em-dashes in hooks) throws (lessons.md 2026-07-19)
+  const r = await fetch(NTFY, { method: 'POST', headers: { Title: title.replace(/[^\x20-\x7e]/g, '-'), Priority: 'high', Tags: 'speech_balloon' }, body });
   if (!r.ok) throw new Error(`ntfy ${r.status}`);
 }
 
