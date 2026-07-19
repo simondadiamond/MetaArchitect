@@ -1,7 +1,7 @@
 # Workflow Rescue — Side-Quest Offer Design
 
 > Owner: Simon Paris · Produced by: COO brainstorm session, 2026-07-09
-> Status: DRAFT — pending Simon's review
+> Status: KILLED 2026-07-19 (Simon) — see docs/handoffs/2026-07-15-workflow-rescue-launch-kit.md for rationale; do not build
 > Relationship to main ladder: side quest, firewalled. Does NOT touch offer-ladder.md tiers or the Agent Factory Kit (§9). Different buyer (SMB/solopreneur with broken automations), different channel (freelance marketplaces), different positioning language.
 
 ---
