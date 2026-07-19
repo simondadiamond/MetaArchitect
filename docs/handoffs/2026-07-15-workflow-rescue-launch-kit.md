@@ -1,8 +1,13 @@
 # Handoff — Workflow Rescue Launch Kit
 
-status: ready
-goal_id: f7cddc35-304f-44b5-a90e-b50542d31614
-updated: 2026-07-15
+status: abandoned
+<!-- killed 2026-07-19, Simon's call — do NOT execute -->
+goal_id: f7cddc35-304f-44b5-a90e-b50542d31614 (archived)
+updated: 2026-07-19
+
+> **KILLED before execution.** Race-to-the-bottom marketplace economics + zero-review cold start,
+> and the ghostwriter + setup ventures now fill the side-income slot at 5–10x transaction size.
+> Kept as paid-for thinking; revive only if both other ventures stall. Full rationale on the goal.
 
 > Goal: `f7cddc35` (child of Fable 5 Final Week initiative `646c7760`) — the last of the five.
 > Written 2026-07-15 by COO session. Intended to be handed to a fresh Fable 5 session verbatim.

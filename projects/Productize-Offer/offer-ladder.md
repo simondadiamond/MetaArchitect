@@ -33,10 +33,10 @@ The research is consistent: a starter with no social proof should **never buy tr
 
 | # | Public title (per locked naming rule) | Scope | Founding | Full | Slots |
 |---|---|---|---|---|---|
-| 1 | **AI Readiness Diagnostic** | 2–3 days, written findings memo (5 pp), 1-hr readout, EN/FR | **$2,500** | $3,500 | 5 — closes when all 5 delivered+debriefed OR 2026-12-31 |
-| 2 | **Production AI Audit** | 2 weeks, full STATE audit, remediation plan, named artifacts, 90-min presentation | **$6,500** | $9,500 | 3 — closes when all 3 delivered AND ≥2 case studies live OR 2027-03-31 |
-| 3 | **Team Training** — "Agentic Development for Teams" | Half-day or full-day workshop, remote-first (on-site travel billed), hands-on with the client's codebase, EN/FR | Half-day **$3,000** · Full-day **$4,500** | $4,500 / $6,500 | 3 — closes when 3 delivered with testimonials OR 2027-06-30 |
-| 4 | **Fractional LLMOps Engineer** (ext.) / AI Reliability Specialist | Day-blocks: **1 day/wk = $5,500/mo · 2 days/wk = $9,000/mo** founding; full $7,000 / $12,000 | see left | see left | 2 — closes when both signed OR 2027-06-30 |
+| 1 | **AI Readiness Diagnostic** | 2–3 days, written findings memo (5 pp), 1-hr readout, EN/FR | **$2,500** | $3,500 | 5 — closes when all 5 delivered+debriefed OR 2027-06-30 |
+| 2 | **Production AI Audit** | 2 weeks, full STATE audit, remediation plan, named artifacts, 90-min presentation | **$6,500** | $9,500 | 3 — closes when all 3 delivered AND ≥2 case studies live OR 2027-09-30 |
+| 3 | **Team Training** — "Agentic Development for Teams" | Half-day or full-day workshop, remote-first (on-site travel billed), hands-on with the client's codebase, EN/FR | Half-day **$3,000** · Full-day **$4,500** | $4,500 / $6,500 | 3 — closes when 3 delivered with testimonials OR 2027-12-31 |
+| 4 | **Fractional LLMOps Engineer** (ext.) / AI Reliability Specialist | Day-blocks: **1 day/wk = $5,500/mo · 2 days/wk = $9,000/mo** founding; full $7,000 / $12,000 | see left | see left | 2 — closes when both signed OR 2027-12-31 |
 
 - Diagnostic carries the **better-than-risk-free guarantee** (§1b.3): refund on request within 14 days of readout, client keeps all deliverables.
 - Never "Fractional AI Reliability Lead" externally (invented category — locked goals rule).
@@ -63,6 +63,8 @@ The research is consistent: a starter with no social proof should **never buy tr
 **Amendment 6 — Team Training tier inserted (added 2026-07-03, Simon-approved).** The founding doc and the original three-tier ladder had no capability-transfer offer, which lost every audit client who couldn't budget a monthly retainer and gave kit-inbound engineering managers (§9) nothing to buy below $5,500/mo. Fix: **"Agentic Development for Teams"** workshops as tier 3 (§2) — half-day $3,000 founding / $4,500 full, full-day $4,500 founding / $6,500 full, market-checked 2026-07-03 (sources and the half-day adjustment rationale in §2 notes). Remote-first, on-site travel billed to client, EN/FR (francophone Quebec delivery is a near-empty niche). Fixed-scope and fixed-price only — never a retainer-in-disguise (brief's time-risk rule). **Explicitly NOT the parked Phase 4 workshop** from the roadmap: that was an audience-funnel practitioner workshop gated on ~1K followers; this is a B2B engagement sold 1:1 through the ladder and via kit inbound — it needs one buyer, not an audience, so the roadmap's sequencing rule is not violated.
 
 **Scope note — prospect geography (locked 2026-07-03).** Outbound is **Canada-wide with Quebec overweight (~50–60% QC)**, not Quebec-only. Rationale: Law 25 follows Quebec residents' personal information regardless of company HQ; OSFI guideline E-23 (model risk management, in force 2027) covers every federally regulated financial institution nationally; French-language delivery remains the differentiator where it applies. The moat is positioning, not a filter (founding doc §2 already says so).
+
+**Amendment 7 — Founding deadlines pushed +6 months (added 2026-07-19, Simon-approved).** Crawl-first strategy adopted: the consumer ladder (/setup productized workspace setups, office-hours meetups) runs first for reps, testimonials, and insider knowledge; the corporate motion (this ladder) activates on pull, with blog + teardowns → LinkedIn building credibility on autopilot in the meantime. The original founding calendar deadlines assumed corporate outreach starting mid-2026 and would have expired unused. Fix: Diagnostic 2026-12-31 → **2027-06-30**, Audit 2027-03-31 → **2027-09-30**, Training & Retainer 2027-06-30 → **2027-12-31** (§2 updated). Slot counts and all prices unchanged.
 
 ## 4. Is the Oct 2026 retainer target credible?
 

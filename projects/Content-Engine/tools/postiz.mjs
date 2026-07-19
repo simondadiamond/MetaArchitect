@@ -33,6 +33,7 @@ config({ path: new URL('../../command-center/.env', import.meta.url).pathname, q
 const API = process.env.POSTIZ_API_URL;
 const KEY = process.env.POSTIZ_API_KEY;
 const INTEGRATION = process.env.POSTIZ_LINKEDIN_INTEGRATION_ID || 'cmr9mqq1j0001pl79vupzw2id';
+const X_INTEGRATION = process.env.POSTIZ_X_INTEGRATION_ID; // no default — feature-flagged on existence
 const NTFY = process.env.NTFY_URL;
 const CC_URL = process.env.COMMAND_CENTER_URL || 'http://100.105.85.5:3737';
 
@@ -58,11 +59,49 @@ async function loadRow(rowId) {
   return data;
 }
 
-async function postizCreate(content, date, images) {
+/**
+ * Connected Postiz channels. Degrades to [] on any error — callers treat an
+ * unreachable/errored query as "no extra channels", never as fatal.
+ */
+export async function connectedIntegrations() {
+  try {
+    const res = await fetch(`${API}/integrations`, {
+      headers: { Authorization: KEY }, signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return [];
+    const body = await res.json();
+    const list = Array.isArray(body) ? body : body.integrations ?? [];
+    return Array.isArray(list) ? list : [];
+  } catch { return []; }
+}
+
+/**
+ * X channel id, or null while no X integration is connected (the feature
+ * flag for everything X-related). POSTIZ_X_INTEGRATION_ID overrides discovery.
+ */
+export async function xIntegration() {
+  if (X_INTEGRATION) return X_INTEGRATION;
+  const found = (await connectedIntegrations()).find((i) =>
+    /^(x|twitter)$/i.test(String(i.identifier ?? i.providerIdentifier ?? i.provider ?? '')));
+  return found?.id ? String(found.id) : null;
+}
+
+/** Integration for a pipeline.posts row: linkedin (default) or x (must be connected). */
+async function integrationFor(row) {
+  if (row.platform !== 'x') return INTEGRATION;
+  const xid = await xIntegration();
+  if (!xid) {
+    throw new Error('no X channel connected in Postiz — connect X in the Postiz UI (or set '
+      + 'POSTIZ_X_INTEGRATION_ID); until then X variants stay in the conversion result jsonb');
+  }
+  return xid;
+}
+
+async function postizCreate(content, date, images, integrationId = INTEGRATION) {
   const res = await fetch(`${API}/posts`, {
     method: 'POST', headers: { Authorization: KEY, 'content-type': 'application/json' },
     body: JSON.stringify({ type: 'schedule', date, shortLink: false, tags: [],
-      posts: [{ integration: { id: INTEGRATION }, value: [{ content, image: images ?? [] }], group: '', settings: {} }] }),
+      posts: [{ integration: { id: integrationId }, value: [{ content, image: images ?? [] }], group: '', settings: {} }] }),
   });
   const body = await res.text();
   if (!res.ok) throw new Error(`Postiz create ${res.status}: ${body.slice(0, 300)}`);
@@ -118,7 +157,7 @@ export async function schedule(rowId, date, images = []) {
     console.warn(`⚠ WARNING: this would be post #${weekCount + 1} in ISO week ${isoWeek(date)} — target cadence is 2/week; proceeding anyway`);
   }
   if (row.first_comment?.trim()) await warnIfNudgerDead(rowId);
-  const pid = await postizCreate(row.draft_content, date, images);
+  const pid = await postizCreate(row.draft_content, date, images, await integrationFor(row));
   const media = images.length ? { ...(row.media ?? {}), images, image_count: images.length } : row.media;
   // Re-queueing a row that ever published must null the reconciler-stamped fields
   // (lessons.md 2026-07-07 third entry: stale post_url/published_at made a correct publish look broken)
@@ -149,9 +188,10 @@ export async function edit(rowId, { content, comment, date, images } = {}) {
   const newContent = content ?? row.draft_content;
   const newDate = date ?? row.scheduled_at;
   const newImages = images ?? row.media?.images ?? [];
+  const integrationId = await integrationFor(row); // resolve BEFORE deleting — a missing X channel must not orphan the post
   await postizDelete(row.postiz_id);
   let pid;
-  try { pid = await postizCreate(newContent, newDate, newImages); }
+  try { pid = await postizCreate(newContent, newDate, newImages, integrationId); }
   catch (e) {
     await db.from('posts').update({ sync_state: 'missing', postiz_id: null }).eq('id', rowId);
     await log(rowId, 'postiz_edit', `DELETED old post but recreate FAILED: ${e.message}`, 'error');
@@ -214,6 +254,11 @@ if (cmd) {
     cancel: () => cancel(args[0], args[1] ?? 'drafted'),
     upload: () => upload(args[0]),
     list: () => list(),
-  }[cmd] ?? (() => { throw new Error(`unknown command: ${cmd} (schedule|edit|cancel|upload|list)`); }))();
+    channels: async () => ({
+      integrations: (await connectedIntegrations()).map(i => ({
+        id: i.id, identifier: i.identifier ?? i.providerIdentifier ?? i.provider, name: i.name })),
+      xConnected: (await xIntegration()) !== null,
+    }),
+  }[cmd] ?? (() => { throw new Error(`unknown command: ${cmd} (schedule|edit|cancel|upload|list|channels)`); }))();
   console.log(JSON.stringify(out, null, 2));
 }
