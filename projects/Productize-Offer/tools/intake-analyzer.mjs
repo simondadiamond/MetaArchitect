@@ -16,7 +16,7 @@ import { checkCompleteness, decodeIntake, loadMessages } from './lib/form-schema
 import { validatedLLMCall, StageError } from './lib/llm.mjs';
 import { buildScorePrompt, buildBriefPrompt, buildSkeletonPrompt, MEMO_TEMPLATE_PATH } from './lib/prompts.mjs';
 import { validateScore, validateBrief, validateSkeleton, PILLAR_KEYS } from './lib/validate.mjs';
-import { renderScorecard, renderBrief } from './lib/render.mjs';
+import { renderScorecard, renderBrief, renderTranscript } from './lib/render.mjs';
 
 const SUPABASE_MJS = '../../Content-Engine/tools/supabase.mjs';
 
@@ -130,6 +130,7 @@ try {
     'provisional-scorecard.md': renderScorecard({ scorecard, row, decoded, workflowId: state.workflowId }),
     'call-brief.md': renderBrief({ brief, row, workflowId: state.workflowId }),
     'memo-skeleton.md': skeleton.markdown,
+    'intake-transcript.md': renderTranscript({ decoded, row, workflowId: state.workflowId }),
   };
   for (const [name, content] of Object.entries(files)) {
     const p = join(outDir, name);

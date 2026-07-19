@@ -15,6 +15,10 @@ const L10N = {
     proposed: 'proposed', confidence: 'confidence',
     optimismFlags: '**Optimism flags:**',
     total: (t) => `**Proposed total: ${t}/15.** Provisional totals are not bands — bands are earned live. Every score above gets re-judged by hand against the anchors before it goes anywhere: the analyzer proposes, the auditor disposes.`,
+    trTitle: 'Intake Transcript',
+    trIntro: 'The client’s own answers, decoded verbatim from the /readiness submission. Self-report — confirms nothing (rubric rule 3); this is what the scorecard and call brief were built from.',
+    trEngagement: 'Engagement context',
+    trEmail: 'Contact', trReferral: 'Referral',
   },
   fr: {
     briefTitle: 'Brief d’appel de confirmation',
@@ -29,6 +33,10 @@ const L10N = {
     proposed: 'proposé', confidence: 'confiance',
     optimismFlags: '**Signaux d’optimisme :**',
     total: (t) => `**Total provisoire proposé : ${t}/15.** Les totaux provisoires ne sont pas des paliers — les paliers se gagnent en direct. Chaque note ci-dessus est re-jugée à la main contre les ancres avant d’aller où que ce soit : l’analyseur propose, l’auditeur dispose.`,
+    trTitle: 'Transcription d’intake',
+    trIntro: 'Les réponses du client, décodées mot pour mot de la soumission /readiness. Auto-déclaration — ne confirme rien (règle 3 de la rubrique); c’est la matière première de la grille et du brief d’appel.',
+    trEngagement: 'Contexte d’engagement',
+    trEmail: 'Contact', trReferral: 'Référence',
   },
 };
 
@@ -78,5 +86,27 @@ export function renderScorecard({ scorecard, row, decoded, workflowId }) {
     lines.push('');
   }
   lines.push('---', t.total(scorecard.total));
+  return lines.join('\n');
+}
+
+export function renderTranscript({ decoded, row, workflowId }) {
+  const t = l10n(row.locale);
+  const lines = [
+    `# ${t.trTitle} — ${row.system_name}`, '',
+    `> ${t.trIntro}`,
+    `> ${t.intakeRow}: ${row.id} · ${t.submitted} ${row.submitted_at ?? '(fixture)'} · ${t.analyzerRun} ${workflowId}`, '',
+    ...decoded.intro.map(f => `**${f.label}:** ${f.value}`),
+    `**${t.trEmail}:** ${row.email}${row.referral_source ? `  ·  ${t.trReferral}: ${row.referral_source}` : ''}`, '',
+  ];
+  for (const p of decoded.pillars) {
+    lines.push(`## ${p.title}`, '');
+    for (const q of p.qa) {
+      lines.push(`**${q.label}**`, '', q.answer, '');
+    }
+  }
+  lines.push(`## ${t.trEngagement}`, '');
+  for (const q of decoded.engagement) {
+    lines.push(`**${q.label}**`, '', q.answer, '');
+  }
   return lines.join('\n');
 }

@@ -321,3 +321,15 @@ test('short select-answer quotes pass only alongside a substantial phrase', () =
     /substantial phrase/,
   );
 });
+
+test('run delivers intake-transcript.md with decoded Q&A', () => {
+  const out = mkdtempSync(join(tmpdir(), 'ia-'));
+  const r = runCli(['--fixture', CAL, '--out', out, '--no-db-log']);
+  assert.equal(r.status, 0, r.stderr);
+  const tr = readFileSync(join(out, 'intake-transcript.md'), 'utf8');
+  assert.match(tr, /# Intake Transcript — Claims Intake Summarizer/);
+  assert.match(tr, /quick-fix path a contractor added/);                    // narrative answer verbatim
+  assert.match(tr, /Do you have an explicit schema defining all the fields/); // question label
+  assert.match(tr, /\nPartial\n/);                                          // select decoded to label
+  assert.match(tr, /## Engagement context/);
+});
