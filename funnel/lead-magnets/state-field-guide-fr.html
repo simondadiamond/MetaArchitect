@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Guide de terrain STATE — The Meta Architect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary:    #0F0F0F;
+    --bg-surface:    #1A1A1A;
+    --bg-elevated:   #1F1F1F;
+    --border:        #2E2E2E;
+    --border-strong: #3A3A3A;
+    --text-primary:  #EAEAEA;
+    --text-secondary:#B4B4B4;
+    --text-muted:    #777777;
+    --accent:        #E04500;
+    --accent-hover:  #FF5A1A;
+    --accent-link:   #C97A1A;
+    --accent-red:    #F85149;
+    --font-serif: 'Merriweather', Georgia, 'Times New Roman', serif;
+    --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono:  'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @page { size: 816px 1056px; margin: 0; }
+
+  html, body {
+    width: 816px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ── PAGE SHELL ── */
+  .page {
+    width: 816px;
+    min-height: 1056px;
+    position: relative;
+    background: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+    page-break-after: always;
+    break-after: page;
+  }
+  .page:last-child { page-break-after: auto; break-after: auto; }
+
+  .accent-bar { height: 4px; background: var(--accent); flex-shrink: 0; }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 22px 56px 12px;
+    border-bottom: 1px solid var(--border-strong);
+    flex-shrink: 0;
+  }
+  .page-header .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .page-header .section-tag {
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  .page-content { flex: 1; padding: 30px 56px 18px; }
+  .page-content--railed { padding-right: 92px; }
+
+  .page-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 56px 26px;
+    flex-shrink: 0;
+  }
+  .page-footer .foot-left,
+  .page-footer .foot-page {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* ── INDEX RAIL (signature element) ── */
+  .index-rail {
+    position: absolute;
+    right: 0;
+    top: 68px;
+    bottom: 66px;
+    width: 32px;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--border-strong);
+    background: var(--bg-surface);
+  }
+  .rail-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .rail-tab:last-child { border-bottom: none; }
+  .rail-tab.active { background: var(--accent); color: #0F0F0F; }
+
+  /* ── TYPE ── */
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .h1 { font-family: var(--font-serif); font-weight: 700; font-size: 32px; line-height: 1.15; letter-spacing: -0.01em; margin-bottom: 12px; }
+  .h2 { font-family: var(--font-serif); font-weight: 700; font-size: 22px; line-height: 1.25; margin-bottom: 10px; }
+  .h3 { font-family: var(--font-serif); font-weight: 400; font-style: italic; font-size: 16px; line-height: 1.35; color: var(--text-secondary); margin-bottom: 8px; }
+  .lede { font-family: var(--font-sans); font-size: 13.5px; line-height: 1.65; color: var(--text-secondary); }
+  .body-text { font-family: var(--font-sans); font-size: 12px; line-height: 1.65; color: var(--text-secondary); }
+  .body-text + .body-text { margin-top: 10px; }
+  .body-text strong, .lede strong { color: var(--text-primary); font-weight: 600; }
+  .label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .divider { height: 1px; background: var(--border); margin: 18px 0; }
+  .divider--strong { background: var(--border-strong); }
+
+  /* ── CALLOUTS ── */
+  .qbox { border-left: 2px solid var(--accent); background: var(--bg-surface); padding: 12px 16px; margin: 14px 0; }
+  .qbox .label { color: var(--accent); }
+  .qbox p { font-family: var(--font-mono); font-size: 11px; line-height: 1.6; color: var(--text-primary); }
+
+  .stat-callout { border: 1px solid var(--border-strong); background: var(--bg-elevated); padding: 18px 22px; margin: 18px 0; display: flex; align-items: center; gap: 18px; }
+  .stat-callout .stat-num { font-family: var(--font-serif); font-weight: 700; font-size: 32px; color: var(--accent); line-height: 1; flex-shrink: 0; min-width: 90px; }
+  .stat-callout .stat-text { font-family: var(--font-sans); font-size: 11px; color: var(--text-secondary); line-height: 1.55; }
+  .stat-callout .stat-text strong { color: var(--text-primary); }
+
+  /* ── TABLES ── */
+  .dtable { width: 100%; border-collapse: collapse; }
+  .dtable th {
+    font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-muted); text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--border-strong);
+  }
+  .dtable td {
+    padding: 9px 10px; border-bottom: 1px solid var(--border); color: var(--text-secondary);
+    vertical-align: top; line-height: 1.5; font-size: 11px;
+  }
+  .dtable td.strong, .dtable td strong { color: var(--text-primary); font-weight: 600; }
+  .dtable tr:last-child td { border-bottom: 1px solid var(--border-strong); }
+  .dtable td.center, .dtable th.center { text-align: center; }
+
+  /* ── CODE ── */
+  .code-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; color: var(--accent); text-transform: uppercase; margin-bottom: 6px; }
+  .code {
+    background: var(--bg-primary); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    padding: 12px 14px; font-family: var(--font-mono); font-size: 9.5px; line-height: 1.6; color: var(--text-secondary);
+    white-space: pre; overflow: hidden; margin-bottom: 16px;
+  }
+  .code .c { color: var(--text-muted); }
+  .code .k { color: var(--accent-link); }
+
+  /* ── CHECKLIST ── */
+  .checklist { list-style: none; }
+  .checklist li {
+    display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border);
+    font-family: var(--font-sans); font-size: 11.5px; color: var(--text-secondary); line-height: 1.5;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li .box { font-family: var(--font-mono); color: var(--text-muted); flex-shrink: 0; }
+  .checklist li strong { color: var(--text-primary); }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-block; font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.06em;
+    padding: 2px 7px; border: 1px solid var(--border-strong); color: var(--text-secondary); white-space: nowrap;
+  }
+  .badge--accent { border-color: var(--accent); color: var(--accent); }
+
+  /* ── MATRIX DOTS (brand-safe strong/partial/absent indicator) ── */
+  .dot { display: inline-block; width: 11px; height: 11px; border: 1px solid var(--border-strong); vertical-align: middle; }
+  .dot--strong { background: var(--accent); border-color: var(--accent); }
+  .dot--partial { background: linear-gradient(90deg, var(--accent) 50%, transparent 50%); }
+  .dot--absent { background: transparent; }
+
+  /* ── PULL QUOTE (signature: real ICP language, verbatim) ── */
+  .pull-quote { margin: 54px 0 0; padding: 22px 0 0; border-top: 1px solid var(--border); }
+  .pull-quote p {
+    font-family: var(--font-serif); font-style: italic; font-weight: 700; font-size: 27px; line-height: 1.28;
+    color: var(--text-primary); margin-bottom: 10px;
+  }
+  .pull-quote .attr { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.14em; color: var(--text-muted); text-transform: uppercase; }
+
+  /* ── FIELD APPLICATION ── */
+  .field-app { margin-top: 16px; }
+  .field-app ul { list-style: none; }
+  .field-app li {
+    display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border);
+    font-family: var(--font-sans); font-size: 11.5px; line-height: 1.55; color: var(--text-secondary);
+  }
+  .field-app li:last-child { border-bottom: none; }
+  .field-app li .arrow { color: var(--accent); font-family: var(--font-mono); flex-shrink: 0; }
+  .field-app li strong { color: var(--text-primary); }
+
+  /* ── LAYOUT UTILITIES ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 32px; }
+  .grid-2--divided { grid-template-columns: 1fr 1px 1fr; }
+  .grid-2--divided .rule-col { background: var(--border); }
+  .flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+  /* ── COVER ── */
+  .cover-hero { padding: 64px 56px 0; }
+  .cover-mark { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.22em; color: var(--accent); text-transform: uppercase; margin-bottom: 34px; }
+  .cover-title { font-family: var(--font-serif); font-weight: 700; font-size: 54px; line-height: 1.06; letter-spacing: -0.015em; margin-bottom: 20px; }
+  .cover-sub { font-family: var(--font-sans); font-size: 14.5px; color: var(--text-secondary); line-height: 1.6; max-width: 560px; margin-bottom: 42px; }
+
+  .state-band { display: flex; border-top: 1px solid var(--border-strong); border-bottom: 1px solid var(--border-strong); margin: 0 56px; }
+  .state-letter-block { flex: 1; padding: 22px 8px; text-align: center; border-right: 1px solid var(--border); }
+  .state-letter-block:last-child { border-right: none; }
+  .state-letter-block .big { font-family: var(--font-serif); font-weight: 700; font-size: 40px; color: var(--accent); line-height: 1; }
+  .state-letter-block .name { font-family: var(--font-mono); font-size: 7.5px; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; margin-top: 8px; }
+
+  .cover-thesis { padding: 40px 56px 0; }
+  .cover-thesis .line { font-family: var(--font-serif); font-size: 20px; font-style: italic; color: var(--text-primary); line-height: 1.5; }
+  .cover-thesis .line strong { font-weight: 700; font-style: normal; color: var(--accent); }
+
+  .cover-footer { margin-top: auto; padding: 24px 56px 40px; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid var(--border); }
+  .cover-footer .byline { font-family: var(--font-serif); font-size: 15px; color: var(--text-primary); }
+  .cover-footer .tagline { font-family: var(--font-mono); font-size: 8.5px; color: var(--text-muted); letter-spacing: 0.06em; margin-top: 4px; }
+  .cover-footer .doc-control { font-family: var(--font-mono); font-size: 8px; color: var(--text-muted); letter-spacing: 0.1em; text-align: right; }
+
+  /* ── PILLAR HERO ── */
+  .pillar-hero { display: flex; align-items: flex-start; gap: 22px; margin-bottom: 6px; }
+  .pillar-letter { font-family: var(--font-serif); font-weight: 700; font-size: 88px; line-height: 0.85; color: var(--accent); }
+  .pillar-titles { padding-top: 10px; }
+
+  /* ── TOC ── */
+  .toc-list { list-style: none; }
+  .toc-item { display: flex; align-items: baseline; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .toc-item .toc-num { font-family: var(--font-mono); font-size: 11px; color: var(--accent); flex-shrink: 0; width: 20px; }
+  .toc-item .toc-title { font-family: var(--font-serif); font-size: 14px; color: var(--text-primary); flex: 1; }
+  .toc-item .toc-tag { font-family: var(--font-mono); font-size: 8.5px; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase; }
+
+  /* ── BACK COVER ── */
+  .back-cover { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 80px; }
+  .back-statement { font-family: var(--font-serif); font-weight: 700; font-size: 34px; line-height: 1.2; color: var(--text-primary); margin-bottom: 16px; }
+  .back-byline { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; color: var(--accent); text-transform: uppercase; margin-bottom: 36px; }
+  .back-about { font-family: var(--font-sans); font-size: 12.5px; color: var(--text-secondary); line-height: 1.7; max-width: 460px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ PAGE 1 — COUVERTURE ══════════════ -->
+<section class="page">
+  <div class="accent-bar"></div>
+  <div class="cover-hero">
+    <div class="cover-mark">The Meta Architect — Ingénierie de la fiabilité des IA</div>
+    <div class="cover-title">Guide de terrain<br>STATE</div>
+    <div class="cover-sub">Une référence de terrain pour l'ingénieur qui a hérité d'une plateforme d'IA générative, qui s'est retrouvé de garde — et à qui il faut une architecture, pas un meilleur prompt.</div>
+  </div>
+
+  <div class="state-band">
+    <div class="state-letter-block"><div class="big">S</div><div class="name">Structuré</div></div>
+    <div class="state-letter-block"><div class="big">T</div><div class="name">Traçable</div></div>
+    <div class="state-letter-block"><div class="big">A</div><div class="name">Auditable</div></div>
+    <div class="state-letter-block"><div class="big">T</div><div class="name">Tolérant</div></div>
+    <div class="state-letter-block"><div class="big">E</div><div class="name">Explicite</div></div>
+  </div>
+
+  <div class="cover-thesis">
+    <div class="line"><strong>L'état bat l'intelligence.</strong> Un modèle de milieu de gamme avec une vraie gestion d'état surpasse un modèle frontière qui tourne sans état — chaque fois.</div>
+  </div>
+
+  <div class="cover-footer">
+    <div>
+      <div class="byline">Simon Paris</div>
+      <div class="tagline">Je conçois des systèmes d'IA qui ne lâchent pas.</div>
+    </div>
+    <div class="doc-control">GUIDE DE TERRAIN — ÉDITION 01<br>SIMONPARIS.CA</div>
+  </div>
+</section>
+
+<!-- ══════════════ PAGE 2 — MODE D'EMPLOI / TABLE DES MATIÈRES ══════════════ -->
+<section class="page">
+  <div class="page-header">
+    <span class="eyebrow">Guide de terrain STATE</span>
+    <span class="section-tag">Avant-propos</span>
+  </div>
+  <div class="page-content">
+    <div class="kicker">Comment utiliser ce guide</div>
+    <div class="h1">Vous ne l'avez pas choisi.</div>
+    <p class="lede">Quelqu'un vous a remis une plateforme d'IA générative, l'a déclarée prête pour la production, puis est passé au dossier suivant. Maintenant c'est non déterministe, indébogable, et le risque pose des questions auxquelles vous ne pouvez pas répondre. Ce guide ne vous enseigne pas un meilleur modèle. Il montre les cinq propriétés qui manquent à votre système — et exactement ce qui casse en leur absence.</p>
+
+    <div class="divider"></div>
+
+    <div class="label">Chaque page de pilier suit la même structure</div>
+    <ul class="checklist" style="margin-bottom: 22px;">
+      <li><span class="box">01</span><span><strong>Définition</strong> — ce que le pilier signifie, en une phrase.</span></li>
+      <li><span class="box">02</span><span><strong>Mode de panne</strong> — ce qui arrive en production quand il manque.</span></li>
+      <li><span class="box">03</span><span><strong>Question diagnostique</strong> — posez-la à votre système, là, maintenant.</span></li>
+      <li><span class="box">04</span><span><strong>Preuve de terrain</strong> — le chiffre ou le principe derrière.</span></li>
+    </ul>
+
+    <div class="divider"></div>
+
+    <div class="label" style="margin-top: 4px;">Table des matières</div>
+    <ul class="toc-list">
+      <li class="toc-item"><span class="toc-num">03</span><span class="toc-title">La thèse et les niveaux de risque</span><span class="toc-tag">Cadre</span></li>
+      <li class="toc-item"><span class="toc-num">04</span><span class="toc-title">Pilier S — Structuré</span><span class="toc-tag">Pilier 1/5</span></li>
+      <li class="toc-item"><span class="toc-num">05</span><span class="toc-title">Pilier T — Traçable</span><span class="toc-tag">Pilier 2/5</span></li>
+      <li class="toc-item"><span class="toc-num">06</span><span class="toc-title">Pilier A — Auditable</span><span class="toc-tag">Pilier 3/5</span></li>
+      <li class="toc-item"><span class="toc-num">07</span><span class="toc-title">Pilier T — Tolérant</span><span class="toc-tag">Pilier 4/5</span></li>
+      <li class="toc-item"><span class="toc-num">08</span><span class="toc-title">Pilier E — Explicite</span><span class="toc-tag">Pilier 5/5</span></li>
+      <li class="toc-item"><span class="toc-num">09</span><span class="toc-title">Le barème et la matrice des écarts</span><span class="toc-tag">Référence</span></li>
+      <li class="toc-item"><span class="toc-num">10</span><span class="toc-title">Carte de référence — schémas et patrons</span><span class="toc-tag">Référence</span></li>
+      <li class="toc-item"><span class="toc-num">11</span><span class="toc-title">La liste S+T+E</span><span class="toc-tag">Risque moyen</span></li>
+      <li class="toc-item"><span class="toc-num">12</span><span class="toc-title">La liste des cinq piliers</span><span class="toc-tag">Risque élevé</span></li>
+      <li class="toc-item"><span class="toc-num">13</span><span class="toc-title">Taxonomie des pannes en production</span><span class="toc-tag">Réf. terrain</span></li>
+      <li class="toc-item"><span class="toc-num">14</span><span class="toc-title">Quatre pannes qui méritent qu'on s'arrête</span><span class="toc-tag">Notes terrain</span></li>
+      <li class="toc-item"><span class="toc-num">15</span><span class="toc-title">Principes nommés et ce que STATE n'est pas</span><span class="toc-tag">Référence</span></li>
+    </ul>
+  </div>
+  <div class="page-footer">
+    <span class="foot-left">THE META ARCHITECT — L'ÉTAT BAT L'INTELLIGENCE</span>
+    <span class="foot-page">P. 02 / 16</span>
+  </div>
+</section>
+
+<!-- ══════════════ PAGE 3 — THÈSE + NIVEAUX DE RISQUE ══════════════ -->
+<section class="page">
+  <div class="page-header">
+    <span class="eyebrow">Guide de terrain STATE</span>
+    <span class="section-tag">Cadre</span>
+  </div>
+  <div class="page-content">
+    <div class="kicker">La thèse</div>
+    <div class="h1">L'état bat l'intelligence.</div>
+    <p class="lede">Un modèle de milieu de gamme avec une vraie gestion d'état surpasse un modèle frontière qui tourne sans état — chaque fois. Les systèmes d'IA en production n'échouent pas parce que le modèle est trop faible. Ils échouent parce que personne n'a donné au système une mémoire, un témoin, ni un moyen de dire non.</p>
+    <p class="body-text" style="margin-top: 12px;">STATE gouverne chaque opération du pipeline. Le niveau de risque détermine quels piliers sont obligatoires — pas les préférences, pas le budget, pas l'assurance qu'affichait la démo.</p>
+
+    <div class="divider divider--strong"></div>
+
+    <div class="h2">Niveaux de risque</div>
+    <table class="dtable" style="margin-bottom: 16px;">
+      <tr><th style="width:14%">Niveau</th><th style="width:46%">Condition</th><th>Piliers requis</th></tr>
+      <tr><td class="strong">Faible</td><td>Interne, lecture seule, aucun appel d'API, non personnalisé</td><td>S + T</td></tr>
+      <tr><td class="strong">Moyen</td><td>Écritures en base de données, appels LLM, API externes, exposition externe</td><td>S + T + E</td></tr>
+      <tr><td class="strong">Élevé</td><td>Décisions touchant des personnes, opérations financières, données réglementées, portée Loi 25</td><td>Les cinq — aucune exception</td></tr>
+    </table>
+
+    <div class="stat-callout">
+      <div class="stat-num">S+T+E</div>
+      <div class="stat-text">est le plancher, pas la cible. Chaque commande du pipeline Meta Architect — chaque écriture en base, chaque appel LLM, chaque appel d'API externe — tourne au <strong>risque moyen minimum</strong>. Aucun niveau en dessous ne saute un pilier.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <p class="body-text"><strong>L'habitude diagnostique que ce guide installe :</strong> pour chaque pilier, deux questions décident si vous êtes couvert — une question d'état et une question de preuve. Si vous ne pouvez pas répondre aux deux sans ouvrir un journal de conversation ni demander à quelqu'un de « vérifier », le pilier n'existe pas encore. C'est un espoir.</p>
+
+    <div class="divider"></div>
+
+    <div class="label" style="color:var(--text-secondary);">En pratique</div>
+    <p class="body-text">Deux équipes livrent le même pipeline RAG sur le même modèle. L'équipe A le branche sans objet d'état, sans patron de verrou, sans porte de validation — ça marche en démo, alors ça part en production. L'équipe B enrobe un modèle plus petit et moins cher d'un état explicite, d'une journalisation complète des appels et d'une porte de validation avant chaque écriture. Six semaines plus tard, les deux systèmes affichent le même taux d'erreurs côté modèle — ce n'était jamais ça, le différenciateur. L'équipe A débogue en relisant des fils Slack et en relançant le pipeline à la main, en espérant attraper le bogue en direct. L'équipe B filtre une table de traces par <code style="font-family:var(--font-mono); font-size:11px; color:var(--text-primary);">stage</code> et <code style="font-family:var(--font-mono); font-size:11px; color:var(--text-primary);">status</code>, et livre le correctif avant le stand-up. Même modèle. Même taux d'échec. Une architecture différente en dessous. C'est la thèse, opérationnalisée — pas une affirmation sur la qualité du modèle, une affirmation sur ce qui l'entoure.</p>
+  </div>
+  <div class="page-footer">
+    <span class="foot-left">THE META ARCHITECT — L'ÉTAT BAT L'INTELLIGENCE</span>
+    <span class="foot-page">P. 03 / 16</span>
+  </div>
+</section>
+
+<!-- ══════════════ PAGE 4 — PILIER S ══════════════ -->
+<section class="page">
+  <div class="page-header">
+    <span class="eyebrow">Guide de terrain STATE</span>
+    <span class="section-tag">Pilier 1 sur 5</span>
+  </div>
+  <div class="page-content page-content--railed">
+    <div class="pillar-hero">
+      <div class="pillar-letter">S</div>
+      <div class="pillar-titles">
+        <div class="h2" style="margin-bottom:4px;">Structuré</div>
+        <div class="h3">Des schémas d'état explicites, pas du contexte implicite.</div>
+      </div>
+    </div>
+    <p class="body-text">Chaque opération initialise un objet d'état typé avant de faire quoi que ce soit. Les entités métier — réclamations, billets, portefeuilles, contenus — sont des objets d'état de plein droit, avec des schémas définis. Le champ <code style="font-family:var(--font-mono); font-size:11px; color:var(--text-primary);">stage</code> reflète toujours la position d'exécution réelle, pas ce que l'historique de conversation laisse croire.</p>
+
+    <div class="divider"></div>
+
+    <div class="label" style="color:var(--text-secondary);">Le mode de panne qu'il prévient</div>
+    <p class="body-text">La pourriture de contexte. L'agent perd le fil de sa position dans le flux à mesure que la fenêtre de contexte se remplit. L'état ancien est abandonné en silence. Le comportement se dégrade — et rien ne lève d'erreur pour vous dire pourquoi.</p>
+
+    <div class="qbox">
+      <div class="label">Question diagnostique</div>
+      <p>« Si cet agent plantait maintenant, pourriez-vous regarder le dernier objet d'état sauvegardé et savoir exactement où le flux s'est arrêté — sans relire l'historique de conversation? »</p>
+    </div>
+
+    <div class="stat-callout">
+      <div class="stat-num">73,5&nbsp;%</div>
+      <div class="stat-text">d'exécution plus rapide, <strong>60&nbsp;% d'appels LLM en moins</strong> — recherche CA-MCP, en mesurant le passage du contexte implicite à l'état explicite partagé.</div>
+    </div>
+
+    <div class="field-app">
+      <div class="label" style="color:var(--text-secondary);">Application terrain</div>
+      <ul>
+        <li><span class="arrow">→</span><span>Le champ <strong>stage</strong> d'un flux est l'unique source de vérité du « où en sommes-nous » — jamais déduit des derniers messages d'une transcription.</span></li>
+        <li><span class="arrow">→</span><span>Les entités métier — un billet, une réclamation, un brouillon — sont des lignes avec des schémas, pas du contexte de conversation qui flotte.</span></li>
+      </ul>
+    </div>
+
+    <div class="pull-quote">
+      <p>« Ce truc est non déterministe. »</p>
+      <div class="attr">Comment les praticiens le disent déjà</div>
+    </div>
+  </div>
+  <div class="index-rail">
+    <div class="rail-tab active">S</div><div class="rail-tab">T</div><div class="rail-tab">A</div><div class="rail-tab">T</div><div class="rail-tab">E</div>
+  </div>
+  <div class="page-footer">
+    <span class="foot-left">THE META ARCHITECT — L'ÉTAT BAT L'INTELLIGENCE</span>
+    <span class="foot-page">P. 04 / 16</span>
+  </div>
+</section>
+
+<!-- ══════════════ PAGE 5 — PILIER T (TRAÇABLE) ══════════════ -->
+<section class="page">
+  <div class="page-header">
+    <span class="eyebrow">Guide de terrain STATE</span>
+    <span class="section-tag">Pilier 2 sur 5</span>
+  </div>
+  <div class="page-content page-content--railed">
+    <div class="pillar-hero">
+      <div class="pillar-letter">T</div>
+      <div class="pillar-titles">
+        <div class="h2" style="margin-bottom:4px;">Traçable</div>
+        <div class="h3">Chaque étape observable, chaque décision journalisée.</div>
+      </div>
+    </div>
+    <p class="body-text">Journalisez chaque appel LLM, chaque appel d'API externe et chaque transition d'étape significative — avec tous les champs requis, chaque fois. Aucune opération silencieuse. Vous devez pouvoir reconstituer exactement ce que l'agent a fait, ce qu'on lui a donné et ce qu'il a produit — pour n'importe quelle exécution, après coup, sans deviner.</p>
+
+    <div class="divider"></div>
+
+    <div class="label" style="color:var(--text-secondary);">Le mode de panne qu'il prévient</div>
+    <p class="body-text">Le débogage à l'aveugle. « Le modèle a fait quelque chose de bizarre » comme post-mortem. Des pannes qui n'émergent que par leurs effets en aval, trois systèmes plus loin.</p>
+
+    <div class="qbox">
+      <div class="label">Question diagnostique</div>
+      <p>« Pouvez-vous afficher, là, maintenant, une trace montrant chaque appel LLM, chaque appel d'outil, chaque entrée et chaque sortie d'une exécution précise de la semaine dernière? »</p>
+    </div>
+
+    <div class="stat-callout">
+      <div class="stat-num">1 sur 3</div>
+      <div class="stat-text">équipes d'entreprise se disent satisfaites de leur observabilité et de leur évaluation d'IA — Cleanlab, 2025. Les deux autres déboguent au feeling.</div>
+    </div>
+
+    <div class="field-app">
+      <div class="label" style="color:var(--text-secondary);">Application terrain</div>
+      <ul>
+        <li><span class="arrow">→</span><span>Chaque appel LLM obtient une ligne de journal avec version du modèle, résumé de sortie et statut — écrite au moment de l'appel, pas reconstruite de mémoire.</span></li>
+        <li><span class="arrow">→</span><span>« Ce que l'agent a vu » et « ce qu'il a fait » sont deux champs différents. Tous deux obligatoires, tous deux requêtables.</span></li>
+      </ul>
+    </div>
+
+    <div class="pull-quote">
+      <p>« Il n'y a pas de stack trace. »</p>
+      <div class="attr">Comment les praticiens le disent déjà</div>
+    </div>
+  </div>
+  <div class="index-rail">
+    <div class="rail-tab">S</div><div class="rail-tab active">T</div><div class="rail-tab">A</div><div class="rail-tab">T</div><div class="rail-tab">E</div>
+  </div>
+  <div class="page-footer">
+    <span class="foot-left">THE META ARCHITECT — L'ÉTAT BAT L'INTELLIGENCE</span>
+    <span class="foot-page">P. 05 / 16</span>
+  </div>
+</section>
+
+<!-- ══════════════ PAGE 6 — PILIER A (AUDITABLE) ══════════════ -->
+<section class="page">
+  <div class="page-header">
+    <span class="eyebrow">Guide de terrain STATE</span>
+    <span class="section-tag">Pilier 3 sur 5</span>
+  </div>
+  <div class="page-content page-content--railed">
+    <div class="pillar-hero">
+      <div class="pillar-letter">A</div>
+      <div class="pillar-titles">
+        <div class="h2" style="margin-bottom:4px;">Auditable</div>
+        <div class="h3">Prêt pour la gouvernance — explicable sous la Loi 25, l'OSFI et l'EU AI Act.</div>
+      </div>
+    </div>
+    <p class="body-text">Pour toute décision automatisée touchant une personne ou utilisant des renseignements personnels, écrivez un enregistrement de décision : quels renseignements personnels ont servi, quels ont été les principaux facteurs, quelle version du modèle et du prompt a tourné, et qui peut la réviser.</p>
+
+    <div class="divider"></div>
+
+    <div class="label" style="color:var(--text-secondary);">Le mode de panne qu'il prévient</div>
+    <p class="body-text">L'exposition réglementaire. L'incapacité de répondre à la question d'un régulateur — ou d'une personne concernée — sur le pourquoi d'une décision automatisée. Pas une lacune technique. Un passif.</p>
+
+    <div class="qbox">
+      <div class="label">Question diagnostique</div>
+      <p>« Si un régulateur vous demandait aujourd'hui quelles données votre système a utilisées pour une décision précise le mois dernier — pourriez-vous répondre en moins de 30 minutes? »</p>
+    </div>
+
+    <div class="stat-callout">
+      <div class="stat-num">25 M$</div>
+      <div class="stat-text">ou 4&nbsp;% du chiffre d'affaires mondial — le maximum pénal de la Loi 25 pour défaut de divulguer une décision automatisée sur demande (10 M$ / 2&nbsp;% en sanctions administratives). S'applique largement — pas seulement aux décisions à portée juridique.</div>
+    </div>
+
+    <p class="body-text" style="margin-top:8px; color:var(--text-muted); font-size:11px;">Non requis pour l'outillage interne à faible risque sans renseignements personnels. Requis dès que les données d'une vraie personne entrent dans le pipeline.</p>
+
+    <div class="field-app">
+      <div class="label" style="color:var(--text-secondary);">Application terrain</div>
+      <ul>
+        <li><span class="arrow">→</span><span>Un enregistrement de décision répond à trois questions avant qu'on ait à les poser : quelles données, quels facteurs, quel modèle.</span></li>
+        <li><span class="arrow">→</span><span>« On n'a pas pensé à journaliser ça » n'est pas une réponse défendable à une demande d'accès Loi 25 — une ÉFVP est exigée avant même que l'IA touche aux renseignements personnels.</span></li>
+      </ul>
+    </div>
+
+    <div class="pull-quote">
+      <p>« Peut-on consigner pourquoi l'agent a fait ça? »</p>
+      <div class="attr">Comment les praticiens le disent déjà</div>
+    </div>
+  </div>
+  <div class="index-rail">
+    <div class="rail-tab">S</div><div class="rail-tab">T</div><div class="rail-tab active">A</div><div class="rail-tab">T</div><div class="rail-tab">E</div>
+  </div>
+  <div class="page-footer">
+    <span class="foot-left">THE META ARCHITECT — L'ÉTAT BAT L'INTELLIGENCE</span>
+    <span class="foot-page">P. 06 / 16</span>
+  </div>
+</section>
+
+<!-- ══════════════ PAGE 7 — PILIER T (TOLÉRANT) ══════════════ -->
+<section class="page">
+  <div class="page-header">
+    <span class="eyebrow">Guide de terrain STATE</span>
+    <span class="section-tag">Pilier 4 sur 5</span>
+  </div>
+  <div class="page-content page-content--railed">
+    <div class="pillar-hero">
+      <div class="pillar-letter">T</div>
+      <div class="pillar-titles">
+        <div class="h2" style="margin-bottom:4px;">Tolérant</div>
+        <div class="h3">Tolérant aux pannes, capable de reprendre après l'échec.</div>
+      </div>
+    </div>
+    <p class="body-text">Quand le flux échoue à l'étape 6, il reprend à l'étape 6 — pas à l'étape 1. Verrouillez avant les opérations coûteuses. Libérez le verrou à l'échec. Chaque commande peut être retentée. Un run échoué ne laisse aucun état brisé permanent derrière lui.</p>
+
+    <div class="divider"></div>
+
+    <div class="label" style="color:var(--text-secondary);">Le mode de panne qu'il prévient</div>
+    <p class="body-text">Le redémarrage complet après une panne partielle. Le travail perdu. Les systèmes qui ne fonctionnent qu'en marche avant, sur le chemin heureux — et qui tombent la première fois que la réalité ne coopère pas.</p>
+
+    <div class="qbox">
+      <div class="label">Question diagnostique</div>
+      <p>« Si ce flux plante à l'étape 6 sur 10, là, maintenant — reprend-il à l'étape 6, ou repart-il de l'étape 1? »</p>
+    </div>
+
+    <div class="stat-callout">
+      <div class="stat-num" style="font-size:26px; min-width:70px;">70&nbsp;%</div>
+      <div class="stat-text">des entreprises <strong>réglementées</strong> remplacent au moins une partie de leur pile d'IA tous les trois mois — 41&nbsp;% des non réglementées aussi. Cleanlab, 2025. Voir page 15.</div>
+    </div>
+
+    <div class="field-app">
+      <div class="label" style="color:var(--text-secondary);">Application terrain</div>
+      <ul>
+        <li><span class="arrow">→</span><span>L'horodatage de verrou se pose avant le début de l'opération coûteuse, pas après coup — un plantage en cours d'opération devient visible au lieu de silencieux.</span></li>
+        <li><span class="arrow">→</span><span>Retenter veut dire reprendre, pas relancer. Un flux qui refait l'étape 1 après avoir échoué à l'étape 6 double le travail et la facture.</span></li>
+      </ul>
+    </div>
+
+    <div class="pull-quote">
+      <p>« Un prototype rafistolé en production. »</p>
+      <div class="attr">Comment les praticiens le disent déjà</div>
+    </div>
+  </div>
+  <div class="index-rail">
+    <div class="rail-tab">S</div><div class="rail-tab">T</div><div class="rail-tab">A</div><div class="rail-tab active">T</div><div class="rail-tab">E</div>
+  </div>
+  <div class="page-footer">
+    <span class="foot-left">THE META ARCHITECT — L'ÉTAT BAT L'INTELLIGENCE</span>
+    <span class="foot-page">P. 07 / 16</span>
+  </div>
+</section>
+
+<!-- ══════════════ PAGE 8 — PILIER E ══════════════ -->
+<section class="page">
+  <div class="page-header">
+    <span class="eyebrow">Guide de terrain STATE</span>
+    <span class="section-tag">Pilier 5 sur 5</span>
+  </div>
+  <div class="page-content page-content--railed">
+    <div class="pillar-hero">
+      <div class="pillar-letter">E</div>
+      <div class="pillar-titles">
+        <div class="h2" style="margin-bottom:4px;">Explicite</div>
+        <div class="h3">Des frontières déterministes, pas de magie.</div>
+      </div>
+    </div>
+    <p class="body-text">Chaque sortie de LLM ou d'API externe passe par une porte de validation avant toute écriture ou action. Une sortie invalide est routée vers le chemin d'erreur — jamais de continuation silencieuse. Chaque point où le raisonnement devient action réelle est une porte nommée et validée.</p>
+
+    <div class="divider"></div>
+
+    <div class="label" style="color:var(--text-secondary);">Le mode de panne qu'il prévient</div>
+    <p class="body-text">La cascade d'hallucinations. Le modèle enrobe le JSON dans un bloc markdown, le parseur meurt sans un bruit. Une réponse confiante et fausse déclenche une action en aval, sans aucun contrôle de contrat pour l'arrêter.</p>
+
+    <div class="qbox">
+      <div class="label">Question diagnostique</div>
+      <p>« Pour chaque appel LLM de ce flux — quelle est la pire sortie possible, et qu'est-ce qui l'empêche concrètement de devenir une action réelle? »</p>
+    </div>
+
+    <div class="stat-callout">
+      <div class="stat-num" style="font-size:18px; min-width:90px;">Coutures vs<br>composants</div>
+      <div class="stat-text">Tester des nœuds individuels n'est pas tester le flux. Exécutez toujours un passage complet de bout en bout avec de vraies sorties LLM avant de livrer — les données figées prouvent les nœuds, pas les coutures entre eux.</div>
+    </div>
+
+    <div class="field-app">
+      <div class="label" style="color:var(--text-secondary);">Application terrain</div>
+      <ul>
+        <li><span class="arrow">→</span><span>Une porte de validation a un nom et un chemin d'échec. « Parser le JSON » n'est pas une porte — « parser le JSON ou router vers error_invalid_output » en est une.</span></li>
+        <li><span class="arrow">→</span><span>La pire sortie possible de chaque appel LLM est une donnée de conception, pas un cas limite pour plus tard.</span></li>
+      </ul>
+    </div>
+
+    <div class="pull-quote">
+      <p>« Je veux juste qu'il dise “je ne sais pas” au lieu d'halluciner. »</p>
+      <div class="attr">Comment les praticiens le disent déjà</div>
+    </div>
+  </div>
+  <div class="index-rail">
+    <div class="rail-tab">S</div><div class="rail-tab">T</div><div class="rail-tab">A</div><div class="rail-tab">T</div><div class="rail-tab active">E</div>
+  </div>
+  <div class="page-footer">
+    <span class="foot-left">THE META ARCHITECT — L'ÉTAT BAT L'INTELLIGENCE</span>
+    <span class="foot-page">P. 08 / 16</span>
+  </div>
+</section>
+
+<!-- ══════════════ PAGE 9 — BARÈME + MATRICE DES ÉCARTS ══════════════ -->
+<section class="page">
+  <div class="page-header">
+    <span class="eyebrow">Guide de terrain STATE</span>
+    <span class="section-tag">Référence</span>
+  </div>
+  <div class="page-content">
+    <div class="kicker">Le barème</div>
+    <div class="h1">Mesurez. Ne devinez pas.</div>
+    <p class="lede">Chaque pilier se note de 0 à 2, selon ses deux questions diagnostiques. Deux oui : 2. Un oui : 1. Deux non, ou « pas sûr » : 0.</p>
+
+    <table class="dtable" style="margin: 14px 0 20px;">
+      <tr><th style="width:20%">Score</th><th>Étiquette</th></tr>
+      <tr><td class="strong">0–3</td><td>Risque critique</td></tr>
+      <tr><td class="strong">4–5</td><td>Risque élevé</td></tr>
+      <tr><td class="strong">6–7</td><td>En développement</td></tr>
+      <tr><td class="strong">8–9</td><td>Prêt pour la prod</td></tr>
+      <tr><td class="strong">10</td><td>Conforme STATE</td></tr>
+    </table>
+
+    <div class="divider divider--strong"></div>
+
+    <div class="h2">Là où les cadres existants s'arrêtent</div>
+    <p class="body-text" style="margin-bottom:12px;">Outils d'orchestration et d'observabilité, évalués contre les cinq mêmes propriétés de fiabilité.</p>
+
+    <table class="dtable" style="margin-bottom:14px;">
+      <tr><th style="width:34%">Cadre</th><th class="center">S</th><th class="center">T</th><th class="center">A</th><th class="center">Tol</th><th class="center">E</th></tr>
+      <tr><td class="strong">LangGraph</td><td class="center"><span class="dot dot--partial"></span></td><td class="center"><span class="dot dot--partial"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--strong"></span></td><td class="center"><span class="dot dot--partial"></span></td></tr>
+      <tr><td class="strong">W&amp;B Weave</td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--strong"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--partial"></span></td></tr>
+      <tr><td class="strong">LangSmith</td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--strong"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--absent"></span></td></tr>
+      <tr><td class="strong">Arize Phoenix</td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--strong"></span></td><td class="center"><span class="dot dot--partial"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--absent"></span></td></tr>
+      <tr><td class="strong">OpenTelemetry GenAI</td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--strong"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--absent"></span></td><td class="center"><span class="dot dot--absent"></span></td></tr>
+    </table>
+    <p class="body-text" style="font-size:10px; color:var(--text-muted); margin-bottom:14px; display:flex; align-items:center; gap:20px;"><span style="display:flex;align-items:center;gap:6px;"><span class="dot dot--strong"></span> Fort</span><span style="display:flex;align-items:center;gap:6px;"><span class="dot dot--partial"></span> Partiel</span><span style="display:flex;align-items:center;gap:6px;"><span class="dot dot--absent"></span> Absent</span></p>
+
+    <div class="stat-callout">
+      <div class="stat-num" style="font-size:20px; min-width:70px;">A</div>
+      <div class="stat-text">est le pilier le moins couvert ici — carrément absent chez quatre sur cinq, et même le crédit partiel d'Arize Phoenix tient au versionnage prompt/modèle et à des annotations manuelles, pas à un artefact natif d'enregistrement de décision. Ce n'est pas un argument marketing pour STATE. C'est un trou dans les outils que vous utilisez déjà.</div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span class="foot-left">THE META ARCHITECT — L'ÉTAT BAT L'INTELLIGENCE</span>
+    <span class="foot-page">P. 09 / 16</span>
+  </div>
+</section>
+
+<!-- ══════════════ PAGE 10 — CARTE DE RÉFÉRENCE ══════════════ -->
+<section class="page">
+  <div class="page-header">
+    <span class="eyebrow">Guide de terrain STATE</span>
+    <span class="section-tag">Carte de référence</span>
+  </div>
+  <div class="page-content">
+    <div class="kicker">Carte de référence</div>
+    <div class="h1" style="font-size:26px;">Schémas et patrons</div>
+
+    <div class="grid-2--divided" style="display:grid; grid-template-columns:1fr 1px 1fr; gap:0 24px; margin-top:18px;">
+      <div>
+        <div class="code-label">Schéma de l'objet d'état</div>
+        <div class="code">{
+  workflowId: string,   <span class="c">// crypto.randomUUID() par run</span>
+  stage: string,        <span class="c">// nom de l'étape courante</span>
+  entityType: string,   <span class="c">// "idea" | "post" | "hook"</span>
+  entityId: string,     <span class="c">// id de ligne Supabase (uuid)</span>
+  startedAt: string,    <span class="c">// horodatage ISO</span>
+  lastUpdatedAt: string <span class="c">// ISO, mis à jour par étape</span>
+}</div>
+
+        <div class="code-label">Schéma d'entrée de journal</div>
+        <div class="code">{
+  workflow_id, entity_id,
+  step_name: string,   <span class="c">// p. ex. "research_architect"</span>
+  stage: string,        <span class="c">// étape au moment du journal</span>
+  timestamp: string,
+  output_summary: string,
+  model_version: string, <span class="c">// le modèle qui a VRAIMENT</span>
+                        <span class="c">// tourné, jamais codé en dur</span>
+  status: "success" | "error"
+}</div>
+      </div>
+      <div class="rule-col" style="background:var(--border);"></div>
+      <div>
+        <div class="code-label">Patron de verrou</div>
+        <div class="code"><span class="c">// 1. Poser AVANT l'opération</span>
+updateRecord(TABLE, id, {
+  research_started_at: now()
+});
+
+<span class="c">// 2. Libérer à l'échec</span>
+updateRecord(TABLE, id, {
+  research_started_at: null,
+  status: "research_failed"
+});</span></div>
+
+        <div class="code-label">Contrôle d'idempotence</div>
+        <div class="code">if (row.research_started_at
+    !== null) {
+  return "Déjà en cours —
+    vérifier avant de retenter.";
+}</div>
+
+        <div class="code-label">Format d'erreur</div>
+        <div class="code">❌ [Commande] échouée à [étape]
+  — [message d'erreur]
+  — verrou libéré, on peut retenter</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span class="foot-left">THE META ARCHITECT — L'ÉTAT BAT L'INTELLIGENCE</span>
+    <span class="foot-page">P. 10 / 16</span>
+  </div>
+</section>
+
+<!-- ══════════════ PAGE 11 — LISTE S+T+E ══════════════ -->
+<section class="page">
+  <div class="page-header">
+    <span class="eyebrow">Guide de terrain STATE</span>
+    <span class="section-tag">Liste — risque moyen</span>
+  </div>
+  <div class="page-content">
+    <div class="kicker">Liste — risque moyen minimum</div>
+    <div class="h1">La liste S+T+E</div>
+    <p class="lede" style="margin-bottom:20px;">Écritures en base, appels LLM, API externes, tout ce qui est exposé à l'externe. C'est le plancher d'un pipeline de contenu, pas le plafond.</p>
+
+    <ul class="checklist">
+      <li><span class="box">☐</span><span>Objet d'état initialisé avec tous les champs requis</span></li>
+      <li><span class="box">☐</span><span>Étape mise à jour à chaque transition</span></li>
+      <li><span class="box">☐</span><span>Chaque appel LLM journalisé dans la table <strong>logs</strong> avec les champs requis</span></li>
+      <li><span class="box">☐</span><span>Chaque appel d'API externe journalisé dans la table <strong>logs</strong></span></li>
+      <li><span class="box">☐</span><span>Verrou posé avant les opérations coûteuses</span></li>
+      <li><span class="box">☐</span><span>Verrou libéré à l'échec</span></li>
+      <li><span class="box">☐</span><span>Toute sortie LLM/API validée avant toute écriture en base</span></li>
+      <li><span class="box">☐</span><span>Le chemin d'erreur rapporte : étape + message d'erreur + verrou confirmé libéré</span></li>
+    </ul>
+
+    <div class="divider" style="margin-top:24px;"></div>
+    <p class="body-text" style="color:var(--text-muted); font-size:11px;">Une seule case non cochée signifie que le système n'est pas prêt pour la production — peu importe le score du modèle sur un benchmark.</p>
+
+    <div class="stat-callout" style="margin-top:22px;">
+      <div class="stat-num" style="font-size:16px; min-width:110px;">Notez-le<br>ici même</div>
+      <div class="stat-text">Passez S, T et E par les deux questions diagnostiques de leurs pages (04–08). Deux oui : 2. Un oui : 1. Aucun, ou « pas sûr » : 0. <strong>0–5 sur les trois</strong> veut dire que cette liste est une aspiration, pas une description. Barème complet et niveaux de risque : page 09.</div>
+    </div>
+
+    <div class="divider" style="margin-top:20px;"></div>
+    <div class="label" style="color:var(--text-secondary); margin-top:4px;">Où les équipes échouent d'abord sur cette liste</div>
+    <ul class="checklist" style="margin-top:6px;">
+      <li><span class="box">→</span><span>Le verrou est posé mais jamais libéré à l'échec — un run planté a l'air « en cours » pour toujours.</span></li>
+      <li><span class="box">→</span><span>La sortie LLM est validée pour sa forme, pas son contenu — le JSON parse, mais personne ne l'a confronté au vrai contrat d'écriture.</span></li>
+    </ul>
+  </div>
+  <div class="page-footer">
+    <span class="foot-left">THE META ARCHITECT — L'ÉTAT BAT L'INTELLIGENCE</span>
+    <span class="foot-page">P. 11 / 16</span>
+  </div>
+</section>
+
+<!-- ══════════════ PAGE 12 — LISTE DES CINQ PILIERS ══════════════ -->
+<section class="page">
+  <div class="page-header">
+    <span class="eyebrow">Guide de terrain STATE</span>
+    <span class="section-tag">Liste — risque élevé</span>
+  </div>
+  <div class="page-content">
+    <div class="kicker">Liste — risque élevé / données réglementées</div>
+    <div class="h1">La liste des cinq piliers</div>
+    <p class="lede" style="margin-bottom:20px;">Décisions touchant des personnes. Opérations financières. Données réglementées. Portée Loi 25. Tout ce qui est en page 11, plus :</p>
+
+    <ul class="checklist">
+      <li><span class="box">☐</span><span>Enregistrement de décision écrit pour toute décision touchant une personne</span></li>
+      <li><span class="box">☐</span><span>Champs de renseignements personnels énumérés dans l'enregistrement de décision</span></li>
+      <li><span class="box">☐</span><span>Versions du modèle et du prompt capturées dans l'enregistrement de décision</span></li>
+      <li><span class="box">☐</span><span>Nœud d'approbation humaine présent pour les décisions à risque élevé</span></li>
+      <li><span class="box">☐</span><span>Politique de rétention documentée pour les enregistrements de décision</span></li>
+    </ul>
+
+    <div class="stat-callout" style="margin-top:24px;">
+      <div class="stat-num" style="font-size:20px; min-width:70px;">Les cinq</div>
+      <div class="stat-text">— aucune exception. À ce niveau, un pilier manquant n'est pas un élément de dette technique. C'est la ligne qu'un régulateur trace autour de votre exposition.</div>
+    </div>
+
+    <div class="divider" style="margin-top:22px;"></div>
+    <div class="label" style="color:var(--text-secondary);">Avant même la liste</div>
+    <p class="body-text">La Loi 25 exige une évaluation des facteurs relatifs à la vie privée (ÉFVP) avant que l'IA touche aux renseignements personnels — cette liste est ce que l'ÉFVP vérifie, pas son remplacement. Si personne dans l'équipe ne peut pointer l'ÉFVP, c'est l'élément zéro, au-dessus des cinq.</p>
+
+    <div class="divider" style="margin-top:20px;"></div>
+    <p class="body-text" style="color:var(--text-muted); font-size:11px;">Référence : page 06 (Auditable) pour le schéma d'enregistrement de décision que cette liste suppose; page 09 pour la note du pilier Auditable chez les outils que vous utilisez peut-être déjà.</p>
+  </div>
+  <div class="page-footer">
+    <span class="foot-left">THE META ARCHITECT — L'ÉTAT BAT L'INTELLIGENCE</span>
+    <span class="foot-page">P. 12 / 16</span>
+  </div>
+</section>
+
+<!-- ══════════════ PAGE 13 — TAXONOMIE DES PANNES ══════════════ -->
+<section class="page">
+  <div class="page-header">
+    <span class="eyebrow">Guide de terrain STATE</span>
+    <span class="section-tag">Référence de terrain</span>
+  </div>
+  <div class="page-content">
+    <div class="kicker">La taxonomie des pannes</div>
+    <div class="h1">Dix pannes. Cinq causes racines.</div>
+    <p class="lede" style="margin-bottom:14px;">Chacune a déjà été l'objet d'une alerte à 2 h du matin, d'une revue d'incident ou d'un post-mortem « le modèle a fait quelque chose de bizarre ». Aucune n'est un problème de modèle.</p>
+
+    <table class="dtable">
+      <tr><th style="width:19%">Mode de panne</th><th style="width:33%">Ce que vous verrez</th><th style="width:9%">Pilier</th><th>Le correctif</th></tr>
+      <tr><td class="strong">Pourriture de contexte</td><td>Le comportement de l'agent dérive au fil d'une longue session; aucune erreur, juste faux.</td><td><span class="badge badge--accent">S</span></td><td>Objet d'état typé par opération; <em>stage</em> reflète toujours la position réelle.</td></tr>
+      <tr><td class="strong">« Le modèle a fait quelque chose de bizarre »</td><td>Même entrée, sortie différente; le bogue ne se reproduit pas.</td><td><span class="badge badge--accent">S</span></td><td>Objet d'état journalisé à chaque transition — le post-mortem, c'est l'état, pas le modèle.</td></tr>
+      <tr><td class="strong">Débogage à l'aveugle</td><td>Aucune trace d'une exécution précise de la semaine dernière; rien à afficher.</td><td><span class="badge badge--accent">T</span></td><td>Chaque appel LLM/API journalisé avec tous les champs requis, sans exception.</td></tr>
+      <tr><td class="strong">Vol à l'aveugle</td><td>Aucune métrique d'hallucination ni de dérive; les problèmes émergent par les plaintes.</td><td><span class="badge badge--accent">T</span></td><td>Reconstitution complète des chaînes de prompts et des appels d'outils, pas seulement des prompts.</td></tr>
+      <tr><td class="strong">Cascade d'hallucinations</td><td>JSON enrobé dans un bloc markdown; le parseur meurt en silence, l'action part quand même.</td><td><span class="badge badge--accent">E</span></td><td>Porte de validation nommée avant chaque écriture — l'invalide route vers l'erreur, jamais plus loin.</td></tr>
+      <tr><td class="strong">Whack-a-mole de prompts</td><td>Chaque correctif de prompt en casse un autre; la précision ne tient pas.</td><td><span class="badge badge--accent">E</span></td><td>Coutures vs composants — test complet de bout en bout avec sorties réelles, pas juste le nœud.</td></tr>
+      <tr><td class="strong">L'angle mort réglementaire</td><td>« Peut-on consigner pourquoi l'agent a fait ça? » — et la réponse est non.</td><td><span class="badge badge--accent">A</span></td><td>Enregistrement de décision par décision automatisée : données, facteurs principaux, versions modèle/prompt.</td></tr>
+      <tr><td class="strong">Redémarrage complet</td><td>Plantage à l'étape 6 sur 10; le flux repart de l'étape 1, le travail est perdu.</td><td><span class="badge badge--accent">Tol</span></td><td>Verrou avant les opérations coûteuses, reprise depuis <em>stage</em>, pas depuis zéro.</td></tr>
+      <tr><td class="strong">La reconstruction aux 90 jours</td><td>Le système d'agents est rebâti de zéro, encore, sur un cycle prévisible.</td><td><span class="badge badge--accent">Tol</span></td><td>Le Test de Redémarrage, réussi avant de prononcer « prêt pour la production ».</td></tr>
+      <tr><td class="strong">Le go/no-go au feeling</td><td>Un pilote part en production parce que la démo avait fière allure.</td><td><span class="badge">Les 5</span></td><td>Notez-le avec le barème STATE avant la promotion — pas après l'incident.</td></tr>
+    </table>
+  </div>
+  <div class="page-footer">
+    <span class="foot-left">THE META ARCHITECT — L'ÉTAT BAT L'INTELLIGENCE</span>
+    <span class="foot-page">P. 13 / 16</span>
+  </div>
+</section>
+
+<!-- ══════════════ PAGE 14 — NOTES DE TERRAIN ══════════════ -->
+<section class="page">
+  <div class="page-header">
+    <span class="eyebrow">Guide de terrain STATE</span>
+    <span class="section-tag">Notes de terrain</span>
+  </div>
+  <div class="page-content">
+    <div class="kicker">Notes de terrain</div>
+    <div class="h1">Quatre pannes qui méritent qu'on s'arrête.</div>
+
+    <div class="divider" style="margin: 16px 0 14px;"></div>
+    <div class="h2" style="font-size:17px; margin-bottom:6px;">L'angle mort réglementaire</div>
+    <p class="body-text">Le risque et le juridique posent déjà la question : « Peut-on consigner pourquoi l'agent a fait ça? Quelles données a-t-il utilisées? » La Loi 25 ne traite pas ça comme une option — elle exige la divulgation des renseignements personnels utilisés, des principaux facteurs derrière une décision automatisée, et un recours à la révision humaine pour la personne concernée. Manquez-la et l'exposition n'a rien d'hypothétique : jusqu'à 25 M$ ou 4&nbsp;% du chiffre d'affaires mondial, au pénal. Posez-vous la question : pourriez-vous répondre à la demande d'un régulateur sur la décision du mois dernier en moins de 30 minutes?</p>
+
+    <div class="divider" style="margin: 16px 0 14px;"></div>
+    <div class="h2" style="font-size:17px; margin-bottom:6px;">La reconstruction aux 90 jours</div>
+    <p class="body-text">La recherche 2025 de Cleanlab montre que 70&nbsp;% des entreprises réglementées — et 41&nbsp;% des non réglementées — remplacent au moins une partie de leur pile d'IA tous les trois mois. Pas toujours le système entier, mais assez, assez souvent, pour que la continuité ne tienne jamais. C'est le sort d'un système qui ne survit qu'au chemin heureux : le premier plantage, délai d'attente ou bris de dépendance absent de la démo force une démolition au lieu d'une reprise. Le Test de Redémarrage sert à attraper ça avant le prochain cycle de démolition — redémarrez le service, redémarrez le conteneur, injectez un échec en plein flux, coupez une dépendance deux minutes. Si ça ne fonctionne qu'en marche avant, c'est une démo, pas un système.</p>
+
+    <div class="divider" style="margin: 16px 0 14px;"></div>
+    <div class="h2" style="font-size:17px; margin-bottom:6px;">Le go/no-go au feeling</div>
+    <p class="body-text">Tous les dirigeants de données ressentent la pression de livrer de l'IA générative; presque aucun ne trouve les échéanciers réalistes. Entre ces deux faits se prend une décision go/no-go fondée sur l'allure de la démo, pas sur un score. Le barème STATE existe pour que cette décision porte un chiffre — 0 à 10, cinq piliers, deux questions diagnostiques chacun. Un système qui score 4 et part en production quand même, ce n'est pas un pari. C'est un risque connu que personne n'a écrit.</p>
+
+    <div class="divider" style="margin: 16px 0 14px;"></div>
+    <div class="h2" style="font-size:17px; margin-bottom:6px;">Cascade d'hallucinations</div>
+    <p class="body-text">La panne, ce n'est pas l'hallucination — les modèles auront toujours parfois tort. La panne, c'est la suite : du JSON enrobé dans un bloc markdown, un parseur qui meurt sans un bruit, une réponse confiante et fausse qui déclenche une action en aval parce que rien ne l'a vérifiée d'abord. « Je veux juste qu'il dise “je ne sais pas” au lieu d'halluciner » — c'est la formulation la plus courante chez les praticiens, et c'est un problème de porte de validation, pas un problème de prompt. Pour l'appel LLM de votre flux qui écrit dans quelque chose de réel : qu'est-ce qui empêche, concrètement, la pire sortie de devenir une action réelle?</p>
+  </div>
+  <div class="page-footer">
+    <span class="foot-left">THE META ARCHITECT — L'ÉTAT BAT L'INTELLIGENCE</span>
+    <span class="foot-page">P. 14 / 16</span>
+  </div>
+</section>
+
+<!-- ══════════════ PAGE 15 — PRINCIPES NOMMÉS ══════════════ -->
+<section class="page">
+  <div class="page-header">
+    <span class="eyebrow">Guide de terrain STATE</span>
+    <span class="section-tag">Référence</span>
+  </div>
+  <div class="page-content">
+    <div class="kicker">Principes nommés</div>
+    <div class="h1">Trois idées qui méritent un nom.</div>
+
+    <div class="divider" style="margin:16px 0 12px;"></div>
+    <div class="h2" style="font-size:16px; margin-bottom:8px;">Le Test de Redémarrage</div>
+    <p class="body-text" style="margin-bottom:10px;">Avant de déclarer un système prêt pour la production, simulez la transition d'état :</p>
+    <ul class="checklist" style="margin-bottom:10px;">
+      <li><span class="box">→</span><span>Redémarrez le service</span></li>
+      <li><span class="box">→</span><span>Redémarrez le conteneur</span></li>
+      <li><span class="box">→</span><span>Injectez un échec à une étape intermédiaire</span></li>
+      <li><span class="box">→</span><span>Mettez une dépendance externe hors ligne deux minutes</span></li>
+    </ul>
+    <p class="body-text">Si le système ne fonctionne qu'en marche avant, c'est une démo. S'il survit aux transitions d'état, il approche du réel.</p>
+
+    <div class="divider" style="margin:18px 0 12px;"></div>
+    <div class="h2" style="font-size:16px; margin-bottom:8px;">Coutures vs composants</div>
+    <p class="body-text">Tester des nœuds individuels, c'est du test de composants. Tester le flux complet avec de vraies sorties LLM traversant chaque frontière, c'est du test d'intégration. Les deux sont requis. Les données figées prouvent que les nœuds fonctionnent. Seul un passage réel prouve que les coutures tiennent aussi.</p>
+
+    <div class="divider" style="margin:18px 0 12px;"></div>
+    <div class="h2" style="font-size:16px; margin-bottom:8px;">La question STATE</div>
+    <p class="body-text">« Votre agent passe-t-il le test STATE? » S'applique à n'importe quel système d'IA, n'importe quelle pile, n'importe quelle échelle.</p>
+
+    <div class="divider divider--strong" style="margin:20px 0 12px;"></div>
+    <div class="h3" style="margin-bottom:10px;">Ce que STATE n'est pas</div>
+    <ul class="checklist">
+      <li><span class="box">—</span><span>Pas un cadre d'évaluation de modèles. N'évalue ni la qualité ni la capacité du modèle.</span></li>
+      <li><span class="box">—</span><span>Pas un cadre MLOps. Ne couvre ni les pipelines d'entraînement ni la gestion des jeux de données.</span></li>
+      <li><span class="box">—</span><span>Pas un cadre de sécurité. Ne remplace pas la modélisation des menaces.</span></li>
+      <li><span class="box">—</span><span>Délibérément incomplet. Couvre les cinq propriétés qui manquent le plus souvent aux systèmes d'agents en production.</span></li>
+    </ul>
+  </div>
+  <div class="page-footer">
+    <span class="foot-left">THE META ARCHITECT — L'ÉTAT BAT L'INTELLIGENCE</span>
+    <span class="foot-page">P. 15 / 16</span>
+  </div>
+</section>
+
+<!-- ══════════════ PAGE 16 — QUATRIÈME DE COUVERTURE ══════════════ -->
+<section class="page">
+  <div class="accent-bar"></div>
+  <div class="back-cover">
+    <div class="back-statement">«&nbsp;Je conçois des systèmes d'IA<br>qui ne lâchent pas.&nbsp;»</div>
+    <div class="back-byline">— Simon Paris, The Meta Architect</div>
+    <p class="back-about">The Meta Architect est la pratique de Simon Paris en ingénierie de la fiabilité des IA : des systèmes d'agents de qualité production pour les entreprises à données sensibles qui composent avec la Loi 25, l'OSFI et l'EU AI Act. Pas du prompt engineering. Pas du battage. La plomberie sous les deux.</p>
+  </div>
+  <div class="state-band">
+    <div class="state-letter-block"><div class="big">S</div><div class="name">Structuré</div></div>
+    <div class="state-letter-block"><div class="big">T</div><div class="name">Traçable</div></div>
+    <div class="state-letter-block"><div class="big">A</div><div class="name">Auditable</div></div>
+    <div class="state-letter-block"><div class="big">T</div><div class="name">Tolérant</div></div>
+    <div class="state-letter-block"><div class="big">E</div><div class="name">Explicite</div></div>
+  </div>
+  <div class="page-footer" style="padding-top:20px;">
+    <span class="foot-left">SIMONPARIS.CA — GUIDE DE TERRAIN STATE — ÉDITION 01 — 2026</span>
+    <span class="foot-page">© SIMON PARIS</span>
+  </div>
+</section>
+
+</body>
+</html>
