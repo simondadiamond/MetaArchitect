@@ -28,5 +28,6 @@ Content-pipeline gates live next to their tools in `projects/Content-Engine/tool
 - blog-hero-figure/render.mjs — hero-figure SVG → 2:1 PNG @2x with brand fonts baked in (`<figure.svg> <out.png>`); the render half of the hero-figure skill loop (born 2026-07-16)
 - blog-hero-figure/publish.mjs — upload hero PNG+SVG to public blog-assets bucket and set blog_posts.hero_image_url/alt (`<slug> <png> <svg> "<alt>"`); refuses unknown slugs (born 2026-07-16)
 - supabase-sql.py — run raw SQL against a Supabase project via the Management API; token auto-discovered from ~/.supabase/access-token, --ref overrides the command-center default (born 2026-07-17)
+- pr-merge-when-green.sh — wait for PR checks, squash-merge by number, optional prod grep verify (`<repo-dir> <pr#> [prod-url] [grep-string]`) (born 2026-07-19)
 - outreach-stale-nudge.mjs — daily ntfy digest of outreach leads untouched >5 days (status new/conversation), no LLM; reads command-center .env at point of use; --dry-run; scheduled 08:00 via Command Center (born 2026-07-19)
 - voice-intake.mjs — watched-folder voice-memo intake: transcribe with local whisper.cpp (auto-installs + small model on first run, defers while a next build runs) and queue a Convert conversion, file → processed/; --dry-run; scheduled */15 via Command Center (born 2026-07-19)

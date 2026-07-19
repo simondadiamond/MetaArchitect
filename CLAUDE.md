@@ -127,6 +127,7 @@ curl -s -X POST http://100.105.85.5:3737/api/schedules \
 - Not a code change: content, strategy, research, ops (those have their own skills/pipelines)
 - Live-fire debugging of something currently broken — the queue adds latency; fix it directly
 - Time-sensitive and Simon is waiting on it in chat
+- A NEW customer-facing landing/conversion page — stays in-session with both design skills loaded (or an explicit sitemaster dispatch with a layout brief). The pipeline's /setup story shipped bare-bones and took five in-session passes to fix (lessons context 2026-07-19); stories are for scoped edits to existing pages
 
 Full details: `projects/command-center/README.md` ("Story worker") and `docs/superpowers/plans/golden-path.md` in that repo.
 

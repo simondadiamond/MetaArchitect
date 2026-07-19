@@ -49,6 +49,8 @@
 - Fabricated personal anecdotes — only use verified humanity snippets
 - Passive voice for diagnostic statements
 - Hedging the thesis ("in some cases" / "it depends")
+- AI-tell shapes and em-dash overuse on ANY customer-facing surface (web pages, PDFs, emails — not just pipeline posts); same gates as editorial (lessons.md 2026-07-19)
+- Internal business mechanics in customer copy ("built once, delivered every time", margins, automation degree) — operator docs only, never the buyer's page
 
 ### Voice Tests
 - **Burned practitioner test**: Would someone paged at 2am because their LLM hallucinated a SQL query read this and think "yes, exactly"?
