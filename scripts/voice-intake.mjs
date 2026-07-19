@@ -28,8 +28,9 @@ const dryRun = process.argv.includes("--dry-run");
 mkdirSync(PROCESSED, { recursive: true });
 
 // Memory guard: never transcribe while a next build runs (Sterling ~8GB headroom).
+// Bracket trick so the pgrep's own shell never matches the pattern.
 try {
-  execSync("pgrep -f 'next build'", { stdio: "pipe" });
+  execSync("pgrep -f '[n]ext build'", { stdio: "pipe" });
   console.log("voice-intake: next build running — deferring to the next fire");
   process.exit(0);
 } catch { /* no build running — proceed */ }
