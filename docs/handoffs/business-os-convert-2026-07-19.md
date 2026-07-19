@@ -57,6 +57,11 @@ create table if not exists public.conversions (
   processed_at timestamptz
 );
 create index if not exists conversions_status_created_idx on public.conversions (status, created_at);
+
+-- Phase F needs these two markers on leads (call-prep + case-study triggers):
+alter table public.leads
+  add column if not exists prep_at timestamptz,
+  add column if not exists case_study_at timestamptz;
 ```
 
 - **Apply the migration to the LIVE DB before merging the code** (new selects fail otherwise):
@@ -126,8 +131,18 @@ create index if not exists conversions_status_created_idx on public.conversions 
 - [ ] Skill-lint 0 fails; one manual `/convert-dispatch` run in-session against a real test
       conversion (mark its pipeline.posts rows `rejected` after — test-hygiene rule).
 - [ ] Schedule created and visible on /schedules; one fire observed in /runs (or run-now used).
-- [ ] Goals updated: mark this build's goal in_progress→done; append one-liners to `2116b881`
-      (Business OS) describing Convert; update auto-memory `project_setup_venture.md`.
+- [ ] Phase D: /setup renders unchanged with `NEXT_PUBLIC_BOOKING_URL` unset AND with it set (local
+      env test); form submit still succeeds when the lead-insert path is forced to fail; a real test
+      submit creates a lead row + ntfy (then delete the test row + MailerLite test entry).
+- [ ] Phase E: a session_notes test conversion yields follow-up email in result + [FR] twin drafts;
+      all test pipeline.posts rows marked `rejected` after.
+- [ ] Phase F: each schedule fired once (run-now ok) against a fixture lead; fixture cleaned. Never
+      name a production row as a test target — create disposable fixtures (lessons.md 2026-07-16).
+- [ ] Phase G: postiz channel query degrades gracefully with no X connected; voice-intake processes
+      a sample audio file end to end (queued conversion visible), file moved to processed/.
+- [ ] Goals updated: mark this build's goal in_progress→done (or note which phases remain); append
+      one-liners to `2116b881` (Business OS) describing what shipped; update auto-memory
+      `project_setup_venture.md`; scripts/INDEX.md lines for any new toolbox scripts.
 
 ## Context pointers
 
@@ -140,15 +155,86 @@ create index if not exists conversions_status_created_idx on public.conversions 
 - pipeline.posts write mechanics: `.claude/skills/repurpose/SKILL.md` ("Save" section — captured
   ids, non-atomic loop, test hygiene).
 
-## Parked ideas (reduce-Simon's-hours candidates — discuss before building)
+## Phases D–G — the full automation slate (Simon: "I'm going to want to do everything")
 
-1. **Booking link on /setup** — biggest calls-funnel friction: CTA is email-only today. A Cal.com
-   (self-hostable) or Calendly link for the free discovery call removes the back-and-forth entirely.
-2. **Stale-lead nudge** — daily schedule: leads with status new/conversation and last_touch > 5 days
-   → ntfy with the next_action. Turns /outreach into a system that pokes back.
-3. **X channel in Postiz** — X variants currently die in `result` jsonb; wiring X into Postiz makes
-   the converter truly multi-channel.
-4. **Session-note voice capture** — Simon records a 2-min voice memo after each session; a schedule
-   transcribes → queues a conversion automatically. Zero-typing flywheel.
-5. **Auto follow-up drafts** — same session notes → the follow-up email draft (playbook template)
-   ready in his inbox. Pairs with #4.
+ALL nine ideas are in scope. Build in this order — it's ranked by value, and each phase ships
+independently, so if the session runs out of context the most important things are already live.
+Hand unfinished phases to the next session by updating THIS file's checklist.
+
+### Phase D — calls-funnel leaks (do first, they lose real prospects today)
+
+**D1. Booking link on /setup** (simonparis-website worktree):
+- Page reads `NEXT_PUBLIC_BOOKING_URL`; when set, the hero primary CTA and the #book section gain a
+  "Book the discovery call" `btn-primary` linking to it (email form stays as fallback below). When
+  unset, page renders exactly as today — ship the code without waiting on the account.
+- Both locales; new i18n keys in `messages/{en,fr}/setup.json`; zero em dashes.
+- **Human step (Simon):** create a Cal.com cloud (or Calendly) free account, one 30-min "Discovery
+  call" event, then set `NEXT_PUBLIC_BOOKING_URL` in Vercel. Do NOT self-host Cal.com on Sterling
+  (~8GB free is not enough for another always-on stack).
+
+**D2. Form-to-outreach auto-capture** (simonparis-website worktree):
+- The /setup form posts to `/api/blog-subscribe` with `consentVersion: "setup-v2"`. Extend that
+  route: when consentVersion starts with `setup`, ALSO (a) insert a row into the command-center
+  Supabase `leads` table (cloud-hosted, reachable from Vercel; `status:'new'`, `channel:'inbound'`,
+  `source_ref:'/setup form'`, `next_action:'Reply within a day'`, name = email local-part until
+  known) and (b) fire an ntfy ping ("New /setup signup: <email>").
+- Needs Vercel env vars: `CC_SUPABASE_URL`, `CC_SUPABASE_SERVICE_KEY`, `CC_OWNER_ID`, `NTFY_TOPIC`
+  (server-side only, never exposed to client). Get owner_id via
+  `supabase-sql.py "select distinct owner_id from public.leads limit 1"`. **Human step:** Simon sets
+  the Vercel env values from local .env sources (never paste values in chat).
+- Failure isolation: the MailerLite subscribe must still succeed even if the lead insert fails
+  (wrap in try/catch, log, don't 500 the form).
+
+### Phase E — dispatcher extensions (extend convert-dispatch while building it)
+
+**E1. Auto follow-up drafts:** when `source_type='session_notes'`, also generate the follow-up email
+(playbook template, three concrete session-specific items) and store it in the conversion `result`
+jsonb (`follow_up_email`). Surface on /convert with a CopyButton. ntfy one-liner so Simon sends it
+same-day.
+
+**E2. FR auto-variants:** for every LinkedIn draft the dispatcher saves, also save a French twin row
+in `pipeline.posts` (proper Québec French, same gates, title prefixed `[FR] `). Inspect
+`lib/db/pipeline-posts.ts` first — if the table has a language/platform column use it, else the
+title prefix is the marker. Simon approves EN and FR independently in /content.
+
+### Phase F — scheduled nudges (small skills/scripts + schedules; all asked-for)
+
+**F1. Stale-lead nudge** — script, no LLM: `scripts/outreach-stale-nudge.mjs` (MetaArchitect
+toolbox; grep scripts/INDEX.md first, add an INDEX line after). Queries leads where status in
+(new,conversation) and coalesce(last_touch_at,created_at) < now()-'5 days', sends ONE ntfy digest
+(names + next_actions). Schedule: kind `script`, cron `0 8 * * *`, absolute path, executable bit.
+
+**F2. Discovery-call prep brief** — skill `call-prep` + hourly schedule (`30 * * * *`, prompt
+`/call-prep`): leads with `status='call_booked'` and `prep_at is null` → best-effort research (web
+search on name/company/notes), write a one-page brief (business model, likely automatable workflows,
+suggested first skill, questions to ask) APPENDED to the lead's `notes` (marker line `--- PREP ---`),
+set `prep_at`, ntfy "Prep ready: <name>". One lead per fire, router pattern.
+
+**F3. Case-study capture** — skill `case-study-capture` + weekly schedule (`0 9 * * 1`, prompt
+`/case-study-capture`): leads with `status='won'` and `case_study_at is null` → gather that client's
+conversions/session notes, draft an anonymized case study to
+`funnel/setup-offer/case-studies/<slug>.md` (named only if notes contain explicit permission), set
+`case_study_at`, ntfy. One per fire.
+
+### Phase G — heavier infra (last; both have human steps)
+
+**G1. X channel via Postiz:** extend `linkedin-publish`'s `postiz.mjs` to support an X integration
+id, and let convert-dispatch schedule x_variants through it once available. Feature-flag on the
+integration's existence (query Postiz API for connected channels). **Human step:** Simon connects X
+in the Postiz UI (OAuth). Until then variants keep landing in `result` jsonb — that path stays.
+Note LinkedIn-automation-risk posture applies to X too: modest volume only.
+
+**G2. Voice-memo intake:** watched folder `~/projects/MetaArchitect/intake/voice-memos/` (gitignore
+contents). Script `scripts/voice-intake.mjs` on a 15-min script schedule: new audio file →
+transcribe with local whisper.cpp (install + small model on first run; CPU is fine for 2-min memos;
+NEVER run transcription in parallel with a next build — Sterling memory) → POST a conversion
+(`source_type: 'session_notes'`, title from filename+date) → move file to `processed/`. **Human
+step:** Simon picks his phone→Sterling transport (same mechanism he uses for the brain inbox works).
+
+## Human-steps summary (the builder cannot do these — list them in the final report)
+
+1. Cal.com/Calendly account + event + `NEXT_PUBLIC_BOOKING_URL` in Vercel (D1).
+2. Vercel env vars for lead capture: CC_SUPABASE_URL / CC_SUPABASE_SERVICE_KEY / CC_OWNER_ID /
+   NTFY_TOPIC (D2) — values from local .env, file-path handoff, never chat.
+3. Postiz X OAuth connect (G1).
+4. Phone→folder transport choice for voice memos (G2).
