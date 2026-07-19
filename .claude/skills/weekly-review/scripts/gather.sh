@@ -53,21 +53,22 @@ pg posts "posts?select=id,status,pillar,intent,planned_week,drafted_at,published
 # --- Story pipeline (public schema) ---
 pg stories "stories?select=id,title,stage,failed_stage,error,target_repo,updated_at&stage=in.(merged,failed,needs_review)&updated_at=gte.$WEEK_START&updated_at=lt.$WEEK_END&order=updated_at.desc" "$TMP/stories.json"
 
-# --- Leads / ICP conversations (public schema, optional — probe the table; degrade gracefully if absent) ---
+# --- New CRM people / ICP conversations (unified clients table since migration 0023;
+# --- public schema, optional — probe the table; degrade gracefully if absent) ---
 stage="leads"
-curl -s --max-time 30 "$SUPABASE_URL/rest/v1/leads?select=id,name,company,channel,source_ref,status,created_at&created_at=gte.$WEEK_START&created_at=lt.$WEEK_END&order=created_at.desc" \
+curl -s --max-time 30 "$SUPABASE_URL/rest/v1/clients?select=id,name,company,channel,source_ref,status,created_at&created_at=gte.$WEEK_START&created_at=lt.$WEEK_END&order=created_at.desc" \
   -H "apikey: $KEY" -H "Authorization: Bearer $KEY" -o "$TMP/leads.json" \
-  || echo '{"skipped": true, "reason": "curl error on leads"}' > "$TMP/leads.json"
+  || echo '{"skipped": true, "reason": "curl error on clients"}' > "$TMP/leads.json"
 python3 -c "import json;d=json.load(open('$TMP/leads.json'));assert isinstance(d,list)" 2>/dev/null \
-  || echo '{"skipped": true, "reason": "leads table not readable"}' > "$TMP/leads.json"
+  || echo '{"skipped": true, "reason": "clients table not readable"}' > "$TMP/leads.json"
 
-# --- Open lead pipeline (all statuses, for the Friday follow-up pass; optional — degrade, don't abort) ---
+# --- Open pipeline (all statuses, for the Friday follow-up pass; optional — degrade, don't abort) ---
 stage="open_leads"
-curl -s --max-time 30 "$SUPABASE_URL/rest/v1/leads?select=id,name,company,status,created_at&order=created_at.asc" \
+curl -s --max-time 30 "$SUPABASE_URL/rest/v1/clients?select=id,name,company,status,created_at&order=created_at.asc" \
   -H "apikey: $KEY" -H "Authorization: Bearer $KEY" -o "$TMP/open_leads.json" \
-  || echo '{"skipped": true, "reason": "curl error on open leads"}' > "$TMP/open_leads.json"
+  || echo '{"skipped": true, "reason": "curl error on open clients"}' > "$TMP/open_leads.json"
 python3 -c "import json;d=json.load(open('$TMP/open_leads.json'));assert isinstance(d,list)" 2>/dev/null \
-  || echo '{"skipped": true, "reason": "leads table not readable"}' > "$TMP/open_leads.json"
+  || echo '{"skipped": true, "reason": "clients table not readable"}' > "$TMP/open_leads.json"
 
 # --- Engage queue health (public schema, optional — degrade, don't abort) ---
 stage="engage"

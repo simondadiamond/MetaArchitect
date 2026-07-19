@@ -1,11 +1,13 @@
 #!/usr/bin/env node
-// outreach-stale-nudge.mjs — daily digest of stale outreach leads, no LLM.
-// Stale = status in (new, conversation) and coalesce(last_touch_at, created_at)
-// older than 5 days. Sends ONE ntfy digest (names + next_actions); silent when
-// nothing is stale. Scheduled daily 08:00 via Command Center (kind: script).
+// outreach-stale-nudge.mjs — daily digest of stale prospects, no LLM.
+// Reads the unified CRM (public.clients, migration 0023 — public.leads is
+// frozen). Stale = status in (new, conversation) and coalesce(last_touch_at,
+// created_at) older than 5 days. Sends ONE ntfy digest (names + next_actions);
+// silent when nothing is stale. Scheduled daily 08:00 via Command Center
+// (kind: script).
 //
-// Env comes from the command-center .env (Supabase project holding public.leads)
-// — read at point of use, never committed. --dry-run prints instead of pinging.
+// Env comes from the command-center .env — read at point of use, never
+// committed. --dry-run prints instead of pinging.
 
 import { readFileSync } from "node:fs";
 
@@ -33,12 +35,12 @@ if (!url || !key || !owner) {
 }
 
 const res = await fetch(
-  `${url}/rest/v1/leads?select=name,status,next_action,last_touch_at,created_at` +
+  `${url}/rest/v1/clients?select=name,status,next_action,last_touch_at,created_at` +
     `&owner_id=eq.${owner}&status=in.(new,conversation)&order=created_at.asc`,
   { headers: { apikey: key, Authorization: `Bearer ${key}` } },
 );
 if (!res.ok) {
-  console.error(`outreach-stale-nudge: leads query failed (${res.status})`);
+  console.error(`outreach-stale-nudge: clients query failed (${res.status})`);
   process.exit(1);
 }
 const leads = await res.json();
@@ -57,7 +59,7 @@ const lines = stale.map(
   (l) => `${l.name} (${l.status}): ${l.next_action ?? "no next action set"}`,
 );
 const body = lines.join("\n");
-const title = `${stale.length} stale lead${stale.length > 1 ? "s" : ""} (>${STALE_DAYS}d untouched)`;
+const title = `${stale.length} stale prospect${stale.length > 1 ? "s" : ""} (>${STALE_DAYS}d untouched)`;
 
 if (dryRun) {
   console.log(`[dry-run] ${title}\n${body}`);
@@ -75,4 +77,4 @@ const ping = await fetch(ntfyUrl, {
   body,
   signal: AbortSignal.timeout(10_000),
 });
-console.log(`outreach-stale-nudge: sent digest (${stale.length} leads, ntfy ${ping.status})`);
+console.log(`outreach-stale-nudge: sent digest (${stale.length} prospects, ntfy ${ping.status})`);
