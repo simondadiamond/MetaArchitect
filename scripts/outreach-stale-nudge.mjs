@@ -73,7 +73,8 @@ if (!ntfyUrl) {
 }
 const ping = await fetch(ntfyUrl, {
   method: "POST",
-  headers: { Title: title },
+  // HTTP header values are latin1 ByteStrings — non-ASCII (em-dashes) throws (lessons.md 2026-07-19)
+  headers: { Title: title.replace(/[^\x20-\x7e]/g, "-") },
   body,
   signal: AbortSignal.timeout(10_000),
 });
