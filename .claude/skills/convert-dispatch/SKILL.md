@@ -52,7 +52,8 @@ curl -s -o /tmp/claim.json -w "%{http_code}" -X POST http://100.105.85.5:3737/ap
 ```
 
 - `204` → print `convert queue: empty`, log it (`output_summary: 'queue empty'`), stop.
-- `200` → the body's `conversion` is the row: `{id, title, source_type, raw_content, targets, ...}`. Set `state.entityId`. The claim already flipped it to `processing` — never SELECT or claim a second row.
+- `200` → the body's `conversion` is the row: `{id, title, source_type, raw_content, targets, client_id, ...}`. Set `state.entityId`. The claim already flipped it to `processing` — never SELECT or claim a second row.
+- The body also carries `client` (`{id, name, company, locale, memory}`) when the conversion is client-attributed (queued from the Clients mini-CRM), else `null`. See "Client-attributed conversions" below.
 - Any other status → report the error and stop (nothing was claimed; nothing to roll back).
 
 From here on, every failure path MUST end with the error PATCH in step 6 — never leave a row stuck in `processing`.
@@ -81,6 +82,28 @@ Read `build-story/SKILL.md`, `repurpose/SKILL.md` (Step 7 + Scheduled Mode), and
 `stage: 'candidate'` is the point: the row enters the staged pipeline behind its human gates — **never** a direct blog draft, never a later stage. Capture the id. Source too thin → skip the target and say so in the result (`blog_idea_id: null`).
 
 **Follow-up email (only when `source_type = 'session_notes'`):** generate the same-day follow-up email from the acquisition playbook template (`funnel/setup-offer/acquisition-playbook.md`, "Follow-up email"): three concrete session-specific items traced to the notes (two from the session, one small solo next step), where we stopped, what's next. Store the full email in `result.follow_up_email`. After the PATCH in step 6, ping: `await ntfy('Follow-up email ready to send today — <conversion title> — CC /convert')` (a false return gets one log line, nothing more).
+
+### 3b. Client-attributed conversions (claim body has `client`)
+
+- **Memory is background, notes are the source.** `client.memory` is the durable-facts
+  list Simon keeps per client (also embedded in `raw_content` under `CLIENT MEMORY`).
+  Use it to get details right (their season, their tools, what was built before) —
+  never as post material on its own; every event in a post still traces to the FRESH
+  COMMUNICATIONS block.
+- **Anonymity unchanged:** attribution in the DB does NOT mean the client is nameable
+  in a post. build-story's default holds — anonymized unless the memory contains an
+  explicit line recording Simon's/the client's permission.
+- **Give back to the memory.** After drafting, extract durable NEW facts from the fresh
+  notes (a preference stated, a milestone reached, permission granted, a tool adopted —
+  the kind of line `products/business-os-kit/template/memory/conventions.md` would keep;
+  not one-off logistics). If there are any: append them to the memory as dated bullets
+  (`- (2026-07-19) ...`) and write it back:
+  `PATCH http://100.105.85.5:3737/api/clients/<client.id>` with `{"memory": "<existing memory + new lines>"}` —
+  always the full text (existing + appended), never a replacement. Zero new durable
+  facts → skip the PATCH; don't pad the memory. Note `memory: +<n> facts` (or `+0`) in
+  the final log line.
+- Use `client.locale` as the default draft language for the EN row when the client is
+  the audience anchor; the FR-twin rule applies regardless.
 
 ### 4. Validate before writing (E gate)
 
