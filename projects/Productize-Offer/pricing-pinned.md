@@ -4,15 +4,16 @@
 > Every artifact in `audit/` and `diagnostic/` uses ONLY these numbers. If a number here disagrees
 > with a goals-table row, an old roadmap doc, or the handoff prose, THIS TABLE WINS.
 > USD list prices are canonical (site display); CAD applies at invoice for Canadian entities (Amendment 5).
+> **Amendment 7 (2026-07-19):** founding calendar deadlines pushed +6 months (Diagnostic 2027-06-30, Audit 2027-09-30, Training/Retainer 2027-12-31). Reason: crawl-first strategy — consumer ladder (/setup) runs first, corporate motion starts on pull, so the founding windows must survive the sequencing. Slot counts unchanged.
 
 ## The Table
 
 | Tier | Public title | Scope & duration | Deliverables | Founding USD | Full USD | Founding CAD | Full CAD | Raise trigger (slots close) |
 |---|---|---|---|---|---|---|---|---|
-| 1 | **AI Readiness Diagnostic** | 2–3 days | 5-page findings memo, 1-hr readout, EN/FR | **$2,500** | **$3,500** | $3,500 | $4,800 | 5 slots — all 5 delivered + debriefed, OR 2026-12-31 |
-| 2 | **Production AI Audit** | 2 weeks | Full STATE audit: codebase + telemetry review, 3–5 engineer interviews, per-pillar scoring, 10–20 pp findings doc, 90-day remediation roadmap, 90-min readout | **$6,500** | **$9,500** | $9,000 | $13,000 | 3 slots — all 3 delivered AND ≥2 case studies live, OR 2027-03-31 |
-| 3 | **Team Training** ("Agentic Development for Teams") | Half-day or full-day workshop, remote-first, EN/FR | Hands-on with client's codebase | **$3,000** half / **$4,500** full-day | $4,500 / $6,500 | $4,000 / $6,000 | $6,000 / $9,000 | 3 slots — 3 delivered with testimonials, OR 2027-06-30 |
-| 4 | **Fractional LLMOps Engineer** | Day-blocks, monthly | 1 d/wk or 2 d/wk | **$5,500/mo** (1 d/wk) / **$9,000/mo** (2 d/wk) | $7,000 / $12,000 | $7,500 / $12,500 | $9,500 / $16,500 | 2 slots — both signed, OR 2027-06-30 |
+| 1 | **AI Readiness Diagnostic** | 2–3 days | 5-page findings memo, 1-hr readout, EN/FR | **$2,500** | **$3,500** | $3,500 | $4,800 | 5 slots — all 5 delivered + debriefed, OR 2027-06-30 |
+| 2 | **Production AI Audit** | 2 weeks | Full STATE audit: codebase + telemetry review, 3–5 engineer interviews, per-pillar scoring, 10–20 pp findings doc, 90-day remediation roadmap, 90-min readout | **$6,500** | **$9,500** | $9,000 | $13,000 | 3 slots — all 3 delivered AND ≥2 case studies live, OR 2027-09-30 |
+| 3 | **Team Training** ("Agentic Development for Teams") | Half-day or full-day workshop, remote-first, EN/FR | Hands-on with client's codebase | **$3,000** half / **$4,500** full-day | $4,500 / $6,500 | $4,000 / $6,000 | $6,000 / $9,000 | 3 slots — 3 delivered with testimonials, OR 2027-12-31 |
+| 4 | **Fractional LLMOps Engineer** | Day-blocks, monthly | 1 d/wk or 2 d/wk | **$5,500/mo** (1 d/wk) / **$9,000/mo** (2 d/wk) | $7,000 / $12,000 | $7,500 / $12,500 | $9,500 / $16,500 | 2 slots — both signed, OR 2027-12-31 |
 
 ## Standing terms (also frozen)
 
