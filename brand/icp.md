@@ -4,6 +4,8 @@
 > the 1–2 year destination). The active revenue venture (/setup, venture #1) has its
 > own buyer — see `funnel/setup-offer/icp.md`. Never conflate the funnels.
 
+> **Lane status (2026-07-20): this is the PRACTITIONER/enterprise lane — pull-only under the crawl-first strategy.** It stays canonical here and reactivates on corporate pull. The active primary audience is the Expertise Operator: `brand/audiences/operator.md` (brand-side lane doc — voice test, pillar weights, CTA routing) alongside `funnel/setup-offer/icp.md` (offer-side buyer research). Those two are pending reconciliation — goal `e7ab2aa0`.
+
 > Last updated: March 2026  
 > Use this file when writing: landing pages, post hooks, outreach DMs, cohort positioning, offer copy, workshop scripts.
 
