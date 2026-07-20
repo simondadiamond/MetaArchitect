@@ -60,7 +60,9 @@ Before making any visual or copy change, read the brand files:
 5. **Quality gates:**
    - Build command: `npm run build` (Next.js — check `package.json` to confirm).
    - Surface check: Playwright screenshots of affected routes on mobile and desktop viewports + form-flow validation when forms changed.
+   - **Prove the screenshot is of YOUR build (lesson 2026-07-20)**: a stale `next-server` still bound to the port served pre-change HTML and nearly certified a build that was never rendered. Before any rendered check counts as evidence, confirm the serving process postdates your build (kill by port-owner pid via `ss`, never a broad `pkill`) AND grep the served HTML for a string unique to your change.
    - i18n is bilingual EN + FR via `next-intl` — every locale-aware string must have both variants or a `TODO` comment.
+   - **Never round-trip locale JSON through a parser (lesson 2026-07-20)**: `json.load` → `json.dump` on `messages/*.json` reformats the whole file and buries the real change in unreviewable churn. Replace the exact quoted string in the raw text, assert it occurs exactly once, then check `git diff --stat` — a line count far above the size of your change means the formatter got in; revert and redo.
    - **Closing gate (lesson 2026-06-28): a live preview or localhost walk is MANDATORY before recommending merge on any UI-touching change.** Static code review cannot predict CSS box-model conflicts under real data widths. If the preview path is blocked (no bypass token, protection issues), fall back to localhost-dev — never substitute deeper code review for the walk.
 6. **Git ops via `gh` CLI** — never raw `git push`, never `--no-verify`, never force-push.
    - **`gh pr list` before starting any chore PR** (lesson 2026-05-10: two agents shipped duplicate PRs for the same cleanup).
