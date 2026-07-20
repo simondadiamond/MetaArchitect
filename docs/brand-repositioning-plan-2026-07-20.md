@@ -1,6 +1,6 @@
 # Brand Repositioning Plan — Operator ICP (Two-Audience Brand OS)
 
-> Date: 2026-07-20 · Author: COO session · Status: awaiting Simon's approval on the ICP draft, then Phase 1 executes.
+> Date: 2026-07-20 · Author: COO session · Status: ICP stress-tested (see Stress Test section); doc architecture is ADDITIVE per Simon — no existing brand doc gets rewritten; expensive phases are gated on paying signal.
 > Trigger: crawl-first strategy (locked 2026-07-19) made /setup the active offer, but the entire brand OS — ICP doc, voice gates, pillars, CTA routing, homepage — still targets the enterprise reliability lead.
 
 ## Decisions already locked (this session)
@@ -67,12 +67,32 @@ Proposed LinkedIn mix: ~60% operator / 40% practitioner, revisit after first fou
 - Practitioner-audience post → `/score`, every ~3rd practitioner post (unchanged)
 - `/readiness` never public (unchanged)
 
+## Stress test — does the operator ICP have the budget/willingness? (2026-07-20)
+
+**Verdict: budget exists — proven at exactly these price points — but willingness for THIS framing is unproven, and the target needs one refinement: delegation-proven operators, not AI-curious solopreneurs.**
+
+Evidence for budget: the Notion-consultant/business-OS market sells to the same buyer (coaches, consultants, solo founders) at $75–250/hr, $2K–5K for customized workspace builds, and $5K–15K+ for custom OS builds with integrations — Simon's $125/hr → $2.5K → $6.5K ladder sits inside an established category, not above it.
+
+Attackable weaknesses (all three shape execution):
+1. **Anthropic commoditized the floor (May 2026): "Claude for Small Business"** — 15 pre-built workflows + 7 connectors (QuickBooks, PayPal, HubSpot, Canva, DocuSign, Google Workspace, M365), free with any paid Claude plan, via Claude Cowork. The buyer's alternative is no longer "DIY from docs" — it's a free official product. Every discovery call will eventually hit "isn't Claude doing this for free now?" The /setup copy says "not a template" but never confronts the free tier. REQUIRED: /setup and the operator ICP doc must position explicitly above it (bespoke workflows, your voice, memory conventions, skills encoding how YOU work — things a generic toggle can't hold). Verify the launch details firsthand before writing copy against it.
+2. **Time-savings framing sells weakly to solos.** This segment pays $5K+ readily for revenue promises (coaching, funnels, ads) and skimps on efficiency. The Notion builds that DO sell at $5K+ sell mental-load replacement, mostly to people who already outsource. Refinement: the primary target is the **delegation-proven operator** — already pays a VA/OBM/bookkeeper ($500–1,500/mo ≈ $6–18K/yr). For them $6.5K one-time displaces spend they already make, and they've proven they pay for ops relief. "Already pays for help" becomes a qualifying question on the discovery call.
+3. **Reachability–WTP inversion.** The people easiest to reach with AI content on LinkedIn (AI-curious builders) are the most DIY-prone and price-sensitive; the delegation-proven operators with real WTP mostly don't follow AI content. Implication: operator content must lead with business pain in business language (invoices, follow-ups, evenings), never tool language; and referral/case-study motion (sister → founding clients) will likely outperform feed content for actual closes.
+4. (Delivery risk, watch-item) Post-handover sustained use by a non-technical owner in a terminal-adjacent tool → if usage decays, case studies and referrals die. The Owner's Manual + 30-day async window are the mitigations; track usage at day 30.
+
+**Validation gates (the ladder IS the experiment — don't finish the rebrand before the market votes):**
+- Gate A (now, cheap): make /setup discoverable (nav story) + Phase 1 additive docs. No paying signal required.
+- Gate B (first paying signal: 1 audit sale, ~3 session clients, or 1 founding close): unlocks Phase 2 (skills/gates) + full operator homepage rebuild.
+- Gate C (2+ founding closes or clear segment read from discovery calls): unlocks Phase 4 (superstar operator anchors, operator lead magnet) + doubling operator share of the content mix.
+- If 60 days of discoverable /setup + operator posts produce zero discovery calls: revisit the segment (5–25-staff variant or back toward practitioner) before spending more.
+
 ## Phases — what gets modified, where
 
-### Phase 1 — Brand source-of-truth (MetaArchitect, session work, ~1–2h) — DO FIRST
-1. `brand/icp.md` — rewrite as two-audience doc: operator ICP (above) primary; enterprise ICP preserved verbatim in a "Pull lane (parked)" section, not deleted.
-2. `brand/brand-summary.md` — highest leverage (@-imported by both CLAUDE.md files): new ICP block, audience-field convention, both voice tests scoped by audience, re-weighted pillar table, CTA routing table, Write-This/Not-This rows gain operator examples.
-3. `brand/brand-guidelines.md` — align voice tests + pillars; add operator Write-This/Not-This rows.
+### Phase 1 — Brand source-of-truth, ADDITIVE (MetaArchitect, session work, ~1–2h) — DO FIRST
+**Architecture rule (Simon, 2026-07-20): no existing brand doc is rewritten. Each audience gets its own file; shared identity stays where it is. The enterprise docs remain intact for the day the pull lane reactivates.**
+1. NEW `brand/audiences/operator.md` — full operator ICP (label, defining sentence, frustrations, language-that-lands, busy-owner test, pillar weights, /setup CTA rules).
+2. NEW `brand/audiences/practitioner.md` — thin pointer file: "the enterprise lane — see brand/icp.md + existing voice tests; status: pull-only" (no content duplicated).
+3. `brand/icp.md`, `brand/brand-guidelines.md` — UNTOUCHED except a 2-line banner at top: "Practitioner/enterprise lane — pull-only since 2026-07-20. Operator lane: brand/audiences/operator.md."
+4. `brand/brand-summary.md` — the ONE shared file that must change (it's @-imported everywhere): its ICP/pillar/CTA sections become audience-routed ("operator content → audiences/operator.md; practitioner content → existing sections below"), plus the audience-field convention and CTA routing table. Existing enterprise sections stay in place.
 
 ### Phase 2 — Skills, gates, agent profiles (MetaArchitect, session work, ~1–2h)
 4. `editorial/SKILL.md` — fidelity check becomes audience-parameterized: busy-owner test for operator drafts, burned-practitioner test for practitioner drafts.
@@ -85,7 +105,7 @@ Proposed LinkedIn mix: ~60% operator / 40% practitioner, revisit after first fou
 11. Run `scripts/skill-lint.sh` after skill edits.
 
 ### Phase 3 — Website (simonparis-website repo, mixed routing)
-12. **Homepage rebuild — operator-first** (`messages/{en,fr}/home.json` + layout): hero on the operator pain (groundhog-day context → business running on Claude), primary CTA → /setup, practitioner escape hatch in sub-hero or footer ("Run production LLM systems? → STATE Score"). NEW conversion page ⇒ **in-session with ui-ux-pro-max + frontend-design loaded** (per CLAUDE.md rule), not a story.
+12. **Homepage — two-step per validation gates.** Now (Gate A): light touch — nav routes to /setup + a secondary hero CTA to /setup; enterprise homepage otherwise stands. After Gate B (first paying signal): full operator-first rebuild (`messages/{en,fr}/home.json` + layout), hero on the operator pain, primary CTA → /setup, practitioner escape hatch. NEW conversion page ⇒ **in-session with ui-ux-pro-max + frontend-design loaded** (per CLAUDE.md rule), not a story.
 13. **Nav story** (sitemaster): "Work With Me" nav item → `/setup`; /work-with-me stays live, orphaned. Brand acceptance criteria spelled out.
 14. **Metadata sweep stories** (after Phase 1 locks language): `metadata.json`, `layout.tsx` keywords/OG, `llms.txt/route.ts` ("Who This Is For" gains the operator, enterprise moves to secondary), `about.json` (soften to two-audience).
 15. Untouched: `/score` tool + score.json (practitioner funnel intact), `/work-with-me`, blog, state-rubric artifact. Delete dead `app/page.tsx.bak`.
@@ -97,7 +117,7 @@ Proposed LinkedIn mix: ~60% operator / 40% practitioner, revisit after first fou
 
 ## Sequencing
 
-Phase 1 → then homepage (12) and Phase 2 in parallel → nav story (13) can ship immediately after homepage decision is final → metadata stories (14) after Phase 1 → Phase 4 on pull/backlog.
+Gate A now: Phase 1 additive docs + nav story (13) + light homepage CTA. Gate B (first paying signal): Phase 2 + full homepage rebuild (12) + metadata stories (14). Gate C: Phase 4. The stress-test's "position against Claude for Small Business" requirement lands in the operator.md doc and /setup copy at Gate A — it's a claim gap, not a rebuild.
 
 ## Open items for Simon
 - Approve/edit the operator ICP draft (label, defining sentence, frustrations) — the one blocking item.
