@@ -67,7 +67,9 @@ The wedge — never argue against it, build on top of it:
 
 ## Out of scope (absorb on pull, don't target)
 
-- Small firms 5–25 staff — needs a multi-seat variant that doesn't exist yet.
+**The boundary is who operates the workspace, not headcount** (clarified with Simon 2026-07-20). An 8-person firm whose owner personally does the proposals/invoices/content is an owner-operator with staff — the current offer fits them as-is (we set up the OWNER's workspace). What's out of scope is "set up my whole team":
+
+- Multi-seat/team setups (5–25 staff wanting the team version) — a variant that doesn't exist yet; if one asks, that's pull: scope as working sessions + custom quote, first one pilots the variant.
 - Indie founders/creators as flagship targets — they enter via working sessions; don't shape $6.5K copy around them.
 - The enterprise practitioner — separate lane, see `practitioner.md`.
 
