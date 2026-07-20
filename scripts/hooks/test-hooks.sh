@@ -40,6 +40,8 @@ TAMPER_APPEND=$(printf 'echo x >> %s' 'scripts/skill-lint.sh')
 SECRET_LITERAL_CMD=$(printf 'curl -H "Authorization: Bearer %s%s" https://api.supabase.com/v1/projects' 'sbp_' '0123456789abcdef0123456789abcdef')
 JWT_LITERAL_CMD=$(printf 'curl -H "apikey: %s.%s.%s" "$URL/rest/v1/posts"' 'eyJhbGciOiJIUzI1NiJ9' 'eyJyb2xlIjoic2VydmljZV9yb2xlIn0' 'sig')
 file_payload() { jq -n --arg f "$1" '{tool_name:"Edit",tool_input:{file_path:$f}}'; }
+agent_payload() { jq -n --arg f "$1" --arg n "$2" '{tool_name:"Edit",tool_input:{file_path:$f,new_string:$n}}'; }
+agent_write_payload() { jq -n --arg f "$1" --arg c "$2" '{tool_name:"Write",tool_input:{file_path:$f,content:$c}}'; }
 prompt_payload() { jq -n --arg p "$1" '{prompt:$p}'; }
 
 CC=/home/diamond/projects/MetaArchitect/projects/command-center
@@ -95,8 +97,15 @@ check "edit in story worktree ok"  file-guard.sh "$(file_payload "$HOME/.story-w
 check "edit MetaArchitect ok"      file-guard.sh "$(file_payload '/home/diamond/projects/MetaArchitect/docs/lessons.md')" allow
 check "brain INDEX.md denied"      file-guard.sh "$(file_payload '/home/diamond/projects/brain/INDEX.md')"   deny
 # file-guard rule 3: agent profiles are propose-only (red-team 2026-07-13)
-check "agent profile edit denied"  file-guard.sh "$(file_payload '/home/diamond/projects/MetaArchitect/.claude/agents/sitemaster.md')" deny
-check "agent profile in worktree denied" file-guard.sh "$(file_payload '/home/diamond/projects/MetaArchitect/.claude/worktrees/x/.claude/agents/coo.md')" deny
+# Rule 3 narrowed 2026-07-20: self-edit + off-brand hex denied; other profile edits allowed.
+check "self-profile edit denied"   file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/.claude/agents/coo.md' 'a harmless process rule')" deny
+check "self-profile in worktree denied" file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/.claude/worktrees/x/.claude/agents/coo.md' 'text')" deny
+check "off-brand hex in profile denied" file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/.claude/agents/sitemaster.md' 'use #FF6600 for buttons')" deny
+check "off-brand hex lowercase denied"  file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/.claude/agents/sitemaster.md' 'accent: #ff6600')" deny
+check "off-brand hex via Write denied"  file-guard.sh "$(agent_write_payload '/home/diamond/projects/MetaArchitect/.claude/agents/sitemaster.md' 'body #123456 more')" deny
+check "palette hex in profile ok"       file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/.claude/agents/sitemaster.md' 'actions use #E04500, links #C97A1A')" allow
+check "palette hex lowercase ok"        file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/.claude/agents/sitemaster.md' 'accent #e04500')" allow
+check "process rule in other profile ok" file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/.claude/agents/sitemaster.md' 'never round-trip locale JSON through a parser')" allow
 check "skills edit still allowed"  file-guard.sh "$(file_payload '/home/diamond/projects/MetaArchitect/.claude/skills/repurpose/SKILL.md')" allow
 check "brain note ok"              file-guard.sh "$(file_payload '/home/diamond/projects/brain/notes/x.md')" allow
 
