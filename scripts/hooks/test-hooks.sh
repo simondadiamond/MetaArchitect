@@ -97,15 +97,14 @@ check "edit in story worktree ok"  file-guard.sh "$(file_payload "$HOME/.story-w
 check "edit MetaArchitect ok"      file-guard.sh "$(file_payload '/home/diamond/projects/MetaArchitect/docs/lessons.md')" allow
 check "brain INDEX.md denied"      file-guard.sh "$(file_payload '/home/diamond/projects/brain/INDEX.md')"   deny
 # file-guard rule 3: agent profiles are propose-only (red-team 2026-07-13)
-# Rule 3 narrowed 2026-07-20: self-edit + off-brand hex denied; other profile edits allowed.
-check "self-profile edit denied"   file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/.claude/agents/coo.md' 'a harmless process rule')" deny
-check "self-profile in worktree denied" file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/.claude/worktrees/x/.claude/agents/coo.md' 'text')" deny
-check "off-brand hex in profile denied" file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/.claude/agents/sitemaster.md' 'use #FF6600 for buttons')" deny
-check "off-brand hex lowercase denied"  file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/.claude/agents/sitemaster.md' 'accent: #ff6600')" deny
-check "off-brand hex via Write denied"  file-guard.sh "$(agent_write_payload '/home/diamond/projects/MetaArchitect/.claude/agents/sitemaster.md' 'body #123456 more')" deny
-check "palette hex in profile ok"       file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/.claude/agents/sitemaster.md' 'actions use #E04500, links #C97A1A')" allow
-check "palette hex lowercase ok"        file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/.claude/agents/sitemaster.md' 'accent #e04500')" allow
-check "process rule in other profile ok" file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/.claude/agents/sitemaster.md' 'never round-trip locale JSON through a parser')" allow
+# Rule 3 (2026-07-20, corrected): EVERY agent-profile edit asks for Simon's approval.
+# The rule is about unapproved behaviour drift, not about any particular value.
+check "profile edit asks"          file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/.claude/agents/sitemaster.md' 'never round-trip locale JSON')" ask
+check "own-profile edit asks"      file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/.claude/agents/coo.md' 'a process rule')" ask
+check "profile in worktree asks"   file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/.claude/worktrees/x/.claude/agents/coo.md' 'text')" ask
+check "profile Write asks"         file-guard.sh "$(agent_write_payload '/home/diamond/projects/MetaArchitect/.claude/agents/blog-writer.md' 'body')" ask
+check "profile hex edit asks"      file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/.claude/agents/sitemaster.md' 'accent #FF6600')" ask
+check "non-profile md silent"      file-guard.sh "$(agent_payload '/home/diamond/projects/MetaArchitect/docs/lessons.md' 'text')" allow
 check "skills edit still allowed"  file-guard.sh "$(file_payload '/home/diamond/projects/MetaArchitect/.claude/skills/repurpose/SKILL.md')" allow
 check "brain note ok"              file-guard.sh "$(file_payload '/home/diamond/projects/brain/notes/x.md')" allow
 

@@ -13,6 +13,11 @@ deny() {
   exit 0
 }
 
+ask() {
+  jq -n --arg r "$1" '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"ask",permissionDecisionReason:$r}}'
+  exit 0
+}
+
 # --- Rule 1: brain INDEX.md is generated, never hand-edited (second-brain memory) ---
 if [ "$fp" = "/home/diamond/projects/brain/INDEX.md" ]; then
   deny "brain INDEX.md is generated — never hand-edit it. Save via 'brain save' and let the brain CLI regenerate the index."
@@ -25,44 +30,17 @@ if grep -qE "^($PRIMARIES)/" <<<"$fp" && ! grep -qE "$WORKTREE_MARKERS" <<<"$fp"
   deny "Worktree rule: code edits in shared checkouts happen in a git worktree, never the primary (the live :3737 service serves the command-center primary — lessons.md 2026-07-04). Create one: git worktree add <path> -b <branch> origin/main"
 fi
 
-# --- Rule 3: agent profiles — self-edit banned, off-brand values banned (CLAUDE.md standing rule) ---
-# Born from the 2026-07-13 downgrade red-team: a mid-tier model asked to "update the
-# accent color" edited .claude/agents/sitemaster.md directly and wrote an off-brand
-# hex. skill-lint caught the color after the fact; nothing blocked the write.
-#
-# Narrowed 2026-07-20 (Simon, explicit): the original rule denied EVERY profile edit,
-# which blocked legitimate anti-recurrence work — the COO could write a lesson to
-# lessons.md but not mechanize it into the profile that owns the failure, so the loop
-# stayed half-closed. A blanket deny that stops correct work gets worked around; a
-# targeted one gets respected. Two things stay hard-denied, because they're the actual
-# risks the blanket rule was standing in for:
-#   (a) an agent editing its OWN profile — self-modifying operating instructions is a
-#       different class of change, and coo.md says propose-only in its own text;
-#   (b) writing a hex color that isn't in the brand palette — the literal 2026-07-13
-#       incident. This now blocks on ANY path into a profile, not just the ones a
-#       blanket deny happened to cover.
-# Everything else (process rules, checklists, lessons) is allowed and reviewable in the PR.
+# --- Rule 3: agent profiles require an approval pass (CLAUDE.md standing rule) ---
+# The rule is about UNDOCUMENTED, UNAPPROVED changes to how agents operate — not about
+# any particular value. Agent behaviour must never drift without Simon seeing the change.
+# History: 2026-07-13 a downgraded model silently wrote an off-brand hex into
+# sitemaster.md, so this became a hard deny. That over-corrected — it also blocked
+# approved, legitimate edits (2026-07-20: mechanizing a lesson into the agent that owns
+# the failure), and a gate that blocks correct work gets routed around. Corrected the
+# same day to what the rule always meant: every profile edit prompts Simon for approval.
+# Approve it and the edit proceeds in-session; decline and nothing is written.
 if grep -qE '/\.claude/agents/[^/]+\.md$' <<<"$fp"; then
-  # (a) self-edit: an agent may never rewrite its own operating instructions.
-  # CLAUDE_AGENT_NAME is set for subagent sessions; the COO main loop sets nothing,
-  # so coo.md is treated as self-owned by default (the conservative reading).
-  self_profile="${CLAUDE_AGENT_NAME:-coo}"
-  if grep -qE "/\.claude/agents/${self_profile}\.md$" <<<"$fp"; then
-    deny "Self-edit denied: an agent never edits its own profile (${self_profile}.md). Show Simon the exact diff and let him apply it. Other agents' profiles are editable — non-palette hex values are still blocked."
-  fi
-
-  # (b) off-brand hex: palette from brand/brand-summary.md (Visual Identity).
-  # Applies to Edit (new_string), Write (content), and MultiEdit (every edits[].new_string).
-  PALETTE='#0F0F0F|#1A1A1A|#1F1F1F|#333333|#EAEAEA|#B4B4B4|#777777|#E04500|#FF5A1A|#C97A1A|#F85149'
-  new_content=$(jq -r '[.tool_input.new_string?, .tool_input.content?, (.tool_input.edits[]?.new_string)] | map(select(. != null)) | join("\n")' <<<"$input" 2>/dev/null || true)
-  if [ -n "$new_content" ]; then
-    # Case-insensitive compare against the palette; report the first offender.
-    bad_hex=$(grep -oiE '#[0-9a-f]{6}\b' <<<"$new_content" | tr '[:lower:]' '[:upper:]' \
-              | grep -vE "^(${PALETTE})$" | head -1 || true)
-    if [ -n "$bad_hex" ]; then
-      deny "Off-brand hex '$bad_hex' in an agent profile — brand values in profiles must match brand/brand-summary.md (palette: $PALETTE). This is the 2026-07-13 downgrade-red-team failure; fix the value or change the palette at its source first."
-    fi
-  fi
+  ask "Agent profile edit — needs your approval pass. Agents never change how they (or other agents) operate without you seeing it. Review the diff above: approve to apply, decline to leave it as a proposal. (Brand values must match brand/brand-summary.md — skill-lint check 10 fails any non-palette hex.)"
 fi
 
 exit 0
