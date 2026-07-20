@@ -1,5 +1,7 @@
 # Brand Guidelines — The Meta Architect
 
+> **Audience note (2026-07-20)**: ICP-specific material in this file (burned-practitioner voice test, Law 25 pillar, enterprise examples) belongs to the practitioner lane, now pull-only. For operator-audience work use `brand/audiences/operator.md`. Shared identity/visual rules below apply to both lanes.
+
 **Brand**: The Meta Architect
 **Owner**: Simon Paris (simonparis.ca)
 **Core thesis**: State beats intelligence. Reliable AI systems are architectural, not model-dependent.

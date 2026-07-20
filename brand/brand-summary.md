@@ -4,6 +4,22 @@
 
 ---
 
+## Audience Routing (read first — 2026-07-20)
+
+The brand serves TWO audiences. Every content artifact declares one, and that choice routes the ICP, voice test, and CTA:
+
+| Audience | Status | Reference | Voice test | Public CTA |
+|---|---|---|---|---|
+| **Operator** (Expertise Operator — /setup buyer) | PRIMARY, active | `brand/audiences/operator.md` | Busy owner test | `/setup` (every ~3rd operator post) |
+| **Practitioner** (LLM Platform/Reliability Lead) | Pull-only | ICP + voice sections below; `brand/audiences/practitioner.md` | Burned practitioner test | `/score` (every ~3rd practitioner post) |
+
+- The ICP, Voice Tests, Content Pillars, and CTA cadence sections BELOW this line describe the **practitioner lane** and stay authoritative for it. For operator-audience work, `brand/audiences/operator.md` overrides them.
+- Shared and audience-neutral: Identity, thesis, prohibitions, post anatomy, STATE framework, visual identity.
+- `/readiness` is never a public CTA in either lane. Operator content never uses tool language (see operator.md).
+- Default LinkedIn mix ~60% operator / 40% practitioner (pending confirmation; revisit after first founding client).
+
+---
+
 ## Identity
 
 **Brand**: The Meta Architect | **Owner**: Simon Paris (simonparis.ca)
