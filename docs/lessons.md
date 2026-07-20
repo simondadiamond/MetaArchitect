@@ -717,3 +717,19 @@ Building the command-center Schedules ticker: `instrumentation.ts` with early-re
 **Fix applied:** Closed #30, cherry-picked the fix onto a fresh branch off origin/main, merged as PR #31 cleanly.
 **The generalizable rule:** after a squash-merge, the branch is dead — never push follow-ups from it. New work, however small, starts from a fresh branch off updated origin/main (cherry-pick if the commit already exists).
 **Where documented:** This entry.
+
+## 2026-07-20 — Rewriting JSON via load→dump reformats the whole file and buries the real change
+
+**What happened:** Editing two `messages/*/home.json` locale files with Python `json.load` → `json.dump` produced a 32-line diff for what should have been a 1-line copy change: the compact one-line objects in `tableRows` were re-expanded to multi-line. The intended edit was correct but unreviewable, and would have shipped gratuitous churn into a PR touching a live marketing page.
+**Root cause:** `json.dump` re-serializes from the parsed structure, so it emits the serializer's formatting, not the file's. Any hand-formatted JSON (locale bundles, config files) loses its shape. The failure is invisible unless you read the diff — the JSON stays semantically identical and every test passes.
+**Fix applied:** Reverted with `git checkout --`, redid the change as `sed` on the exact quoted string. The later copy pass used a Python helper that asserts `s.count(old) == 1` per replacement and writes the string back — surgical, and it fails loudly if a target string is missing or ambiguous.
+**The generalizable rule:** never round-trip a human- or tool-formatted JSON file through a parser to change a value. Replace the unique string in the raw text, assert uniqueness, and read the diff stat before committing — a line count far above the change size means the formatter got in.
+**Where documented:** This entry; `.claude/agents/sitemaster.md` (owns `messages/*.json` edits).
+
+## 2026-07-20 — A stale dev server nearly certified screenshots of the wrong build
+
+**What happened:** During the PR #91 tuning pass, the visual verification of a mobile above-the-fold fix ran against a `next-server` still bound to port 3990 from an earlier run — an earlier kill had silently failed. The screenshots showed pre-tuning copy with 404'd CSS. Had the layout coincidentally looked acceptable, a "verified" claim would have shipped for code that was never rendered.
+**Root cause:** Nothing tied the verification artifact to the commit under test. A port that answers looks identical to a port serving the right build, and screenshot evidence carries no provenance — the check was "did I get an image", not "is this image of the thing I changed".
+**Fix applied:** Killed by pid via `ss`, rebuilt, and re-verified — plus grep-confirmed the served HTML contained the new copy strings before re-measuring the button positions.
+**The generalizable rule:** a verification pass is only evidence if it can prove which artifact it tested. Before trusting any screenshot or rendered check, confirm the serving process postdates the target build, or grep the served output for a string unique to the change. This is the same class as the no-broad-pkill rule: kill by port-owner pid, then verify the port is actually free.
+**Where documented:** This entry; `.claude/agents/sitemaster.md` (visual-verify step); one-liner on goal `0938c024` (stale next-server reaper).
