@@ -1,5 +1,7 @@
 # Ideal Customer Profile — The Meta Architect
 
+> **Lane status (2026-07-20): this is the PRACTITIONER/enterprise lane — pull-only under the crawl-first strategy.** The active primary audience is the Expertise Operator: `brand/audiences/operator.md`. This file stays canonical for the enterprise lane and reactivates on corporate pull.
+
 > Last updated: March 2026  
 > Use this file when writing: landing pages, post hooks, outreach DMs, cohort positioning, offer copy, workshop scripts.
 
