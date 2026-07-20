@@ -66,6 +66,18 @@ experiment: small first batch, measure reply rate by segment, feed what converts
 into this doc. Disqualifier heuristics stay: AI consultants/coaches ("I help X with
 AI"), engineers/data scientists, students, open-to-work.
 
+## Field notes (newest first — this section owns v2)
+
+- **2026-07-20, mine run #1** ($1.59, 800 comments off Welsh/Sanchez/Gray posts): 175
+  owner-headline commenters, but tier-A was ~85% the LinkedIn seller economy (GTM
+  engines, cold-email agencies, ghostwriters, personal-branding coaches) selling to
+  each other — only 3/19 were genuine service-SMB owners (security ops firm, real
+  estate investor, memorial services). **Lesson: solopreneur-creator comment sections
+  are peers, not buyers.** The overwhelmed service-SMB owner (ICP #1) doesn't perform
+  in those comments. Next runs: creators whose audience is operators (Codie Sanchez
+  skews closest), or different surfaces entirely (local business groups, industry
+  newsletters, r/smallbusiness). Filters hardened, 2-posts-per-creator cap added.
+
 ## Primary research plan (closes RQ1–RQ4; owns this doc's v2)
 
 1. **Every session is a buyer interview.** Log in the CRM call note: what triggered them

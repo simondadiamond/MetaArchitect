@@ -31,12 +31,13 @@ const dryRun = process.argv.includes("--dry-run");
 const fresh = process.argv.includes("--fresh");
 const today = new Date().toISOString().slice(0, 10);
 
-// Spend guards — the whole run stays around $10 at harvestapi's ~$2/1k rates.
-const MAX_POSTS_PER_CREATOR = 12;
+// Spend guards — sized for a $5/mo Apify plan: ~100 posts ($0.15) + ≤800
+// comments ($1.60) keeps a full run under ~$2 at harvestapi's ~$1.50-2/1k rates.
+const MAX_POSTS_PER_CREATOR = 10;
 const POSTS_MIN_COMMENTS = 8;
-const MAX_POSTS_TO_MINE = 40;
-const COMMENTS_PER_POST = 120;
-const MAX_CRM_INSERTS = 150;
+const MAX_POSTS_TO_MINE = 10;
+const COMMENTS_PER_POST = 80;
+const MAX_CRM_INSERTS = 50;
 
 function env(path) {
   const out = {};
@@ -121,7 +122,7 @@ function mapComment(raw) {
 const OWNER_RE =
   /\b(founder|co-?founder|owner|ceo|president|managing director|managing partner|principal|fondat(eur|rice)|propri[ée]taire|pdg|pr[ée]sident(e)?|g[ée]rant(e)?)\b/i;
 const EXCLUDE_RE =
-  /\b(ai (consultant|coach|strategist|expert|educator|trainer|agency)|prompt|automation agency|ghost ?writer|linkedin (coach|strategist|expert)|growth (hacker|marketer)|helping (you|founders|businesses|companies|coaches|creators)|i help|software engineer|data scientist|ml engineer|web developer|full[- ]stack|devrel|student|aspiring|open to work|looking for (work|opportunities)|keynote|speaker on ai|futurist)\b/i;
+  /\b(ai (consultant|coach|strategist|expert|educator|trainer|agency)|prompt|automation agency|ghost ?writ\w*|linkedin (coach|strategist|expert)|growth (hacker|marketer|partner)|helping (you|founders|business(es)? owners?|companies|coaches|creators)|i (help|build|grow|scale)\b|software engineer|data scientist|ml engineer|web developer|full[- ]stack|devrel|student|aspiring|open to work|looking for (work|opportunities)|keynote|speaker on ai|futurist|gtm|go[- ]to[- ]market|outbound|cold email|lead gen\w*|personal brand\w*|marketing strategist|content strategist|clarity architect|ecosystem thinker|transformation specialist|done[- ]for[- ]you)\b/i;
 const CURIOUS_RE =
   /\b(how (do|would|can|did)|what tool|which tool|where do i start|where to start|any recommendation|does (this|it) work|trying to|struggl\w*|overwhelm\w*|no idea|help me|curious|beginner|getting started|comment (faire|on)|par o[uù] commencer)\b/i;
 const BIZ_RE =
@@ -183,38 +184,42 @@ console.log(`[posts] ${posts.length} posts across ${Object.keys(perCreator).leng
 for (const c of creators)
   if (!perCreator[c.name]) console.log(`[coverage] WARNING: 0 posts for ${c.name} — check the slug`);
 
-// Stage 2: pick the busiest posts.
-const mineable = posts
+// Stage 2: pick the busiest posts — max 2 per creator, so one mega-account
+// can't monopolize the run (2026-07-20: Welsh took 7/10 slots and his comment
+// section is the seller economy, not buyers).
+const byBusiest = posts
   .filter((p) => p.comments >= POSTS_MIN_COMMENTS)
-  .sort((a, b) => b.comments - a.comments)
-  .slice(0, MAX_POSTS_TO_MINE);
+  .sort((a, b) => b.comments - a.comments);
+const perCreatorCount = {};
+const mineable = byBusiest.filter((p) => {
+  perCreatorCount[p.creator] = (perCreatorCount[p.creator] ?? 0) + 1;
+  return perCreatorCount[p.creator] <= 2;
+}).slice(0, MAX_POSTS_TO_MINE);
 console.log(
   `[select] mining ${mineable.length}/${posts.length} posts (comments ≥ ${POSTS_MIN_COMMENTS}, cap ${MAX_POSTS_TO_MINE})`,
 );
 
-// Stage 3: comments (batched 8 posts/call).
+// Stage 3: comments — one call per post so creator/post attribution is exact.
 const comments = await cached("comments", async () => {
   const all = [];
-  for (let i = 0; i < mineable.length; i += 8) {
-    const batch = mineable.slice(i, i + 8);
+  for (const post of mineable) {
     const items = await runActor(
       "harvestapi~linkedin-post-comments",
       {
-        posts: batch.map((p) => p.post_url),
-        maxItems: batch.length * COMMENTS_PER_POST,
+        posts: [post.post_url],
+        maxItems: COMMENTS_PER_POST,
         scrapeReplies: false,
         profileScraperMode: "short",
       },
-      `comments[batch ${i / 8 + 1}]`,
+      `comments[${post.creator}]`,
     );
     for (const raw of items) {
       const c = mapComment(raw);
       if (c) {
-        const post = batch.find((p) => raw.postUrl === p.post_url || c.comment_url.includes(p.post_url));
-        all.push({ ...c, post_url: post?.post_url ?? batch[0].post_url, post_text: (post?.text ?? "").slice(0, 200), creator: post?.creator ?? "" });
+        all.push({ ...c, post_url: post.post_url, post_text: post.text.slice(0, 200), creator: post.creator });
       }
     }
-    console.log(`[comments] batch ${i / 8 + 1}: total ${all.length}`);
+    console.log(`[comments] ${post.creator} (${post.comments} listed): total ${all.length}`);
   }
   return all;
 });
