@@ -1,5 +1,9 @@
 # Ideal Customer Profile — The Meta Architect
 
+> **Two ventures, two ICPs.** This file is the ENTERPRISE ICP (The Meta Architect,
+> the 1–2 year destination). The active revenue venture (/setup, venture #1) has its
+> own buyer — see `funnel/setup-offer/icp.md`. Never conflate the funnels.
+
 > Last updated: March 2026  
 > Use this file when writing: landing pages, post hooks, outreach DMs, cohort positioning, offer copy, workshop scripts.
 
