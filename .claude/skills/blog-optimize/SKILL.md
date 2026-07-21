@@ -28,7 +28,7 @@ Teardown rows have **no `outline` artifact** — that is expected, not a failure
 
 Everything else — voice veto, the mechanical gate (PHASE 4), metadata assembly, `geo_citability`, artifact persist, and the Stage Contract — is identical to the article path.
 
-**Post-factcheck edits (any session, 2026-07-21):** saving a new `optimized_draft` after a factcheck_report exists invalidates that report — blog-insert hard-fails on report-older-than-draft. If you revise the draft at final review, immediately `setStage(ideaId, 'fact_check')` so the dispatcher re-verifies the text that will actually publish. Never leave a new draft on top of an old report.
+**Post-factcheck edits (any session, 2026-07-21):** saving a new `optimized_draft` after a factcheck_report exists invalidates that report — blog-insert hard-fails on report-older-than-draft. If you revise the draft at final review, immediately `setStage(ideaId, 'fact_check')` so the dispatcher re-verifies the text that will actually publish. Never leave a new draft on top of an old report. And when saving that revision, **copy the previous newest optimized_draft's FULL `meta` forward** (title, slug, tags, seo fields, pillar, cta_type, reading_time_minutes, featured, geo_citability, canonical_url — recompute reading_time if the word count changed) before adding your own keys — blog-insert reads all of its payload metadata from the newest optimized_draft's meta, and a meta carrying only `{source, changes}` fails the insert gate on a dozen missing fields (2026-07-21, second failure in the same cycle).
 
 ---
 
