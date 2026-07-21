@@ -146,7 +146,7 @@ Write each candidate against the playbook's **post anatomy** (hook fold-check, s
 - **Every specific comes from the source.** Numbers, quotes, failure modes, names — pulled verbatim from the source material. Never fabricate an anecdote or a stat.
 - **No "it's not X, it's Y" shape anywhere in a hook** — LinkedIn's publicly named AI-tell (playbook explains). This includes the brand's own "not about the model, about the plumbing" phrasing; vary it ("The model was fine. The plumbing wasn't.").
 - **Zero em dashes** in the post and the first comment. Simon's call, 2026-07-05: the ICP reads em dashes as the ChatGPT signature — stricter than the playbook's max-2 budget; the stricter rule wins. Short sentences do the emphasis work.
-- **Links**: the blog/teardown link may sit in the body (max one bare URL, never in the hook, no markdown syntax — LinkedIn strips it) or in the first comment. Either way the post must deliver its core insight without the click. Name sources in prose ("ZenML's write-up says…").
+- **Links**: the post's one link goes in the BODY by default (max one bare URL, never in the hook, no markdown syntax — LinkedIn strips it); the first comment carries bonus value and any second link (Simon 2026-07-21; gate has the full rule). The post must deliver its core insight without the click. Name sources in prose ("ZenML's write-up says…").
 - Line break every 1–2 sentences. No decorative-symbol bullets. Hashtags: default 0, max 3 niche.
 
 Each candidate ships as a package:
@@ -304,6 +304,8 @@ A manifest is an ordered JSON array of `{ "slide": <type>, "params": {...} }`. F
 | 7 | `outro` | `slug` = `blog_slug` (renders `simonparis.ca/blog/<slug>`) |
 
 Every slide also carries `name`, `k` (its 1-based index), `total` (7). Save the manifest to `projects/Content-Engine/.tmp/carousel-manifest-<blog_slug>.json`.
+
+**`lines` fields must be pipe-delimited strings (`"a|b|c"`), never JSON arrays** (lessons.md 2026-07-21). `carousel.mjs`'s `slideUrl()` serializes every param with `String(v)`; a JS array silently becomes comma-joined (`"a,b,c"`), which the live route then renders as one truncated line with no error. Author every `lines` value as a single `|`-joined string from the start.
 
 **Slide text rules** (on top of brand voice, `brand/brand-summary.md`):
 

@@ -20,7 +20,7 @@ grep -coE 'https?://' candidate.txt   # ≤ 1 — one bare URL in the body is al
 grep -icE 'simonparis\.ca/readiness' candidate.txt   # must be 0 — public CTAs go to /score, never /readiness
 ```
 
-**Link rule (resolved 2026-07-07, Simon's call — playbook wins):** the blog/teardown link MAY sit in the post body (2026 algorithm: mild penalty only, and only if the post doesn't stand alone). Max one URL, bare (no markdown), never in the hook line, and the post must deliver its core insight without the click. First comment remains a fine alternative placement.
+**Link rule (updated 2026-07-21, Simon's call — body is the DEFAULT):** the post's one link goes IN THE BODY (2026 algorithm: mild penalty only when the post stands alone; link-in-first-comment is obsolete advice per the playbook's sources — Buffer Dec 2025, Dataslayer Feb 2026). Max one URL, bare (no markdown), never in the hook line, never the only payload of its line's paragraph until after the close, and the post must deliver its core insight without the click. The first comment is for BONUS VALUE (added mechanism, the fix line, a supporting detail) — and is the overflow slot when a post needs a second link (e.g. /score in body, blog link in comment).
 
 ## Judgment checks
 

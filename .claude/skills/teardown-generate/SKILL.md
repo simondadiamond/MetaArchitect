@@ -603,7 +603,8 @@ sql = f"""
 ```
 
 - `format` is `'image'` because the post ships with the card attached (download the PNG from
-  `card_url` at publish time and attach it; the first comment still carries the teardown link).
+  `card_url` at publish time and attach it; the blog link goes in the post BODY per the gate's
+  2026-07-21 body-default link rule — the first comment carries bonus value instead).
 - **Preview rule (long parameterized URLs are a truncation hazard — lesson 2026-07-06):** never
   paste `card_url` into chat for Simon to preview. Download the PNG
   (`curl -s -o projects/Content-Engine/.tmp/teardown-card-<slug>.png "<card_url>"`) and present
