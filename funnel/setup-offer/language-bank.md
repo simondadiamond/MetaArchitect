@@ -94,9 +94,37 @@
 5. "You know AI could help. 'Where do I even start?' — right here."
 6. "You're not a programmer. You don't need to be."
 
+## 2026 recency addendum (added 2026-07-21 after Simon's age challenge)
+
+**Age audit of the bank above**: only 2 of 24 quotes are <12 months old (beornsco 2026, Torres 2025-11). The Reddit
+quotes run 15 months–3 years. The pullpush archive has NO 2026 data (verified: bare "chatgpt" returns 0 hits for
+2026H1 vs 100/100 for 2025H1), so the original quotes above establish *vocabulary*, not current prevalence.
+
+**Live 2026 validation** (OpenAI community forum, fetched live 2026-07-21): the pain is alive but has EVOLVED.
+Nobody credible says "it forgets every chat" anymore — 2026 users say memory exists but can't hold *business* context:
+
+25. "I am speaking as a Business admin. The concern around Saved Memories is not just a consumer personalization issue. For Business workspaces, this is an operational continuity issue. … These are not casual preferences. These are work contexts. … A business owner or admin may need ChatGPT to understand company goals, client details, inventory context, marketing strategy, product plans, pricing logic, and ongoing projects." — 520520, ChatGPT Pro user + Business admin, 2026-06-20 `[verified-live]`
+    https://community.openai.com/t/memory-summary-cannot-replace-saved-memories-for-power-users-and-business-workspaces/1384209
+26. "ChatGPT Business workspaces need organization-wide instructions similar to Claude Organization Instructions. … without requiring every user to manually copy/paste personal instructions." — easeev, workspace admin, 2026-06-18 `[verified-live]` (note: business buyers explicitly pointing at the Claude-shaped solution)
+    https://community.openai.com/t/chatgpt-business-organization-wide-instructions-for-every-chat-and-codex-session/1384033
+27. "The issue is not that ChatGPT lacks information. … The information exists. The timeline often does not." / "it functions as a second brain … an external memory" — Ch47x, daily Plus user, 2026-06-30 `[verified-live]` `[consumer-lane]`
+    https://community.openai.com/t/chatgpt-needs-a-personal-timeline-executive-function-support-and-context-aware-memory-instead-of-isolated-conversation-memory/1385401
+28. Content seed, not buyer language: "Most AI systems are expensive because they are architecturally forgetful." — forum essay "The AI Industry Is Paying to Forget", 2026-06-16
+    https://community.openai.com/t/the-ai-industry-is-paying-to-forget/1383831
+
+**2026 copy implication**: "starts from scratch every chat" is 2023–2025 phrasing and may read dated to a current
+user. The 2026-durable version of the pain is "it still doesn't know MY business" — memory holds facts, not
+operations (goals, clients, pricing logic, voice). Hero copy should target that. "Generic answers" phrasing has
+weak 2026 attestation — treat as plausible, not proven.
+
+**Prevalence is still unproven** (n=3 live threads = existence, not widespreadness). The honest prevalence signals
+for this offer are: (1) the market — competitors selling business-brain setups at volume in 2026; (2) Simon's own
+discovery calls and engage-queue replies — ground truth from the actual ICP; (3) testing hero phrasings as
+LinkedIn hooks before promoting any to the page. Do not treat this bank alone as license to rewrite the page.
+
 ## Caveats & open questions
 
-- OpenAI-forum quotes date Dec 2024–Feb 2025 and partly describe a since-fixed memory bug — use the *phrasing*, never as claims about current ChatGPT behavior.
+- OpenAI-forum quotes (original bank) date Dec 2024–Feb 2025 and partly describe a since-fixed memory bug — use the *phrasing*, never as claims about current ChatGPT behavior. See the 2026 addendum for what current users say instead.
 - ICP fidelity is mixed: clean operator voices are Adkins, User-_-ZER0HER0, Usual_Side6791, Consistent_Yak6765, amazeballs00; Torres is operator-adjacent; consumer-lane quotes are tagged.
 - Theme 4 reaction data (enthusiasm vs. security worry about handing AI your whole business) is still unmined — X/Twitter and YouTube comments contributed zero survivors. The privacy/data-safety objection the /setup page must pre-empt has NO mined language yet.
 - Fuller pullpush pass was rate-limited; a later sweep for "where do I even start" first-person and business-brain trend reactions would round out themes 3–4.
