@@ -757,3 +757,27 @@ Building the command-center Schedules ticker: `instrumentation.ts` with early-re
 **Fix applied:** Row reset to `fact_check` for a fresh report on the final text; publish chain resumes on all-PASS. Rule added to blog-optimize SKILL (final-review edits section). Story queued so the CC retry action detects this failure class and resets to `fact_check` instead of `inserting`.
 **The generalizable rule:** an approval artifact (factcheck report, gate pass, review sign-off) is bound to the exact revision it examined. If you touch the text afterward — however small the edit — re-run the gate or explicitly reset the stage so the pipeline does; never leave a stale pass lying upstream of a publish step.
 **Where documented:** This entry; `.claude/skills/blog-optimize/SKILL.md`.
+
+## 2026-07-21 — Carousel manifest `lines` as a JSON array silently truncated to one comma-joined line per slide
+
+**What happened:** During a `/repurpose --auto` sweep (Morgan Stanley teardown), the carousel manifest's `lines` fields were authored as JSON arrays (matching the surrounding manifest's JSON shape). All 7 PNGs built successfully with no error, but visual inspection (mandatory per C5) showed the summary and pillar slides rendering only their first line, comma-glued to the start of the second ("...98% adoption,AskResearchGPT extended to...") and truncated with the server's mid-word "...".
+**Root cause:** `carousel.mjs`'s `slideUrl()` builds query params with `String(v)` on every manifest value. `String(['a','b','c'])` produces `"a,b,c"`, not the pipe-delimited `"a|b|c"` the live `teardown-slide` route expects for its `lines` param — and per the route's own documented quirks, every non-cover slide type returns HTTP 200 regardless of malformed input, so nothing failed loudly. `carousel.mjs`'s own header docstring documents the correct shape (`"lines": "a|b|c"` as a string) but the repurpose skill's Carousel Mode section (C1 manifest-composition table) never restates that constraint, so a manifest authored by pattern-matching the rest of the JSON structure gets it wrong.
+**Fix applied:** Manifest fixed (`.join('|')` on the array fields), rebuilt, re-inspected — all 7 slides confirmed correct. Added an explicit warning to the repurpose skill's C1 section (this session) so future manifest authoring doesn't repeat the mistake.
+**The generalizable rule:** when a builder script serializes manifest params with a blind `String(v)`, any array-valued field silently becomes comma-joined instead of erroring — "no thrown error" is not evidence the manifest was well-formed. The C5 mandatory-visual-inspection step is what catches this class of bug; never skip it because the build step reported success.
+**Where documented:** This entry; `.claude/skills/repurpose/SKILL.md` (Carousel Mode, C1).
+
+## 2026-07-21 — Announcement scheduled to Postiz without its image; Simon caught it 4 minutes before publish
+
+**What happened:** The Morgan Stanley LinkedIn announcement was scheduled ASAP on Simon's ask — with the scorecard card attached, but before the carousel question was settled, and via ad-hoc scripts instead of the linkedin-publish skill. Simon had to say "wait cancel it i need an image" at T-4min; the post was deleted from Postiz at 17:29:58, three minutes before its 17:33 slot, and rescheduled at 17:38 as the full 7-slide carousel.
+**Root cause:** Speed-to-ship skipped two checks the linkedin-publish skill's flow enforces: confirm the media plan for the post class (teardown announcements ship the full carousel per the fan-out spec, not just the card) and use the sanctioned tool path. The skill existed the whole time; the session read it only AFTER the near-miss.
+**Fix applied:** Cancel + rollback + log + ntfy inside the window; rescheduled correctly via proper Postiz calls; media rule added to the linkedin-publish skill (this entry's companion edit): teardown/announcement rows must carry their full planned media before any schedule call.
+**The generalizable rule:** "schedule it ASAP" is an instruction about urgency, not about skipping the media/SOP checklist — the checklist is exactly what makes ASAP safe. When a sanctioned skill exists for an operation, read it before acting, not after the near-miss.
+**Where documented:** This entry; `.claude/skills/linkedin-publish/SKILL.md`.
+
+## 2026-07-21 — Teardown engine generated a 143-char hook against the 140-char downstream gate
+
+**What happened:** The panel-generated Morgan Stanley linkedin_post carried a 143-character first line. It passed the panel's own validation but failed blog-insert's shared LinkedIn gate (hook ≤140), blocking the blog publish until hand-trimmed.
+**Root cause:** The hook-length constraint lived only in the downstream shared gate, not where the text is generated. Constraints that exist only downstream surface as publish-time failures instead of generation-time retries.
+**Fix applied:** Hook trimmed 143→136 in BOTH places the text lives — `teardown_drafts.linkedin_post` AND the pipeline.posts announcement row (fixing one without the other reintroduces the mismatch later). Story 60fff23a queued to enforce ≤140 in the panel's validate.ts alongside the em-dash rule.
+**The generalizable rule:** every downstream gate constraint on generated text must also exist at the generation site; and when the same text is denormalized across rows, a fix must update every copy in the same operation.
+**Where documented:** This entry; command-center story 60fff23a.
