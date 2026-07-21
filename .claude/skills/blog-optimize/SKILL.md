@@ -28,6 +28,8 @@ Teardown rows have **no `outline` artifact** — that is expected, not a failure
 
 Everything else — voice veto, the mechanical gate (PHASE 4), metadata assembly, `geo_citability`, artifact persist, and the Stage Contract — is identical to the article path.
 
+**Post-factcheck edits (any session, 2026-07-21):** saving a new `optimized_draft` after a factcheck_report exists invalidates that report — blog-insert hard-fails on report-older-than-draft. If you revise the draft at final review, immediately `setStage(ideaId, 'fact_check')` so the dispatcher re-verifies the text that will actually publish. Never leave a new draft on top of an old report.
+
 ---
 
 ### STEP 0 — STATE Init
