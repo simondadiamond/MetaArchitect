@@ -70,10 +70,52 @@ YouTube gets re-cut mini-derivatives of VIP content (not straight excerpts — S
 need standalone hooks). Public generic content = funnel; applied content = product.
 If standalone training revenue ever: live cohorts, verified band $295–$1,500/seat.
 
+## Currency
+
+All published prices are **USD** — every verified comp band (Wellforce $2.5–9.5K,
+Notionalize $5–25K, Notion-OS market) is USD, and at $6,500 USD we sit mid-band.
+The /setup page labels prices "USD" explicitly. Local warm deals (sister, friend)
+may be taken CAD-at-par as the real founding discount — a better founding story
+than another price cut.
+
+## How kit updates reach clients
+
+**Never automatic.** Client machines never see the kit repo (install-by-copy, rule #1).
+Simon applies updates during retainer sessions, verifies them on the client's real
+work, and bumps the KIT_VERSION stamp in their CLAUDE.md. No silent changes land in a
+live business's workspace (STATE: validated change, never silent continue). This is a
+core part of what the retainer pays for — if updates were auto, the retainer weakens.
+
+**Skill architecture supports this (audited 2026-07-27, all 6 skills):** skill bodies
+are generic process + invariants; client specifics live in (a) 1–4 `{{TOKENS}}` per
+skill and (b) workspace files read at runtime (`operations/pricing.md`,
+`how-we-work.md`, `policies.md`, customer notes). v1.1 refinement: centralize the
+remaining tokens into `operations/business-profile.md` so a skill update is a drop-in
+file replacement + a minutes-long personalization check.
+
+**Flow-back verdict: core to the model.** Every client-built skill generalized into
+the kit raises setup value at zero marginal delivery cost, feeds retained clients
+("your workspace gained a skill you never paid to build"), and is the moat vs. DIY
+Cowork. Byproduct-only rule stands: skills enter the kit from paying client work,
+never speculatively.
+
+## What is advertised where
+
+- **Public /setup page:** Working Sessions $125/hr, Audit+Roadmap $2,500 (credit
+  mechanic stated), OS Setup $6,500 / founding $5K. Retainer appears as the
+  "what happens after" continuity note — *existing clients only*, no purchase CTA.
+- **Not on the page:** the free demo build (warm-intro only — publishing it invites
+  cold strangers to claim free work) and per-skill pricing framing of any kind.
+- Delivery language on the page: "installed in Claude's desktop app — no code, no
+  terminal." Never CLI-facing vocabulary.
+
 ## Open items
 
 1. **Cowork port test** (gating): install kit template in Cowork, verify 6 skills +
    memory conventions behave. Sister session = test + first delivery rep.
-2. /setup page copy revision once (1) passes.
-3. Prospect #1 (Airbnb friend, ~100 doors): route to Audit at founding rate; website
+2. /setup page update — queued as pipeline story 2026-07-27 (sitemaster). If the
+   Cowork port test surfaces issues, the delivery-language line is the only copy at risk.
+3. Kit v1.1: centralize tokens into `business-profile.md` (small, do during or right
+   after sister session).
+4. Prospect #1 (Airbnb friend, ~100 doors): route to Audit at founding rate; website
    is a separate one-off or referral, never blended into the OS offer.
