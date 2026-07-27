@@ -52,7 +52,11 @@ defend per skill.
 - Kit updates pushed to their workspace as KIT_VERSION advances (flow-back rule:
   every client inherits every improvement — say this, nobody else has it)
 - 1 monthly working session
-- 1 new or revised skill per month
+- 1 skill per month: a **library skill installed/personalized, or an existing skill
+  revised** (20–40 min each — the generic core is pre-built). Net-new custom builds
+  are Working Sessions at every tier, retainer included; retained clients get
+  priority booking for them. The retainer distributes the compounding library — it
+  never funds bespoke R&D.
 - Priority booking + support channel
 - Client education module access (see below)
 
