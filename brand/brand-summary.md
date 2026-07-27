@@ -86,8 +86,8 @@ The brand serves TWO audiences. Every content artifact declares one, and that ch
 1. **Non-determinism in production** — Same input, different outputs. Bugs can't be reproduced. Post-mortems end with "the model did something weird."
 2. **Prompt whack-a-mole** — Every fix breaks something else. Accuracy requirements can't be reliably met.
 3. **No observability** — No traces of prompt chains or tool calls. Problems go unnoticed until users complain.
-4. **The compliance gap** — Risk and legal asking: "Can we log why the agent did this?" Law 25 requires documenting automated decisions, data used, principal factors.
-5. **Leadership pressure vs. stochastic reality** — 100% feel pressure to implement GenAI. 90% think expectations are unrealistic.
+4. **The compliance gap** — Risk and legal asking: "Can we log why the agent did this?" Law 25 requires documenting automated decisions, data used, principal factors. No confirmed Quebec Law 25 enforcement action against an automated-decision/AI system exists yet (verified 2026-07-23) — content must frame this as a legal requirement + architecture spec, never imply Quebec has already fined someone for it. Real enforcement precedent to cite instead: OPC's PIPEDA findings against OpenAI (consent/retention/accuracy, May 2026) and X Corp/xAI (Grok deepfakes, June 2026), and CJEU C-203/22 (GDPR, an automated-decision-explainability case). OSFI's Guideline E-23 (AI model risk) is real but not yet in force — effective May 1, 2027 — usable as a countdown-clock hook, not a claim that enforcement has started.
+5. **Leadership pressure vs. stochastic reality** — 100% feel pressure to implement GenAI. 90% think expectations are unrealistic. Backed by named data (verified 2026-07-23): RAND found leadership miscommunicating project intent to engineering is the single most common cause of AI project failure; IDC's Ashish Nadkarni attributes much pilot failure to panic-driven, underfunded board mandates.
 
 ### Language That Lands
 "This stuff is non-deterministic" | "Debugging is a game of chance" | "Prompt whack-a-mole" | "There's no stack trace" | "Clever demo duct-taped into production" | "It's not about the model — it's about the plumbing" | "Can we log why the agent did this?"
@@ -102,7 +102,7 @@ The brand serves TWO audiences. Every content artifact declares one, and that ch
 | **STATE Framework Applied** | Demonstrations of STATE pillars in real architecture decisions. Before/after comparisons. |
 | **Defensive Architecture** | Design patterns that make AI systems tolerant by construction. Validation gates, locks, idempotency. |
 | **The Meta Layer** | How Simon uses AI to do the work most people do manually — including figuring out what to ask. |
-| **Regulated AI & Law 25** | Quebec Law 25, OSFI, EU AI Act as architecture requirements, not compliance checkboxes. |
+| **Regulated AI & Law 25** | Quebec Law 25, OSFI, EU AI Act as architecture requirements, not compliance checkboxes. Fresh angle: OSFI Guideline E-23 (AI model risk/explainability) takes effect May 1, 2027 — real deadline, zero enforcement yet. |
 
 **Spine check**: ≥2 posts per week should explicitly or implicitly land on State Beats Intelligence.
 
