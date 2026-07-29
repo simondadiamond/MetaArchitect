@@ -789,3 +789,19 @@ Building the command-center Schedules ticker: `instrumentation.ts` with early-re
 **Fix applied:** command-center PR #127 — verifier can declare intentionally-identical groups in `.story/verify/expected-identical.json` ({files, reason}); guard exempts only fully-covered declared groups with a non-empty reason, still rejects undeclared/partially-covered duplicates; declaration is committed with the story PR for audit. Rejection message and `worker/skills/verify.md` teach the mechanism (stasis proof must be paired with a motion-mode capture that differs). Story 6431714e retried after deploy.
 **The generalizable rule:** any deterministic anti-fraud gate needs an explicit, auditable escape hatch for the cases where the "fraud signature" is the legitimately required outcome — otherwise honest passes are unwinnable and the fix loop thrashes against correct code. When a fix attempt concludes "no code defect," suspect the gate, not the code.
 **Where documented:** This entry; command-center PR #127 (`worker/verify-evidence.ts`, `worker/skills/verify.md`).
+
+## 2026-07-29 — Two user skills silently never loaded: flat .md files instead of dir/SKILL.md
+
+**What happened:** A /doctor health check found `~/.claude/skills/home-assistant.md` and `~/.claude/skills/pfsense.md` had never loaded once since creation (Jun 17 / Jul 10) — they were flat `.md` files sitting directly in the skills dir. The loader only picks up `<name>/SKILL.md` directories and skips everything else without any error, so months passed with zero signal.
+**Root cause:** No shape validation anywhere between "file authored" and "skill available" — the loader's silent-skip is an error path pretending to be success, and nothing on our side checked the shape either.
+**Fix applied:** Both converted to proper directories in-session (confirmed loading live). Root-cause fix: skill-lint check 17 now fails on flat `.md` files directly in the repo's root skills dir and warns for `~/.claude/skills` (Content-Engine's `.claude/skills/supabase.md` is exempt — it's a deliberately flat reference doc, not a loadable skill). No matching goals row exists for this tooling work; documented here instead.
+**The generalizable rule:** a loader that silently skips malformed entries turns config mistakes into permanent invisible failures — validate the shape at authoring time with a lint, because "no error" from a silent-skip loader is not evidence the thing loaded.
+**Where documented:** This entry; `scripts/skill-lint.sh` check 17.
+
+## 2026-07-29 — Absence check ran against the worktree, write targeted the primary checkout
+
+**What happened:** During the same /doctor session, `.claude/settings.local.json` was parse-checked as "absent" with the shell cwd in a worktree, then the write targeted the primary checkout's path — where the file already existed with live permission rules. Only the `[ -f ] && abort` guard inside the write command itself prevented an overwrite; the session then merged keys with jq instead.
+**Root cause:** A state/absence check is only valid against the exact absolute path being written. Worktree and primary checkout are different filesystems that look identical; checking one and writing the other is the same class as the 2026-07-04 worktree collisions.
+**Fix applied:** Caught by the inline guard; keys merged non-destructively. Behavioral rule recorded here — no mechanical gate fits (the write commands are ad-hoc), the portable fix is the guard pattern itself.
+**The generalizable rule:** every conditional write carries its existence check inside the same command against the same absolute path (`[ -f "$F" ] && abort` / `jq` merge) — never rely on an earlier check that may have run against a different checkout, cwd, or moment.
+**Where documented:** This entry.

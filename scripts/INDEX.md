@@ -35,3 +35,4 @@ Content-pipeline gates live next to their tools in `projects/Content-Engine/tool
 - insert-test-intake.mjs — insert a fixture /readiness row byte-faithfully to the website form (anon key, ?select=id only) for RLS/form regression tests; prints row id; cleanup (row + pipeline.logs markers) is on you (born 2026-07-19)
 - attach-hero.sh — poll blog_posts for a slug, attach hero_image_url + alt when the row lands (`<slug> <hero-url> <alt-file> [--timeout-min N]`); idempotent, JSON-safe alt text (born 2026-07-21)
 - pipeline-rest.sh — authed Supabase REST one-liner against command-center (`'<query>' [--schema pipeline] [--method M --data JSON]`); replaces the source-.env-and-curl incantation (born 2026-07-21)
+- transcript-usage-scan.py — scan recent Claude transcripts for skill/plugin/MCP/slash usage, hook durations, and denial patterns; feeds context-diet and /doctor estate audits (`[N]` = lookback, default 400) (born 2026-07-29)
