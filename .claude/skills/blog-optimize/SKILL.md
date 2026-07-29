@@ -3,6 +3,8 @@ name: blog-optimize
 description: Use when the blog pipeline dispatcher advances a blog_ideas row to the optimizing stage, or when Simon asks to optimize/SEO-pass a pipeline post — consumes the post-editorial draft and outline artifacts and produces the optimized_draft artifact (metadata, FAQ, internal links). Do NOT trigger for editing/reviewing a draft's prose (editorial) or for the post-optimization fact check (blog-factcheck).
 ---
 
+> **Brand context**: `brand/brand-summary.md` is NOT auto-loaded into sessions — read it (repo root) before writing or judging any copy, hook, CTA, or visual output.
+
 ## Blog Optimize Process
 
 **Risk tier: medium (S + T + E)** — Supabase reads/writes (`blog_ideas` stage, `blog_artifacts`, public `blog_posts` link map) in pipeline mode only; no LLM external API calls beyond the reasoning done in this session. On any failure:

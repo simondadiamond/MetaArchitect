@@ -1,6 +1,6 @@
 ---
 name: build-story
-description: Use when Simon says "/build-story", "turn these notes into posts", "post about what I built", or right after a client session, the sister setup, or an infra build produces raw material — converts true build/session notes into 1–3 LinkedIn build-story drafts (Meta Layer pillar) with routed CTAs, saved to pipeline.posts. Do NOT trigger for deriving posts from existing long-form content (repurpose), writing blog posts (write-post), or teardowns (teardown-generate).
+description: Use when Simon says '/build-story', 'turn these notes into posts', or right after a client session, the sister setup, or an infra build produces raw material — converts true build/session notes into 1-3 LinkedIn build-story drafts (Meta Layer pillar) with routed CTAs, saved to pipeline.posts. Do NOT trigger for derivatives of existing long-form (repurpose), blog posts (write-post), or teardowns (teardown-generate).
 ---
 
 # Build Story — session notes → build-in-public posts

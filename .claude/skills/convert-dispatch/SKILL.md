@@ -1,7 +1,9 @@
 ---
 name: convert-dispatch
-description: Use when the Command Center schedule fires '/convert-dispatch' (~every 30 min), or when Simon asks to "process the convert queue" / "run the converter". Claims the single oldest queued row from public.conversions and turns it into pipeline.posts drafts (+ X variants, + a blog_ideas candidate, + a follow-up email for session notes). Do NOT trigger for interactive drafting from notes Simon pastes in chat (build-story), deriving posts from published long-form (repurpose), or writing blog posts (write-post).
+description: Use when the schedule fires '/convert-dispatch' (~every 30 min) or Simon asks to process the convert queue. Claims the single oldest queued public.conversions row and turns it into pipeline.posts drafts (+ X variants, a blog_ideas candidate, a follow-up email for session notes). Do NOT trigger for interactive drafting from pasted notes (build-story), derivatives of published long-form (repurpose), or blog posts (write-post).
 ---
+
+> **Brand context**: `brand/brand-summary.md` is NOT auto-loaded into sessions — read it (repo root) before writing or judging any copy, hook, CTA, or visual output.
 
 # Convert Dispatch — queued source material → drafts
 

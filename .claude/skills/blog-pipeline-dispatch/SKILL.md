@@ -1,6 +1,6 @@
 ---
 name: blog-pipeline-dispatch
-description: Use when the Command Center schedule fires '/blog-pipeline-dispatch' (~every 25 min), or when Simon asks to "process the blog pipeline" / "run the dispatcher". Router only — reads listActionable(), invokes the mapped stage skill on the single oldest actionable row, and stops. Do NOT trigger for starting a new post (write-post), approving a checkpoint (that's Simon in CC/chat), or retrying a failed row (CC's retry action resets the stage first — this skill picks it up on its next fire).
+description: Use when the Command Center schedule fires '/blog-pipeline-dispatch' (~every 25 min) or Simon asks to process the blog pipeline. Router only — reads listActionable(), invokes the mapped stage skill on the single oldest actionable row, and stops. Do NOT trigger for starting a new post (write-post), approving a checkpoint (Simon in CC/chat), or retrying a failed row (CC's retry resets the stage first).
 ---
 
 ## Blog Pipeline Dispatch

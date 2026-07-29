@@ -1,4 +1,4 @@
-@brand/brand-summary.md
+**Brand context is NOT auto-loaded.** Before any content decision — posts, hooks, copy, CTAs, voice or brand judgment, visual identity — read `brand/brand-summary.md` (audience routing, voice tests, prohibitions, post anatomy, STATE operational summary). Content skills reference it too, but skill or no skill: content work starts by reading it. (`projects/Content-Engine/CLAUDE.md` still imports it, so content-data sessions get it automatically.)
 
 # YOUR ROLE — COO
 
@@ -41,26 +41,10 @@ Your job is to push Simon toward his goals, keep him on the roadmap, and make su
 This is the command-driven workspace for Simon Paris's solo content brand: **The Meta Architect** (simonparis.ca).
 Focus: AI reliability engineering content for practitioners.
 
-## Repository Layout
+## Repository Notes
 
-```
-.claude/                       — repo-level config (settings, hooks, skills incl. session-close)
-scripts/                       — promoted toolbox — grep scripts/INDEX.md before writing a new script
-brand/                         — brand reference files (state-framework.md, brand-guidelines.md, icp.md)
-funnel/                        — landing pages, lead magnets, workshop assets
-projects/
-  Content-Engine/              — self-contained content pipeline (WAT framework)
-    .claude/commands/          — all slash commands (/capture, /research, /draft, /week, etc.)
-    .claude/skills/            — reusable skill definitions (airtable, researcher, writer, etc.)
-    tools/                     — Node.js execution scripts
-    docs/                      — session logs and design plans
-    .tmp/                      — runtime state files (gitignored)
-  cohort-beta/                 — cohort delivery assets
-  readiness-audit/             — readiness audit project
-  auto-root-eval/              — auto root eval project
-```
-
-**Content pipeline**: run all slash commands from `projects/Content-Engine/` — commands live there, not at repo root.
+- `scripts/` is the promoted toolbox — grep `scripts/INDEX.md` before writing a new script.
+- **Content pipeline**: run all slash commands from `projects/Content-Engine/` — commands live there, not at repo root. Its `.tmp/` is runtime state, gitignored.
 
 ## Story Pipeline — default route for small code tasks
 
@@ -68,49 +52,11 @@ Command Center runs an autonomous story pipeline: capture → plan → build →
 
 **When a code task qualifies (see criteria), queue it as a story instead of doing it in-session.** This applies to tasks Simon mentions in chat AND to fix-it items agents discover themselves.
 
-### Queue a story
+### Queueing mechanics
 
-```bash
-curl -s -X POST http://100.105.85.5:3737/api/stories \
-  -H 'content-type: application/json' \
-  -d '{
-    "description": "What to change, where, and how to verify it. First line becomes the title. Include checkable success criteria.",
-    "target_repo": "simonparis-website",
-    "agent_target": "sitemaster",
-    "goal_id": "<uuid>"
-  }'
-```
-
-- `target_repo` (required): `command-center` | `simonparis-website` — the only registered targets (`worker/targets.ts` in the command-center repo)
-- `agent_target` (**always set it — pick deterministically, never leave it unset**):
-  - **UI / front-end work → `sitemaster`** — anything touching pages, components, styling, layout, copy, or the funnel. When you pick `sitemaster`, the description MUST spell out brand acceptance criteria: default/hover/selected/active states, `#E04500` actions, `#C97A1A` links (never blue), zero border-radius, dark mode.
-  - **Everything else → `coo`.**
-  - A forgotten `agent_target` is how front-end stories ship off-brand — this is not optional.
-- `goal_id` (optional): links a `goals` row — the goal flips `in_progress` on start, `done` on merge
-- `auto_merge` (optional): omit to use the global default from `pipeline_settings`
-- If the API is down: `systemctl --user start command-center`. Don't insert into `stories` directly — the API applies validation and defaults.
-
-### Queue a schedule
-
-Command Center also runs recurring tasks (Claude prompts or server scripts) on cron schedules — the `/schedules` page. Any Claude session can create one:
-
-```bash
-curl -s -X POST http://100.105.85.5:3737/api/schedules \
-  -H 'content-type: application/json' \
-  -d '{
-    "name": "Morning roadmap brief",
-    "kind": "prompt",
-    "cron": "0 7 * * *",
-    "working_dir": "~/projects/MetaArchitect",
-    "agent": "coo",
-    "prompt": "/roadmap — summarize current phase and today'\''s top task."
-  }'
-```
-
-- `kind`: `prompt` (needs `prompt`; `working_dir` defaults to MetaArchitect, `agent` optional) or `script` (needs absolute, executable `script_path`)
-- `cron`: standard 5-field expression, server-local time
-- Runs land in the `/runs` log; failures ping Simon's ntfy topic. Missed fires while the service is down are skipped, and overlapping fires of the same schedule are skipped.
-- Only schedule what Simon asked to schedule — don't create recurring tasks on your own initiative.
+Stories and recurring schedules are queued through the Command Center API — invoke the `queue-story` skill for the exact payloads and field rules. Non-negotiables that stay resident:
+- **`agent_target` is always set, deterministically**: UI/front-end work → `sitemaster` (the description MUST spell out brand acceptance criteria — states, `#E04500` actions, `#C97A1A` links, zero border-radius, dark mode); everything else → `coo`. A forgotten `agent_target` is how front-end stories ship off-brand.
+- **Only schedule what Simon asked to schedule** — never create recurring tasks on your own initiative.
 
 ### Route to the pipeline when ALL of these hold
 

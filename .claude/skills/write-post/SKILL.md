@@ -3,6 +3,8 @@ name: write-post
 description: Use when Simon asks to write, create, or draft a new blog post for simonparis.ca. Do NOT trigger for editing an existing post (use editorial skill), research-only requests (use research skill), or turning existing content into LinkedIn posts (use repurpose skill).
 ---
 
+> **Brand context**: `brand/brand-summary.md` is NOT auto-loaded into sessions — read it (repo root) before writing or judging any copy, hook, CTA, or visual output.
+
 ## Write-Post — Interactive Orchestrator
 
 This is the chat entrypoint for a new blog post. It runs the same pipeline the dispatcher runs on `blog_ideas` rows — parse brief → create the row → research → outline (pause) → draft → editorial → optimize → fact-check (pause) → insert — except every stage runs in-session, in this chat, and **Simon's own replies perform the two human-only stage transitions instead of a Command Center click.**
