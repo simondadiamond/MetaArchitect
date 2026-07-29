@@ -1,6 +1,6 @@
 ---
 name: session-recap
-description: Use when the Command Center schedule fires '/session-recap' (hourly), or when Simon asks to "draft the recap" for a client call or working session. Finds ONE client_notes row of kind call or session with no recap yet (recapped_at null), drafts a client-facing recap in the client's locale, logs it to their timeline ready to copy-send, stamps recapped_at, and pings Simon. Nothing is ever sent to the client automatically — Simon reviews and sends. Do NOT trigger for note/email/transcript kinds, for re-recapping a stamped note, or for social posts from notes (that's convert-dispatch).
+description: Use when the Command Center schedule fires '/session-recap' (hourly) or Simon asks to draft a client recap. Finds ONE call/session client_notes row with recapped_at null, drafts a client-facing recap in the client's locale, logs it to the timeline ready to copy-send, stamps recapped_at, pings Simon — nothing is ever auto-sent. Do NOT trigger for other note kinds, already-stamped notes, or social posts (convert-dispatch).
 ---
 
 # Session Recap — call/session note → ready-to-send client recap, one per fire

@@ -1,6 +1,6 @@
 ---
 name: call-prep
-description: Use when the Command Center schedule fires '/call-prep' (hourly), or when Simon asks to "prep the next call". Finds ONE CRM person with status call_booked and no prep brief yet, researches the person/business best-effort, logs a one-page brief to their client_notes timeline, stamps prep_at, and pings Simon. Do NOT trigger for people without a booked call, for re-running prep on an already-prepped person (prep_at set), or for drafting outreach copy (that's the /clients page).
+description: Use when the hourly schedule fires '/call-prep' or Simon asks to prep the next call. Finds ONE CRM person with status call_booked and no prep brief yet, researches the person/business best-effort, logs a one-page brief to client_notes, stamps prep_at, pings Simon. Do NOT trigger for people without a booked call, already-prepped people (prep_at set), or outreach copy (the /clients page).
 ---
 
 # Call Prep — discovery-call brief, one person per fire

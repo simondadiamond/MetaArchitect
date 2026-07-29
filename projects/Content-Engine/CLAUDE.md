@@ -84,24 +84,7 @@ Load from `.env` at repo root (dotenv walks up automatically). Never hardcode va
 
 Every command or script that **writes to Supabase** or calls an external API must satisfy S + T + E (full spec: `../../brand/state-framework.md`):
 
-**S — Structured**: Initialize a state object before any work.
-```javascript
-const state = {
-  workflowId: randomUUID(),
-  stage: "init",
-  entityType: "idea" | "post" | "hook",
-  entityId: "<pipeline row uuid>",
-  startedAt: new Date().toISOString(),
-  lastUpdatedAt: new Date().toISOString()
-};
-```
-
-**T — Traceable**: Log every LLM call and external API call to `pipeline.logs` via `logEntry()`.
-```javascript
-{ workflow_id, entity_id, step_name, stage, timestamp, output_summary, model_version, status: "success" | "error" }
-```
-
-**E — Explicit**: All LLM/API output passes a validation gate before any Supabase write. Invalid output → error path, never silent continue.
+**S — Structured**: Initialize a state object before any work. **T — Traceable**: Log every LLM call and external API call to `pipeline.logs` via `logEntry()`. **E — Explicit**: All LLM/API output passes a validation gate before any Supabase write; invalid output → error path, never silent continue. (State-object and log-entry schemas: the imported `brand-summary.md` above.)
 
 ### Lock Pattern
 Set a timestamp lock (`setLock`) before any expensive/long operation on a row; clear it (`clearLock`) on the failure path. **The Reboot Test**: if the system reboots mid-workflow, the lock field is the checkpoint — check it at startup to detect in-progress or completed work.
@@ -150,6 +133,3 @@ All paths relative to `projects/Content-Engine/` (this folder).
 5. Postiz is delivery-only — never treat it as the source of truth
 
 State Beats Intelligence.
-
-# RTK
-Handled by a global PreToolUse hook — no instructions needed here.

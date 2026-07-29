@@ -1,6 +1,6 @@
 ---
 name: blog-factcheck
-description: Use when the blog pipeline dispatcher advances a blog_ideas row to the fact_check stage, or when Simon asks to fact-check/verify a pipeline post before it goes to final review — consumes the optimized_draft and research_doc artifacts, independently re-verifies every external-world claim against a primary source, and produces the factcheck_report artifact. Do NOT trigger for SEO/metadata optimization (blog-optimize) or for the human final-review/publish step (blog-insert).
+description: Use when the dispatcher advances a blog_ideas row to fact_check or Simon asks to fact-check a pipeline post before final review — independently re-verifies every external-world claim in the optimized_draft against primary sources and produces the factcheck_report artifact. Do NOT trigger for SEO/metadata optimization (blog-optimize) or the human final-review/publish step (blog-insert).
 ---
 
 ## Blog Fact-Check Process

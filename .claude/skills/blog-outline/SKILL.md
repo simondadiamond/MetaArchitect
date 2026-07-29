@@ -3,6 +3,8 @@ name: blog-outline
 description: Use when the blog pipeline dispatcher advances a blog_ideas row to the outlining stage, or when Simon asks to outline a researched pipeline post — consumes the research_doc artifact and produces the outline artifact. Do NOT trigger for research (research) or for drafting the post (blog-draft).
 ---
 
+> **Brand context**: `brand/brand-summary.md` is NOT auto-loaded into sessions — read it (repo root) before writing or judging any copy, hook, CTA, or visual output.
+
 ## Blog Outline Process
 
 **Risk tier: medium (S + T + E)** — Supabase reads/writes (`blog_ideas` stage, `blog_artifacts`, public `blog_posts` link map) in pipeline mode only; no LLM external API calls beyond the reasoning done in this session. On any failure:

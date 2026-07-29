@@ -1,6 +1,6 @@
 ---
 name: repurpose
-description: Use when Simon says "repurpose [something]", "/repurpose", "turn this teardown/blog post into LinkedIn posts", asks for a "carousel" or "slides" from existing content (Carousel Mode), asks for "derivatives" of existing long-form content (a teardown, a blog post, a file, pasted text), or when the scheduled sweep fires "/repurpose --auto" (Scheduled Mode — no interactive approval; gate-passing candidates saved as drafts). Do NOT trigger for writing new long-form content (write-post), editing an existing draft (editorial), or generating a teardown (teardown-generate).
+description: Use when Simon says '/repurpose' or 'repurpose [X]', asks for a carousel/slides from existing content (Carousel Mode), wants derivatives of existing long-form (teardown, blog post, file, pasted text), or the sweep fires '/repurpose --auto' (Scheduled Mode — no interactive approval; gate-passing candidates saved as drafts). Do NOT trigger for new long-form (write-post), editing a draft (editorial), or generating a teardown (teardown-generate).
 ---
 
 # /repurpose <platform> <source>

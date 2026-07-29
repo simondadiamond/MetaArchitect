@@ -3,6 +3,8 @@ name: hero-figure
 description: Generate the brand-locked hero schematic for a blog post — author an SVG of the post's core mechanism, refine it through a render→critique loop, publish to storage, and set the post's hero columns. Use after a post's markdown is final (draft or published).
 ---
 
+> **Brand context**: `brand/brand-summary.md` is NOT auto-loaded into sessions — read it (repo root) before writing or judging any copy, hook, CTA, or visual output.
+
 # Hero Figure — author → render → critique → publish
 
 Every simonparis.ca post gets one hero figure: an engineering schematic of the post's core mechanism, drawn in the blueprint idiom. It renders in a fixed template slot (2:1, between header and body) with a `FIG. 01` caption — you only produce the asset and the alt text; positioning is the template's job. **No photos, no AI-art, no decoration: if the figure doesn't diagram the post's argument, it doesn't ship.**

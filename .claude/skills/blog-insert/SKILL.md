@@ -1,6 +1,6 @@
 ---
 name: blog-insert
-description: Use when the blog pipeline dispatcher advances a blog_ideas row to the inserting stage — a transition Simon's own final-review approval performs, never this skill — or when Simon asks to insert an approved, fact-checked pipeline post into blog_posts as a gated draft. Consumes the newest optimized_draft and a passing factcheck_report artifact and produces the blog_posts draft row (idea stage + legacy status both flip to promoted_to_post). Do NOT trigger for the independent pre-insert claim verification (blog-factcheck) or for generating LinkedIn/derivative content from an already-published post (repurpose).
+description: Use when the blog pipeline dispatcher advances a blog_ideas row to the inserting stage — a transition only Simon's final-review approval performs, never this skill — or when Simon asks to insert an approved, fact-checked post into blog_posts as a gated draft (consumes newest optimized_draft + passing factcheck_report). Do NOT trigger for pre-insert claim verification (blog-factcheck) or derivative content (repurpose).
 ---
 
 ## Blog Insert Process

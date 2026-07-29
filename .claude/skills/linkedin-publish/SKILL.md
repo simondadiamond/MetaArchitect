@@ -1,7 +1,9 @@
 ---
 name: linkedin-publish
-description: Use when Simon asks to schedule, reschedule, edit, cancel, or check LinkedIn posts in Postiz — "schedule the Ramp posts", "queue it", "push to Postiz", "set it live Tuesday", "move Thursday's post", "fix the hook on the scheduled post", "what's queued", "publish this draft". Also trigger when a session that just produced posts is asked to get them onto LinkedIn — never hand-roll a scheduling script (postiz.mjs is the only path). Do NOT trigger for creating post content (repurpose / write-post) or for publishing blog posts to simonparis.ca.
+description: Use when Simon asks to schedule, reschedule, edit, cancel, or check LinkedIn posts in Postiz ('queue it', 'push to Postiz', 'move Thursday's post', 'what's queued'), or when a session that just produced posts must get them onto LinkedIn — postiz.mjs is the only path, never hand-roll a scheduling script. Do NOT trigger for creating post content (repurpose/write-post) or publishing blog posts to simonparis.ca.
 ---
+
+> **Brand context**: `brand/brand-summary.md` is NOT auto-loaded into sessions — read it (repo root) before writing or judging any copy, hook, CTA, or visual output.
 
 # /linkedin-publish — schedule, edit, cancel via Postiz
 

@@ -1,6 +1,6 @@
 ---
 name: case-study-capture
-description: Use when the Command Center schedule fires '/case-study-capture' (weekly, Monday morning), or when Simon asks to "draft the case study" for a client. Finds ONE CRM person with status active and no case study yet, gathers that client's notes/memory/conversions, drafts an anonymized case study to funnel/setup-offer/case-studies/, stamps case_study_at, and pings Simon. Do NOT trigger for people who aren't active clients, for re-drafting an existing case study (case_study_at set), or for LinkedIn posts about the work (that's build-story/convert-dispatch).
+description: Use when the weekly Monday schedule fires '/case-study-capture' or Simon asks to draft a client case study. Finds ONE active CRM person with no case study yet, drafts an anonymized case study to funnel/setup-offer/case-studies/, stamps case_study_at, pings Simon. Do NOT trigger for non-active clients, re-drafts (case_study_at set), or LinkedIn posts about the work (build-story/convert-dispatch).
 ---
 
 # Case Study Capture — active client → case study draft, one per fire
