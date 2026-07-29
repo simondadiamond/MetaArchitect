@@ -825,3 +825,7 @@ The board format treats lane 8 (humanity snippet) and lane 9 (content seed) as i
 **The generalizable rule:** after a squash-merge, the session branch is spent — treat it as read-only history. Each subsequent PR gets a fresh branch off origin/main; the guard denying force-push is the system working, not an obstacle to route around.
 **Where documented:** This entry; docs/agent-memory/coo.md.
 
+## 2026-07-29 — Outreach draft quoted a fabricated price ($150/hr vs canonical $125 USD)
+An outreach draft for the warm-network motion offered working sessions at "$150/hr". The canonical price is $125 USD/hr, defined in simonparis-website `lib/pricing.ts` (single source of truth) and rendered with explicit currency on every surface. The draft was written from memory instead of reading the source. Simon caught it after copying the message.
+**Rule**: any price, date, or offer term in customer-facing copy (outreach, posts, emails, pages) must be read from `lib/pricing.ts` or the live page at point of use — never recalled. A quoted price that mismatches the page the prospect will visit is worse than no price.
+**Discriminators**: correct = "$125 USD / hour" / "125 $ US / heure" (matches /setup); wrong = anything saying 150.
