@@ -122,6 +122,23 @@ while IFS= read -r f; do
 done < <(find .claude/skills -name '*.md' -not -path '*/archive/*' 2>/dev/null)
 [ -n "$hits" ] && fail $'assert-block in skill prose (promote it to a script and call that — code-as-spec is what a weaker model paraphrases or drops):\n'"$hits"
 
+# 17. Flat .md files directly in a skills dir silently never load (2026-07-29: home-assistant +
+#     pfsense sat unloaded for months). Skills load ONLY as <name>/SKILL.md. Repo root = fail;
+#     ~/.claude/skills = warn (machine-local). Content-Engine's .claude/skills/supabase.md is a
+#     deliberately flat reference doc, not a loadable skill — out of scope here.
+hits=$(find .claude/skills -maxdepth 1 -name '*.md' -type f 2>/dev/null)
+[ -n "$hits" ] && fail $'flat .md directly in .claude/skills/ (skills load only as <name>/SKILL.md — this file is silently ignored):\n'"$hits"
+hits=$(find "$HOME/.claude/skills" -maxdepth 1 -name '*.md' -type f 2>/dev/null)
+[ -n "$hits" ] && warn $'flat .md directly in ~/.claude/skills/ (silently ignored by the loader):\n'"$hits"
+
+# 18. SKILL.md description budget — the skill listing gets ~1% of the context window; long
+#     descriptions crowd it toward truncation, which degrades routing (2026-07-29 trim pass
+#     cut 11 of them). 480 chars = post-trim ceiling; warn on regrowth.
+while IFS= read -r f; do
+  len=$(grep -m1 '^description:' "$f" | wc -c)
+  [ "$len" -gt 480 ] && warn "$f description is ${len} chars (>480) — trim it; the listing budget is finite"
+done < <(find .claude/skills -name SKILL.md -not -path '*/archive/*' 2>/dev/null)
+
 echo
 echo "skill-lint: $FAILS fail(s), $WARNS warning(s)"
 [ "$FAILS" -eq 0 ]

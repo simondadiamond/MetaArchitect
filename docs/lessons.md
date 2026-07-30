@@ -792,3 +792,28 @@ Building the command-center Schedules ticker: `instrumentation.ts` with early-re
 
 ## 2026-07-30 — session-close push script dropped snippets on skipped seeds
 The board format treats lane 8 (humanity snippet) and lane 9 (content seed) as independent, but `push_pattern_to_supabase.mjs` only wrote `snippet_text` when `status === 'raw'` — an approved snippet on a skipped-seed session was silently dropped (script even printed ✅). Caught same-session by re-checking the script's write path after an output line that didn't mention the snippet. Root-cause fix: snippet now writes for raw AND skipped seeds (same PR as this entry). Rule: when a script's success line doesn't name a thing you expected it to write, verify the write path before trusting the ✅.
+
+## 2026-07-29 — Two user skills silently never loaded: flat .md files instead of dir/SKILL.md
+
+**What happened:** A /doctor health check found `~/.claude/skills/home-assistant.md` and `~/.claude/skills/pfsense.md` had never loaded once since creation (Jun 17 / Jul 10) — they were flat `.md` files sitting directly in the skills dir. The loader only picks up `<name>/SKILL.md` directories and skips everything else without any error, so months passed with zero signal.
+**Root cause:** No shape validation anywhere between "file authored" and "skill available" — the loader's silent-skip is an error path pretending to be success, and nothing on our side checked the shape either.
+**Fix applied:** Both converted to proper directories in-session (confirmed loading live). Root-cause fix: skill-lint check 17 now fails on flat `.md` files directly in the repo's root skills dir and warns for `~/.claude/skills` (Content-Engine's `.claude/skills/supabase.md` is exempt — it's a deliberately flat reference doc, not a loadable skill). No matching goals row exists for this tooling work; documented here instead.
+**The generalizable rule:** a loader that silently skips malformed entries turns config mistakes into permanent invisible failures — validate the shape at authoring time with a lint, because "no error" from a silent-skip loader is not evidence the thing loaded.
+**Where documented:** This entry; `scripts/skill-lint.sh` check 17.
+
+## 2026-07-29 — Absence check ran against the worktree, write targeted the primary checkout
+
+**What happened:** During the same /doctor session, `.claude/settings.local.json` was parse-checked as "absent" with the shell cwd in a worktree, then the write targeted the primary checkout's path — where the file already existed with live permission rules. Only the `[ -f ] && abort` guard inside the write command itself prevented an overwrite; the session then merged keys with jq instead.
+**Root cause:** A state/absence check is only valid against the exact absolute path being written. Worktree and primary checkout are different filesystems that look identical; checking one and writing the other is the same class as the 2026-07-04 worktree collisions.
+**Fix applied:** Caught by the inline guard; keys merged non-destructively. Behavioral rule recorded here — no mechanical gate fits (the write commands are ad-hoc), the portable fix is the guard pattern itself.
+**The generalizable rule:** every conditional write carries its existence check inside the same command against the same absolute path (`[ -f "$F" ] && abort` / `jq` merge) — never rely on an earlier check that may have run against a different checkout, cwd, or moment.
+**Where documented:** This entry.
+
+## 2026-07-29 — "Story passed" ≠ deployed: PDF upload tried inside the ~3-min deploy-sync window, and a generic toast hid the reason
+
+**What happened:** Story 2cf0009f (terminal attach button accepts PDFs, CC PR #128) merged at 18:19 UTC; deploy-sync built and restarted the live service at 18:22:32. Simon tried a PDF upload right after the story passed and got the "file upload failed" toast. Server-side testing afterward showed every path working (small/5MB PDF → 200, 11.5MB → 413), and `/tmp/cc-paste` had never been created — no upload had ever reached a working handler. Most probable cause: the attempt hit the pre-deploy code (old route rejects PDFs); alternate: the file was over the 10MB cap. Indistinguishable because the client toast swallows the server's error body.
+**Root cause:** Two stacked gaps. (1) The story-passed notification precedes the live deploy by up to ~4 minutes (3-min timer + ~40s build), so "just merged, immediately broken" is usually old code, not a bug. (2) `TerminalPane.uploadAndInject` showed a generic toast for every non-OK response while the route returned precise messages ("file exceeds 10MB", "unsupported file type: <mime>").
+**Fix applied:** Queued story e8e5b507 (sitemaster): surface the server `error` string in the existing toast, generic text only for network errors. No code fix needed for the upload itself — verified working live.
+**The generalizable rule:** before debugging a just-merged feature, check what's actually deployed (`journalctl --user -u deploy-sync | grep deployed`) against the merge commit — the deploy lag is a built-in false-alarm window. And any user-facing failure toast must carry the server's reason; a generic message turns a 30-second diagnosis into a debugging session.
+**Where documented:** This entry; command-center story e8e5b507.
+

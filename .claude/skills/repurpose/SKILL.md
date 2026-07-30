@@ -1,6 +1,6 @@
 ---
 name: repurpose
-description: Use when Simon says '/repurpose' or 'repurpose [X]', asks for a carousel/slides from existing content (Carousel Mode), wants derivatives of existing long-form (teardown, blog post, file, pasted text), or the sweep fires '/repurpose --auto' (Scheduled Mode — no interactive approval; gate-passing candidates saved as drafts). Do NOT trigger for new long-form (write-post), editing a draft (editorial), or generating a teardown (teardown-generate).
+description: Use when Simon says '/repurpose' or 'repurpose [X]', asks for a carousel from existing content, wants derivatives of existing long-form (teardown, blog post, file, pasted text), the sweep fires '/repurpose --auto' (Scheduled Mode), or the Monday schedule fires '/repurpose --harvest' (Harvest Mode — oldest queued harvest_sources row → gate-passed drafts). Do NOT trigger for new long-form (write-post), editing a draft (editorial), or generating a teardown (teardown-generate).
 ---
 
 # /repurpose <platform> <source>
@@ -280,6 +280,23 @@ Fired by the Command Center schedule "Auto-repurpose published posts" — every 
 **Everything else is unchanged and mandatory:** Step 0 STATE init, playbook read, Step 5 full-gate per candidate (including the `/score` cadence check across the batch — at most ONE candidate in the batch carries the `/score` CTA, and only if the last 2 LinkedIn rows in `pipeline.posts` don't), Step 7 save shape + logging + run record, Step 8 report (the report lands in the schedule's run log instead of chat).
 
 **Dedup warning:** the `linkedin_extract` generated at insert time lives on the `blog_posts` row — Step 5's reuse checks apply to it same as `teardown_drafts.linkedin_post`: hands off its lines if it shipped (`linkedin_post_url` set), claimable under the donor rule while it's still unposted.
+
+---
+
+## Harvest Mode — `/repurpose --harvest` (2026-07-30, Simon's ask)
+
+Fired by the Command Center schedule "Weekly content harvest" (Mondays) or invoked manually. Turns the oldest queued row of **`public.harvest_sources`** (a content-idea queue: YouTube/article URLs, pasted transcripts, raw observations — fed by chat sessions, the session-close content-seed lane, and the CC ideas UI) into gate-passed `pipeline.posts` drafts. **Only the `--harvest` flag enters this mode.** Read `public.harvest_sources` via a public-schema client (Step 2's blog-post pattern) or `scripts/pipeline-rest.sh '...' --schema public`.
+
+**What changes vs. interactive mode:**
+
+1. **Discovery replaces Step 2's explicit source.** Read the single oldest `status='queued'` row (order by `created_at`). Claim it first: set `status='processing'`. No queued rows → log a `repurpose_harvest_sweep` entry (`output_summary: 'harvest queue empty'`) and exit silently. **One row per fire** — the weekly cadence clears backlog over time; never batch.
+2. **Source load by `kind`.** `url` + YouTube host → `scripts/yt-transcript.sh <url> <tmpfile>`; other URLs → fetch and extract readable text. `kind='text'` → the row's `content` verbatim. Load failure → row `status='error'` + `last_error`, log with `status: 'error'`, ntfy Simon, stop. Never leave a row stuck in `processing`.
+3. **Lane routing via the row's `lane`.** `operator` (default) → voice, CTA, and pillar rules from `brand/audiences/operator.md` (soft `/setup` cadence, no tool language, Meta Layer default pillar). `practitioner` → the brand-summary defaults (`/score` cadence). `auto` → judge from the source's content and record the choice in `result`. The gate runs with the chosen lane's rules on top of the shared mechanical checks.
+4. **Attribution is non-negotiable.** Specifics from an outside source (someone's anecdote, stat, metaphor) are attributed by name in the post text — commentary shape, exactly like the 2026-07-30 Nate B. Jones posts. Never present someone else's story as Simon's. A practitioner-lane source can still seed an operator post if the idea translates; the attribution rule travels with it.
+5. **Step 6's stop is replaced by the gate** (same principle as Scheduled Mode): 2–3 candidates, full Step 5 gate each, ONE rewrite for a failing candidate, then drop it. Never lower the bar to hit a count — zero survivors is a valid outcome. A `kind='text'` seed too thin to pass the specificity test honestly → row `status='skipped'` + `notes` saying why, no drafts. Survivors save via Step 7 unchanged (`post_class: 'repurposed'`; source provenance in `thesis_angle` and the log entry).
+6. **Close out (all mandatory, in this order):** update the row — `status='processed'` (or `skipped`), `processed_at`, `result` jsonb `{saved: [ids], dropped: n, lane}`; write the log marker `repurpose_harvest_processed` with `entity_id` = the harvest row id; THEN ntfy only if drafts were saved: `'<N> harvest drafts from "<title>" — CC → Content → Social'`. Marker before ping, always.
+
+Everything else — STATE init, playbook read, gate mechanics, Step 7 save shape, run record in `.tmp/` — is unchanged and mandatory.
 
 ---
 

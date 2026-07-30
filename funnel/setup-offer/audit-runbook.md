@@ -13,7 +13,11 @@ product**.
 - **Audit + Roadmap document** (⚠ 5–8 pages), containing:
   1. **System map** — tools, people, handoffs; where the owner's hours actually go
   2. **ROI-ranked automation roadmap** — top 5–8 opportunities, effort vs. payoff,
-     each tagged: library skill / custom skill / working session / out of scope
+     each tagged: library skill / custom skill / working session / out of scope.
+     **Every opportunity is written as an outcome sentence with no technology in it**
+     ("Invoices go out Thursday morning without you touching them") — if the sentence
+     can't be written, the item is tagged out of scope, and saying so is part of the
+     verdict the buyer is paying for
   3. **Do-not-automate list** — what stays human and why (the reliability brand doing
      sales work; no other vendor ships this)
   4. **Quoted Setup scope** — business-type variant, the 3 library skills, custom-skill
@@ -63,3 +67,31 @@ After the live demo run on Simon's rig:
 The buyer pays for a verdict from someone who runs his own business on this exact
 stack — not for time. Hours spent are never mentioned, itemized, or defended. Warm
 local deals may be CAD-at-par per the currency rule in the spec.
+
+## Exec-lane hooks (banked 2026-07-30 — for the corporate Diagnostic, pull-only)
+
+Source: Nate Herk × Nate B. Jones podcast, "Why Your AI Offer Isn't Selling"
+(youtu.be/8MEJen0nblQ, 2026-07-20). These are for the corporate lane WHEN pull
+arrives — never for operator-facing /setup copy (tool language, exec framing).
+
+- **The 480-volt line** (Nate B. Jones, near-verbatim): "Handing out Claude credits
+  to your employees in buckets is the same thing as giving a 480-volt sparking live
+  line to a factory worker and saying figure it out." Electricity transformed
+  factories only after the floor was redesigned around it. This is State Beats
+  Intelligence in a boardroom metaphor — access without architecture.
+- **IBM CEO stat**: 76% of CEOs believe leaders must be tech-fluent in their domain
+  to apply their expertise (cited by Herk as IBM's 2,000-CEO survey). ⚠ Verify
+  against the IBM primary source before any customer-facing use.
+- **"The buck stops with you"** (Jones, to CEOs): "You are the AI change you want to
+  see in the world. If you are not using Claude Code, don't expect other people to."
+  Segue: the Diagnostic starts with the leadership team's own usage, not the org chart.
+- **Token-spread diagnostic**: real teams show champions at ~2B tokens/day next to
+  badge-holders at 2–5M/day doing nothing productive. Usage spread is a measurable
+  adoption diagnostic — a natural Diagnostic finding with a number attached.
+- **"Intent verification loop"** (Jones): leaders don't care how it was built; they
+  need to know what was built is correct, sustainable, secure. The reliability
+  thesis in exec language — verification, not vibes, is the 2027 investment theme.
+- **Team-by-team, never org-wide** (Jones's observed pattern): hand-picked small
+  teams of AI-native builders + passionate team leads + one big, close-in-time,
+  slightly scary shared challenge. Transformation scales through learning-by-contagion,
+  not mandates. Maps to a phased Diagnostic → pilot-team recommendation.
