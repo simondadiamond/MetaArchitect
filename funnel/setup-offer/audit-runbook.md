@@ -13,7 +13,11 @@ product**.
 - **Audit + Roadmap document** (⚠ 5–8 pages), containing:
   1. **System map** — tools, people, handoffs; where the owner's hours actually go
   2. **ROI-ranked automation roadmap** — top 5–8 opportunities, effort vs. payoff,
-     each tagged: library skill / custom skill / working session / out of scope
+     each tagged: library skill / custom skill / working session / out of scope.
+     **Every opportunity is written as an outcome sentence with no technology in it**
+     ("Invoices go out Thursday morning without you touching them") — if the sentence
+     can't be written, the item is tagged out of scope, and saying so is part of the
+     verdict the buyer is paying for
   3. **Do-not-automate list** — what stays human and why (the reliability brand doing
      sales work; no other vendor ships this)
   4. **Quoted Setup scope** — business-type variant, the 3 library skills, custom-skill
