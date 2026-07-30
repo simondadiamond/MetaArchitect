@@ -130,7 +130,8 @@ try {
   const row = await createRecord(TABLES.SESSIONS, fields, ['id']);
 
   let snippetId = null;
-  if (seed.status === 'raw' && snippetText) {
+  // Lanes 8 (snippet) and 9 (content seed) are independent — a skipped seed can still carry a snippet.
+  if (snippetText) {
     stage = 'write_snippet';
     const snippet = await createRecord(TABLES.SNIPPETS, { snippet_text: snippetText }, ['id']);
     snippetId = snippet.id;
