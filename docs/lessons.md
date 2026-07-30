@@ -790,6 +790,9 @@ Building the command-center Schedules ticker: `instrumentation.ts` with early-re
 **The generalizable rule:** any deterministic anti-fraud gate needs an explicit, auditable escape hatch for the cases where the "fraud signature" is the legitimately required outcome — otherwise honest passes are unwinnable and the fix loop thrashes against correct code. When a fix attempt concludes "no code defect," suspect the gate, not the code.
 **Where documented:** This entry; command-center PR #127 (`worker/verify-evidence.ts`, `worker/skills/verify.md`).
 
+## 2026-07-30 — session-close push script dropped snippets on skipped seeds
+The board format treats lane 8 (humanity snippet) and lane 9 (content seed) as independent, but `push_pattern_to_supabase.mjs` only wrote `snippet_text` when `status === 'raw'` — an approved snippet on a skipped-seed session was silently dropped (script even printed ✅). Caught same-session by re-checking the script's write path after an output line that didn't mention the snippet. Root-cause fix: snippet now writes for raw AND skipped seeds (same PR as this entry). Rule: when a script's success line doesn't name a thing you expected it to write, verify the write path before trusting the ✅.
+
 ## 2026-07-29 — Two user skills silently never loaded: flat .md files instead of dir/SKILL.md
 
 **What happened:** A /doctor health check found `~/.claude/skills/home-assistant.md` and `~/.claude/skills/pfsense.md` had never loaded once since creation (Jun 17 / Jul 10) — they were flat `.md` files sitting directly in the skills dir. The loader only picks up `<name>/SKILL.md` directories and skips everything else without any error, so months passed with zero signal.
@@ -813,3 +816,4 @@ Building the command-center Schedules ticker: `instrumentation.ts` with early-re
 **Fix applied:** Queued story e8e5b507 (sitemaster): surface the server `error` string in the existing toast, generic text only for network errors. No code fix needed for the upload itself — verified working live.
 **The generalizable rule:** before debugging a just-merged feature, check what's actually deployed (`journalctl --user -u deploy-sync | grep deployed`) against the merge commit — the deploy lag is a built-in false-alarm window. And any user-facing failure toast must carry the server's reason; a generic message turns a 30-second diagnosis into a debugging session.
 **Where documented:** This entry; command-center story e8e5b507.
+
