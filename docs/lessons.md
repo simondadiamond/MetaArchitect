@@ -842,3 +842,10 @@ The 2026-07-29 "fabricated" price wasn't hallucinated at draft time — `funnel/
 **Fix applied:** PR #135 merged after independent live verification, with a correcting comment on the PR. Goal captured for the worker fix (refresh PR body — or append a corrected verify comment — after every re-verify).
 **The generalizable rule:** when a pipeline story looks failed, diff the PR body's verify section against `.story/result.json` at the branch HEAD before diagnosing — the artifact on the branch is the truth; the PR body is a cached copy that can be stale after fix attempts.
 **Where documented:** This entry; goal captured in Supabase goals.
+
+## 2026-07-31 — First night-build scope named a route that doesn't exist (/admin)
+
+**What happened:** The first night-build scoping session wrote acceptance criteria for a "Revenue tile in /admin" — copied forward from the goal's own stale description — without opening the command-center repo. Simon caught it post-scope: there is no /admin route (the home launcher is `/`), AND `/money` already held a full revenue ledger with a `rollup()` stats lib, which invalidated the "manual editable values vs derived" scoping question Simon had already answered (the "no billing system exists" premise was false).
+**Root cause:** Scoping treated the goal row's description as ground truth and asked design questions from memory of the app instead of from the app. Ten seconds of `ls app/(app)/` would have caught both errors before they reached Simon.
+**Fix applied:** Goal rescoped (home launcher, ledger-derived via revenue-math, pipeline value cut from v1) and retitled; verification clause added to CLAUDE.md behavior #9 (this commit).
+**The generalizable rule:** acceptance criteria are claims about a codebase — every route, table, lib, or surface they name must be verified to exist (or explicitly marked "to be created") before the criteria are written. A scoping question posed to Simon inherits this: verify the premise before spending his decision on it.
