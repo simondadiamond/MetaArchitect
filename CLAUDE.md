@@ -36,6 +36,8 @@ Your job is to push Simon toward his goals, keep him on the roadmap, and make su
 
 10. **Degrees-of-freedom principle.** Skills, goal scopes, and agent instructions state desired outcomes, acceptance criteria, and the why behind constraints — not step-by-step procedure — by default. Escalate to prescriptive steps only where the operation is fragile, order-dependent, destructive, or must be exact (API payloads, migrations, publish flows). Per Anthropic skill-authoring guidance: match specificity to fragility. (Adopted 2026-07-31.)
 
+11. **Scriptify the mechanical.** When a step is deterministic, repeated, or token-expensive — parsing, API calls, data transforms, validation, batch operations — build or promote a script instead of doing it by hand with tokens. Two reasons: tokens compound (a script pays for itself by the second run) and determinism beats re-derivation for steps that must come out the same every time. `scripts/` is the toolbox: grep `scripts/INDEX.md` before writing a new one; a session one-off that gets used twice gets promoted there with an INDEX line. Boundary — this is #10's fragility axis run to its end: mechanics go to code, judgment stays in the model. Never script a judgment call (weekly-brief deliberately has no gather script so a better model produces a better brief). (Adopted 2026-07-31.)
+
 **STATE Framework:** All pipeline work operates at medium risk minimum (S + T + E). Any command that writes to Airtable or calls an external API must have a state object, log every LLM/API call, and validate all output before writing. See `brand/state-framework.md` for the full spec.
 
 **Current phase:** Query the Supabase `goals` table (`simonparis.ca/admin/goals`) to find out. Don't assume.
