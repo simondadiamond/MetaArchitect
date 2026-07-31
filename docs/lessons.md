@@ -817,3 +817,11 @@ The board format treats lane 8 (humanity snippet) and lane 9 (content seed) as i
 **The generalizable rule:** before debugging a just-merged feature, check what's actually deployed (`journalctl --user -u deploy-sync | grep deployed`) against the merge commit — the deploy lag is a built-in false-alarm window. And any user-facing failure toast must carry the server's reason; a generic message turns a 30-second diagnosis into a debugging session.
 **Where documented:** This entry; command-center story e8e5b507.
 
+## 2026-07-30 — Mid-session rebase of a pushed session branch dead-ends into the force-push guard
+
+**What happened:** After PR #59 squash-merged from session branch `ade/coo-0584e536`, the session rebased that branch onto origin/main to ship a second change. The remote branch still held pre-squash history, so the follow-up push required `--force-with-lease` — which the mechanical guard correctly denied. Work was recovered by cutting `coo/outcome-sentence-gate` fresh from origin/main.
+**Root cause:** Rebasing an already-pushed branch guarantees a non-fast-forward push. The 2026-07-13 lesson covered the reused-branch variant (plain push rejected); this is the rebase variant of the same scar — any history rewrite of a pushed branch collides with the (correct) force-push ban.
+**Fix applied:** Recovery pattern used for the rest of the session (three further PRs, zero collisions). Standard pattern recorded in `docs/agent-memory/coo.md` (2026-07-30b bullet): never rebase a pushed branch; cut a fresh topic branch from origin/main per PR (`git checkout -b <topic> origin/main`).
+**The generalizable rule:** after a squash-merge, the session branch is spent — treat it as read-only history. Each subsequent PR gets a fresh branch off origin/main; the guard denying force-push is the system working, not an obstacle to route around.
+**Where documented:** This entry; docs/agent-memory/coo.md.
+
