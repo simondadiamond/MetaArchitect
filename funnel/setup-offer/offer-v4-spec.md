@@ -21,7 +21,7 @@ stays an install/maintenance tool, never the buyer-facing product.
 
 | Rung | Price | What it is | Boundary line |
 |---|---|---|---|
-| Demo build | Free | 1 library skill personalized on their real task, one sitting | Library-only, hard-capped. Needs new base building → it's a Working Session, say so |
+| Demo build | Free | 1 library skill personalized on their real task, one sitting — **delivered from Simon's machine (demo/screen-share); nothing installed on theirs until paid work** (Simon, 2026-07-31) | Library-only, hard-capped. Needs new base building → it's a Working Session, say so |
 | Working Sessions | $125/hr | Hands on whatever they point at | "You know what you want built" |
 | Audit + Roadmap | $2,500, credited to Setup | Bounded verdict: system map + ROI-ranked automation roadmap | "You don't know what to build first." Setup is only quoted from an audit — always where we start |
 | OS Setup | $6,500 (founding 3× $5K) | The full install (below), fixed scope, ~30 days | Skill cap explicit; extras = sessions |

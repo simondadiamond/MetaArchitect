@@ -31,7 +31,23 @@ better than any competitor, and you are the default for the project that follows
 project; let it emerge ("could you just build this for me?") or recommend it once you've seen a
 workflow worth it.
 
-## Session flow (the hour itself)
+## Disco / demo call (first touch — free, ~20–30 min, SIMON'S machine only)
+
+The first call is a demo and a conversation, never a setup (Simon, 2026-07-31). Rules:
+
+- **Simon's machine, Simon's screen-share.** Nothing gets installed or configured on their
+  computer at this stage — their machine is a paid surface (Working Sessions and up).
+- Show the live OS: pick one thing from their world (an invoice chase, a follow-up they keep
+  rewriting, a proposal) and run it through Simon's own setup so they watch a real system do
+  a real task. This doubles as the v4 "Demo build" rung: one LIBRARY skill personalized on
+  their real task, in the sitting, hard-capped — anything needing new base building is named
+  as a Working Session, out loud.
+- Close by placing them on the ladder: "here's what I'd do for you, and here's the rung it
+  starts at." The demo sells the first paid session; the paid session starts their machine.
+- Warm-intro only — the free demo is never published on the page (v4 spec: publishing it
+  invites cold strangers to claim free work).
+
+## Session flow (the PAID hour itself — their machine, they drive)
 
 - Open: "what's the most annoying recurring thing you did this week?" Build toward that.
 - Your job is managing overwhelm, not demonstrating expertise. Slow down when they lose the thread.
@@ -44,13 +60,16 @@ workflow worth it.
 
 **Warm outreach text (EN):**
 > Hey [name] — I've been building AI operating systems for businesses (mine runs on one, it's a bit
-> ridiculous). I'm taking a few working sessions at $125/hr where we set one up for your business
-> together, on your machine. Want the first hour on me to see if it's useful?
+> ridiculous). Want a 20-minute look? Bring one real task — an invoice chase, a follow-up you
+> keep rewriting — and I'll run it through my setup live so you see what yours would do. If it
+> clicks, I do working sessions at $125/hr where we build yours, on your machine.
 
 **Warm outreach text (FR):**
 > Salut [name] — je monte des « systèmes d'exploitation IA » pour les entreprises (la mienne roule
-> là-dessus). J'offre des sessions de travail à 125 $ US de l'heure (≈ 170 $ CA) où on configure
-> le tien ensemble, sur ta machine. Première heure gratuite si tu veux voir ce que ça donne ?
+> là-dessus). Ça te dirait, 20 minutes en démo ? Amène une vraie tâche — une facture à relancer,
+> un suivi que tu réécris tout le temps — et je te montre en direct ce que mon système en fait.
+> Si ça clique, j'offre des sessions de travail à 125 $ US de l'heure (≈ 170 $ CA) où on bâtit
+> le tien, sur ta machine.
 
 **Follow-up email (same day, adapt):**
 > Good working with you today. Three things to try before next time:
