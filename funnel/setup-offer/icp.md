@@ -17,7 +17,7 @@
 |---|---|---|
 | ~51% of US small businesses ($25K–$5M rev) are "Explorers" — testing/researching AI, not integrated. Only 25% use AI daily. | PayPal/Reimagine Main Street survey, n=947, May 2025 fieldwork | medium (stale-ish, pool-sizing only) |
 | Quebec: 12.7% of businesses used AI in production (Q2 2025; Ontario 13.3%). National adoption accelerating: 12.2% → 19.2% by Q2 2026. | ISQ + StatCan | high |
-| Pricing is market-bracketed: SMB AI consulting $100–300/hr or $5K–20K/project (2026). FloatAI (Montreal) anchors hands-on SMB training at CAD $150/hr. Our $125/hr and $6.5K sit inside; the $2.5K audit is at the cheap end. | dancumberlandlabs (corroborated ×3), floatai.ca live rate card, Wellforce $2.5K–$9.5K flat comp (brain) | medium |
+| Pricing is market-bracketed: SMB AI consulting $100–300/hr or $5K–20K/project (2026). <!-- price-ok: market comps --> FloatAI (Montreal) anchors hands-on SMB training at CAD $150/hr. Our $125/hr and $6.5K sit inside; the $2.5K audit is at the cheap end. | dancumberlandlabs (corroborated ×3), floatai.ca live rate card, Wellforce $2.5K–$9.5K flat comp (brain) | medium |
 | BDC's $500M LIFT program (Apr 2026): half-price subsidized AI advisory for Canadian SMEs with **$1M+ revenue**. Below $1M it doesn't reach the buyer at all; above $1M it competes with our audit tier on price — but offers no hands-on operator training or workspace builds. | BDC press release, Les Affaires, BetaKit, The Logic | high |
 | Comparable vendor (DigiSmart) self-declares the same target: owner-operated, 2–30 person firms, founder-led engagement. No published price, no named clients. | digismart.io/ai-audits live page | medium (self-declared targeting) |
 | ~5% of SMBs actually hire outside AI help (vs 73% wanting training). The paying market is a thin slice of a huge curious pool. | Goldman 2026 (brain, pre-verified) | high |
@@ -51,7 +51,9 @@ web source survived verification on any of them.
 ### #3 — Quebec francophone SMB (the differentiator, not the volume play)
 - **Profile**: same size bands, FR-native delivery.
 - **Why #3 despite home turf**: current adoption 12.7% = smallest present-day buyer pool;
-  FloatAI anchors rates at CAD $150/hr (our FR pricing already matches). The ~87%
+  FloatAI anchors rates at CAD $150/hr <!-- price-ok: competitor comp --> — note our $125 USD
+  is ≈$172 CAD, ABOVE this local anchor; that friction is priced deliberately (research-gated,
+  2026-07-29) and must never be "fixed" by rounding FR quotes down to 150. The ~87%
   non-adopter pool is the long game, and provincial subsidy culture (BDC/hellodarwin)
   shapes willingness-to-pay. Simon's read ("Quebec people are typically cheap") is
   directionally consistent with the evidence but unproven — no EN-vs-FR

@@ -825,3 +825,12 @@ The board format treats lane 8 (humanity snippet) and lane 9 (content seed) as i
 **The generalizable rule:** after a squash-merge, the session branch is spent — treat it as read-only history. Each subsequent PR gets a fresh branch off origin/main; the guard denying force-push is the system working, not an obstacle to route around.
 **Where documented:** This entry; docs/agent-memory/coo.md.
 
+## 2026-07-29 — Outreach draft quoted a fabricated price ($150/hr vs canonical $125 USD)
+An outreach draft for the warm-network motion offered working sessions at "$150/hr". The canonical price is $125 USD/hr, defined in simonparis-website `lib/pricing.ts` (single source of truth) and rendered with explicit currency on every surface. The draft was written from memory instead of reading the source. Simon caught it after copying the message.
+**Rule**: any price, date, or offer term in customer-facing copy (outreach, posts, emails, pages) must be read from `lib/pricing.ts` or the live page at point of use — never recalled. A quoted price that mismatches the page the prospect will visit is worse than no price.
+**Discriminators**: correct = "$125 USD / hour" / "125 $ US / heure" (matches /setup); wrong = anything saying 150.
+
+## 2026-07-31 — Root cause of the $150/hr fabrication: the price lived in a playbook, not the source of truth
+The 2026-07-29 "fabricated" price wasn't hallucinated at draft time — `funnel/setup-offer/acquisition-playbook.md` (PR #34, written 2026-07-18, pre-dating the pricing-discipline rule) contained "≈$150 CAD" as a blessed conversion AND a French outreach template with "150 $/h" baked in. icp.md rationalized it ("our FR pricing already matches" FloatAI's CAD $150 anchor — false: $125 USD ≈ $172 CAD). Every automation drafting from the playbook faithfully reproduced the wrong price.
+**Fix applied:** playbook + icp.md corrected ($125 USD everywhere, day's CAD equivalent as courtesy only); `scripts/price-drift-check.sh` added (red-green tested) — flags any $/hr amount in funnel/ or brand/ not present in `lib/pricing.ts`, with per-line `price-ok` opt-out for comps/derived math. Wiring it into skill-lint as check 19 is pending Simon's approval (gate scripts are propose-only; the hook correctly blocked self-service edits).
+**The generalizable rule:** reference docs that templates/automations draft FROM are part of the price surface. A price stated twice will diverge; every restatement either cites the source of truth or gets caught by a drift check.

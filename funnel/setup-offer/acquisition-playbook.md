@@ -17,12 +17,15 @@ Manual work per loop: the session itself, ~5 min of notes, ~5 min of approvals, 
 
 ## The offer (rung zero)
 
-Working sessions, **$125 USD/hr** (≈$150 CAD for Quebec francophone sessions), sold in 2-hour blocks
-($250) by preference. One-on-one, screen-share or in person: we set up THEIR workspace together —
+Working sessions, **$125 USD/hr** — the single source of truth for every offer price is
+`projects/simonparis-website/lib/pricing.ts`; read it at point of use before quoting anything.
+For Canadian buyers, quote the day's CAD equivalent as a courtesy line (≈$170–175 CAD as of
+2026-07), never a rounded CAD price: "≈$150 CAD" was a hidden 13% discount that reached an
+outreach draft (lessons.md 2026-07-29). Sold in 2-hour blocks ($250) by preference. One-on-one, screen-share or in person: we set up THEIR workspace together —
 their CLAUDE.md, their first skills, their data connections. They drive; you navigate.
 
-Rate logic (if it ever feels low): the $2,500 diagnostic ≈ $100–150/hr effective; the $6,500 flagship
-≈ $160–215/hr effective. $125 is the same curve's entry rung, and the flagship on the page anchors it.
+Rate logic (if it ever feels low): the $2,500 diagnostic ≈ $100–150/hr effective; <!-- price-ok: derived math -->
+the $6,500 flagship ≈ $160–215/hr effective. <!-- price-ok: derived math --> $125 is the same curve's entry rung, and the flagship on the page anchors it.
 The hour's real payoff is paid discovery + switching costs: after 3 sessions you know their business
 better than any competitor, and you are the default for the project that follows. Never pitch the
 project; let it emerge ("could you just build this for me?") or recommend it once you've seen a
@@ -46,8 +49,8 @@ workflow worth it.
 
 **Warm outreach text (FR):**
 > Salut [name] — je monte des « systèmes d'exploitation IA » pour les entreprises (la mienne roule
-> là-dessus). J'offre des sessions de travail à 150 $/h où on configure le tien ensemble, sur ta
-> machine. Première heure gratuite si tu veux voir ce que ça donne ?
+> là-dessus). J'offre des sessions de travail à 125 $ US de l'heure (≈ 170 $ CA) où on configure
+> le tien ensemble, sur ta machine. Première heure gratuite si tu veux voir ce que ça donne ?
 
 **Follow-up email (same day, adapt):**
 > Good working with you today. Three things to try before next time:
