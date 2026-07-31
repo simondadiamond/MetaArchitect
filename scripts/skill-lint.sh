@@ -139,6 +139,15 @@ while IFS= read -r f; do
   [ "$len" -gt 480 ] && warn "$f description is ${len} chars (>480) — trim it; the listing budget is finite"
 done < <(find .claude/skills -name SKILL.md -not -path '*/archive/*' 2>/dev/null)
 
+# 19. Price drift — customer-facing docs (funnel/, brand/) must not quote hourly rates that
+#     diverge from the website's lib/pricing.ts (2026-07-29: an FR outreach template offered
+#     150 $/h vs canonical $125 USD — a hidden 13% discount reached Simon's clipboard).
+#     Comps/derived math opt out per-line with a comment containing "price-ok".
+#     Approved by Simon 2026-07-31 (gate scripts are propose-only).
+if ! out=$(scripts/price-drift-check.sh 2>&1); then
+  fail $'price drift vs lib/pricing.ts (scripts/price-drift-check.sh):\n'"$out"
+fi
+
 echo
 echo "skill-lint: $FAILS fail(s), $WARNS warning(s)"
 [ "$FAILS" -eq 0 ]
