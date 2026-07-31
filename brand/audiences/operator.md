@@ -67,6 +67,16 @@ The wedge — never argue against it, build on top of it:
 - Proposed mix: ~60% operator / 40% practitioner across LinkedIn (pending Simon's confirmation; revisit after first founding client).
 - Referral/case-study motion (sister → founding clients) is expected to out-close feed content. Content warms; cases close.
 
+### Showcase sub-pillar — proof-of-work series (scoped with Simon 2026-07-31, goal `773f815e`)
+
+Posts that show Simon's actual machine (Command Center surfaces, skills, automations) as evidence he builds systems that run a business without the owner. Seeds live in `harvest_sources` (notes reference this section). Rules:
+
+- **Wow = receipts + bold quantified claims.** Aggressive quantified hooks are allowed ("14 hours of admin gone this month") ONLY when the number is real and verifiable from logs/timestamps at draft time. No real number available → lead with the receipt itself (timestamp, screenshot, before/after). The hype-adjective prohibitions in `brand-summary.md` stay fully in force — the claim carries the punch, never the adjective. Never invent a number to make a hook land.
+- **Show the screen, narrate in business words.** Screenshots/recordings of Command Center surfaces are encouraged — the picture flexes, the words sell outcomes. Copy stays jargon-free per the no-tool-language rule above.
+- **Mechanisms, never contents.** Any surface may be shown as a mechanism; its contents (brain notes, goal text, client details, health/family data, pricing internals) never appear. No real names anywhere.
+- **Hard line: never describe LinkedIn data-collection mechanics publicly.** The engage queue is presented as "my system surfaces the conversations worth joining" — nothing about how. This is account-risk, not style.
+- Platform intent: multi-platform (LinkedIn-first through the existing pipeline; additional platforms as Postiz channels get connected — tracked as a child task of `773f815e`, drafting never blocks on it).
+
 ## Out of scope (absorb on pull, don't target)
 
 **The boundary is who operates the workspace, not headcount** (clarified with Simon 2026-07-20). An 8-person firm whose owner personally does the proposals/invoices/content is an owner-operator with staff — the current offer fits them as-is (we set up the OWNER's workspace). What's out of scope is "set up my whole team":
