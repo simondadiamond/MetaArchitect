@@ -3,7 +3,8 @@
 - **Lane**: SEO flagship (goal `2aaa5908`, biweekly video pipeline)
 - **Audience**: Operator (busy-owner test applies; no tool jargon in narration — product names are fine)
 - **Target queries**: `claude for small business` (3,600 US / 590 CA per DataForSEO 2026-07-31), `how to use claude cowork` (1,900 US)
-- **Runtime target**: 9–10 min
+- **Runtime target**: 10–12 min (grew with permissions/cost/who-shouldn't beats — all differentiators, keep them)
+- **Competitive field (checked 2026-08-01)**: ~10 YouTube tutorials (May–June), all generic setup walkthroughs; none run it on a real business, none cover permissions or data hygiene, none say who shouldn't install, none know the context layer is deliberately empty. Written SERP: Anthropic official, Forbes, newsletter setup guides. Time-saved claims circulating (2–4 h/wk invoice chasing etc.) are analyst ESTIMATES — never quote as fact.
 - **Scoreboard**: discovery calls booked + /setup visits, never views
 - **Status**: script draft v1 — verified against Simon's live plugin run 2026-07-31/08-01 (nothing scripted as fact that wasn't observed)
 
@@ -42,12 +43,16 @@ If you run an expertise business and you want your workspace set up around the w
 
 ### 2. What it is (0:45–2:00)
 - SHOT: claude.com plugin page, connector logos.
-- BEATS: launched May 2026; a plugin inside Claude Cowork (desktop app); 15 command workflows on 15 building-block skills; connectors: QuickBooks, PayPal, HubSpot, Canva, DocuSign, Google Workspace, M365, Slack. Not installed by default: marketplace → Install → toggle connectors.
-- NARRATION anchor: "If you pay for Claude, this costs you nothing. Install it. I mean that. And keep watching, because free is exactly why you need to know where it stops."
+- BEATS: launched May 2026; a plugin inside Claude Cowork (desktop app only); 15 command workflows on 15 building-block skills; connectors: QuickBooks, PayPal, HubSpot, Canva, DocuSign, Google Workspace, M365, Slack. Not installed by default: marketplace → Install → toggle connectors. Cost: $0 beyond any paid Claude plan — Pro at $20/month covers it. Anthropic's own framing (quote it): Claude works "inside the most common systems small businesses use rather than sit beside them."
+- HONEST COST BEAT: "The AI is the cheapest thing in this stack. QuickBooks, HubSpot, Canva, DocuSign — those run you twelve hundred a year and up. Claude is twenty a month on top. Keep that in mind when someone tells you AI is the expensive part."
+- REGION BEAT (verified by this run): "You'll read that rollout outside the US is uneven. I'm in Quebec. It works here."
+- NARRATION anchor: "If you pay for Claude, this costs you nothing extra. Install it. I mean that. And keep watching, because free is exactly why you need to know where it stops."
 
 ### 3. Setup walkthrough (2:00–4:00)
 - SHOT: real install + `/smb-onboard` flow, connector toggles going green. Timelapse the waiting.
 - BEATS: OAuth per connector; pin the workflows you'll use; it runs one recipe end-to-end so you see value early. This section SERVES the "how to use claude cowork" searcher; keep it genuinely instructional.
+- PERMISSIONS BEAT (no tutorial covers this): "Before you connect anything, know what it can see: only what your own login can see. If you can't open a folder, neither can Claude. And nothing sends, posts, or pays without your click. That's the deal, and it's the right deal."
+- DATA-HYGIENE TIP (the most valuable 20 seconds in the video): "One thing before you connect: Claude inherits the quality of your books. Messy QuickBooks in, confident-sounding garbage out — and confident garbage is worse than no answer, because it looks right. Tidy the books first. Pin only the workflows you'll actually run weekly."
 - HONESTY BEAT (on camera, verbatim from the run): it told me my account "looks more like a personal/dev setup than an active small business." NARRATION: "It's honest about its own blind spots. That's the best thing about it, and I want you to remember this sentence, because it's about to matter."
 
 ### 4. The voice setup (4:00–5:00)
@@ -70,6 +75,7 @@ If you run an expertise business and you want your workspace set up around the w
 - BRIDGE (verbatim): "What you're watching is three years of compounding. You don't start here. I didn't start here. You start with one rung: a workspace that knows your clients, your prices, and your voice. And then it grows."
 
 ### 8. Close (9:00–9:45)
+- WHO-SHOULDN'T BEAT (honest-review credibility; no competing video has one): "Quick fairness check. Skip it if you're a Microsoft-only shop — the fit is rough. Skip it if your clients require no AI near their data. And whatever you do: contract review is not your lawyer, and tax prep is not your accountant. It organizes; professionals decide."
 - NARRATION: "So: should you install Claude for Small Business? Yes. It's free, it's careful, and the briefing habit alone is worth it. But then you'll hit the same wall I did, and you'll learn the real question. It's not which AI you use. It's who teaches it your business. If you want yours set up around the work you already do, that's what I do. Link below. And if you connect QuickBooks and it tells you nothing needs you this morning — check. Something needs you."
 - CTA on screen: simonparis.ca/setup — one line, no urgency theatrics.
 
