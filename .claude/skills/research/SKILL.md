@@ -100,21 +100,30 @@ A missing snapshot is a **gate failure for pipeline runs** — do not persist a 
 
 ---
 
-### PHASE 1c — Keyword Volumes
+### PHASE 1c — Keyword Data (volume + difficulty + intent)
 
-Never block on failure — `keywordVolumes` is contract-guaranteed to never throw.
+Never block on failure — every `tools/dataforseo.mjs` function is contract-guaranteed to never throw; a failed call degrades that field to `null`/unverified.
 
 ```javascript
-const { keywordVolumes } = await import('./tools/dataforseo.mjs');
+const { keywordVolumes, keywordDifficulty, searchIntent, keywordSuggestions } = await import('./tools/dataforseo.mjs');
 const candidates = ['keyword one', 'keyword two', 'keyword three'];
-const { ok, volumes, error } = await keywordVolumes(candidates);
-const primary_keyword_candidates = candidates.map(keyword => {
-  const v = ok ? volumes[keyword] : null;
-  return { keyword, volume: v, verified: v != null };
-});
+const [vol, kd, intent] = await Promise.all([
+  keywordVolumes(candidates),          // Google Ads volume (default location: Canada 2124)
+  keywordDifficulty(candidates),       // Labs 0-100, default location: US 2840
+  searchIntent(candidates),
+]);
+const primary_keyword_candidates = candidates.map(keyword => ({
+  keyword,
+  volume: vol.ok ? vol.volumes[keyword] : null,
+  difficulty: kd.ok ? kd.difficulties[keyword] : null,
+  intent: intent.ok ? intent.intents[keyword]?.label ?? null : null,
+  verified: vol.ok && vol.volumes[keyword] != null,
+}));
 ```
 
-Record each candidate into `## Keyword Candidates` as `keyword — volume N (verified)` or `keyword — volume unverified (<error>)`. The same array, verbatim, is what goes into the artifact `meta.primary_keyword_candidates`.
+Also run `keywordSuggestions(<best seed>)` once — it returns long-tail expansions with volume/difficulty/intent in one call and regularly surfaces a more winnable term than the seeds (2026-08-02: volume-only screening picked an 880/KD-72 keyword while a 33k/KD-34 neighbor and a 1.6k/KD-18 long-tail sat unexamined). Add any suggestion that beats the seeds to the candidate list.
+
+Record each candidate into `## Keyword Candidates` as `keyword — volume N, difficulty D, intent I (verified)` or `keyword — unverified (<error>)`. The same array, verbatim, goes into the artifact `meta.primary_keyword_candidates`. **Winnability beats raw volume**: prefer informational intent and the best volume-to-difficulty ratio — simonparis.ca has near-zero domain authority, so a KD ≤ 35 term with real volume beats a bigger term the site cannot rank for.
 
 ---
 
