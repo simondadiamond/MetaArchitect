@@ -108,7 +108,7 @@ TITLE OPTIONS:
   3. ...
 
 WORKING SLUG: [kebab-case, ≤60 chars]
-PRIMARY KEYWORD: [the 501-2,400 volume term this post targets — SEO/GEO rule 1]
+PRIMARY KEYWORD: [the term this post targets: volume ≥ 500/mo, difficulty ≤ 35 — SEO/GEO rule 1; cite volume + KD from the research doc]
 NAMED FAILURE MODE: [specific name for the failure mode, or "n/a" for non-taxonomy posts]
 
 HOOK TYPE: [contrarian | stat_lead | question | story_open | provocative_claim]

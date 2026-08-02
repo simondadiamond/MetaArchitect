@@ -129,7 +129,7 @@ Work items, in order:
    PILLAR:           [enum value]
    CTA_TYPE:         [audit | subscribe]
    FEATURED:         false  [true only if Simon explicitly says so]
-   PRIMARY_KEYWORD:  [the 501-2,400 volume term — confirm it appears in title + first H2 + body]
+   PRIMARY_KEYWORD:  [the volume ≥ 500 / KD ≤ 35 term — confirm it appears in title + first H2 + body]
    TAGS:             [include both brand terms (state-beats-intelligence) and search terms (llmops, production-ai)]
 
    GEO CITABILITY CHECK (required before insert):

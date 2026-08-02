@@ -16,7 +16,7 @@ Do not skip the editorial loop, the outline-approval pause, or the final-review 
 **Risk tier: medium (S + T + E)** — LLM generation + Supabase writes. Full spec: `brand/state-framework.md`. Run all node snippets from `projects/Content-Engine/` (deps + `.env` resolution live there).
 
 **SEO/GEO rules (non-negotiable — canonical here; blog-optimize's metadata gate verifies them):**
-1. **Primary keyword** — one 501–2,400 monthly-volume term per post; it appears in the title, the first H2, and naturally in the body.
+1. **Primary keyword** — one term per post, chosen on winnability: volume ≥ 500/mo AND difficulty ≤ 35 (DataForSEO Labs KD — simonparis.ca has near-zero domain authority; the old 501–2,400 volume band was a proxy for this and no longer applies when difficulty data is available). It appears in the title, the first H2, and naturally in the body.
 2. **BLUF** — the core insight, stated as the conclusion (not a preview), in the first 150 words.
 3. **Fact-blocks** — every H2 section opens with a bolded 40–50 word standalone statement: the GEO citation unit.
 4. **5–7 distinct non-obvious insights** per post — fewer get absorbed by AI summaries, more dilutes. H2/H3 headings phrased as specific technical questions where natural.
