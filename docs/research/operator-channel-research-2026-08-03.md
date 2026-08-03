@@ -63,3 +63,32 @@ Rough audience figures, 2024–2026 public sources. Mine mechanics, don't copy p
 3. **DFY gap** — everyone sells learning or SaaS; the actual service-business owner is told to learn n8n. Only DFY comp (Harris) is niched to coach funnels. The $6.5K setup sits in open space.
 4. **Audience mismatch** — the biggest channels sell shovels to shovel-sellers (aspiring agency owners), not to operators.
 5. **Trust erosion** — inflated claims are the norm and buyers are burned (review-site cottage industry exists). Gate real artifacts (a log, a walkthrough, an audit), not another PDF prompt pack.
+
+## 5. Acuña "How To Get Leads" masterclass (added 2026-08-03, video LDPir-j7jHQ, transcript via NotebookLM notebook a47b3d48)
+
+His complete lead-gen system, one page. Lead gen = traffic + offers + tech.
+
+**Traffic**: organic short-form 3x/day minimum ("you do not exist" below that; TikTok caps at 13/day), long-form 3–5x/week produced by daily livestreams then repurposed (clips + email + YouTube). Paid: $1K/mo minimum FB/IG + Google — but only AFTER LTV is proven ("whoever has more capital to acquire a customer wins market share"; his claimed LTV $5,300/yr funds the ads). Anti-faceless, hard: "whoever's selling you faceless is lying to you."
+
+**Offers**: value ladder, exactly three — substantial lead magnet (22 videos / 10+ hrs free, page converts 55%, claims 400+ emails/day, one video 22K comments), core offer $97–300, high ticket $5K+. "Pick three offers and cut everything else" — more offers = "you are not McDonald's."
+
+**Tech**: minimalist and Claude-built. Funnel + CRM + email automation + payment processor, all vibe-coded with Claude Code, hosted on Hostinger ~$4/mo; Resend or Kit for email driven by Claude ("Resend is not for humans... developers have all the cool tools"); drag-and-drop stack (WordPress, GHL, Clickfunnels, Zapier, Make, Wix, Lead Pages) declared obsolete because it "requires a full-time human to log in and fiddle with settings." DM automation: ManyChat (canned) or **Repliyo** — which he describes as dynamic AI replies across "TikTok, YouTube, LinkedIn, Instagram, Facebook" that "answers dynamically... talks back to trolls."
+
+**Format discipline**: find 10 winning viral formats, model them exactly, zero deviation for your first 100 videos; frame change every 2–3s; hook lands in the first 2 seconds.
+
+**Doctrine**: website's only job is capture, not browsing. Email list is the primary business asset (his: 30K), fed weekly training. "Focus 99% of your time on traffic — you do not have an offer problem."
+
+### Steal / skip verdicts (COO, 2026-08-03)
+
+**Steal now (wired into goals):**
+- Format discipline → competitor-miner goal e140f6a7 now includes a format-library deliverable: 10 proven post formats per platform to model exactly, not just idea mining.
+- Substantial lead magnet + list-as-primary-asset + weekly-training frame → newsletter goal 4a02d3ce scoping input.
+- "Wrong tech" ownership argument → content seed queued in harvest_sources; it is literally Simon's operator offer ("tools a human must babysit vs a workspace that runs itself") with the reliability layer Acuña doesn't have.
+- "Pick three offers" → standing guard against offer-stacking; the locked ladder already conforms. Do not add rungs.
+
+**Skip / not yet:**
+- 3x/day volume: platform-blind; his own LinkedIn fails on it. Applies only if/when the short-form video lane unparcs. LinkedIn stays ≤1/day.
+- $1K/mo paid ads: his own sequencing says after proven LTV; founding clients first.
+- Repliyo: his pitch confirms it's AI auto-replies at scale incl. LinkedIn — unvetted vendor + the exact automation layer LinkedIn enforces against; brand-wise, dynamic AI comment replies are the slop the brand stands against. Hold stands; ManyChat (deterministic, Meta partner) remains the IG choice when gate volume arrives.
+- Mac/iPhone gatekeeping: coaching-funnel talk, irrelevant to this estate.
+- His numbers (55%, 400/day): directional TikTok-scale claims, not benchmarks.
