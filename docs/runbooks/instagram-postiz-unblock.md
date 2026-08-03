@@ -1,5 +1,14 @@
 # Runbook — Connect Instagram to Postiz (goal `51373480`)
 
+> **ON HOLD — platform decision first (2026-08-03).** Simon wants LinkedIn post analytics;
+> Postiz cannot provide them (personal-profile stats API is entity-gated, and official-API
+> stats only attach to posts published by the reporting tool). Recommended direction: migrate
+> delivery to Buffer (official-API personal analytics + GraphQL API + native Instagram) —
+> which would replace this entire runbook with a single OAuth connect and make the Meta
+> developer app + R2 storage below unnecessary. Only the **IG account → Professional
+> (Business)** conversion (step 1) is platform-agnostic — safe to do anytime. Do the rest
+> only if the decision lands on staying with Postiz.
+
 > Simon's part: ~60–75 min across two sittings, all dashboard clicking. Agent part: one
 > story-sized code/env change, queued after sitting 1. Research + evidence:
 > `docs/research/operator-channel-research-2026-08-03.md` §3 (workflow wf_356ea0b0-121).
