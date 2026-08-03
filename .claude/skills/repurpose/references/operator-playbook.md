@@ -21,10 +21,13 @@ The field sells courses about automation to people who want to sell automation. 
 a real business running on these systems, and nobody builds it FOR the owner. The two moves
 that exploit this:
 
-1. **Receipts are the hook, not the appendix.** The audience has seen the demo; it hasn't
-   seen the receipts. Screenshots with timestamps, before/after weeks, real counts from logs.
-   Rules for quantified claims: showcase sub-pillar in operator.md (real, verifiable numbers
-   only; the claim carries the punch, never the adjective).
+1. **Receipts are the hook, not the appendix — and they must be operator-legible** (Simon's
+   correction, 2026-08-03). An operator does not care about a logfile. The receipt is the
+   OUTCOME artifact: the sent follow-up, the finished proposal, the before/after week, the
+   evening reclaimed. Logs, PRs, and uptime are the internal source of truth that makes the
+   number honest — they never appear in operator content; raw-system receipts belong to the
+   practitioner lane. Rules for quantified claims: showcase sub-pillar in operator.md (real,
+   verifiable numbers only; the claim carries the punch, never the adjective).
 2. **Sell the install, not the lesson.** Every CTA path leads to done-for-you (/setup), never
    to "learn how". Teaching content is fine; it demonstrates competence, and the CTA still
    points at "I set this up for you."
@@ -60,8 +63,8 @@ Never fabricate. Numbers come from logs or don't appear. Zero em dashes in posts
    Example: "Your business doesn't have a software problem. Everything waits on your evenings."
 
 7. **What ran without me**
-   Template: `While I [human thing], [system] did [specific work]. Here's the log.`
-   Example: "While I was at my kid's swim practice, the workshop reminders went out. Timestamped, in my voice."
+   Template: `While I [human thing], [specific work] happened. [Outcome proof].`
+   Example: "While I was at my kid's swim practice, the workshop reminders went out. On time, in my voice, nobody chased me."
 
 8. **The generic-draft allergy**
    Template: `[Tool] wrote you a [artifact] that sounds like [wrong company].`
