@@ -32,6 +32,26 @@ that exploit this:
    to "learn how". Teaching content is fine; it demonstrates competence, and the CTA still
    points at "I set this up for you."
 
+## Capability education register (Simon-approved 2026-08-03)
+
+Second register alongside receipts, calibrated from the Acuña analysis (research doc §4-5:
+his audience is LESS technical than ours; what works is capability-level content that names
+the tool and stays spec-free). Purpose: raise what operators EXPECT from the AI they
+already pay for.
+
+- **Name the tool plainly** (Claude, Claude Cowork) when it's the thing the reader already
+  pays for. The jargon ban stays fully in force: no "agents", "context windows",
+  "orchestration", "MCP", "state management".
+- **Teach what's possible and why it pays, never the implementation steps.** The reader
+  finishes thinking "I should expect more from this thing," not holding a tutorial.
+  Implementation lives in the ladder: sessions are the honest DIY rung, the setup is the
+  DFY rung; both reader reactions are monetized, so "learn this" framing is allowed and
+  encouraged as demand generation. Trying it and hitting the wall is the fastest path to
+  the audit.
+- **Close on expectation, not instruction**: what good looks like, what staying at 10%
+  usage costs. Example close: "You don't need another tool. The one you already pay for
+  can do this. Most people never set it up."
+
 ## Hook library (operator register)
 
 Same physics as the practitioner library (mobile fold ~140 chars, under 10 words wins,
