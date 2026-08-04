@@ -19,12 +19,18 @@ script — one mechanism). Design: `docs/superpowers/specs/2026-07-10-session-cl
 
 ### 1. Find this session's transcript
 Echo a fresh random UUID in chat (just print it), then:
-`grep -l "<uuid>" ~/.claude/projects/-home-diamond-projects-MetaArchitect/*.jsonl`
-— the matching file is this session's transcript, even after compaction.
+`grep -l "<uuid>" ~/.claude/projects/-home-diamond-projects-MetaArchitect*/*.jsonl`
+— the glob covers both the bare project dir and worktree-suffixed variants
+(`-home-diamond-projects-MetaArchitect--claude-worktrees-<name>`), since most sessions
+run in a worktree per CLAUDE.md. The matching file is this session's transcript, even
+after compaction.
 
 ### 2. Digest it
 `node scripts/session-digest.mjs <transcript> > <scratchpad>/digest.md`
 (user/assistant text, every bash command, every file written — tool results stripped).
+`session-digest.mjs` is the repo-root toolbox script (`scripts/`), not colocated in this
+skill's own `scripts/` dir (that one only holds `push_pattern_to_supabase.mjs`) — run it
+relative to the repo/worktree root.
 
 **Fallback:** transcript not found or digest fails → harvest from in-context memory alone,
 flag "harvested without transcript" on the board, and SKIP step 7 so the sweep gets a second pass.
