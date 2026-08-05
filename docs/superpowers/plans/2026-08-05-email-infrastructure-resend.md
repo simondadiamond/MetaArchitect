@@ -29,7 +29,17 @@
 
 These are not code tasks. Nothing after Task 2 can be verified without them.
 
-- [ ] **P1.** Create a Resend account. Add domain `mail.simonparis.ca`. Copy the SPF, DKIM, and DMARC records Resend shows into the DNS for `simonparis.ca`. Wait for Resend to show all three verified. (~15 min)
+- [ ] **P1.** Create a Resend account. Add domain **`mail.simonparis.ca`** (a subdomain, not the root — see the DNS note below). Region `us-east-1`. Copy the SPF, DKIM, and DMARC records Resend shows into DNS. Wait for all three to verify. (~15 min)
+
+  **Turn OFF "Enable click tracking"** (it defaults on). Leave open tracking off. Reasons: click tracking rewrites every URL through a tracking subdomain, which is an unwarmed-domain deliverability risk, adds a DNS record, and puts redirect URLs in front of an audience of senior engineers. There is no analytics loop consuming the numbers yet (the stats loop is deliberately deferred). Turn it on later if a decision actually depends on the click rate.
+
+  **Verified DNS state as of 2026-08-05** — checked before choosing the subdomain:
+  - Root `simonparis.ca` MX → **Zoho** (`mx.zoho.com`). His real client and personal mail lives there. This is precisely why sending must not happen on the root domain: a marketing complaint would damage the reputation his client mail depends on.
+  - `mail.simonparis.ca`, `updates.simonparis.ca`, `send.simonparis.ca` — all unused, no collision. `mail.` chosen for a clean From address (`simon@mail.simonparis.ca`).
+  - Root SPF today: `v=spf1 include:zohomail.com a mx include:_spf.mlsend.com ~all` — **already includes MailerLite** (`_spf.mlsend.com`). Removed at cutover (Task 11).
+  - Two stale verification TXT records on the root: `mailerlite-domain-verification=…` and `brevo-code:…`. Both are cruft from abandoned providers; removed at cutover.
+
+  Do **not** add Resend's SPF include to the root domain. It belongs on `mail.simonparis.ca` only — that separation is the entire point.
 - [ ] **P2.** Create a **Full Access** API key at https://resend.com/api-keys. Write it to `projects/simonparis-website/.env` as `RESEND_API_KEY=` and add it to Vercel (Production + Preview). Do not paste it into chat.
 - [ ] **P3.** Confirm to the implementer: keep the `/score` sequence at two emails per locale (delivery + follow-up), or a different shape. Plan assumes **two**.
 
@@ -2189,6 +2199,15 @@ Only after Steps 2–6 all passed:
 1. Delete the MailerLite account.
 2. **Revoke the MailerLite API key** — it was exposed in a session transcript on 2026-08-04 (spec §11 context).
 3. Remove `MAILERLITE_*` env vars from Vercel (Production, Preview, Development).
+4. **Clean the root-domain DNS.** Edit the root `simonparis.ca` SPF record to drop the MailerLite include — from `v=spf1 include:zohomail.com a mx include:_spf.mlsend.com ~all` to `v=spf1 include:zohomail.com a mx ~all`. Leave the Zoho include alone; that is his real inbound/outbound mail and breaking it breaks his client email.
+5. Delete the two stale verification TXT records on the root: `mailerlite-domain-verification=2777109984bd4ca4c8a0bb58af91a900aedb57a9` and `brevo-code:7866d9ed6d243e510475021503538699` (Brevo is another abandoned provider).
+6. Verify the root SPF still resolves and still authorises Zoho:
+
+```bash
+dig +short simonparis.ca TXT | grep spf
+```
+
+Expected: exactly one SPF record, containing `include:zohomail.com`, with no `mlsend` or `brevo` reference. **Send yourself a test email from Zoho afterwards to confirm client mail still works** — an SPF edit is the one step in this plan that can break something Simon uses daily.
 
 - [ ] **Step 9: Close the goals**
 
