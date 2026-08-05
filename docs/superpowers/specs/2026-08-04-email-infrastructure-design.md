@@ -168,19 +168,20 @@ Recipients can leave one without leaving both. Resend enforces opt-out at send t
 
 ### 5.3 Content — the editable surface
 
-Templates are authored as React Email components in the website repo:
+Templates are authored as React Email components in the website repo — **one component per email, not one per locale**:
 
 ```
 emails/
-  _layout.tsx                shared shell: header, footer, {{RESEND_UNSUBSCRIBE_URL}}, address block
-  score-welcome-1.en.tsx     alias: score-welcome-1-en
-  score-welcome-1.fr.tsx     alias: score-welcome-1-fr
-  score-welcome-2.en.tsx  ...
-  setup-welcome.en.tsx    ...
-  newsletter.tsx             broadcast shell
+  _layout.tsx              shared shell: header, footer, {{RESEND_UNSUBSCRIBE_URL}}, address block
+  score-welcome-1.tsx      → aliases score-welcome-1-en, score-welcome-1-fr
+  score-welcome-2.tsx
+  setup-welcome.tsx
+  newsletter.tsx           broadcast shell
 ```
 
-Locale is a file suffix, not a runtime conditional — MailerLite's condition-step branching is what made the current sequence unreadable.
+Copy lives in the site's **existing `messages/en.json` / `messages/fr.json`**, under an `emails.*` namespace, read via `next-intl` — which the site already uses for every other string. This follows the official Resend `react-email` skill's i18n guidance (`references/I18N.md`, which names next-intl as the recommended choice for Next.js) and it is better than the per-locale-file approach in the first revision for a concrete reason: two `.tsx` files for the same email drift, whereas one component with two message sets cannot. It also means email copy sits beside page copy in one translation surface.
+
+The sync script renders each component once per locale and uploads two Resend templates with `-en` / `-fr` alias suffixes, so automations can still branch by locale on the Resend side.
 
 Per-recipient data (name, quiz score, weakest pillar) uses Resend template `variables` — typed, with fallbacks, max 50 per template. `RESEND_UNSUBSCRIBE_URL`, `FIRST_NAME`, `LAST_NAME`, and `EMAIL` are reserved and provided automatically.
 
@@ -196,6 +197,26 @@ The only genuinely new machinery, and it is small. Idempotent, safe to re-run:
 4. Runs in CI on merge to `main`, and on demand.
 
 This is the mechanism that makes git the source of truth. It also belongs in `scripts/INDEX.md` per the scriptify rule — it is deterministic, repeated, and exactly specifiable.
+
+### 5.4b Tooling — CLI over MCP (Simon, 2026-08-05)
+
+Resend ships an official CLI (`resend`), an HTTP MCP server (`mcp.resend.com/mcp`), and an official skill set. **Use the CLI and the skills; do not mount the MCP server.**
+
+The reason is structural, not preference: MCP tool schemas load into context at session start and cost tokens in every session whether email work happens or not. A CLI plus a skill costs nothing until invoked, and the skill's reference files load only when the specific operation needs them. Email work here is occasional, so the permanently-mounted option is the wrong trade. This is the same reasoning as the scriptify rule in CLAUDE.md.
+
+Installed 2026-08-05 via `npx skills add resend/resend-skills` (official Resend repo, MIT, verified before install) into `.agents/skills/` with `.claude/skills/` symlinks and a `skills-lock.json`. Five skills:
+
+| Skill | Use |
+|---|---|
+| `resend-cli` | Terminal operations; carries the non-interactive flag contract and gotchas. Its own instruction: *"Always load this skill before running `resend` commands."* |
+| `resend` | API/SDK reference incl. `references/automations.md`, `broadcasts.md`, `topics.md`, `webhooks.md` |
+| `react-email` | Components, styling, **i18n** (see §5.3), sending, editor |
+| `email-best-practices` | `compliance.md`, `deliverability.md`, `list-management.md`, `email-capture.md` — read these during implementation; they cover the CASL and suppression ground this spec treats as risk |
+| `agent-email-inbox` | Inbound/receiving. Not used by this project. |
+
+The install landed in the primary checkout and is currently untracked. **Recommend committing it** so every worktree and session picks the skills up, with `skills-lock.json` pinning versions.
+
+The CLI supports `--react-email` to send a `.tsx` template directly, which makes the stage-7 live test a one-liner.
 
 ### 5.5 Subscribe path
 
