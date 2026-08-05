@@ -63,7 +63,8 @@ Everything email-mechanical lives in Resend. Two things stay in Supabase, for re
 
 | Concern | Owner | Why |
 |---|---|---|
-| Contacts, opt-out state, suppression, topics | **Resend** | Their job; API-writable, so no loss of control |
+| **Contact identity & attributes** (email, name, locale, source, topics) | **Supabase**, synced out to Resend | Local-first: enables joins against `quiz_results` / `clients` / `blog_posts` for segmentation Resend cannot do, and makes the list portable. See §5.6b. |
+| **Opt-out state, suppression, bounces** | **Resend** — flows *inward* only | Resend hosts the unsubscribe page, so it sees opt-outs first. Pushing our copy outward could re-subscribe someone who left. |
 | Sequences, delays, conditions, triggers | **Resend Automations** | API-writable |
 | Broadcasts / newsletter | **Resend Broadcasts** | API-writable, schedulable |
 | Deliverability, bounce & complaint processing, unsubscribe pages | **Resend** | Better than anything we'd build |
@@ -228,13 +229,35 @@ The CLI supports `--react-email` to send a `.tsx` template directly, which makes
 4. Emit the Resend custom event that triggers the right automation, carrying context (locale, score, name) as event data.
 5. For `/setup`, additionally write the `leads` row + ntfy — existing behaviour, with the email actually stored.
 
-### 5.6 Supabase schema (new — two tables, not seven)
+### 5.6 Supabase schema (three tables)
+
+**`public.email_subscribers`** — the local system of record for the list (Simon, 2026-08-05; see §5.6b for why). RLS on from creation.
+`id`, `email` (unique), `resend_contact_id`, `name`, `locale`, `source` (`score` | `setup` | `blog` | `readiness` | `import`), `topics` (text[]), `delivery_status` (`active` | `unsubscribed` | `bounced` | `complained`), `synced_at`, `created_at`, `updated_at`.
 
 **`public.email_consent_log`** — append-only; never updated or deleted. RLS on from creation.
 `id`, `email`, `event` (`granted` | `withdrawn`), `consent_version`, `source_page`, `locale`, `ip`, `user_agent`, `occurred_at`.
 
 **`public.email_events`** — thin webhook ledger, for idempotency and audit. RLS on from creation.
 `svix_id` (PK), `event_type`, `email`, `payload` (jsonb), `received_at`.
+
+Relationship to CRM: `email_subscribers` is the *marketing list*; `leads` and `clients` are the CRM. They join on email and stay separate — a client is not automatically a subscriber, and a subscriber is not automatically a lead. Conflating them is how you end up emailing a paying client a lead-magnet welcome sequence.
+
+### 5.6b Sync direction — the rule that keeps this safe
+
+The list is **local-first**: a signup writes Supabase, then pushes to Resend. But authority is **per-field, not per-system**, and getting this backwards is the one way this design causes real harm.
+
+| Field | Authority | Direction |
+|---|---|---|
+| email, name, locale, source, topics | **Supabase** | Supabase → Resend on write |
+| `delivery_status` (unsubscribed / bounced / complained) | **Resend** | Resend → Supabase via webhook |
+
+**Never push `delivery_status` outward.** Resend's built-in `RESEND_UNSUBSCRIBE_URL` means someone can unsubscribe on a Resend-hosted page that our database never sees until the webhook lands. If our row were treated as authoritative and pushed, a stale `active` would re-subscribe a person who opted out — a CASL violation caused by our own sync. Opt-out flows inward only, and Resend remains the enforcement point at send time regardless of what our table says.
+
+A nightly reconcile (`scripts/email-sync.mjs --contacts`) diffs both directions and reports drift: contacts in Supabase missing from Resend get pushed; `delivery_status` disagreements resolve **in Resend's favour, always**.
+
+**Honest caveat on portability:** the provider-swap argument is the weaker half of the case. Templates and automations would not port to Kit or anywhere else regardless — different step models, different variable syntax — and the engagement history stays behind too. What ports is the list and the consent proof, which is the part that matters, but a swap would still be a real project rather than an adapter change.
+
+The stronger reason is **segmentation**. "Everyone who scored under 12 on `/score`, hasn't booked a call, and has read three or more posts" requires joining email data against `quiz_results`, `clients`, and `blog_posts` — impossible if the list only lives in Resend. That is a capability Simon will use, not insurance against a swap he probably won't make. Resend segments can then be built *from* those queries.
 
 **Existing-table fix:** add `email text` to `public.leads`. **No backfill is possible** — `blog-subscribe` writes only `name: email.split("@")[0]` and a `notes` string that omits the address, so the domain is already lost. Both existing rows are Simon's; the fix is forward-only.
 
@@ -280,7 +303,9 @@ No reconcile job, no suppression logic, no cron — Resend enforces opt-out at s
 - `app/api/subscribe/route.ts` — dead, no callers
 - All `MAILERLITE_*` vars in Vercel (after cutover)
 
-**No longer needed** (vs. rev. 1): sequence-engine tables, `pg_cron`, `/api/email/tick`, `/api/email/reconcile`, `/api/email/unsubscribe`, and the custom `/[locale]/email-preferences` page.
+**No longer needed** (vs. rev. 1): sequence-engine tables, `pg_cron`, `/api/email/tick`, `/api/email/unsubscribe`, and the custom `/[locale]/email-preferences` page.
+
+**Note on reconcile:** rev. 1's `/api/email/reconcile` *route* is gone — Resend enforces opt-out at send time, so nothing about correct sending depends on a reconcile pass. What remains is `scripts/email-sync.mjs --contacts` (§5.6b), a nightly **drift report** on the local↔Resend contact mirror, scheduled as a Command Center schedule. It is an observability tool, not a correctness dependency, which is why Sterling is an acceptable host for it.
 
 ---
 
@@ -312,7 +337,9 @@ Total Simon-time ≈ **1 hour**, nearly all DNS and reading email copy.
 ## 9. Test plan
 
 - **Suppression is enforced at send time.** An unsubscribed contact receives neither a broadcast nor an automation step. Resend owns this, so the test asserts the integration, not our logic — but it stays permanently.
-- Every subscribe route writes a `email_consent_log` row and creates/updates the Resend contact.
+- **`delivery_status` is never pushed outward.** A test asserts the contact sync payload contains no unsubscribe/status field, so a stale local row can never re-subscribe someone who opted out (§5.6b).
+- Reconcile resolves a `delivery_status` disagreement in Resend's favour, in both directions of drift.
+- Every subscribe route writes an `email_subscribers` row, an `email_consent_log` row, and creates/updates the Resend contact.
 - Consent log is append-only — an unsubscribe appends, never mutates.
 - Webhook rejects unsigned / wrongly-signed payloads.
 - Webhook is idempotent — the same `svix_id` twice produces one state change.
