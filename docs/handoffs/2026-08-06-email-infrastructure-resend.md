@@ -51,6 +51,14 @@ Each of these cost real discussion. The reasoning matters more than the choice.
 
 **Click tracking OFF.** Rewriting every URL through an unwarmed tracking subdomain is a deliverability risk, and no analytics loop consumes the numbers yet.
 
+**ONE Resend audience, not one per ICP** (decided 2026-08-06, Simon asked). The brand serves two audiences — Operator (primary, `/setup`, "busy owner test") and Practitioner (pull-only, `/score`, "burned practitioner test") per `brand/brand-summary.md` — and they stay two audiences *editorially*. But in Resend they share one audience, because:
+- A Resend audience is a separate contact list. Someone in both would be **two contacts with two independent unsubscribe states** — and the overlap is real (a reliability lead who also runs a consultancy). They could opt out of one and keep receiving the other, which reads as ignoring an opt-out.
+- The ICP is already recoverable without splitting: `email_subscribers.source` is a strong proxy (`/score` → practitioner, `/setup` → operator), and Supabase can join it against `quiz_results`, `clients`, and `blog_posts`. That is better targeting than audience membership gives.
+- **Topics** handle the thing that actually needs separating — per-topic opt-out. When there are genuinely two newsletters, add a second newsletter topic; do not add a second audience.
+- Asymmetric cost: adding an ICP property later is trivial. Merging two audiences later means deduplicating contacts and reconciling conflicting unsubscribe state.
+
+Store the ICP as a contact property and an `email_subscribers` column when a lane-specific send actually exists. Not before — there are zero subscribers and the newsletter format is still unscoped (`4a02d3ce`).
+
 ---
 
 ## 4. Verified facts — established by checking, not assuming
@@ -109,9 +117,35 @@ Re-verify anything load-bearing before relying on it, but these were all checked
 - Official Resend skills installed: `.agents/skills/{resend-cli,resend,react-email,email-best-practices,agent-email-inbox}` with `.claude/skills/` symlinks and `skills-lock.json`. **Currently untracked** — the primary checkout had other uncommitted work so they were deliberately left uncommitted. Recommend committing.
 - **Prerequisite P1 complete:** Resend account exists, `mail.simonparis.ca` verified (DKIM + SPF).
 
-**Not done — start here**
-- **P2:** full-access Resend API key written to `projects/simonparis-website/.env` as `RESEND_API_KEY`, and added to Vercel (Production + Preview). Also needed: `RESEND_AUDIENCE_ID` (create the audience first — Task 8 assumes it exists), and later `RESEND_WEBHOOK_SECRET` from Task 9 Step 6. **Never paste a key into chat**; have Simon write it to the file and tell you the path.
-- **Tasks 1–11.** Tasks 1 and 2 (Supabase migration, contact-payload module) need no Resend credentials and can start immediately.
+**P2 — mostly done 2026-08-06.** Resend is provisioned:
+
+| Env var | Value |
+|---|---|
+| `RESEND_AUDIENCE_ID` | `9333ee14-10bb-47eb-99f6-78f4eb480750` (audience "General") |
+| `RESEND_TOPIC_ID_NEWSLETTER` | `963f4eb6-1619-4cf1-9c70-c6d89a23930d` |
+| `RESEND_TOPIC_ID_ONBOARDING` | `dd511559-2469-41ce-8634-1e45c7fe0c68` |
+| `RESEND_API_KEY` | **In Supabase Vault** under that exact name — see below |
+| `RESEND_WEBHOOK_SECRET` | Not yet — produced by Task 9 Step 6 |
+
+Audience currently holds **0 contacts**.
+
+**Reading the API key.** It lives in Supabase Vault (`vault.secrets`), not in any `.env`. Sterling can read it with the management API token at `~/.supabase/access-token`:
+
+```bash
+TOKEN=$(cat ~/.supabase/access-token | tr -d '\r\n')
+KEY=$(curl -s -X POST "https://api.supabase.com/v1/projects/ashwrqkoijzvakdmfskj/database/query" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"query":"select decrypted_secret from vault.decrypted_secrets where name='"'"'RESEND_API_KEY'"'"';"}' \
+  | python3 -c "import sys,json;print(json.load(sys.stdin)[0]['decrypted_secret'])" | tr -d '\r\n')
+```
+
+**Never echo `$KEY`.** Print `${#KEY}` if you need to confirm it loaded. A `secrets-guard` hook watches for credentials in transcripts, and a key was already leaked once this project (2026-08-04, MailerLite, via a Python traceback that included the Authorization header — strip `\r\n` from values read out of files, because a trailing newline in a header raises an exception that prints the header).
+
+**Still needs Simon:** `RESEND_API_KEY` added to **Vercel** (Production + Preview). Vercel cannot read Sterling's vault, so the deployed site needs its own copy. He can copy it from Command Center's `/settings` vault UI.
+
+**Verified 2026-08-06 — topic subscription defaults.** `default_subscription` **cannot be changed after creation**, so it was tested empirically rather than inferred: a topic created with `opt_out`, then a contact created with no topics specified, reads back `subscription: "opt_out"`. So **`opt_out` = new contacts start UNSUBSCRIBED**. Both topics were created `opt_out` deliberately: the subscribe path opts people in explicitly per source (`topicsForSource`), which means a bug in topic assignment fails *silently-safe* (nobody gets email, noticed immediately in testing) rather than *silently-unsafe* (everyone gets everything). That is also the CASL-aligned posture.
+
+**Tasks 1–11.** Tasks 1 and 2 (Supabase migration, contact-payload module) need no Resend credentials and can start immediately.
 
 **Load these skills at the right moments:** `resend-cli` before any `resend` command; `react-email` before writing templates; `email-best-practices` before the footer, consent, or webhook logic. They may shrink the risk section — they cover compliance, deliverability, and list-management ground the spec treats as open.
 
@@ -120,6 +154,7 @@ Re-verify anything load-bearing before relying on it, but these were all checked
 ## 8. Open questions for Simon
 
 1. **Execution mode** — subagent-driven (fresh agent per task, review between; recommended) or inline with checkpoints. He has not answered.
+1b. **`RESEND_API_KEY` into Vercel** — the only remaining provisioning step (§7).
 2. **`/score` sequence shape** — keep two emails per locale (delivery + follow-up), or reshape while rewriting. **Plan assumes two.** Copy is drafted; he reviews it in the React Email preview server at Task 7.
 3. **Commit the vendored Resend skills?** His call — it vendors a third-party dependency into the repo.
 
