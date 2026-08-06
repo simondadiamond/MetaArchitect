@@ -892,3 +892,19 @@ The 2026-07-29 "fabricated" price wasn't hallucinated at draft time — `funnel/
 **Fix applied:** command-center README gained an "Applying migrations — agents can do this directly" section with the exact curl, the `PROJECT_REF` derivation, the `[]`-means-success detail, and an explicit note that the SQL-editor line was stale. The `.claude` memory + brain both carry the capability now.
 
 **The generalizable rule:** a repo doc describing a *limitation* ("must be done by hand", "no access to X") is a claim with an expiry date, and the expensive failure mode is trusting it — it converts silently into unnecessary work for Simon. When a doc says a step needs a human, spend thirty seconds probing whether the credential or endpoint now exists before handing the step over. Absence of the obvious tool (`psql`, a CLI) is not absence of the capability.
+
+---
+
+## 2026-08-06 — An API that returns 201 and ignores what you sent: silent-success is the expensive failure mode
+
+**What happened:** Executing the Resend implementation plan, five of its API shapes were wrong. Four of them fail *silently*. The worst: the plan posted topic subscriptions as bare names (`topics: ["newsletter"]`). The live API returned **201 Created**. A probe of `GET /contacts/{id}/topics` showed both topics still at `opt_out` — the default. The write was accepted and discarded. Had it shipped, every signup would have succeeded, every test would have passed, the dashboard would have shown a growing contact list, and not one person would ever have received an email. The same class showed up three more times: template variables need triple mustache (`{{{SCORE}}}` — double braces render literally, so real subscribers get "Your STATE score is {{SCORE}}/25"), a `condition` step's `field` is accepted with *any* namespace at create time (a wrong guess routes nobody and looks like silence), and contact `properties` must be pre-registered or the whole create 422s.
+
+**Root cause:** The plan's author verified that endpoints *existed* — the 2026-08-05 lesson's rule, correctly applied — but not that they **honoured the payload**. A 2xx was read as confirmation. For a write API, a 2xx only means the request parsed; it says nothing about whether the field you cared about was understood or dropped. Every one of these shapes was a plausible guess written in good faith from an SDK example, and every one of them was wrong in a way no error surface would report.
+
+**Fix applied:** All five corrected against the live API and pinned with regression tests carrying the probe date and the observed failure (`lib/email/resend.test.ts`). `emails/automations.json` carries a `_comment` recording that its shapes are verified, not guessed. Locale routing was redesigned from a condition step to per-locale trigger events, deleting the unverifiable branch rather than guessing at it.
+
+**The generalizable rule:** the 2026-08-05 lesson said *probe before believing a negative capability claim*. This is its other half: **for a write, probe the read-back, not the status code.** After a create or update whose payload contains anything structured — nested objects, enums, ids, subscription states — fetch the resource and assert the field actually landed. A silently-dropped field is strictly worse than a 4xx: the 4xx stops the build, the drop ships. Prefer designs with nothing to guess wrong (two trigger events beat one event plus a condition whose semantics you cannot verify without a live send), and when a wrong value would fail silently-safe, make the code throw instead — an unmapped topic name now raises rather than creating a contact subscribed to nothing.
+
+**Where documented:** This entry; `lib/email/resend.test.ts` and `emails/automations.json` in simonparis-website (PR #103).
+
+**Related:** 2026-08-05 (negative capability claims) — same family. Together: never trust a summariser for "you can't", and never trust a 2xx for "it worked."
