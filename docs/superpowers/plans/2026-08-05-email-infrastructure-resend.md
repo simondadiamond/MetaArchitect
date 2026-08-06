@@ -29,7 +29,9 @@
 
 These are not code tasks. Nothing after Task 2 can be verified without them.
 
-- [ ] **P1.** Create a Resend account. Add domain **`mail.simonparis.ca`** (a subdomain, not the root — see the DNS note below). Region `us-east-1`. Copy the SPF, DKIM, and DMARC records Resend shows into DNS. Wait for all three to verify. (~15 min)
+- [x] **P1. DONE 2026-08-06.** Resend account created, domain **`mail.simonparis.ca`** added (subdomain, not root — see the DNS note below), region `us-east-1`. Verified live: DKIM `resend._domainkey.mail` resolving, SPF `send.mail` TXT = `v=spf1 include:amazonses.com ~all`, MX `send.mail` → `feedback-smtp.us-east-1.amazonses.com`.
+
+  **No DMARC record needed.** The root already has `v=DMARC1; p=none; sp=none; adkim=r; aspf=r; rua=mailto:hello@simonparis.ca`. `sp=none` applies to subdomains and relaxed alignment (`aspf=r`/`adkim=r`) means `mail.simonparis.ca` aligns against the org domain, so Gmail/Yahoo bulk-sender requirements are met. Separate later hardening, not this project: `p=none` means no enforcement against spoofing.
 
   **Turn OFF "Enable click tracking"** (it defaults on). Leave open tracking off. Reasons: click tracking rewrites every URL through a tracking subdomain, which is an unwarmed-domain deliverability risk, adds a DNS record, and puts redirect URLs in front of an audience of senior engineers. There is no analytics loop consuming the numbers yet (the stats loop is deliberately deferred). Turn it on later if a decision actually depends on the click rate.
 
