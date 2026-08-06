@@ -1,4 +1,4 @@
-# Brain v2 — topic pages, section retrieval, supersede
+# Brain v2 — topic pages, section retrieval, section history
 
 **Date**: 2026-08-06 · **Approved by**: Simon (in-session, three decisions recorded below)
 **Relationship to prior specs**: complements `2026-07-16-second-brain-v2-intake.md` (which fixed *what*
@@ -42,7 +42,9 @@ between "readable page" and "precise recall" is false.
 |---|---|
 | Truth lives in… | The **topic page**. One artifact, edited by hand or by CLI. No generated view layer. |
 | Migration and junk | The migration agent **drops** notes it judges worthless, with a `dropped.md` manifest and a git tag on the pre-migration commit. |
-| Scope | Storage + supersede + folders + daily log + **recipes** in v2. Recipe *format* plus three converted skills as proof; converting the remaining skills is a follow-on. |
+| Folder scheme | Johnny.Decimal **areas only** (blocks of ten), no decimal category IDs. `personal`/`family`/`health`/`finance` merge into one `40-49-life` area; three areas left free. |
+| Retirement mechanism | One section per topic; revisions push the old body into a collapsed `History` block **in place**. Replaced the earlier anchor-pointer design — see Simplicity budget. |
+| Scope | Storage + section history + folders + daily log + **recipes** in v2. Recipe *format* plus three converted skills as proof; converting the remaining skills is a follow-on. |
 
 Simon overrode the recommendation on junk-dropping (recommended: archive, never delete) and on scope
 (recommended: defer recipes). Both stand; the manifest and tag are the safety net on the first.
@@ -78,19 +80,21 @@ updated: 2026-08-06
 description: The /setup ladder, pricing rationale, and live prospects.
 ---
 
-## Ladder — locked 2026-07-27
-`status: current` · `since: 2026-07-27`
+## Ladder
+`updated: 2026-07-27`
 
 Sessions $125/hr → Audit $2.5K credited → Setup $6.5K (founding 3×$5K) → Retainer $600/mo.
 Full spec: [[offer-v4-spec]].
 
-## Ladder — locked 2026-07-19
-`status: superseded` · `by: #ladder-locked-2026-07-27`
+<details><summary>History</summary>
 
-Audit+Roadmap $2.5K credited → Business OS Setup $6.5K fixed/30d.
+- **2026-07-19** — Audit+Roadmap $2.5K credited → Business OS Setup $6.5K fixed/30d.
+- **2026-07-06** — Diagnostic $2,500/$3,500, Audit $6,500.
+
+</details>
 
 ## Pricing rationale
-`status: current` · `since: 2026-07-23`
+`updated: 2026-07-23`
 
 Operator-ICP budget is proven by category comparables (Notion/business-OS consulting, same buyer
 type). Enterprise comps like OptyxStack ($42–58K) are a different segment — see [[src-optyxstack]].
@@ -98,21 +102,24 @@ type). Enterprise comps like OptyxStack ($42–58K) are a different segment — 
 
 Rules:
 
-- Frontmatter keys are the existing set from `serializeNote` ORDER, plus `updated`. `created` stays for
-  the page's birth; per-section dates live in the `since:` field.
-- Section state line is optional. Absent ⇒ `status: current`, `since:` = page `updated`.
-- Valid section `status`: `current` | `superseded` | `evidence`. The evidence tier moves from
-  file-level to section-level; `promote` and `drop` operate on anchors.
-- `by:` holds an anchor — same-page (`#anchor`) or cross-page (`page-slug#anchor`).
+- Frontmatter is the existing `serializeNote` key set plus `updated`. `created` stays for the page's
+  birth.
+- A section's state line is one optional line under the heading: `` `updated: YYYY-MM-DD` `` and, for
+  the evidence tier, `` `status: evidence` ``. Absent ⇒ current, dated by the page's `updated`.
+- **A topic gets one section, not one per revision.** Revising a section rewrites its body and pushes
+  the previous body into a `<details><summary>History</summary>` block at the bottom of that section.
+- Nothing inside a `<details>` block is indexed, embedded, or returned by `find`. History is for a
+  human reading the page, and for `git log`.
 
 ### Section addressing
 
 A section's anchor is `slugify(heading text)`, deduped within the page by numeric suffix. Anchors are
-what `find` returns and what `by:` points at.
+what `find` returns.
 
-Renaming a heading changes its anchor and can orphan a `by:` pointer. Mitigation: `brain doctor` gains
-a check that every `by:` resolves to a real anchor, and reports unresolvable ones as diagnostics (not
-proposals — consistent with RECONCILER.md §1). `--fix` does not guess; a human or agent repairs it.
+Anchors are *outputs*, never stored as pointers — nothing in the vault holds an anchor referencing
+another anchor. Renaming a heading changes where `find` points on the next `doctor --fix` and breaks
+nothing, because there is no pointer to dangle. This is the single largest simplification over the
+first revision of this spec.
 
 ### Retrieval moves to the section
 
@@ -120,32 +127,29 @@ proposals — consistent with RECONCILER.md §1). `--fix` does not guess; a huma
 row per section**:
 
 ```
-- [setup-offer#ladder-locked-2026-07-27](notes/10-business/setup-offer.md#ladder-locked-2026-07-27) (business) — Sessions $125/hr → Audit $2.5K credited → Setup $6.5K → Retainer $600/mo.
+- [setup-offer#ladder](notes/10-19-business/setup-offer.md#ladder) (business) — Sessions $125/hr → Audit $2.5K credited → Setup $6.5K → Retainer $600/mo.
 ```
 
-- `LINE_RE` widens to accept a nested path and an optional `#anchor`; the marker slot gains
-  `superseded` alongside the existing `evidence` / `source`.
-- Row `description` = the section's first sentence (page `description` for a page-level row).
-- `scoreEntry` is unchanged in shape but now scores `slug#anchor`, the section's first sentence, and
-  page-level `domain`/`tags`. The anti-shadowing tiebreaks in `rankEntries` gain one more rung:
-  **`current` beats `superseded`**, above the existing source/evidence rungs.
-- `superseded` rows are excluded from `find` results entirely unless `--all` is passed. They remain in
-  INDEX so the audit trail is greppable.
-- `tools/lib/embed.mjs` embeds sections rather than files. Semantic results keep the
+- `LINE_RE` widens to accept a nested path and an optional `#anchor`. The marker slot is unchanged —
+  still `evidence` / `source` only, because `superseded` no longer exists as a state.
+- Row `description` = the section's first sentence, taken from the body **above** any `<details>`.
+- `scoreEntry` keeps its shape but now scores `slug#anchor`, the section's first sentence, and
+  page-level `domain`/`tags`. `rankEntries` tiebreaks are unchanged.
+- `tools/lib/embed.mjs` embeds sections rather than files, history excluded. Semantic results keep the
   `[semantic match — similarity N]` label and the sub-0.85 "lead, not answer" rule.
-- `find` prints `notes/10-business/setup-offer.md#ladder-locked-2026-07-27` as its source line, so a
-  caller can open exactly the section.
+- `find` prints `notes/10-19-business/setup-offer.md#ladder` so a caller can open exactly the section.
 
-### Supersede
+### Revising a section
 
-`brain save "<fact>" --page <slug> --section "<heading>" --supersedes <anchor>`
+`brain save "<fact>" --page <slug> --section "<heading>"`
 
-One atomic write: append the new section, flip the target's state line to
-`status: superseded` · `by: #<new-anchor>`, regenerate INDEX, commit. Same lock discipline as today
-(`tools/lib/lock.mjs`).
+When the named section exists, one atomic write: move its current body into the section's `History`
+block with today's date, write the new body above, bump `updated:` on the section and the page,
+regenerate INDEX, commit. Same lock discipline as today (`tools/lib/lock.mjs`).
 
-`--supersedes` accepts a cross-page anchor, which is how the migration retires the two dead ladders
-into the single `setup-offer` page.
+There is no `--supersedes` flag and no cross-page retirement. If a fact moves to a different page, that
+is a normal edit to two pages. The migration folds the two dead ladders into `setup-offer`'s history
+this way.
 
 ### Save defaults to append
 
@@ -163,14 +167,23 @@ applied to the tool that stores the thesis.
 
 ### Layout
 
-Johnny.Decimal over the existing `domain` values, so `domain` frontmatter and folder agree:
+Johnny.Decimal **areas only** — blocks of ten, no decimal category IDs. Areas give reserved space for
+areas that do not exist yet; per-note decimal IDs would add an assignment rule and a collision surface
+for no retrieval benefit, since recall goes through `find`, not through browsing numbers.
 
 ```
-notes/10-business/   notes/20-content/   notes/30-infra/    notes/40-personal/
-notes/50-family/     notes/60-health/    notes/70-finance/
-notes/80-sources/    notes/90-recipes/   notes/99-archive/
+notes/10-19-business/    notes/20-29-content/     notes/30-39-infra/
+notes/40-49-life/        ← personal · family · health · finance
+notes/50-59-*/           ← free
+notes/60-69-*/           ← free
+notes/70-79-*/           ← free
+notes/80-89-sources/     notes/90-99-system/      ← recipes, archive, dropped.md
 daily/
 ```
+
+The seven existing `domain:` frontmatter values are **unchanged** — `personal`, `family`, `health`, and
+`finance` all live in `40-49-life/` but keep their own `domain`. Folder is location; `domain` stays the
+semantic tag, so Supabase sync, the CC `/brain` page, and every existing `--domain` filter keep working.
 
 `tools/lib/paths.mjs` hardcodes `NOTES_DIR`, and eight command files build `notes/${slug}.md` inline.
 All of that collapses into one exported `notePath(slug)` / `resolveNote(slug)` pair; slugs stay globally
@@ -213,18 +226,45 @@ file from a fixed template on first write. Sections: **Done · In progress · De
 `session-close` writes it as part of the harvest. Daily files are append-only and are excluded from
 `find` ranking by default (`--daily` includes them) — they are a chronological record, not knowledge.
 
+## Simplicity budget
+
+Simon's constraint, stated 2026-08-06: *"I want to be selling this. Should be simple to use and have
+not too many breaking places."* That is a design constraint, not a preference, and it killed two things
+that were in the first revision of this spec.
+
+**Removed: anchor pointers.** Sections used to carry `status: superseded` · `by: <anchor>`, which meant
+a heading rename orphaned a pointer, `doctor` needed a pointer-validation check, and `rankEntries`
+needed a current-beats-superseded rung. Collapsing history *into* the section deleted all three. A
+client never learns the word "supersede" — they see the current answer with history folded under it.
+
+**Removed: decimal category IDs.** Real Johnny.Decimal assigns every note a number like `42.03`. That
+is a rule the client must learn and a place two notes collide. Areas alone give the reserved-space
+benefit with nothing to assign.
+
+The remaining places a user can get it wrong, and what catches each:
+
+| Breaking place | Catch |
+|---|---|
+| `save` appends to the wrong page | It prints the page and section it chose; `--page` / `--new` override; one commit to revert |
+| Two pages claim the same slug | `doctor` error, not a silent shadow |
+| Hand-edited INDEX.md | Never read as truth; `doctor --fix` regenerates from `notes/` |
+| Heading renamed | Nothing breaks; next `doctor --fix` re-points |
+| A page grows unreadable | `doctor` warns past ~15 sections; splitting is a normal edit |
+
+Everything else in the system is either regenerated or under `git`.
+
 ## Migration
 
 One agent pass over the 138 notes, run overnight.
 
 1. Tag the pre-migration commit `brain-v1-final` and push. Nothing below is irreversible.
 2. Cluster the 138 by topic into ~25 pages. Target: no page under three sections; no page over ~15.
-3. Write pages, preserving each source note's substance as a section with `since:` = its `created`.
+3. Write pages, preserving each source note's substance as a section dated by its `created`.
 4. **Resolve contradictions against the locked source docs**, not against each other:
    `funnel/setup-offer/offer-v4-spec.md`, `funnel/setup-offer/audit-runbook.md` (both verified present
-   2026-08-06), and the `operating-strategy-locked-2026-07-19-*` note. Losing
-   versions become `status: superseded` sections with a `by:` pointer — retired, not deleted, because
-   the audit trail is the thing that failed.
+   2026-08-06), and the `operating-strategy-locked-2026-07-19-*` note. The winning version becomes the
+   section body; every losing version becomes a dated line in that section's `History` block — retired,
+   not deleted, because the audit trail is the thing that failed.
 5. Drop worthless notes (dead links, contentless dupes). Every drop gets a line in
    `99-archive/dropped.md`: slug, one-line content, reason. Nothing leaves without a receipt.
 6. `brain doctor --fix` regenerates INDEX. `brain sync` re-embeds sections and refreshes Supabase.
@@ -239,14 +279,15 @@ Simon reviews `dropped.md` and the page list before the branch merges. Recovery 
 The 15 existing test files in `tools/tests/` must pass, updated where the contract genuinely changed
 (`index-file`, `score`, `note`, `save`, `find`, `doctor`). New coverage:
 
-- `section.test.mjs` — parse/serialize state lines; anchor generation and dedupe; absent-state defaults.
-- `supersede.test.mjs` — flip is atomic; cross-page anchors resolve; `find` hides superseded without
-  `--all`; `current` outranks `superseded` on equal score.
+- `section.test.mjs` — parse/serialize state lines; anchor generation and dedupe; absent-state defaults;
+  `<details>` history is excluded from the indexed body.
+- `revise.test.mjs` — revising a section moves the old body into History with today's date, bumps
+  `updated:` on section and page, and is atomic under the lock.
 - `save-append.test.mjs` — confident match appends; no match creates; `--page` and `--new` override.
-- `paths.test.mjs` — `resolveNote` finds a slug in any domain folder; duplicate slugs across folders
-  are a `doctor` error.
+- `paths.test.mjs` — `resolveNote` finds a slug in any area folder; duplicate slugs across folders are
+  a `doctor` error.
 - A regression test seeded with the three real ladder notes asserting `find "offer ladder"` returns
-  only the 2026-07-27 section. That defect is the reason for this spec; it gets a permanent test.
+  only the current ladder body, with the two dead prices reachable only inside History. That defect is the reason for this spec; it gets a permanent test.
 
 ## Command Center and the product angle
 
@@ -273,7 +314,7 @@ Simon asked for the sellable inclusions. Recorded here so the follow-on viewer s
 |---|---|
 | Migration agent merges two topics that should stay apart | Page list reviewed before merge; `brain-v1-final` tag makes any split cheap |
 | Agent drops a note Simon wanted | `dropped.md` manifest + tag; recovery is one `git show` |
-| Section anchors break `by:` pointers on heading rename | `doctor` validates every pointer resolves; reports unresolvable |
+| `save` guesses the wrong page to append to | `save` prints the page and section it chose; `--page` / `--new` override; the choice is one commit to revert |
 | Live skills break on the CLI change | CLI signatures frozen; `source find`/`source add` covered by existing tests |
 | Scope creep from recipes | Exactly three skills convert; the rest is explicitly out |
 
