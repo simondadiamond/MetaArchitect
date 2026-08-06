@@ -1,4 +1,4 @@
-# Brain v2 — topic pages, section retrieval, section history
+# Brain v2 — topic pages, section retrieval, retirement
 
 **Date**: 2026-08-06 · **Approved by**: Simon (in-session, three decisions recorded below)
 **Relationship to prior specs**: complements `2026-07-16-second-brain-v2-intake.md` (which fixed *what*
@@ -43,7 +43,7 @@ between "readable page" and "precise recall" is false.
 | Truth lives in… | The **topic page**. One artifact, edited by hand or by CLI. No generated view layer. |
 | Migration and junk | The migration agent **drops** notes it judges worthless, with a `dropped.md` manifest and a git tag on the pre-migration commit. |
 | Folder scheme | Johnny.Decimal **areas only** (blocks of ten), no decimal category IDs. `personal`/`family`/`health`/`finance` merge into one `40-49-life` area; three areas left free. |
-| Retirement mechanism | One section per topic; revisions push the old body into a collapsed `History` block **in place**. Replaced the earlier anchor-pointer design — see Simplicity budget. |
+| Retirement mechanism | One section per topic; the prior body moves into a collapsed history block carrying `status: superseded` + `by:`. Cross-page retirement supported. Retired content is excluded from the default index — the one hard invariant. |
 | Scope | Storage + section history + folders + daily log + **recipes** in v2. Recipe *format* plus three converted skills as proof; converting the remaining skills is a follow-on. |
 
 Simon overrode the recommendation on junk-dropping (recommended: archive, never delete) and on scope
@@ -114,42 +114,59 @@ Rules:
 ### Section addressing
 
 A section's anchor is `slugify(heading text)`, deduped within the page by numeric suffix. Anchors are
-what `find` returns.
+what `find` returns and what a retired section's `by:` points at.
 
-Anchors are *outputs*, never stored as pointers — nothing in the vault holds an anchor referencing
-another anchor. Renaming a heading changes where `find` points on the next `doctor --fix` and breaks
-nothing, because there is no pointer to dangle. This is the single largest simplification over the
-first revision of this spec.
+Renaming a heading changes its anchor and can orphan a `by:` pointer. `brain doctor` gains a check that
+every `by:` resolves to a real anchor and reports unresolvable ones as diagnostics (not proposals —
+consistent with RECONCILER.md §1). `--fix` does not guess. This check rides the weekly reconciler pass
+that already does structural health, so its cost is unattended and invisible.
 
 ### Retrieval moves to the section
 
 `tools/lib/index-file.mjs` currently emits one INDEX row per note (`noteToIndexEntry`). v2 emits **one
-row per section**:
+row per live section**:
 
 ```
 - [setup-offer#ladder](notes/10-19-business/setup-offer.md#ladder) (business) — Sessions $125/hr → Audit $2.5K credited → Setup $6.5K → Retainer $600/mo.
 ```
 
 - `LINE_RE` widens to accept a nested path and an optional `#anchor`. The marker slot is unchanged —
-  still `evidence` / `source` only, because `superseded` no longer exists as a state.
-- Row `description` = the section's first sentence, taken from the body **above** any `<details>`.
+  `evidence` / `source` only.
+- Row `description` = the section's first sentence, taken from the body above any history block.
 - `scoreEntry` keeps its shape but now scores `slug#anchor`, the section's first sentence, and
-  page-level `domain`/`tags`. `rankEntries` tiebreaks are unchanged.
-- `tools/lib/embed.mjs` embeds sections rather than files, history excluded. Semantic results keep the
+  page-level `domain`/`tags`. **`rankEntries` is unchanged** — see below for why that is deliberate.
+- `tools/lib/embed.mjs` embeds live sections, history excluded. Semantic results keep the
   `[semantic match — similarity N]` label and the sub-0.85 "lead, not answer" rule.
-- `find` prints `notes/10-19-business/setup-offer.md#ladder` so a caller can open exactly the section.
 
-### Revising a section
+**The one invariant: retired content is never a candidate in a default `find`.**
 
-`brain save "<fact>" --page <slug> --section "<heading>"`
+Metadata on retired content and searchability of retired content are independent decisions, and the
+first revision of this spec wrongly bundled them. Retired sections keep full metadata (`status`, `by:`,
+dates) and remain on disk, in git, and in the page a human reads. They are simply not emitted as
+default INDEX rows.
 
-When the named section exists, one atomic write: move its current body into the section's `History`
-block with today's date, write the new body above, bump `updated:` on the section and the page,
-regenerate INDEX, commit. Same lock discipline as today (`tools/lib/lock.mjs`).
+The reason is not tidiness. A retired price and its replacement are near-identical text and therefore
+score near-identically; if both are candidates, the only thing keeping the dead one out of first place
+is a tiebreak rung in a sort comparator. Excluding them makes the failure structurally impossible
+rather than prevented by ranking logic, so the property survives any future change to scoring. It also
+means `rankEntries` needs no new rung — the existing source/evidence tiebreaks stand untouched.
 
-There is no `--supersedes` flag and no cross-page retirement. If a fact moves to a different page, that
-is a normal edit to two pages. The migration folds the two dead ladders into `setup-offer`'s history
-this way.
+`brain find --history <q>` runs a second pass over retired content and labels every result
+`[retired — superseded YYYY-MM-DD]`. Asking for history is explicit; getting it by accident is not
+possible.
+
+### Retirement
+
+`brain save "<fact>" --page <slug> --section "<heading>" --supersedes <anchor>`
+
+One atomic write: write the new body, move the prior body into the section's history block marked
+`status: superseded` · `by: #<new-anchor>` with today's date, bump `updated:`, regenerate INDEX, commit.
+Same lock discipline as today (`tools/lib/lock.mjs`).
+
+`--supersedes` accepts a cross-page anchor (`page-slug#anchor`). Cross-page retirement is the case that
+matters on reorganization: when a topic moves to a new page, the old copy is retired in the same write
+rather than left live on the page it moved off. Without it, reorganizing recreates exactly the
+two-live-answers defect this spec exists to fix.
 
 ### Save defaults to append
 
@@ -229,29 +246,33 @@ file from a fixed template on first write. Sections: **Done · In progress · De
 ## Simplicity budget
 
 Simon's constraint, stated 2026-08-06: *"I want to be selling this. Should be simple to use and have
-not too many breaking places."* That is a design constraint, not a preference, and it killed two things
-that were in the first revision of this spec.
+not too many breaking places."*
 
-**Removed: anchor pointers.** Sections used to carry `status: superseded` · `by: <anchor>`, which meant
-a heading rename orphaned a pointer, `doctor` needed a pointer-validation check, and `rankEntries`
-needed a current-beats-superseded rung. Collapsing history *into* the section deleted all three. A
-client never learns the word "supersede" — they see the current answer with history folded under it.
+The constraint is about **user-facing** surface, and an earlier revision of this spec misapplied it —
+cutting internal machinery (the doctor pointer check, `--supersedes`) that no user ever touches and
+that a weekly unattended job absorbs at no visible cost. Simon caught this. Internal cost borne by
+scheduled tasks is not part of the budget; only what a person must learn or can get wrong is.
 
-**Removed: decimal category IDs.** Real Johnny.Decimal assigns every note a number like `42.03`. That
-is a rule the client must learn and a place two notes collide. Areas alone give the reserved-space
-benefit with nothing to assign.
+What the constraint did legitimately kill:
 
-The remaining places a user can get it wrong, and what catches each:
+**Decimal category IDs.** Real Johnny.Decimal assigns every note a number like `42.03` — a rule the
+client must learn and a place two notes collide. Areas alone give the reserved-space benefit with
+nothing to assign.
+
+**Retired rows in the default index.** Kept out not for simplicity but as the correctness guard; see
+Retrieval. This is the one exclusion that is not negotiable, because it is the property being sold.
+
+The places a user can get it wrong, and what catches each:
 
 | Breaking place | Catch |
 |---|---|
 | `save` appends to the wrong page | It prints the page and section it chose; `--page` / `--new` override; one commit to revert |
 | Two pages claim the same slug | `doctor` error, not a silent shadow |
 | Hand-edited INDEX.md | Never read as truth; `doctor --fix` regenerates from `notes/` |
-| Heading renamed | Nothing breaks; next `doctor --fix` re-points |
+| Heading renamed, orphaning a `by:` | `doctor` reports it on the weekly pass; nothing user-visible breaks meanwhile |
 | A page grows unreadable | `doctor` warns past ~15 sections; splitting is a normal edit |
 
-Everything else in the system is either regenerated or under `git`.
+Everything else is either regenerated or under `git`.
 
 ## Migration
 
@@ -281,8 +302,10 @@ The 15 existing test files in `tools/tests/` must pass, updated where the contra
 
 - `section.test.mjs` — parse/serialize state lines; anchor generation and dedupe; absent-state defaults;
   `<details>` history is excluded from the indexed body.
-- `revise.test.mjs` — revising a section moves the old body into History with today's date, bumps
-  `updated:` on section and page, and is atomic under the lock.
+- `retire.test.mjs` — retiring moves the old body into history with today's date and `by:` pointer,
+  bumps `updated:`, is atomic under the lock, and works across pages.
+- `history-exclusion.test.mjs` — retired content emits no default INDEX row, is not embedded, and is
+  returned only by `find --history`, labelled retired. This is the correctness guard; it gets its own file.
 - `save-append.test.mjs` — confident match appends; no match creates; `--page` and `--new` override.
 - `paths.test.mjs` — `resolveNote` finds a slug in any area folder; duplicate slugs across folders are
   a `doctor` error.
@@ -314,6 +337,7 @@ Simon asked for the sellable inclusions. Recorded here so the follow-on viewer s
 |---|---|
 | Migration agent merges two topics that should stay apart | Page list reviewed before merge; `brain-v1-final` tag makes any split cheap |
 | Agent drops a note Simon wanted | `dropped.md` manifest + tag; recovery is one `git show` |
+| Heading rename orphans a `by:` pointer | `doctor` validates every pointer on the weekly pass and reports unresolvable ones |
 | `save` guesses the wrong page to append to | `save` prints the page and section it chose; `--page` / `--new` override; the choice is one commit to revert |
 | Live skills break on the CLI change | CLI signatures frozen; `source find`/`source add` covered by existing tests |
 | Scope creep from recipes | Exactly three skills convert; the rest is explicitly out |
