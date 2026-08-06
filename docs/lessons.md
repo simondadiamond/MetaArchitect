@@ -872,6 +872,20 @@ The 2026-07-29 "fabricated" price wasn't hallucinated at draft time — `funnel/
 
 ---
 
+## 2026-08-06 — An in-flight story cannot actually be stopped; "pause the pipeline first" does not work
+
+**What happened:** Story #146 was queued, then superseded by a simpler design ~2 minutes later while still in `planning`. `POST /api/stories/<id>/cancel` returned `"story is being processed by the worker — wait for the stage to finish or pause the pipeline first"`. Following that instruction, `pipeline_settings.paused` was set true. The story nonetheless advanced planning → building → testing → verify → pr_open → **merged**, ignoring the pause the whole way. A retry loop hammering cancel every 15s for 15 minutes never once caught an unlocked window. The unwanted design merged as PR #144.
+
+**Root cause:** Two independent gaps. (1) `cancelStory` refuses whenever `stories.locked_by` is non-null, and the worker holds that lock continuously *across* stage transitions — so the "wait for the stage to finish" window the error message promises effectively never opens for a story already in flight. (2) `paused` is only consulted when the worker claims *new* work; a story already claimed runs to completion, including the auto-merge. The error message therefore names two remedies, neither of which can stop an in-flight story.
+
+**Fix applied:** None to the pipeline — the merged story was inert (`guard_script` was never set on any schedule, so no live behavior changed) and a replacement story (#147) was queued to swap the mechanism. Pipeline `paused` was restored to false.
+
+**The generalizable rule:** Treat queueing a story as **irreversible the moment the worker claims it**. There is no working abort. Get the design right before `POST /api/stories`, because "I'll cancel it if we change our minds" is not a real option — and never assume a documented remedy works just because an error message recommends it.
+
+**Where documented:** This entry. Proposals for Simon, neither made: (a) have the worker check `paused` between stages, not only at claim time, so pausing actually parks in-flight work; (b) add a `cancel_requested` flag the worker honors at its next stage boundary, giving cancel a path that doesn't depend on catching an unlocked instant. Until one exists, the queue-story skill's advice to resolve open decisions *before* queueing is load-bearing, not stylistic.
+
+---
+
 ## 2026-08-05 — A doc-summarising tool's confident wrong answer became a load-bearing architecture decision
 
 **What happened:** Scoping the MailerLite→Resend email migration, a WebFetch against `resend.com/docs/llms.txt` returned *"Key Finding: Automation sequences cannot be created or updated via API—only through the dashboard interface."* That claim was taken as verified and became the spec's central architectural premise: §2 concluded Resend Automations were unusable and designed a custom sequence engine around the limitation (Supabase `email_sequence_*` tables, `pg_cron` tick, `/api/email/tick`, self-hosted unsubscribe + preference pages). Simon pushed back with the API reference URL. A direct probe found `automations/{create,update,get,list}` and `templates/{create,update,get,list,publish,duplicate,delete}` all returning 200 — full CRUD at every layer, plus a documented React Email→Resend upload path. The spec was rewritten; roughly half the designed machinery was deleted as unnecessary.
