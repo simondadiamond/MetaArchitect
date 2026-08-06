@@ -17,6 +17,7 @@ built it, reuse it (session-close lane 4 promotes session one-offs here; keep en
 - handoff-lint.sh — every docs/handoffs/*.md (except TEMPLATE.md) must carry `status: queued|in-progress|done|abandoned`; exit 1 lists offenders; `--self-test` (born 2026-07-13)
 - bind-audit.sh — compares live `ss -tlnp` against scripts/bind-allowlist.txt (sanctioned non-loopback listeners); drift → exit 1 + ntfy; `--fixture <file>` for offline runs, `--self-test` (born 2026-07-13)
 - mark-session-closed.sh — appends {path, lastLineTimestamp} for a transcript to the brain reconciler ledger (~/projects/brain/.reconciler/processed.json); atomic + jq-validated + idempotent; PROCESSED_FILE overrides for tests; `--self-test` (born 2026-07-13)
+- agent-reach.sh — the ONLY sanctioned way to call Agent Reach (`doctor`, `install`, `configure`, …): runs the ~/.agent-reach-venv CLI with its own bin dir prepended to PATH, since its helpers (yt-dlp) live in the venv and are invisible to the system PATH; calling the venv binary directly silently reports channels as uninstalled (born 2026-08-05)
 
 Content-pipeline gates live next to their tools in `projects/Content-Engine/tools/` (all `--self-test`):
 
