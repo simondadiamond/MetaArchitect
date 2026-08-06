@@ -108,8 +108,9 @@ Rules:
   the evidence tier, `` `status: evidence` ``. Absent ⇒ current, dated by the page's `updated`.
 - **A topic gets one section, not one per revision.** Revising a section rewrites its body and pushes
   the previous body into a `<details><summary>History</summary>` block at the bottom of that section.
-- Nothing inside a `<details>` block is indexed, embedded, or returned by `find`. History is for a
-  human reading the page, and for `git log`.
+- History entries carry `status: superseded` and `by:` and stay fully on disk, in git, and on the page a
+  human reads. They emit no default INDEX row and are not embedded, so a normal `find` cannot return
+  them; `find --history` reaches them deliberately and labels each result retired.
 
 ### Section addressing
 
