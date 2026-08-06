@@ -906,3 +906,19 @@ The 2026-07-29 "fabricated" price wasn't hallucinated at draft time — `funnel/
 **Fix applied:** command-center README gained an "Applying migrations — agents can do this directly" section with the exact curl, the `PROJECT_REF` derivation, the `[]`-means-success detail, and an explicit note that the SQL-editor line was stale. The `.claude` memory + brain both carry the capability now.
 
 **The generalizable rule:** a repo doc describing a *limitation* ("must be done by hand", "no access to X") is a claim with an expiry date, and the expensive failure mode is trusting it — it converts silently into unnecessary work for Simon. When a doc says a step needs a human, spend thirty seconds probing whether the credential or endpoint now exists before handing the step over. Absence of the obvious tool (`psql`, a CLI) is not absence of the capability.
+
+---
+
+## 2026-08-06 — A story's DROP COLUMN took every schedule offline for 13 minutes, silently
+
+**What happened:** Story #147 (replacing the script-based schedule guard with a table+filter one) included `alter table public.scheduled_tasks drop column if exists guard_script`. The pipeline applies a story's migrations to the **shared production database during the build stage, before the story merges**. The drop landed; the story then failed at `verifying` on an unrelated classifier refusal and never merged. Meanwhile `main` still carried PR #144's code, whose `lib/db/schedules.ts` `COLS` selects `guard_script`. Result: `GET /api/schedules` returned `500 column scheduled_tasks.guard_script does not exist`, and because `listSchedules()` is what the ticker calls, `tick()` threw on every pass — **no scheduled task fired at all from 03:24:41 to 03:37 UTC**. Discovered only because a routine check of the schedules API during unrelated work returned a 500.
+
+**Root cause (two independent defects):**
+1. **Migrations reach prod before the code that matches them.** A story's DDL is applied at build time against the live database, but its application code only arrives at merge. Any story pairing a destructive migration with the code change that stops using the column leaves a window — and if the story fails, the window never closes. Prod silently diverges from `main`, and `main`'s merged code breaks against it.
+2. **A dead scheduler is silent.** `tick()` wraps everything in `try/catch` and does `console.error("[scheduler] tick failed")`. Nothing pings ntfy, nothing surfaces in the UI, `last_run_status` on every row keeps showing the last *successful* run. Thirteen minutes of total scheduler outage produced zero alerts; only journalctl knew.
+
+**Fix applied:** Re-added the column (`add column if not exists guard_script text`) via the management API — API returned to 200 and the ticker resumed firing within one tick (confirmed: real runs at 03:37:41). Cancelled #147 so its **Retry button couldn't re-drop the column and cause a second outage** — a failed story with a destructive migration is a loaded gun.
+
+**The generalizable rule:** never ship a destructive migration in the same story as the code change that stops using the column. Sequence it in two: first merge the code that no longer references the column, then drop it in a separate follow-up. Because migrations hit production *before* merge, "additive first, destructive strictly later, never together" is a correctness requirement, not tidiness. Corollary: when a story fails after its migration applied, always check whether prod now disagrees with `main` — a failed story is not a no-op.
+
+**Where documented:** This entry. Two proposals for Simon, neither made: (a) the ticker should ntfy on repeated `tick failed` — a scheduler that stops scheduling is the highest-severity failure this box has and it currently alerts on nothing; (b) the migration applier should refuse destructive DDL in a story whose branch still has unmerged code, or apply migrations at merge time rather than build time.
