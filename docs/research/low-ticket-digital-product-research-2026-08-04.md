@@ -69,6 +69,32 @@
 | 9 | The Core Offer Bundle | Operators wanting more than one fix at once | Multiple frustrations at once, not ready for the Audit | Bundle: Business Brief + Follow-Up Machine + 30-min recorded walkthrough, credited toward the Audit if they upgrade | Bundle + video | Mirrors the existing $2.5K→$6.5K credit mechanic — familiar structure | $299 | "The fixed-price version of Working Sessions." | 4 |
 | 10 | The 2AM Test Kit | Operators anxious about AI mistakes reaching clients | Fear of AI sending something wrong to a client | Template + checklist that adds a human-review gate before anything AI-drafted goes external | Claude project + checklist | Direct crossover from the practitioner-lane thesis ("state beats intelligence") translated to operator language, zero tool jargon | $147 | "One checkpoint between the draft and your client's inbox." | 3 |
 
+## Re-rank after pushback (2026-08-04) — "top 3 were pretty underwhelming"
+
+Fair call, and there's a real reason: my first "top 3" optimized for on-brand + cheap-to-build, not for the thing Simon actually said he wants ($97–299 "fuck you money" band, ready for anything). That produced a miss — **The 10% Fix ($147)** isn't a digital product at all. It requires Simon to personally record a review per buyer. That's disguised hourly work at a *worse* rate than the $125/hr Sessions rung it's supposed to sit below. It should never have been a top pick.
+
+**The scalability test that should have driven the ranking**: does a stranger buy this and get value with zero of Simon's per-unit time, or is "digital product" pricing hiding a service? Re-scored against that:
+
+| # | Idea | Scalable (0 marginal Simon-time)? |
+|---|---|---|
+| 1 | One Document Business Brief | Yes — worksheet + template only |
+| 2 | The 10% Fix | **No** — personalized review per buyer, disguised hourly |
+| 3 | Groundhog Day Starter Kit | Yes — asset only |
+| 4 | Proposal & Invoice Autopilot | Yes, if walkthrough video is generic/pre-recorded once |
+| 5 | The Follow-Up Machine | Yes, same caveat |
+| 6 | The Receipts Log | Yes — template only |
+| 7 | Self-Score Scorecard | Yes — asset only |
+| 8 | The State-Proof Starter Kit | Yes — asset + checklist |
+| 9 | Core Offer Bundle | Yes, if the walkthrough stays generic (breaks if personalized) |
+| 10 | The 2AM Test Kit | Yes — asset + checklist |
+
+Revised top 3, ranked by scalability + actual differentiation (not just cheapest-to-build):
+1. **The State-Proof Starter Kit ($199)** — the only idea in the set with a real brand moat: it's the direct answer to Dan Harrison's "Claude for Coaches" ($47, 1,300 members, zero reliability framing). Everyone else in this niche sells prompts that quietly break; this one is sold explicitly against that.
+2. **The Follow-Up Machine ($197)** — targets the single highest-frequency named frustration in `operator.md` ("owner-as-bottleneck"), not a generic admin task.
+3. **Groundhog Day Starter Kit ($97)** — the cleanest true passive asset in the set: no delivery labor, no personalization, closest thing to Acuña's "core offer" as literally defined (a packaged $97–300 SKU sold at volume, not a mini-consult).
+
+**The bigger point, unprompted**: no single $97–299 product in this list gets Simon to "fuck you money" on its own — none of these are big swings, they're all narrow single-workflow templates by design (that's what "don't add rungs, package the existing offer" constrains them to). Acuña's own doctrine, already in the research base, says the ceiling here isn't the offer — it's traffic: *"Focus 99% of your time on traffic — you do not have an offer problem."* Yesterday's steal/skip verdict on this exact masterclass explicitly deferred the volume lever ("3x/day: skip/not yet... LinkedIn stays ≤1/day"). If "underwhelming" means these ideas feel small, that's consistent — a bigger swing here isn't a better product idea, it's a decision to unpark the volume/traffic lever the locked strategy is currently holding back. That's Simon's call, not a research finding.
+
 ## COO framing note
 
 Every idea above sits **between** Working Sessions ($125/hr) and the Audit ($2,500) on the existing ladder — none of them is pitched as a parallel, unrelated SKU. That's a deliberate constraint: the Aug 3 Acuña masterclass research (`docs/research/operator-channel-research-2026-08-03.md`) landed on "pick three offers, do not add rungs" as a standing guard, and this research does not override that. Read this doc as answering "what would a packaged, fixed-price version of the existing offer look like, and is there market evidence anyone wants it" — not as a pitch for a fourth/fifth SKU. A decision to actually build and sell one of these is Simon's call, not something this research resolves on its own.
