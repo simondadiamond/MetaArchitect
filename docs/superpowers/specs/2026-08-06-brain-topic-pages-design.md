@@ -287,8 +287,21 @@ One agent pass over the 138 notes, run overnight.
    2026-08-06), and the `operating-strategy-locked-2026-07-19-*` note. The winning version becomes the
    section body; every losing version becomes a dated line in that section's `History` block — retired,
    not deleted, because the audit trail is the thing that failed.
-5. Drop worthless notes (dead links, contentless dupes). Every drop gets a line in
-   `99-archive/dropped.md`: slug, one-line content, reason. Nothing leaves without a receipt.
+5. Drop worthless notes. Every drop gets a line in `99-99-system/dropped.md`: slug, one-line content,
+   reason. Nothing leaves without a receipt.
+
+   **Measured expectation: one to three drops, not dozens.** A scan of all 138 on 2026-08-06 found
+   exactly two notes whose body restates their own title and adds nothing (`my-middle-name-is-mathew`,
+   `simon-s-cv`), and one bare undescribed URL (`places-to-go-with-val-…`). Everything else in the thin
+   tail is a sound fact in the wrong container — a merge, not a drop. The migration agent must treat
+   "this note is short" as evidence of a container problem, never as evidence of worthlessness.
+
+   **Two notes are stalled stubs, and are repairs rather than drops.** `simon-s-cv` (2026-07-28) and
+   `open-residency-ai-agent-playbook-episode-digest` both carry `describe_pending: true` with a PDF
+   attachment present on disk; the describe step never ran. `simon-s-cv`'s body is the single word
+   "cv", so a naive emptiness heuristic would delete the pointer to Simon's actual CV. Run `brain
+   describe` on both during migration and merge the result. **The pipeline bug that left them pending
+   for over a week is out of scope here and needs its own investigation** — flagged, not fixed.
 6. `brain doctor --fix` regenerates INDEX. `brain sync` re-embeds sections and refreshes Supabase.
 7. Run all 15 test files green.
 8. Report: page count, section count, dropped count, unresolved contradictions.
@@ -337,7 +350,7 @@ Simon asked for the sellable inclusions. Recorded here so the follow-on viewer s
 | Risk | Mitigation |
 |---|---|
 | Migration agent merges two topics that should stay apart | Page list reviewed before merge; `brain-v1-final` tag makes any split cheap |
-| Agent drops a note Simon wanted | `dropped.md` manifest + tag; recovery is one `git show` |
+| Agent drops a note Simon wanted | `dropped.md` manifest + tag; recovery is one `git show`. Expected drop count is 1–3, so any larger number is itself a signal the agent misread the merge instruction |
 | Heading rename orphans a `by:` pointer | `doctor` validates every pointer on the weekly pass and reports unresolvable ones |
 | `save` guesses the wrong page to append to | `save` prints the page and section it chose; `--page` / `--new` override; the choice is one commit to revert |
 | Live skills break on the CLI change | CLI signatures frozen; `source find`/`source add` covered by existing tests |
