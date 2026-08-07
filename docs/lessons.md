@@ -976,3 +976,17 @@ open can reproduce this.
 **Where documented:** This entry; goal `5a19c6db` (deploy-lands-late notification gap)
 carries a one-liner; follow-up story queued to auto-reload once on chunk-load failure
 so this stops surfacing as a scary error page.
+
+---
+
+## 2026-08-07 — Two "locked" notes held contradictory offer pricing; both stale, neither retired
+
+**What happened:** While auditing the brain vault for the v2 design, two notes were found whose own titles say **locked** and which state different offer-ladder pricing — both superseded by the v4 offer spec, and both still returned by `brain find` as authoritative. A `find` for the ladder could surface a dead price with full confidence, and nothing on either note signalled that a newer decision existed.
+
+**Root cause:** `brain save` had no supersede operation. A revised decision became a *new file beside the old one* — the store could only append. Rule 4 of `brain/CLAUDE.md` ("one fact per note") institutionalized the pattern: every revision is a new note, and retirement is a convention someone must remember, not an operation the system performs.
+
+**Fix applied:** Brain v2 topic pages — one section per topic instead of one file per fact; `brain save --supersedes <anchor>` retires the loser into a dated History block atomically; retired content emits no INDEX row and is reachable only via `find --history`, labelled. The vault migration resolves every existing contradiction against the current arbiter docs (offer-v4-spec, audit-runbook, operating-strategy-locked).
+
+**The generalizable rule:** *a knowledge store that can only append will state two contradictory things with equal confidence; retirement must be an operation, not a convention.* If updating a fact requires the writer to remember to hunt down and mark every prior statement of it, the store's correctness decays at exactly the rate its most important facts change.
+
+**Where documented:** This entry; spec at `docs/superpowers/specs/2026-08-06-brain-topic-pages-design.md` (Anti-recurrence section); brain repo `CLAUDE.md` rule 4 rewritten as part of the v2 merge.
