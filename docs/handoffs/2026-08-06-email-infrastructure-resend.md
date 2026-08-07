@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-06
 **For:** a fresh agent session picking up implementation
-**Status:** scoped, specced, planned, prerequisites partly done. **No code written yet.**
+**Status:** Tasks 1–10 BUILT AND MERGED (PR #103, simonparis-website `master`). **Task 11 — cutover — is not done.** Automations are enabled but the path has never been exercised end to end. Updated 2026-08-07.
 
 Read this document first. It exists so you do not need the original scoping conversation.
 
@@ -145,7 +145,32 @@ KEY=$(curl -s -X POST "https://api.supabase.com/v1/projects/ashwrqkoijzvakdmfskj
 
 **Verified 2026-08-06 — topic subscription defaults.** `default_subscription` **cannot be changed after creation**, so it was tested empirically rather than inferred: a topic created with `opt_out`, then a contact created with no topics specified, reads back `subscription: "opt_out"`. So **`opt_out` = new contacts start UNSUBSCRIBED**. Both topics were created `opt_out` deliberately: the subscribe path opts people in explicitly per source (`topicsForSource`), which means a bug in topic assignment fails *silently-safe* (nobody gets email, noticed immediately in testing) rather than *silently-unsafe* (everyone gets everything). That is also the CASL-aligned posture.
 
-**Tasks 1–11.** Tasks 1 and 2 (Supabase migration, contact-payload module) need no Resend credentials and can start immediately.
+### Tasks 1–10: DONE (verified 2026-08-07)
+
+Merged as **PR #103** ("Email infrastructure: MailerLite → Resend (Tasks 1–10)") into simonparis-website **`master`** — note that repo's default branch is `master`, not `main`. Squash-merged, so `email/resend-infrastructure` branch commits are not ancestors of master; the content is.
+
+Verified present on `master`: `lib/email/{types,normalize,contacts,resend,subscribe,store,webhook,pillars}.ts` with tests, `emails/{_layout,score-welcome-1,score-welcome-2}.tsx`, `emails/automations.json`, `app/api/email/webhook/route.ts`, `scripts/email-sync.mjs`, `supabase/migrations/0007_email_infrastructure.sql`. MailerLite appears nowhere in `app/`, `lib/`, `components/`, `messages/`, `scripts/`. Dead `app/api/subscribe/route.ts` deleted.
+
+Verified in Supabase: `email_subscribers`, `email_consent_log`, `email_events` all exist; `leads.email` added.
+
+Verified in Resend: 4 templates (`score-welcome-{1,2}-{en,fr}`), 2 automations **both `enabled`**, webhook registered and `enabled` on `https://simonparis.ca/api/email/webhook`.
+
+The implementing session also went beyond the plan, correctly: it added `lib/email/pillars.ts`, fixed the footer address to Quebec City (not Lévis), added contact-property personalization, and caught a real bug the plan would have shipped — **`POST /events` only *defines* an event; firing one needs `/events/send`**.
+
+### Task 11 (cutover): NOT DONE — this is the remaining work
+
+Current state is *armed but unproven*: both automations are enabled, so a real `/score` signup runs a path that has never once been exercised. If `RESEND_API_KEY` never made it into Vercel, that signup fails silently.
+
+| # | Item | Evidence it's outstanding (2026-08-07) |
+|---|---|---|
+| 1 | **Live end-to-end test** | `email_subscribers`, `email_consent_log`, `email_events` all have **0 rows**; Resend audience has **0 contacts** |
+| 2 | **Confirm `RESEND_API_KEY` is in Vercel** | Never verified. Item 1 proves it either way. |
+| 3 | **Retire MailerLite** | Its API still returns **200** — account live, key still valid. That key leaked into a transcript 2026-08-04, so **revoke** it, don't just abandon it. |
+| 4 | **Clean root DNS** | Root SPF is still `v=spf1 include:zohomail.com a mx include:_spf.mlsend.com ~all`; stale `mailerlite-domain-verification=…` and `brevo-code:…` TXT records still present. **Keep `include:zohomail.com`** — that's Simon's daily mail — and send a Zoho test after editing. Plan Task 11 Steps 4–6. |
+| 5 | **Close goals** | `af0cc0d6`, `f176b2be`, `7bcf50d5` all still `pending`. First two look genuinely complete; `7bcf50d5`'s decision was "Supabase `email_subscribers` is the list of record, `leads` stays the CRM." **Propose, don't self-write** — status changes Simon didn't ask for are propose-only. |
+| 6 | Delete Resend cruft | An `Untitled Automation` (disabled) is sitting in the account |
+
+**Still blocking item 1:** the story-pipeline verify-stage fix (§6). 35 of MailerLite's 43 contacts were verify-stage fixtures; with automations now enabled, a verify run could both pollute the list and send real email.
 
 **Load these skills at the right moments:** `resend-cli` before any `resend` command; `react-email` before writing templates; `email-best-practices` before the footer, consent, or webhook logic. They may shrink the risk section — they cover compliance, deliverability, and list-management ground the spec treats as open.
 
