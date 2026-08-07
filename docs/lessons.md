@@ -990,3 +990,87 @@ so this stops surfacing as a scary error page.
 **The generalizable rule:** *a knowledge store that can only append will state two contradictory things with equal confidence; retirement must be an operation, not a convention.* If updating a fact requires the writer to remember to hunt down and mark every prior statement of it, the store's correctness decays at exactly the rate its most important facts change.
 
 **Where documented:** This entry; spec at `docs/superpowers/specs/2026-08-06-brain-topic-pages-design.md` (Anti-recurrence section); brain repo `CLAUDE.md` rule 4 rewritten as part of the v2 merge.
+
+---
+
+## 2026-07-02 — `public.ideas` check-constraint fix applied live via Supabase console, never captured in a migration
+
+**What happened:** A session hit `new row for relation "ideas" violates check constraint "ideas_type_check"` and hotfixed it by running `ALTER TABLE public.ideas DROP/ADD CONSTRAINT ideas_type_check CHECK (type = ANY (ARRAY['conversation','artifact','capture']))` directly against Supabase — no migration file. `lib/db/ideas.ts` and `app/api/ideas/route.ts` still write `type='capture'` today, and a repo grep finds no `CREATE TABLE`/`ALTER` for `public.ideas` or `ideas_type_check` anywhere under `projects/*/supabase/migrations`.
+
+**Root cause:** Live hotfixes applied via the Supabase console/Management API don't automatically become tracked migrations — nothing forces the follow-up write.
+
+**Fix applied:** Documented here. **Open follow-up:** add an idempotent migration file (`DROP CONSTRAINT IF EXISTS` / `ADD CONSTRAINT`) capturing the live `ideas_type_check` shape to `command-center/supabase/migrations/` — a schema reset or fresh env would otherwise silently reintroduce the capture-save failure. Not yet written (needs a command-center worktree).
+
+**Where documented:** This entry.
+
+---
+
+## 2026-07-03 — command-center push rejected: story-worker had already merged to `origin/main` from its own worktree
+
+**What happened:** Pushing a local commit (per-stage-model-config) to command-center was rejected because the story-worker had merged PR #3 to `origin/main` from its own worktree while the local checkout was behind.
+
+**Root cause:** The story-worker merges autonomously and directly to `origin/main`; any local checkout can drift behind without warning between a `git status` check and the push.
+
+**Fix applied:** `git fetch && git rebase` (or pull) before every push to command-center — already captured in Claude auto-memory (`feedback_command_center_git_pull_before_push.md`). Added the same one-line rule to this repo's root `CLAUDE.md` Git & Deployment section so it's visible without relying on auto-memory alone.
+
+**Where documented:** This entry; root `CLAUDE.md` Git & Deployment section; auto-memory `feedback_command_center_git_pull_before_push.md`.
+
+---
+
+## 2026-07-04 — n8n API key + bearer token committed in plaintext to public GitHub history
+
+**What happened:** Commits `eacaac4`/`d856c50` on the public `github.com/simondadiamond/MetaArchitect` repo had a plaintext n8n API key and supergateway bearer token in `.mcp.json` (root and Content-Engine copies). The working tree was redacted to a placeholder and committed (`6c93780`, 2026-07-04), but git history still has the plaintext secret.
+
+**Root cause:** `.mcp.json` was never gitignored or templated as `.example`, so real values landed in commits before anyone caught it.
+
+**Fix applied:** Working-tree redaction shipped 2026-07-04. **Still open, Simon's call:** confirm/rotate the n8n token (n8n binds `localhost:5678` per CLAUDE.md, so exposure risk was assessed as low, but rotation was never confirmed done) and decide whether to scrub git history (`git filter-repo` — destructive, needs explicit go-ahead before anyone runs it).
+
+**Where documented:** This entry.
+
+---
+
+## 2026-07-07 — `brain find` declined mid-session; agent answered an infra question from general knowledge instead of grepping `notes/`
+
+**What happened:** A probe asked for the fix to a Postiz login-loop issue. The recorded fix is the `cookiefix.conf` PSL-suffix cookie shim (a specific, non-obvious workaround), but when the `brain find` tool call was declined, the agent fell back to generic `FRONTEND_URL`/env advice from world knowledge instead of grepping `~/projects/brain/notes/` directly — contradicting the actual recorded fix.
+
+**Root cause:** The global CLAUDE.md Second Brain section mandates `brain find` before manual grepping, but has no fallback instruction for when the tool call itself is declined or unavailable — the agent had no sanctioned next step and defaulted to guessing.
+
+**Fix applied:** Added one line to `~/.claude/CLAUDE.md` Second Brain section: if `brain find` is declined or unavailable, grep `~/projects/brain/notes/` directly before answering — never answer a Simon-specific infra question from general knowledge alone.
+
+**Where documented:** This entry; `~/.claude/CLAUDE.md` Second Brain section.
+
+---
+
+## 2026-07-10 — Null ledger timestamps in one sweep run blocked every `mark-session-closed.sh` write, not just the null ones
+
+**What happened:** The 2026-07-24 session sweep found 7 timestamp-less stub transcripts (metadata-only, no real turns). The ledger-write script validates that *every* entry in the batch has a `lastLineTimestamp` before writing anything — so those 7 null entries silently blocked all 25 writes in that run, including 18 legitimately-timestamped ones.
+
+**Root cause:** Batch validation failed atomically without naming which entry was null, so one class of expected input (untimestamped stubs) took down an unrelated batch instead of being handled as its own case.
+
+**Fix applied:** That run repaired by hand (7 null entries set to file-mtime fallback; 25/25 then wrote clean). `session-sweep.md` §1 updated: timestamp-less stub transcripts get file-mtime fallback automatically instead of blocking the batch, and a validation failure now names the offending entry.
+
+**Where documented:** This entry; `.claude/skills/session-close/references/session-sweep.md` §1.
+
+---
+
+## 2026-07-10 — Brain-proposal approve gate blocked the string `--file` but not the CLI's `--file=/path` form
+
+**What happened:** PR #50 review caught that the brain-proposal approve gate checked `argv.includes('--file')` to block dangerous flags, but `brain`'s own `args.mjs` also parses `--key=value` syntax — so `--file=/etc/passwd` would have passed the gate untouched.
+
+**Root cause:** The gate was written against one spelling of the dangerous flag instead of modeling the CLI's actual argument grammar (bare `--flag value` and `--flag=value` are both valid).
+
+**Fix applied:** Root cause already fixed in `lib/brain/cli.ts` (`743336e`) before this lesson was logged. **Open follow-up, not yet done:** grep sibling `execFile`-based approval gates (story-worker, night-build) for the same blacklist-one-spelling shape — if any exist, they carry the identical bypass.
+
+**Where documented:** This entry; `lib/brain/cli.ts`.
+
+---
+
+## 2026-07-08 — Duplicate LinkedIn post nearly went out twice; caught manually 10 minutes before the second fire
+
+**What happened:** Simon caught it himself: "The same post already went out yesterday." A second copy of a post already published 2026-07-07 was queued to fire again 2026-07-08, ~10 minutes out — cancelled via `postiz.mjs cancel 62004168`.
+
+**Root cause:** Not fully traced. Existing lessons entries cover a near-miss and a false-alarm double-booking class, but neither documents an actual duplicate reaching the "about to publish twice" state — unclear whether this is residue of a previously-recorded double-booking bug or a new path.
+
+**Fix applied:** Documented here as its own entry rather than folded into an unrelated one, since the mechanism is still unconfirmed. **Open follow-up:** trace how the second copy got queued before merging this into an existing entry.
+
+**Where documented:** This entry.

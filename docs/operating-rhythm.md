@@ -1,5 +1,13 @@
 # Operating Rhythm — The $8k Motion
 
+> **STALE (flagged 2026-08-07):** written 2026-07-06, predates the 2026-07-19/20 crawl-first
+> roadmap surgery that promoted `/setup` to a top-level initiative and parked the corporate
+> outreach ladder. The cadence below (80/20 split, teardown/outreach alternating weeks) no
+> longer matches current strategy — see the locked crawl-first plan (`brain find "operating
+> strategy crawl-first"`) before following this as a weekly checklist. Left in place rather
+> than archived since the weekly-mechanics table (commenting cadence, publish days) may still
+> be partly current — needs Simon's pass to update or formally retire.
+
 > Set 2026-07-06 (COO audit, plan: dazzling-purring-tarjan). Budget: ~7h/week.
 > Headline metric: **ICP conversations started ≥ 2/week** (leads table), not engagement rate.
 > Split: 80% of hours on the $8k motion, 20% on moat bets (FR/Loi 25, interior case studies). Reassess monthly in /weekly-review.
