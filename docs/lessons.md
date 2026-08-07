@@ -936,3 +936,21 @@ The 2026-07-29 "fabricated" price wasn't hallucinated at draft time — `funnel/
 **The generalizable rule:** when a blog/content goal's pending-ness is in question, query the live `blog_posts` table (`pillar`, `status`, `published_at`) rather than trusting the goals table's `status` field — publishing has no goal-closing hook. Do this reconciliation check before proposing new blog pillar work (e.g. before seeding the pipeline queue), or you'll plan a post that already shipped under a different title/format.
 
 **Where documented:** This entry; auto-memory `project_blog_pillar_status.md`. Proposal for Simon, not made: wire blog-insert (or the teardown publish step) to look up a matching pending goal by pillar and auto-close it, so this can't silently drift again.
+
+---
+
+## 2026-08-07 — `brain sync` from a worktree wiped all 137 rows of the live `brain_entries` table
+
+**What happened:** During brain v2 (Task 12), an agent ran `brain sync` with no `BRAIN_ROOT` set, intending only to smoke-test that existing commands still dispatched after registering a new one. Three conditions combined. The worktree's `.env` is a real symlink to the primary checkout's, so it carried live production Supabase credentials. The worktree's `notes/` was still flat (138 files directly under `notes/`) while the new `allNoteFiles()` only reads inside Johnny.Decimal area folders, so `scan()` returned **zero** valid notes. And `sync`'s prune stage deletes remote rows with no local counterpart — with zero local notes, that matched every row. All 137 rows of `brain_entries` were deleted from production.
+
+**Recovery:** Local `notes/` and `INDEX.md` were untouched and git-clean, and notes are the declared source of truth, so the rows were re-derived from the `.md` files via the existing `parseNote`/`buildRow`/`upsertEntries` path and restored. Independently verified afterwards: 138 rows present, 31 source notes, **0 rows carrying embeddings**. Semantic `find` is lexical-only until a full `brain sync` re-embeds post-migration.
+
+**Root cause (two defects, either of which alone would have prevented it):**
+1. **A destructive remote operation with no floor.** `scan()` returning zero valid notes overwhelmingly means something is wrong locally — a bad `BRAIN_ROOT`, a half-migrated tree, a path bug — not that the user deleted all 138 of their notes. `sync` treated both readings identically, and only one of them is recoverable from the remote side.
+2. **The hazard was communicated as one command instead of one class.** Every task brief in this project carried an explicit warning that `doctor --fix` must never run against the worktree's real `notes/`, because an empty scan would regenerate INDEX.md as empty. That reasoning applies verbatim to `sync`, whose blast radius is strictly worse — off-repo and not restorable by `git checkout`. The warning named a member of the class, not the class, so an agent obeying it precisely still walked into the other member.
+
+**Fix applied:** `sync` refuses to mass-prune when the local scan yields zero valid notes — a validate-stage failure before any remote call, with an explicit escape-hatch flag for a genuinely intended mass deletion. Tests cover the refusal, the escape hatch, and a regression guard proving an ordinary prune of a genuinely-removed note still works.
+
+**The generalizable rule:** when a local scan feeding a destructive remote operation comes back empty, treat empty as *suspicious input*, never as *authoritative intent*. Any command that deletes remote state needs a floor below which it refuses and asks, and the floor belongs in the command rather than in the discipline of whoever invokes it. Corollary for briefing agents: when warning about a hazard, name the **class** of dangerous operation and the property that makes it dangerous ("commands that write from a scan of `notes/`, because this vault scans empty"), not one example command — an agent that obeys a specific prohibition exactly will still find the sibling you didn't list.
+
+**Where documented:** This entry. Follow-up required, not yet done: re-run `brain sync` after the area migration lands to restore embeddings.
