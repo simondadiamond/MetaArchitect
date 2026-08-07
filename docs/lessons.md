@@ -909,27 +909,6 @@ The 2026-07-29 "fabricated" price wasn't hallucinated at draft time — `funnel/
 
 ---
 
-## 2026-08-07 — Command Center threw "client-side exception" on /pipeline mid-session
-
-**What happened:** Story #149 (Playbook sidebar section) auto-merged and deploy-sync
-redeployed Command Center at 18:04:38 UTC while Simon had a tab open. Next.js swapped in
-new build asset hashes on restart; the already-open tab held references to the old
-chunks and threw a client-side exception on its next soft-navigation. Server-side was
-never broken — `/pipeline` and `/playbook` both returned clean 200s and the build log
-showed zero errors; only the live browser tab was stale.
-
-**Fix:** hard refresh. No code defect, no rollback needed.
-
-**Root cause:** the app has no recovery path for a stale-chunk error after a hot
-redeploy — a known Next.js failure class (`ChunkLoadError` / ambient client exception),
-not specific to this story. Any auto-merged story that lands while Simon has the app
-open can reproduce this.
-
-**Where documented:** This entry; goal `5a19c6db` (deploy-lands-late notification gap)
-carries a one-liner; follow-up story queued to auto-reload once on chunk-load failure
-so this stops surfacing as a scary error page.
----
-
 ## 2026-08-06 — A story's DROP COLUMN took every schedule offline for 13 minutes, silently
 
 **What happened:** Story #147 (replacing the script-based schedule guard with a table+filter one) included `alter table public.scheduled_tasks drop column if exists guard_script`. The pipeline applies a story's migrations to the **shared production database during the build stage, before the story merges**. The drop landed; the story then failed at `verifying` on an unrelated classifier refusal and never merged. Meanwhile `main` still carried PR #144's code, whose `lib/db/schedules.ts` `COLS` selects `guard_script`. Result: `GET /api/schedules` returned `500 column scheduled_tasks.guard_script does not exist`, and because `listSchedules()` is what the ticker calls, `tick()` threw on every pass — **no scheduled task fired at all from 03:24:41 to 03:37 UTC**. Discovered only because a routine check of the schedules API during unrelated work returned a 500.
@@ -975,6 +954,28 @@ so this stops surfacing as a scary error page.
 **The generalizable rule:** when a local scan feeding a destructive remote operation comes back empty, treat empty as *suspicious input*, never as *authoritative intent*. Any command that deletes remote state needs a floor below which it refuses and asks, and the floor belongs in the command rather than in the discipline of whoever invokes it. Corollary for briefing agents: when warning about a hazard, name the **class** of dangerous operation and the property that makes it dangerous ("commands that write from a scan of `notes/`, because this vault scans empty"), not one example command — an agent that obeys a specific prohibition exactly will still find the sibling you didn't list.
 
 **Where documented:** This entry. Follow-up required, not yet done: re-run `brain sync` after the area migration lands to restore embeddings.
+
+---
+
+## 2026-08-07 — Command Center threw "client-side exception" on /pipeline mid-session
+
+**What happened:** Story #149 (Playbook sidebar section) auto-merged and deploy-sync
+redeployed Command Center at 18:04:38 UTC while Simon had a tab open. Next.js swapped in
+new build asset hashes on restart; the already-open tab held references to the old
+chunks and threw a client-side exception on its next soft-navigation. Server-side was
+never broken — `/pipeline` and `/playbook` both returned clean 200s and the build log
+showed zero errors; only the live browser tab was stale.
+
+**Fix:** hard refresh. No code defect, no rollback needed.
+
+**Root cause:** the app has no recovery path for a stale-chunk error after a hot
+redeploy — a known Next.js failure class (`ChunkLoadError` / ambient client exception),
+not specific to this story. Any auto-merged story that lands while Simon has the app
+open can reproduce this.
+
+**Where documented:** This entry; goal `5a19c6db` (deploy-lands-late notification gap)
+carries a one-liner; follow-up story queued to auto-reload once on chunk-load failure
+so this stops surfacing as a scary error page.
 
 ---
 
