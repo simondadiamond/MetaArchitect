@@ -2,11 +2,17 @@
 /**
  * session-digest.mjs — reduce a Claude Code transcript (.jsonl) to a harvestable digest.
  *
- * Usage: node scripts/session-digest.mjs <transcript.jsonl> [--max-bytes N]
+ * Usage: node scripts/session-digest.mjs <transcript.jsonl> [--max-bytes N] [--tail-bytes N]
  *
  * Emits markdown on stdout: user/assistant text turns, every Bash command run,
  * every file written or edited. Tool RESULTS are never included (they dominate
  * transcript size and contain nothing the harvest lanes need).
+ *
+ * --tail-bytes reserves that many bytes (out of --max-bytes) for the END of a long
+ * transcript instead of dropping it: the digest forward-truncates by default, so a
+ * 2.8MB session digested only its first ~15% and the close-out/outcome (usually near
+ * the end) never reached the harvester (2026-08-06). 0 (default) keeps the old
+ * forward-truncate-only behavior for callers that don't opt in.
  *
  * Shared by two callers (one mechanism, per the 2026-07-10 unified-close spec):
  *   - session-close skill (interactive /end) — default 150KB cap
@@ -21,9 +27,11 @@ import { createInterface } from 'readline';
 
 const args = process.argv.slice(2);
 let maxBytes = 150_000;
+let tailBytes = 0;
 let file = null;
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--max-bytes') maxBytes = parseInt(args[++i], 10);
+  else if (args[i] === '--tail-bytes') tailBytes = parseInt(args[++i], 10);
   else file = args[i];
 }
 if (!file || !existsSync(file)) {
@@ -34,24 +42,22 @@ if (!Number.isFinite(maxBytes) || maxBytes < 1000) {
   console.error('❌ session-digest failed at input — --max-bytes must be a number ≥ 1000');
   process.exit(1);
 }
+if (!Number.isFinite(tailBytes) || tailBytes < 0 || tailBytes >= maxBytes) {
+  console.error('❌ session-digest failed at input — --tail-bytes must be a number ≥ 0 and < --max-bytes');
+  process.exit(1);
+}
 
 const PER_TURN = 2000; // chars per text turn — long pastes get elided, shape survives
 
 const trunc = (s, n = PER_TURN) =>
   s.length <= n ? s : s.slice(0, n) + ` …[+${s.length - n} chars]`;
 
+// Every line is collected unconditionally — head/tail slicing happens once, after the
+// full digest is known, so a --tail-bytes reservation can pull from the true end of the
+// transcript rather than whatever happened to still fit during a forward scan.
 const out = [];
-let written = 0;
-let truncated = false;
 function emit(line) {
-  if (truncated) return;
-  if (written + line.length > maxBytes) {
-    out.push(`\n…[digest truncated at ${maxBytes} bytes — transcript continues]`);
-    truncated = true;
-    return;
-  }
   out.push(line);
-  written += line.length + 1;
 }
 
 const rl = createInterface({ input: createReadStream(file, 'utf8'), crlfDelay: Infinity });
@@ -102,6 +108,20 @@ if (turns === 0) {
   process.exit(1);
 }
 
+let body = out.join('\n');
+let truncated = false;
+if (body.length > maxBytes) {
+  if (tailBytes > 0) {
+    const headBudget = maxBytes - tailBytes;
+    const head = body.slice(0, headBudget);
+    const tail = body.slice(body.length - tailBytes);
+    body = `${head}\n\n…[digest truncated — ${body.length - maxBytes} chars omitted from the middle — showing head + tail]…\n\n${tail}`;
+  } else {
+    body = `${body.slice(0, maxBytes)}\n…[digest truncated at ${maxBytes} bytes — transcript continues]`;
+  }
+  truncated = true;
+}
+
 console.log(`# Session digest — ${file.split('/').pop()}`);
 console.log(`Activity: ${firstTs ?? '?'} → ${lastTs ?? '?'} | ${turns} text turns${truncated ? ' | TRUNCATED' : ''}`);
-console.log(out.join('\n'));
+console.log(body);
