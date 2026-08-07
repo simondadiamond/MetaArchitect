@@ -892,3 +892,25 @@ The 2026-07-29 "fabricated" price wasn't hallucinated at draft time — `funnel/
 **Fix applied:** command-center README gained an "Applying migrations — agents can do this directly" section with the exact curl, the `PROJECT_REF` derivation, the `[]`-means-success detail, and an explicit note that the SQL-editor line was stale. The `.claude` memory + brain both carry the capability now.
 
 **The generalizable rule:** a repo doc describing a *limitation* ("must be done by hand", "no access to X") is a claim with an expiry date, and the expensive failure mode is trusting it — it converts silently into unnecessary work for Simon. When a doc says a step needs a human, spend thirty seconds probing whether the credential or endpoint now exists before handing the step over. Absence of the obvious tool (`psql`, a CLI) is not absence of the capability.
+
+---
+
+## 2026-08-07 — Command Center threw "client-side exception" on /pipeline mid-session
+
+**What happened:** Story #149 (Playbook sidebar section) auto-merged and deploy-sync
+redeployed Command Center at 18:04:38 UTC while Simon had a tab open. Next.js swapped in
+new build asset hashes on restart; the already-open tab held references to the old
+chunks and threw a client-side exception on its next soft-navigation. Server-side was
+never broken — `/pipeline` and `/playbook` both returned clean 200s and the build log
+showed zero errors; only the live browser tab was stale.
+
+**Fix:** hard refresh. No code defect, no rollback needed.
+
+**Root cause:** the app has no recovery path for a stale-chunk error after a hot
+redeploy — a known Next.js failure class (`ChunkLoadError` / ambient client exception),
+not specific to this story. Any auto-merged story that lands while Simon has the app
+open can reproduce this.
+
+**Where documented:** This entry; goal `5a19c6db` (deploy-lands-late notification gap)
+carries a one-liner; follow-up story queued to auto-reload once on chunk-load failure
+so this stops surfacing as a scary error page.
