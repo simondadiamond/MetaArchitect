@@ -872,6 +872,20 @@ The 2026-07-29 "fabricated" price wasn't hallucinated at draft time — `funnel/
 
 ---
 
+## 2026-08-06 — An in-flight story cannot actually be stopped; "pause the pipeline first" does not work
+
+**What happened:** Story #146 was queued, then superseded by a simpler design ~2 minutes later while still in `planning`. `POST /api/stories/<id>/cancel` returned `"story is being processed by the worker — wait for the stage to finish or pause the pipeline first"`. Following that instruction, `pipeline_settings.paused` was set true. The story nonetheless advanced planning → building → testing → verify → pr_open → **merged**, ignoring the pause the whole way. A retry loop hammering cancel every 15s for 15 minutes never once caught an unlocked window. The unwanted design merged as PR #144.
+
+**Root cause:** Two independent gaps. (1) `cancelStory` refuses whenever `stories.locked_by` is non-null, and the worker holds that lock continuously *across* stage transitions — so the "wait for the stage to finish" window the error message promises effectively never opens for a story already in flight. (2) `paused` is only consulted when the worker claims *new* work; a story already claimed runs to completion, including the auto-merge. The error message therefore names two remedies, neither of which can stop an in-flight story.
+
+**Fix applied:** None to the pipeline — the merged story was inert (`guard_script` was never set on any schedule, so no live behavior changed) and a replacement story (#147) was queued to swap the mechanism. Pipeline `paused` was restored to false.
+
+**The generalizable rule:** Treat queueing a story as **irreversible the moment the worker claims it**. There is no working abort. Get the design right before `POST /api/stories`, because "I'll cancel it if we change our minds" is not a real option — and never assume a documented remedy works just because an error message recommends it.
+
+**Where documented:** This entry. Proposals for Simon, neither made: (a) have the worker check `paused` between stages, not only at claim time, so pausing actually parks in-flight work; (b) add a `cancel_requested` flag the worker honors at its next stage boundary, giving cancel a path that doesn't depend on catching an unlocked instant. Until one exists, the queue-story skill's advice to resolve open decisions *before* queueing is load-bearing, not stylistic.
+
+---
+
 ## 2026-08-05 — A doc-summarising tool's confident wrong answer became a load-bearing architecture decision
 
 **What happened:** Scoping the MailerLite→Resend email migration, a WebFetch against `resend.com/docs/llms.txt` returned *"Key Finding: Automation sequences cannot be created or updated via API—only through the dashboard interface."* That claim was taken as verified and became the spec's central architectural premise: §2 concluded Resend Automations were unusable and designed a custom sequence engine around the limitation (Supabase `email_sequence_*` tables, `pg_cron` tick, `/api/email/tick`, self-hosted unsubscribe + preference pages). Simon pushed back with the API reference URL. A direct probe found `automations/{create,update,get,list}` and `templates/{create,update,get,list,publish,duplicate,delete}` all returning 200 — full CRUD at every layer, plus a documented React Email→Resend upload path. The spec was rewritten; roughly half the designed machinery was deleted as unnecessary.
@@ -914,3 +928,50 @@ open can reproduce this.
 **Where documented:** This entry; goal `5a19c6db` (deploy-lands-late notification gap)
 carries a one-liner; follow-up story queued to auto-reload once on chunk-load failure
 so this stops surfacing as a scary error page.
+---
+
+## 2026-08-06 — A story's DROP COLUMN took every schedule offline for 13 minutes, silently
+
+**What happened:** Story #147 (replacing the script-based schedule guard with a table+filter one) included `alter table public.scheduled_tasks drop column if exists guard_script`. The pipeline applies a story's migrations to the **shared production database during the build stage, before the story merges**. The drop landed; the story then failed at `verifying` on an unrelated classifier refusal and never merged. Meanwhile `main` still carried PR #144's code, whose `lib/db/schedules.ts` `COLS` selects `guard_script`. Result: `GET /api/schedules` returned `500 column scheduled_tasks.guard_script does not exist`, and because `listSchedules()` is what the ticker calls, `tick()` threw on every pass — **no scheduled task fired at all from 03:24:41 to 03:37 UTC**. Discovered only because a routine check of the schedules API during unrelated work returned a 500.
+
+**Root cause (two independent defects):**
+1. **Migrations reach prod before the code that matches them.** A story's DDL is applied at build time against the live database, but its application code only arrives at merge. Any story pairing a destructive migration with the code change that stops using the column leaves a window — and if the story fails, the window never closes. Prod silently diverges from `main`, and `main`'s merged code breaks against it.
+2. **A dead scheduler is silent.** `tick()` wraps everything in `try/catch` and does `console.error("[scheduler] tick failed")`. Nothing pings ntfy, nothing surfaces in the UI, `last_run_status` on every row keeps showing the last *successful* run. Thirteen minutes of total scheduler outage produced zero alerts; only journalctl knew.
+
+**Fix applied:** Re-added the column (`add column if not exists guard_script text`) via the management API — API returned to 200 and the ticker resumed firing within one tick (confirmed: real runs at 03:37:41). Cancelled #147 so its **Retry button couldn't re-drop the column and cause a second outage** — a failed story with a destructive migration is a loaded gun.
+
+**The generalizable rule:** never ship a destructive migration in the same story as the code change that stops using the column. Sequence it in two: first merge the code that no longer references the column, then drop it in a separate follow-up. Because migrations hit production *before* merge, "additive first, destructive strictly later, never together" is a correctness requirement, not tidiness. Corollary: when a story fails after its migration applied, always check whether prod now disagrees with `main` — a failed story is not a no-op.
+
+**Where documented:** This entry. Two proposals for Simon, neither made: (a) the ticker should ntfy on repeated `tick failed` — a scheduler that stops scheduling is the highest-severity failure this box has and it currently alerts on nothing; (b) the migration applier should refuse destructive DDL in a story whose branch still has unmerged code, or apply migrations at merge time rather than build time.
+
+---
+
+## 2026-08-07 — "First 3 blog posts" goals sat pending for months after the posts had actually published
+
+**What happened:** The goals table's "First 3 blog posts in 3 weeks" feature listed all three child tasks (Post 1 STATE, Post 2 Failure Taxonomy, Post 3 Defensive Architecture) as `pending`. A live audit against the `blog_posts` table showed 4 posts actually published: `ai-told-the-truth-that-was-the-problem` (pillar `failure_taxonomy`, 2026-05-08 — predates the goal itself, created 2026-05-17), `ramp-financial-automation-agent` and `morgan-stanley-ai-assistant-state-teardown` (both pillar `state_applied`, teardown format). Only Defensive Architecture had genuinely nothing published. Separately, "Spec /blog-draft command" was still `pending` with a blocker note ("deferred until blog_posts Supabase table exists") — the table has existed with 4 live rows for months; the functional need was met anyway by the blog-draft skill inside the pipeline-dispatch architecture, just never linked back.
+
+**Root cause:** Nothing writes back from a publish event to the goal that predicted it. Teardowns and pipeline-published posts land in `blog_posts` with zero touch on the `goals` table, so a goal only closes if someone remembers to close it by hand. Two goals also predated or were satisfied through different mechanisms than the ones described in their own spec text (a teardown, not a narrative essay; a skill, not a slash command), so a literal string match against the spec wouldn't have caught the closure either — it took reading actual pillar/status columns and reasoning about intent.
+
+**Fix applied:** Reconciled by hand: Post 1 and Post 2 marked `done` with the satisfying slug cited in the description; blog-draft spec marked `done` noting the skill that superseded it; `Blog foundation` marked `done` (its only remaining child resolved); parent "First 3 blog posts" left `in_progress` with description rewritten to say only Defensive Architecture remains. No pipeline code changed.
+
+**The generalizable rule:** when a blog/content goal's pending-ness is in question, query the live `blog_posts` table (`pillar`, `status`, `published_at`) rather than trusting the goals table's `status` field — publishing has no goal-closing hook. Do this reconciliation check before proposing new blog pillar work (e.g. before seeding the pipeline queue), or you'll plan a post that already shipped under a different title/format.
+
+**Where documented:** This entry; auto-memory `project_blog_pillar_status.md`. Proposal for Simon, not made: wire blog-insert (or the teardown publish step) to look up a matching pending goal by pillar and auto-close it, so this can't silently drift again.
+
+---
+
+## 2026-08-07 — `brain sync` from a worktree wiped all 137 rows of the live `brain_entries` table
+
+**What happened:** During brain v2 (Task 12), an agent ran `brain sync` with no `BRAIN_ROOT` set, intending only to smoke-test that existing commands still dispatched after registering a new one. Three conditions combined. The worktree's `.env` is a real symlink to the primary checkout's, so it carried live production Supabase credentials. The worktree's `notes/` was still flat (138 files directly under `notes/`) while the new `allNoteFiles()` only reads inside Johnny.Decimal area folders, so `scan()` returned **zero** valid notes. And `sync`'s prune stage deletes remote rows with no local counterpart — with zero local notes, that matched every row. All 137 rows of `brain_entries` were deleted from production.
+
+**Recovery:** Local `notes/` and `INDEX.md` were untouched and git-clean, and notes are the declared source of truth, so the rows were re-derived from the `.md` files via the existing `parseNote`/`buildRow`/`upsertEntries` path and restored. Independently verified afterwards: 138 rows present, 31 source notes, **0 rows carrying embeddings**. Semantic `find` is lexical-only until a full `brain sync` re-embeds post-migration.
+
+**Root cause (two defects, either of which alone would have prevented it):**
+1. **A destructive remote operation with no floor.** `scan()` returning zero valid notes overwhelmingly means something is wrong locally — a bad `BRAIN_ROOT`, a half-migrated tree, a path bug — not that the user deleted all 138 of their notes. `sync` treated both readings identically, and only one of them is recoverable from the remote side.
+2. **The hazard was communicated as one command instead of one class.** Every task brief in this project carried an explicit warning that `doctor --fix` must never run against the worktree's real `notes/`, because an empty scan would regenerate INDEX.md as empty. That reasoning applies verbatim to `sync`, whose blast radius is strictly worse — off-repo and not restorable by `git checkout`. The warning named a member of the class, not the class, so an agent obeying it precisely still walked into the other member.
+
+**Fix applied:** `sync` refuses to mass-prune when the local scan yields zero valid notes — a validate-stage failure before any remote call, with an explicit escape-hatch flag for a genuinely intended mass deletion. Tests cover the refusal, the escape hatch, and a regression guard proving an ordinary prune of a genuinely-removed note still works.
+
+**The generalizable rule:** when a local scan feeding a destructive remote operation comes back empty, treat empty as *suspicious input*, never as *authoritative intent*. Any command that deletes remote state needs a floor below which it refuses and asks, and the floor belongs in the command rather than in the discipline of whoever invokes it. Corollary for briefing agents: when warning about a hazard, name the **class** of dangerous operation and the property that makes it dangerous ("commands that write from a scan of `notes/`, because this vault scans empty"), not one example command — an agent that obeys a specific prohibition exactly will still find the sibling you didn't list.
+
+**Where documented:** This entry. Follow-up required, not yet done: re-run `brain sync` after the area migration lands to restore embeddings.
