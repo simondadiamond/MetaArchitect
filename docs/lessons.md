@@ -975,3 +975,17 @@ so this stops surfacing as a scary error page.
 **The generalizable rule:** when a local scan feeding a destructive remote operation comes back empty, treat empty as *suspicious input*, never as *authoritative intent*. Any command that deletes remote state needs a floor below which it refuses and asks, and the floor belongs in the command rather than in the discipline of whoever invokes it. Corollary for briefing agents: when warning about a hazard, name the **class** of dangerous operation and the property that makes it dangerous ("commands that write from a scan of `notes/`, because this vault scans empty"), not one example command — an agent that obeys a specific prohibition exactly will still find the sibling you didn't list.
 
 **Where documented:** This entry. Follow-up required, not yet done: re-run `brain sync` after the area migration lands to restore embeddings.
+
+---
+
+## 2026-08-07 — Two "locked" notes held contradictory offer pricing; both stale, neither retired
+
+**What happened:** While auditing the brain vault for the v2 design, two notes were found whose own titles say **locked** and which state different offer-ladder pricing — both superseded by the v4 offer spec, and both still returned by `brain find` as authoritative. A `find` for the ladder could surface a dead price with full confidence, and nothing on either note signalled that a newer decision existed.
+
+**Root cause:** `brain save` had no supersede operation. A revised decision became a *new file beside the old one* — the store could only append. Rule 4 of `brain/CLAUDE.md` ("one fact per note") institutionalized the pattern: every revision is a new note, and retirement is a convention someone must remember, not an operation the system performs.
+
+**Fix applied:** Brain v2 topic pages — one section per topic instead of one file per fact; `brain save --supersedes <anchor>` retires the loser into a dated History block atomically; retired content emits no INDEX row and is reachable only via `find --history`, labelled. The vault migration resolves every existing contradiction against the current arbiter docs (offer-v4-spec, audit-runbook, operating-strategy-locked).
+
+**The generalizable rule:** *a knowledge store that can only append will state two contradictory things with equal confidence; retirement must be an operation, not a convention.* If updating a fact requires the writer to remember to hunt down and mark every prior statement of it, the store's correctness decays at exactly the rate its most important facts change.
+
+**Where documented:** This entry; spec at `docs/superpowers/specs/2026-08-06-brain-topic-pages-design.md` (Anti-recurrence section); brain repo `CLAUDE.md` rule 4 rewritten as part of the v2 merge.
