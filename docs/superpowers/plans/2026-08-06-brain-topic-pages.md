@@ -1206,7 +1206,25 @@ Expected: FAIL — module missing.
 
 `tools/infra/migrate-areas.mjs`: read every `notes/*.md`, parse frontmatter, compute the destination (`type: source` → `SOURCES_AREA`, else `areaFor(fm.domain)`), `mkdirSync` the areas, and `git mv` each file. Dry-run prints `from → to` and exits 0 without touching disk. After `--apply`, run `doctor --fix` and print the diff in INDEX row count.
 
-- [ ] **Step 4: Run it for real, gated**
+- [ ] **Step 4: Quiesce the concurrent writers — REQUIRED before any migration**
+
+`~/projects/brain` has two scheduled writers of its own. Both must be disabled for the duration of Tasks 10 and 11, and re-enabled after. A sweep firing mid-migration writes a v1-shaped flat note into a half-migrated vault, and `tools/lib/lock.mjs` guards a single save, not a multi-hour rewrite.
+
+| Schedule | Cron | What it writes |
+|---|---|---|
+| Session sweep (daily) | `30 6 * * *` | evidence notes via `brain save --status evidence`, `.reconciler/*.json` |
+| Brain reconciler (weekly) | `0 6 * * 0` | runs `brain doctor --fix`, appends proposals |
+
+```bash
+# list, capture the two ids, then disable each
+curl -s http://100.105.85.5:3737/api/schedules | python3 -m json.tool | grep -B4 -iE '"name": "(Session sweep|Brain reconciler)'
+curl -s -X PATCH http://100.105.85.5:3737/api/schedules/<id> \
+  -H 'content-type: application/json' -d '{"enabled": false}'
+```
+
+Record both ids in the migration commit message. **Re-enabling them is the last step of Task 11** — a permanently disabled sweep silently stops harvesting.
+
+- [ ] **Step 5: Run it for real, gated**
 
 ```bash
 cd ~/projects/brain
@@ -1220,13 +1238,15 @@ node bench/run.mjs
 
 Expected: `doctor` clean. Bench back to **15/18** — the three ladder questions still fail, because nothing has merged the contradictory notes yet. That is correct at this stage; Task 11 is what fixes them.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add -A
 git commit -m "migrate: move all notes into Johnny.Decimal area folders
 
-Mechanical only — no content changed. git mv preserves history."
+Mechanical only — no content changed. git mv preserves history.
+Session sweep and Brain reconciler schedules disabled for the migration
+window — ids in the Task 11 commit."
 ```
 
 ---
@@ -1285,7 +1305,16 @@ node bench/run.mjs
 
 Expected: **18/18 on the `cli` lane.** The three ladder questions from Task 1 must now pass, which means `find` returns the v4 pricing and no longer surfaces `$3,500`. Anything less than 18/18 blocks the merge. Compare against `bench/baseline-v1.json` and confirm no previously-passing question regressed.
 
-- [ ] **Step 5: Simon reviews, then commit**
+- [ ] **Step 5: Re-enable the schedules**
+
+```bash
+curl -s -X PATCH http://100.105.85.5:3737/api/schedules/<id> \
+  -H 'content-type: application/json' -d '{"enabled": true}'
+```
+
+Verify both read `"enabled": true` before moving on. A sweep left off harvests nothing and nothing surfaces that it is off.
+
+- [ ] **Step 6: Simon reviews, then commit**
 
 Print the page list and `dropped.md` for Simon. **Do not merge without his sign-off on the drops.** Then:
 
