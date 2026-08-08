@@ -1129,3 +1129,45 @@ full prior history after a hard chat-daemon kill and restart.
 
 **Where documented:** This entry. No SOP/skill currently owns "how to browser-test an
 app with a persistent WebSocket" — worth a `run` skill addendum if this pattern recurs.
+
+---
+
+## 2026-08-08 — deploy-sync silently grinding on a broken build for 25+ minutes after PR #150 merged; every Command Center page erroring
+
+**What happened:** Simon reported every page in Command Center erroring, "reload fixes
+it but still" (i.e. recurring on navigation). `deploy-sync.service` had been failing
+every ~3-minute retry since the PR #150 merge, always the same `npm run build` crash
+(a webpack `BatchedHash` error deep in minified internals). Because the script runs
+under `set -e`, the crash happened *before* `systemctl restart command-center.service`
+ever ran — so the live Next.js process, started ~17 hours earlier, kept serving its old
+build unrestarted the whole time, while the on-disk checkout and `node_modules` had
+already moved to the new commit (`git pull`/`npm install` both completed fine before
+the build step). The symptom pattern — reload sometimes works, other pages still break
+— fits a stale-vs-new asset mismatch, not a clean single-version failure.
+
+**Root cause:** `.next/cache` in the primary checkout was a month old (last written
+2026-07-30). PR #150 was a large diff for this repo — 38 commits, a new dependency
+(`@anthropic-ai/claude-agent-sdk`), dozens of new files — and webpack's persistent
+cache doesn't reliably survive a module-graph change that size; confirmed by reproducing
+the exact same commit in an isolated fresh worktree with `npm ci` (no stale cache) and
+getting a clean build. `deploy-sync.sh` had no cache-invalidation safeguard and no
+failure notification, so a corrupted cache became a silent, indefinite retry loop
+instead of a one-time, self-correcting failure or a page to Simon.
+
+**Fix applied:** Manually cleared `.next/cache` (508MB, month-stale) and re-ran
+`deploy-sync.sh` by hand to confirm recovery (clean build, restart, `.deployed-sha`
+updated, `/`, `/chat`, `/roadmap`, `/pipeline` all smoke-tested 200) — Command Center
+was back up within minutes of the report. Root-cause fix in `deploy/deploy-sync.sh`
+(PR #151, merged): on a build failure, clear `.next/cache` and retry once before
+giving up for real, so this specific failure class self-heals on the next timer tick
+instead of requiring someone to notice broken pages and intervene by hand. A genuine
+code error still fails loudly (`set -e` still aborts after the retry).
+
+**Open follow-up, not yet done:** deploy-sync still has no failure *notification* —
+even with the self-heal, a build that fails for a real reason (not a stale cache) still
+silently retries forever with nobody paged. This is the same gap goal `5a19c6db`
+(deploy-lands-late notification) already tracks; worth folding this incident's evidence
+into that goal rather than opening a new one.
+
+**Where documented:** This entry; `deploy/deploy-sync.sh` (PR #151); goal `5a19c6db`
+is the open follow-up for the still-missing failure notification.
