@@ -990,3 +990,23 @@ so this stops surfacing as a scary error page.
 **The generalizable rule:** *a knowledge store that can only append will state two contradictory things with equal confidence; retirement must be an operation, not a convention.* If updating a fact requires the writer to remember to hunt down and mark every prior statement of it, the store's correctness decays at exactly the rate its most important facts change.
 
 **Where documented:** This entry; spec at `docs/superpowers/specs/2026-08-06-brain-topic-pages-design.md` (Anti-recurrence section); brain repo `CLAUDE.md` rule 4 rewritten as part of the v2 merge.
+
+---
+
+## 2026-08-08 — Three protocol variants shipped with no producer; each silently killed an acceptance criterion
+
+**What happened:** The ADE chat-surface plan defined a `ChatServerEvent` discriminated union up front as the wire contract between the chat daemon and the browser. Three of its variants were declared in the type, handled by the client reducer, and **emitted by nothing**:
+
+- `delta` — caught at Task 5. Would have meant no token-by-token streaming (acceptance criterion 2). The implementer had filed it as the next task's problem; it wasn't — the daemon is the only place with access to raw SDK messages, so nothing downstream could have produced it.
+- `busy` — caught at Task 9, only because the controller swept all nine variants after the first instance. The Composer never swapped Send for Stop, making acceptance criterion 9 unreachable.
+- `inventory` — caught at Task 13, by live-browser testing. The mode selector and slash palette never rendered on a session's first use.
+
+**Root cause:** a discriminated-union member that nobody emits type-checks perfectly and passes every test. `tsc` is satisfied because the type is well-formed; unit tests are satisfied because they construct the event themselves and assert the reducer handles it. Nothing in the toolchain asks the one question that matters — *does anything ever send this?* Per-task reviews couldn't catch it either, because the producer and the consumer live in different tasks and each review sees one diff.
+
+**Fix applied:** `lib/chat/__tests__/protocol-coverage.test.ts` in command-center parses the `t:` literals out of `protocol.ts` itself and generates a producer test and a consumer test per variant, so a newly added variant is covered automatically with no list to maintain. Verified enforcing, not theatre: 30 tests = 14 variants × 2 + 2 self-checks.
+
+**The generalizable rule:** *when a plan defines a wire protocol up front, every variant needs a producer-coverage check before the protocol task is called done.* Type safety proves a message is well-formed, never that it is sent. The check is a grep and it catches a class of gap that unit tests structurally cannot — and the gap presents as a feature that is fully built, fully tested, and completely dead.
+
+**Second-order lesson, same build:** twelve tasks each passed their own review in isolation; the first time anything exercised them together (Task 13's live-browser pass) it immediately found two regressions that all prior inspection had missed. Subagent-driven development concentrates bugs at the seams between tasks. Budget an integration task with real-browser verification, and do not let "verify in a real browser, not by inspection" be satisfied by a passing unit test.
+
+**Where documented:** This entry; `lib/chat/__tests__/protocol-coverage.test.ts` (command-center, PR #150); SDD ledger at `.superpowers/sdd/2026-08-07-ade-chat-surface/progress.md` in that branch's worktree.
