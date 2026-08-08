@@ -1165,9 +1165,11 @@ code error still fails loudly (`set -e` still aborts after the retry).
 
 **Open follow-up, not yet done:** deploy-sync still has no failure *notification* —
 even with the self-heal, a build that fails for a real reason (not a stale cache) still
-silently retries forever with nobody paged. This is the same gap goal `5a19c6db`
-(deploy-lands-late notification) already tracks; worth folding this incident's evidence
-into that goal rather than opening a new one.
+silently retries forever with nobody paged. Checked goal `5a19c6db` first (it sounded
+like the same gap) — it's already `done` and was actually about story-worker's own
+success-notification wording ("say merged, not passed"), not deploy-sync failure
+alerting, so it's the wrong goal to fold this into. Filed a new one instead: goal
+`87e0e4e5` ("deploy-sync build failures have no notification path").
 
-**Where documented:** This entry; `deploy/deploy-sync.sh` (PR #151); goal `5a19c6db`
+**Where documented:** This entry; `deploy/deploy-sync.sh` (PR #151); goal `87e0e4e5`
 is the open follow-up for the still-missing failure notification.
