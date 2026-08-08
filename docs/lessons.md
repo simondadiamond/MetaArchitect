@@ -1074,3 +1074,58 @@ so this stops surfacing as a scary error page.
 **Fix applied:** Documented here as its own entry rather than folded into an unrelated one, since the mechanism is still unconfirmed. **Open follow-up:** trace how the second copy got queued before merging this into an existing entry.
 
 **Where documented:** This entry.
+
+---
+
+## 2026-08-08 — real-browser verification scripts hung/false-passed four separate ways before a working attempt
+
+**What happened:** Verifying the ADE chat surface's two reconnect fixes (PR #150 residual
+round) required driving a real headless-Chromium session against a locally-run
+chat-daemon/Next pair while restarting those processes mid-test. Four scripted attempts:
+
+1. A `nohup ... & disown` chat-daemon restart issued from *inside* a Node script (via
+   `execSync`, itself launched via the Bash tool's `run_in_background`) died silently —
+   the backgrounded grandchild shared a process group with the tracked command, and
+   whatever cleans up that group on completion took the "detached" daemon with it. No
+   error surfaced; the daemon was just gone next time a request hit it.
+2. `page.goto(url, { waitUntil: 'networkidle' })` against a page holding an open
+   WebSocket never resolves — an active WS counts as network activity, so "idle" is
+   never reached. Combined with piping the script's output through `| tail -150`
+   (which buffers everything until the process exits, so nothing streams while it
+   runs), this produced a script that looked hung with zero visibility for **30
+   minutes** before being killed by pid.
+3. Two separate false "PASS" results from assertions that matched the test's own
+   prompt text instead of the model's reply: first `text=READY` matched the still-
+   visible unsent prompt (the send had actually failed — see next point); then
+   `text=PONGQX7419` was satisfied by the prompt literally spelling out the target
+   string it was asking the model to reverse (and the model's reversal was wrong
+   besides — character-reversal turned out to be an unreliable task to ask an LLM to
+   do reliably). The fix pattern: never let the assertion string appear verbatim
+   anywhere in the outbound prompt — ask for a transform (e.g. "strip these hyphens")
+   whose input string differs from the expected output by construction, so a match can
+   only come from a genuine correct reply.
+4. The WS connection silently failed with `ERR_CONNECTION_REFUSED` for an entire run
+   because the browser navigated to `localhost:4123` while chat-daemon binds only to
+   the Tailscale interface IP — the client derives its WS target from
+   `window.location.hostname`, so the hostname used to load the page must match the
+   daemon's actual bind address, not just be "some way to reach the same box."
+
+**Root cause:** each failure was a distinct, generalizable trap, not one mistake
+repeated: (1) nested background-process spawning inside a tool-tracked script is
+unreliable — `child_process.spawn(cmd, { detached: true, stdio: 'ignore' }).unref()`
+from Node, or a restart issued as the agent's own top-level Bash call rather than
+nested inside a script, both worked reliably; (2) `networkidle` and long-lived
+WebSockets are fundamentally incompatible — use `domcontentloaded` plus an explicit
+`waitForSelector` for the actual content needed; (2b) piping a long-running script
+through `| tail -N` hides all output until exit — redirect straight to a file instead;
+(3) any assertion string for a live-model test must never appear literally in its own
+prompt; (4) a client's WS/API target hostname must match whatever the test harness
+used to load the page, not just be network-reachable from it.
+
+**Fix applied:** none needed in product code — these were all test-harness bugs. The
+eventual script (four fixes deep) produced clean, real proof: a chat pane that stayed
+`CONNECTED` through a genuine 60-second Next outage, and a session that came back with
+full prior history after a hard chat-daemon kill and restart.
+
+**Where documented:** This entry. No SOP/skill currently owns "how to browser-test an
+app with a persistent WebSocket" — worth a `run` skill addendum if this pattern recurs.
