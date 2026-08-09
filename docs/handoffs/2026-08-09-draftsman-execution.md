@@ -7,9 +7,16 @@ supersedes: `2026-08-09-operator-visual-rollout-draftsman.md` (design/context ha
 
 ## Start here
 
-1. Read the plan: `docs/superpowers/plans/2026-08-09-draftsman-rollout.md` — 16 tasks, Sonnet-ready (exact files, line numbers, full CSS/component code, per-page section maps).
-2. Invoke `superpowers:subagent-driven-development` and execute it task-by-task. Simon chose subagent-driven execution explicitly (this session, 2026-08-09).
-3. The spec (`docs/superpowers/specs/2026-08-09-draftsman-rollout-design.md`) is the approved design; the original handoff §"The approved system, concretely" is the visual authority; `docs/research/operator-trust-criteria-independent-2026-08-09.md` is the why.
+1. Read the plan: `docs/superpowers/plans/2026-08-09-draftsman-rollout.md` — Sonnet-ready (exact files, line numbers, full CSS/component code, per-page section maps).
+2. **Tasks 0–2 are DONE** (Fable/CMO session 2026-08-09, merged to main): plugin check all-PASS (49 skills, symlinks good, marketplace current); brand-summary now carries `## Operator Lane — Draftsman System` (the design authority for builder prompts); the copy audit is at `funnel/setup-offer/copy-audit-2026-08-09.md` — apply its CURRENT→REPLACE pairs verbatim. **Start at Task 3** (worktree setup).
+3. Invoke `superpowers:subagent-driven-development` and execute task-by-task. Simon chose subagent-driven execution explicitly (this session, 2026-08-09).
+4. The spec (`docs/superpowers/specs/2026-08-09-draftsman-rollout-design.md`) is the approved design; the original handoff §"The approved system, concretely" is the visual authority; `docs/research/operator-trust-criteria-independent-2026-08-09.md` is the why.
+
+## Late corrections (2026-08-09, Simon-approved — already folded into the plan)
+
+- `/work-with-me` and `/about` are **practitioner pages** (enterprise ladder + STATE identity — see audit doc headline finding). They STAY in the rollout but get the **visual system only** — copy unchanged, no operatorizing, no-mono rule relaxed there. Simon: the whole public face goes Draftsman; practitioner lane stays open underneath until social proof.
+- **Lane-aware nav**: on `/` and `/setup`, the nav "Work With Me" item points to `/setup`; elsewhere it keeps `/work-with-me` (plan Task 7 Step 1b).
+- `StateGrid`/`FailureTrace`/`OfferCards` belong to `LegacyHomePractitioner` only — the original handoff's /setup component list was stale. Don't touch them.
 
 ## Decisions already made — do not re-open
 
