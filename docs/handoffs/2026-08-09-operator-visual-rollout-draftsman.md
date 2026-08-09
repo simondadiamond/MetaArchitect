@@ -1,8 +1,8 @@
 # Handoff — Roll out "The Draftsman" visual direction across simonparis.ca + deepen brand guidelines with marketing-skill strategy
 
-status: queued
-goal_id: 55343aa8-60f8-4c1a-b395-ef2620967cc5
-picked_up_by: nobody yet
+status: planned — now the design authority only; the work queue is `2026-08-09-draftsman-execution.md` (spec + 16-task plan approved by Simon)
+goal_id: 55343aa8-60f8-4c1a-b395-ef2620967cc5 (closed by stories #154/#155; this handoff supersedes — Simon-authorized 2026-08-09)
+picked_up_by: CMO session ade/cmo-5f423e6a (brainstorm/spec/plan); execution → fresh session per execution handoff
 updated: 2026-08-09
 
 ## Mission
