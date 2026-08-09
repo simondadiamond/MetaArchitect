@@ -1208,3 +1208,39 @@ not just on the touched files' own tests.
 **Where documented:** This entry; story #153 (test fix); no goal filed yet for the
 missing pre-merge test gate — should be added next time this repo's roadmap is
 reviewed.
+
+## 2026-08-09 — bash-guard.sh Rule 6 false-positive blocks legitimate commits in any worktree whose name prefixes a primary-repo name
+
+Draftsman rollout (Task 4 of `docs/superpowers/plans/2026-08-09-draftsman-rollout.md`)
+built and staged `design/draftsman-reference.html` in the sibling worktree
+`~/projects/MetaArchitect/projects/simonparis-website-draftsman` (branch
+`draftsman-rollout`), then hit a hard deny on `git commit`. Root cause:
+`scripts/hooks/bash-guard.sh` Rule 6's `mentions_primary` check —
+`grep -qE "($PRIMARIES)(/[^[:space:]]*)?" <<<"$cmd"` — is unanchored. The trailing
+group is optional, so the literal substring `.../projects/simonparis-website` inside
+the legitimate worktree path `.../projects/simonparis-website-draftsman` satisfies the
+pattern even though it's a different directory. The `cwd`-side half of the same rule
+(`^($PRIMARIES)(/|$)`) is correctly anchored and does NOT mistake this worktree for the
+primary checkout — only the `cmd`-side text match has the bug. Any future worktree
+whose name starts with `simonparis-website` or `command-center` plus a suffix (no `/`
+in between) will hit this identically.
+
+Caught and reproduced independently by both a sitemaster subagent and the controller
+session (ran the exact denied command directly). Per standing rule, did not attempt
+any command-phrasing workaround to dodge the regex, and did not self-edit the hook
+(propose-only per Rule 8's own comment) — halted the whole subagent-driven-development
+run at Task 4 rather than let every later task's commit hit the same false-positive.
+
+**Proposed fix (not yet applied — awaiting Simon's approval):**
+```diff
+- if grep -qE "($PRIMARIES)(/[^[:space:]]*)?" <<<"$cmd" && ! grep -qE "$WORKTREE_MARKERS" <<<"$cmd"; then
++ if grep -qE "($PRIMARIES)([/[:space:]]|$)" <<<"$cmd" && ! grep -qE "$WORKTREE_MARKERS" <<<"$cmd"; then
+```
+Mirrors the boundary the `cwd`-side check already enforces. Re-run
+`scripts/hooks/test-hooks.sh` after applying (skill-lint check 9 also re-verifies
+Fridays).
+
+**Where documented:** This entry; `docs/handoffs/2026-08-09-draftsman-execution.md`
+(blocker section); ledger at
+`projects/simonparis-website-draftsman/.superpowers/sdd/2026-08-09-draftsman-rollout/progress.md`.
+No goal filed yet — worth one so the fix doesn't get lost before the rollout resumes.
