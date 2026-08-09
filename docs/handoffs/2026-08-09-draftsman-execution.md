@@ -1,8 +1,19 @@
 # Handoff — Execute the Draftsman rollout (spec + plan approved, build it)
 
-status: RESUMING at Task 4 Step 3 — bash-guard.sh Rule 6 fix approved and merged (PR #102), sitemaster re-dispatched
+status: built — pending Simon's live preview check (PR #106)
 picked_up_by: sitemaster session, 2026-08-09 (CMO delegate)
 updated: 2026-08-09
+
+## Build complete (2026-08-09)
+
+Resumed at Task 4 Step 3 per this doc's prior blocker resolution and ran the full `superpowers:subagent-driven-development` loop through Task 15. All 16 plan tasks complete — see the SDD ledger (now deleted per the skill's Finish step; git history in the `simonparis-website` `draftsman-rollout` branch is the record) and PR #106 for the full task-by-task commit history, review verdicts, and fix rounds.
+
+Two items were deliberately left unresolved as open design-policy questions surfaced by the final whole-branch review, not code defects — both need Simon's call, documented in PR #106's body:
+1. `--color-brass` fails WCAG AA contrast (~4.30:1 on paper, needs 4.5:1) at every size it's actually used — a brand-token decision.
+2. The shared Nav CTA renders orange-filled + monospace on every Draftsman page (outside `.theme-draftsman`'s scope), so the "orange used exactly 2×/page" budget was never counted against the full rendered page — needs a policy decision on whether shared chrome converts too, or the budget rule gets scoped to page-body content only.
+
+PR: https://github.com/simondadiamond/simonparis-website/pull/106
+Vercel preview: https://simonparis-website-git-draftsma-429043-simondadiamonds-projects.vercel.app (SSO-protected — could not curl-verify the paper/dark discriminator directly from this session; awaits Simon's own login-gated check, which is the merge gate anyway)
 supersedes: `2026-08-09-operator-visual-rollout-draftsman.md` (design/context handoff — now the design authority, not the work queue)
 
 ## Blocker (2026-08-09) — RESOLVED, read before resuming
