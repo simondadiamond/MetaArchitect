@@ -1,7 +1,7 @@
 # Handoff — Execute the Draftsman rollout (spec + plan approved, build it)
 
-status: BLOCKED at Task 4 — infra bug in scripts/hooks/bash-guard.sh Rule 6, pending Simon's approval of a one-line regex fix (see docs/lessons.md 2026-08-09 entry)
-picked_up_by: sitemaster session, 2026-08-09 (COO delegate)
+status: RESUMING at Task 4 Step 3 — bash-guard.sh Rule 6 fix approved and merged (PR #102), sitemaster re-dispatched
+picked_up_by: sitemaster session, 2026-08-09 (CMO delegate)
 updated: 2026-08-09
 supersedes: `2026-08-09-operator-visual-rollout-draftsman.md` (design/context handoff — now the design authority, not the work queue)
 
