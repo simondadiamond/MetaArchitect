@@ -208,7 +208,7 @@ Full LinkedIn mechanics: `.claude/skills/repurpose/references/linkedin-playbook.
 | **Practitioner** (reserved) | `brand/visual-practitioner.md` — dark brutalist system | `/score`, `/readiness`, blog + teardowns, `LegacyHomePractitioner` — plus held in reserve for a future enterprise-track engagement |
 
 Shared rules (both lanes, the only visual rules that live here):
-1. Orange (`#E04500`) is the only accent/action color — spent, never sprayed. On marketing/conversion pages this means a hard cap (e.g. exactly two uses per page); on functional UI (buttons, focus rings, active nav) it means consistent, deliberate use for real interactive states, not a literal per-page count — "sprayed" means decorative/gratuitous, not "used wherever an accessible focus state is required."
+1. Orange (`#E04500`) is the only accent/action color — spent, never sprayed, on every surface including internal tools. Read this literally: primary button fill-on-hover/press, plus momentary interactive feedback tied to an actual action in progress (focus rings, drag-over states, keyboard-nav highlight in a list). It is NOT for static coloring — selected/active tabs, active-nav indicators, status words, counts, or labels. Those read as ink (bold/underline for "this is selected") or brass (for labels, counts, markers, link hover). A first pass on Command Center over-read "real interactive states" to include active-nav and selected-tab coloring and made orange the dominant color instead of an accent — corrected 2026-08-09, see the visual-operator.md changelog.
 2. Never blue. Anywhere.
 3. No pill buttons, no glow effects, no colored accent bars on cards (recognized AI-design clichés — tried and rejected 2026-08-09)
 
