@@ -1,7 +1,9 @@
 # Visual Identity — Operator Lane (The Draftsman System)
 
-> Load this file when working on operator surfaces: homepage (`HomeOperator`), `/setup`, and — visuals only — `/work-with-me` and `/about` (their copy stays practitioner-voiced; see the 2026-08-09 scope ruling in `funnel/setup-offer/copy-audit-2026-08-09.md`). Practitioner surfaces use `brand/visual-practitioner.md` instead. Router + shared rules: `brand/brand-summary.md` §Visual Identity.
+> Load this file when working on operator surfaces: homepage (`HomeOperator`), `/setup`, and — visuals only — `/work-with-me` and `/about` (their copy stays practitioner-voiced; see the 2026-08-09 scope ruling in `funnel/setup-offer/copy-audit-2026-08-09.md`); also Command Center (Simon's internal ops app) as of 2026-08-09 — this is now the default lane for any new build with no stated audience, see `brand/brand-summary.md` §Visual Identity. Practitioner surfaces use `brand/visual-practitioner.md` instead. Router + shared rules: `brand/brand-summary.md` §Visual Identity.
 > Audience/ICP/customer language for this lane: `.claude/product-marketing.md` (canonical) + `brand/audiences/operator.md`.
+>
+> **Internal-tool adaptation (Command Center, 2026-08-09):** on dense functional UI, three rules adapt rather than apply literally — (1) no rotation/tilt on cards (reserved for singular marketing elements, not dense grids); (2) IDs/timestamps use Inter `tabular-nums` instead of mono for column alignment — this is what the no-monospace rule is actually solving for; the xterm terminal surface is a functionally-required exception and keeps its mono rendering; (3) status tags use ink/ink-soft text, never brass (brass is restricted to ≥14px labels per the AA rule below, and status tags run smaller).
 
 
 **Why this register.** The operator buyer (solo consultant/coach/fractional exec — see `.claude/product-marketing.md`, canonical for ICP and customer language) hires a *person practicing a craft*, not a tech product: independent trust-criteria research found this buyer responds to a named human and visible craftsmanship over company polish (`docs/research/operator-trust-criteria-independent-2026-08-09.md`). Brutalism reads as engineering credibility only to engineers; for a premium-service buyer it reads as unfinished. The Draftsman direction leans into the brand name literally — a boutique architecture-studio register: drafting paper, ink, brass, physical artifacts. Approved by Simon 2026-08-09 after three rejected directions (token-softening, navy/gold glow, Apple-clone twins).
@@ -63,5 +65,6 @@ Gate-B note: this system re-skins approved scope. The *full* homepage rebuild (n
 
 ## Changelog
 
+- 2026-08-09 (c) — Extended to Command Center (internal ops app) as the default lane for all new builds; internal-tool adaptations documented (no rotation, tabular-nums IDs, ink-only status tags).
 - 2026-08-09 — Execution Polish patch (radius/transition tokens) superseded by the full Draftsman system; design rules split by lane; amber ruled practitioner-only (AA failure on paper). Sources: Draftsman handoff + trust-criteria research.
 - 2026-08-09 — Extracted from brand-summary.md into a lane file so sessions load only the lane they're working on. Content unchanged.

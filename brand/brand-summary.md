@@ -200,19 +200,20 @@ Full LinkedIn mechanics: `.claude/skills/repurpose/references/linkedin-playbook.
 
 ## Visual Identity — Lane-Routed (load one, not both)
 
-Visual identity is split by lane. **Load only the file for the lane you're working on:**
+**Operator/Draftsman is the default lane for any new Meta Architect build — web page or internal tool — unless it's one of the named Practitioner surfaces below.** Practitioner is reserved: it stays live only on the specific pull-audience surfaces it already owns, and is held in reserve for a future enterprise-track engagement (big-company buyer, not the solo-operator ICP). If an agent is asked to build or theme something with no stated audience, default to Operator. (Simon, 2026-08-09.)
 
 | Working on | Load | Surfaces |
 |---|---|---|
-| **Operator** (primary) | `brand/visual-operator.md` — the Draftsman system | homepage (`HomeOperator`), `/setup`; visuals-only on `/work-with-me`, `/about` |
-| **Practitioner** | `brand/visual-practitioner.md` — dark brutalist system | `/score`, `/readiness`, blog + teardowns, `LegacyHomePractitioner` |
+| **Operator** (default) | `brand/visual-operator.md` — the Draftsman system | homepage (`HomeOperator`), `/setup`; visuals-only on `/work-with-me`, `/about`; **Command Center** (internal ops app — full literal port, no rotation/tilt devices, mono replaced by Tag/tabular-nums except the functionally-required terminal surface) |
+| **Practitioner** (reserved) | `brand/visual-practitioner.md` — dark brutalist system | `/score`, `/readiness`, blog + teardowns, `LegacyHomePractitioner` — plus held in reserve for a future enterprise-track engagement |
 
 Shared rules (both lanes, the only visual rules that live here):
-1. Orange (`#E04500`) is the only accent/action color — spent, never sprayed
+1. Orange (`#E04500`) is the only accent/action color — spent, never sprayed. On marketing/conversion pages this means a hard cap (e.g. exactly two uses per page); on functional UI (buttons, focus rings, active nav) it means consistent, deliberate use for real interactive states, not a literal per-page count — "sprayed" means decorative/gratuitous, not "used wherever an accessible focus state is required."
 2. Never blue. Anywhere.
 3. No pill buttons, no glow effects, no colored accent bars on cards (recognized AI-design clichés — tried and rejected 2026-08-09)
 
 ### Changelog
 
+- 2026-08-09 (c) — Operator/Draftsman made the default lane for all new builds (not just simonparis-website customer-facing pages); Command Center added as an Operator surface; Practitioner reframed as reserved rather than a co-equal lane. Orange usage rule clarified for functional UI vs. marketing pages.
 - 2026-08-09 (b) — Visual identity split into lane files (`visual-operator.md`, `visual-practitioner.md`) with this router, so sessions load one lane, not both (Simon's modular-loading rule).
 - 2026-08-09 (a) — Execution Polish patch superseded by the full Draftsman system; design rules split by lane; amber ruled practitioner-only (AA failure on paper). Sources: Draftsman handoff + trust-criteria research.
