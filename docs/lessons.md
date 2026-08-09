@@ -1231,16 +1231,49 @@ any command-phrasing workaround to dodge the regex, and did not self-edit the ho
 (propose-only per Rule 8's own comment) — halted the whole subagent-driven-development
 run at Task 4 rather than let every later task's commit hit the same false-positive.
 
-**Proposed fix (not yet applied — awaiting Simon's approval):**
+**Fix applied and merged (PR #102, 2026-08-09):**
 ```diff
 - if grep -qE "($PRIMARIES)(/[^[:space:]]*)?" <<<"$cmd" && ! grep -qE "$WORKTREE_MARKERS" <<<"$cmd"; then
 + if grep -qE "($PRIMARIES)([/[:space:]]|$)" <<<"$cmd" && ! grep -qE "$WORKTREE_MARKERS" <<<"$cmd"; then
 ```
-Mirrors the boundary the `cwd`-side check already enforces. Re-run
-`scripts/hooks/test-hooks.sh` after applying (skill-lint check 9 also re-verifies
-Fridays).
+Mirrors the boundary the `cwd`-side check already enforces. Verified against the
+false-positive case plus 3 true-positive cases (`-C` into primary, subdir of primary,
+exact primary path) before applying; `scripts/hooks/test-hooks.sh` 69/69 pass after.
+Rollout resumed and completed through Task 15 (PR #106 on simonparis-website).
 
-**Where documented:** This entry; `docs/handoffs/2026-08-09-draftsman-execution.md`
-(blocker section); ledger at
-`projects/simonparis-website-draftsman/.superpowers/sdd/2026-08-09-draftsman-rollout/progress.md`.
-No goal filed yet — worth one so the fix doesn't get lost before the rollout resumes.
+**Where documented:** This entry; `docs/handoffs/2026-08-09-draftsman-execution.md`.
+
+---
+
+## 2026-08-09 — subagent's `SendMessage` reply to its orchestrator silently failed to resolve, stalling a background run for ~20 minutes across two manual interventions
+
+During the same Draftsman rollout, the sitemaster orchestrator dispatched a Task 7
+implementer subagent in the background and ended its own turn to wait for the
+implementer's reply. The implementer finished its work cleanly (nav/footer + a real
+out-of-scope LocaleSwitcher contrast bug it found and fixed) and tried to report back
+via `SendMessage` addressed to `"sitemaster"` — but that name didn't resolve to a
+reachable agent in its environment, so the reply never arrived. The orchestrator had
+no way to know a reply was owed and kept re-entering a "waiting for notification"
+state every turn, each of which the harness reported to the controller session as
+"completed" (no live background children) even though the rollout was nowhere near
+done. The controller had to intervene twice: once to notice the vague non-answers
+weren't a real completion, and once with the implementer's actual result (received
+directly by the controller, not the orchestrator) plus an explicit instruction to stop
+waiting and dispatch remaining implementers synchronously. From Task 8 onward,
+synchronous/foreground dispatch was reliable through Task 15.
+
+**Root cause:** cross-session `SendMessage` addressing by bare agent-type name
+(`"sitemaster"`) is not guaranteed to resolve back to the specific orchestrator
+instance that dispatched the subagent — there is no confirmed-delivery or fallback
+path, so a failed send is silent to the sender and invisible to the receiver.
+
+**Lesson:** when an orchestrating agent dispatches implementer/reviewer subagents as
+part of a `superpowers:subagent-driven-development` run, prefer synchronous (foreground)
+dispatch so the result returns in the same tool call — don't rely on the subagent
+messaging back asynchronously by name. If a controller session notices an agent
+reporting "completed" with a vague "I'll wait" result more than once, that's the
+signal to check ground truth directly (git log, SDD ledger) rather than re-trusting
+the same wait pattern.
+
+**Where documented:** This entry; PR #106 on simonparis-website carries the full
+task-by-task history.
