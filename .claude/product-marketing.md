@@ -1,6 +1,6 @@
 # Product Marketing Context
 
-**Document version:** v1
+**Document version:** v2
 **Last updated:** 2026-08-09
 
 > Foundation doc for the marketing-skills plugin (all 49 skills read this first).
@@ -66,6 +66,7 @@ Single-stakeholder sale. The owner wears every hat:
 - **Flow-back rule** — every client inherits every kit improvement, forever; the workspace gains skills they never paid to build
 - **Training to independence** — owner passes a driving test at handover; recorded walkthroughs of THEIR skills on THEIR data
 - **No new software** — delivered inside Claude's desktop app they already pay for; no code, no terminal, no $97/mo dashboard
+- **You own the account, always** — the Claude subscription and workspace are the owner's from day one; Simon works inside it during sessions and never independently holds the credentials, so there's no handoff moment where he could lock them out
 **Pricing logic (own this sentence):** skills are apps; the setup is the operating system plus a trained driver. Never price or defend per skill.
 
 ## Objections
@@ -74,13 +75,14 @@ Single-stakeholder sale. The owner wears every hat:
 | "Isn't Claude doing this for free now?" | The free tier proves the demand. Ready-made workflows fit a generic business — this is what comes after the toggle disappoints. |
 | "Can't I just DIY this?" | You can — Working Sessions at $125/hr are the honest entry if you want a guide instead of a build. Most owners have already DIY'd their way into the frustrations that brought them here. |
 | "$6,500 is a lot" | At your billable rate, the admin it removes pays it back in weeks. And the audit is $2,500, fully credited — you're never betting $6.5K blind. |
+| "What about my client data / can you lock me out?" | You own the Claude account from day one — I work inside your account, I never independently hold the credentials. Nothing to hand back because I never had exclusive control. |
 **Anti-personas:** AI consultants/coaches ("I help X with AI" — peers, not buyers), engineers/data scientists (DIY crowd), students/open-to-work, "set up my whole team" multi-seat requests (pull-only, pilots a variant), indie creators as flagship targets (they enter via sessions).
 
 ## Switching Dynamics
 **Push:** Groundhog-day re-explaining; generic drafts; evenings lost to admin; guilt about paying for 10%.
 **Pull:** "Sit with me for two hours and leave with a working setup on your machine"; output that sounds like them; a business that runs without them hovering.
 **Habit:** The copy-paste ChatGPT workflow they know; "I'll figure it out someday"; DIY-default psychology.
-**Anxiety:** "Another tool that won't stick"; looking stupid in front of a consultant; client data in AI; being upsold consulting forever. (The audit-credit + fixed scope + no-new-software answers live here.)
+**Anxiety:** "Another tool that won't stick"; looking stupid in front of a consultant; client data in AI; being upsold consulting forever. (The audit-credit + fixed scope + no-new-software + own-the-account-from-day-one answers live here.)
 
 ## Customer Language
 **How they describe the problem (verbatim bank):**
@@ -120,4 +122,5 @@ Single-stakeholder sale. The owner wears every hat:
 
 ## Changelog
 *Newest first. One line per revision: what changed and why.*
+- v2 (2026-08-09) — Added data-handling/account-ownership objection + differentiator (client owns the Claude account from day one, Simon never independently holds credentials) after independent trust-criteria research flagged data privacy as underweighted; policy confirmed live with Simon. Source: `docs/research/operator-trust-criteria-independent-2026-08-09.md`.
 - v1 (2026-08-09) — Initial context, compiled from operator.md, icp.md v1, offer-v4-spec, brand-summary for the marketing-skills plugin install.
