@@ -14,7 +14,7 @@ The brand serves TWO audiences. Every content artifact declares one, and that ch
 | **Practitioner** (LLM Platform/Reliability Lead) | Pull-only | ICP + voice sections below; `brand/audiences/practitioner.md` | Burned practitioner test | `/score` (every ~3rd practitioner post) |
 
 - The ICP, Voice Tests, Content Pillars, and CTA cadence sections BELOW this line describe the **practitioner lane** and stay authoritative for it. For operator-audience work, `brand/audiences/operator.md` overrides them.
-- Shared and audience-neutral: Identity, thesis, prohibitions, post anatomy, STATE framework. Visual identity is lane-split as of 2026-08-09: practitioner keeps the dark brutalist system (Visual Identity section below); operator surfaces use the Draftsman system — see "Operator Lane — Draftsman System".
+- Shared and audience-neutral: Identity, thesis, prohibitions, post anatomy, STATE framework. Visual identity is lane-split as of 2026-08-09 into separate files — see "Visual Identity — Lane-Routed" at the bottom of this doc: operator work loads `brand/visual-operator.md` (Draftsman), practitioner work loads `brand/visual-practitioner.md` (dark brutalist). Load one, not both.
 - `/readiness` is never a public CTA in either lane. Operator content never uses tool language (see operator.md).
 - Default LinkedIn mix ~60% operator / 40% practitioner (pending confirmation; revisit after first founding client).
 
@@ -198,105 +198,21 @@ Full LinkedIn mechanics: `.claude/skills/repurpose/references/linkedin-playbook.
 
 ---
 
-## Visual Identity (Quick Reference)
+## Visual Identity — Lane-Routed (load one, not both)
 
-```css
-:root {
-  --bg-primary:    #0F0F0F;   /* page background */
-  --bg-surface:    #1A1A1A;   /* cards, panels */
-  --bg-elevated:   #1F1F1F;   /* modals, overlays */
-  --border:        #333333;   /* all dividers */
-  --text-primary:  #EAEAEA;   /* body, headings */
-  --text-secondary:#B4B4B4;   /* muted, captions */
-  --text-muted:    #777777;   /* disabled, placeholders */
-  --accent:        #E04500;   /* CTAs, buttons */
-  --accent-hover:  #FF5A1A;   /* hover state */
-  --accent-link:   #C97A1A;   /* links only — never blue */
-  --accent-red:    #F85149;   /* errors only */
-}
-```
+Visual identity is split by lane. **Load only the file for the lane you're working on:**
 
-### Typography
-| Role | Font | Usage |
-|------|------|-------|
-| Serif | Merriweather | Headlines, section headers |
-| Sans | Inter | Body text, UI text |
-| Mono | Roboto Mono | Code, labels, nav, metadata |
+| Working on | Load | Surfaces |
+|---|---|---|
+| **Operator** (primary) | `brand/visual-operator.md` — the Draftsman system | homepage (`HomeOperator`), `/setup`; visuals-only on `/work-with-me`, `/about` |
+| **Practitioner** | `brand/visual-practitioner.md` — dark brutalist system | `/score`, `/readiness`, blog + teardowns, `LegacyHomePractitioner` |
 
-### Non-Negotiable Design Rules
-
-**Both lanes:**
-1. Orange (`#E04500`) is the only accent/action color — and it is spent, never sprayed
+Shared rules (both lanes, the only visual rules that live here):
+1. Orange (`#E04500`) is the only accent/action color — spent, never sprayed
 2. Never blue. Anywhere.
-3. No pill buttons, no glow effects, no colored accent bars on cards (recognized AI-design clichés — all tried and rejected 2026-08-09)
-
-**Practitioner lane** (`/score`, `/readiness`, blog, teardowns, `LegacyHomePractitioner`):
-4. Always dark mode — no light mode, no toggle
-5. Zero border-radius everywhere; no/instant transitions — raw execution IS the credibility signal for this audience
-6. Amber (`#C97A1A`) for links only
-7. Roboto Mono for labels, nav, metadata
-
-**Operator lane** (homepage, `/setup`, `/work-with-me`, `/about`): the Draftsman system below governs — including its own light palette, link treatment, and motion rules.
-
-## Operator Lane — Draftsman System (2026-08-09)
-
-**Why this register.** The operator buyer (solo consultant/coach/fractional exec — see `.claude/product-marketing.md`, canonical for ICP and customer language) hires a *person practicing a craft*, not a tech product: independent trust-criteria research found this buyer responds to a named human and visible craftsmanship over company polish (`docs/research/operator-trust-criteria-independent-2026-08-09.md`). Brutalism reads as engineering credibility only to engineers; for a premium-service buyer it reads as unfinished. The Draftsman direction leans into the brand name literally — a boutique architecture-studio register: drafting paper, ink, brass, physical artifacts. Approved by Simon 2026-08-09 after three rejected directions (token-softening, navy/gold glow, Apple-clone twins).
-
-**Standing law — comprehension beats cleverness.** A clever ownable metaphor is worth less than instant comprehension for a first-time, non-technical visitor. (An animated floor-plan metaphor was dropped mid-session for exactly this.) If a device requires decoding, label it inline or cut it. Never ship a metaphor on instinct alone.
-
-### Palette
-
-| Token | Hex | Role | Usage limit |
-|---|---|---|---|
-| paper | `#F3EEE1` | page background | — |
-| paper-deep | `#EAE3D0` | panels, cards, sheets | — |
-| ink | `#1C1712` | headings, body, buttons at rest, the closing dark panel | — |
-| ink-soft | `#5B5346` | secondary text | body-safe |
-| ink-faint | `#948C7A` | decorative metadata only | never essential text (fails AA on paper) |
-| brass | `#8C6A2F` | eyebrow labels, seal, detail accents | labels ≥14px only (large-text AA) |
-| orange | `#E04500` | exactly two uses per page | button hover/press + one full-bleed dark closing panel |
-
-Text links in Draftsman scope: ink, underlined; hover brass. (Amber fails contrast on paper — it stays practitioner-only.)
-
-### Type
-
-- **Merriweather** (serif) for display/headlines, *italic for the emphasis word* — a confident serif is a differentiator against the sea of grotesk AI/SaaS sites
-- **Inter** for body and UI text
-- **No monospace on operator surfaces.** Mono is a practitioner-audience tell — `label-mono`/`font-mono` must not appear in operator page code
-
-### Component patterns
-
-- **Note card** — a physical index card: paper-deep background, real box-shadow (`0 8px 24px rgba(28,23,18,0.12)`), rotated 1–2° off-axis, torn-tape accent pinning it down. Signature use: the *reset vs. remembers* pair — a chat that starts over ("Hi, I run a coaching business, and—" repeated, greyed) beside a workspace that persists (Voice / Rates / Clients).
-- **Spec-sheet pricing** — the rate card as a lifted physical sheet: ~0.4° tilt, pin-dot top-left, rows as numbered leader-dot lines (`01  Working Session ······ $125/hr`), never ruled table borders or a bordered box grid.
-- **Ink-stamp founding seal** — circular brass stamp graphic ("Founding rate · 3 of 3") marking the flagship tier. A stamp, never a badge or colored border.
-- **Buttons** — rectangular, ink fill, orange on hover, scale-down on press (tactile). No pills.
-- **Personal signature line** — near the final CTA, attributing the work to Simon by name. Person-over-company is a measured trust driver for this buyer; don't drop it as "extra."
-
-### Motion
-
-Interactive states get real 150–300ms ease transitions. `prefers-reduced-motion` is always respected — tilt, press-scale, and fades collapse to none.
-
-### Don't (each of these was tried or identified and rejected, 2026-08-09)
-
-- Pill buttons; bordered card grids ("a table with borders turned on"); glow orbs / cursor spotlights; colored accent bars on rounded cards; three-equal-card layouts
-- Monospace anywhere; dark-mode-by-default on operator surfaces
-- Terminal/console framing devices (practitioner tell)
-- Cliché copy: "Elevate", "Seamless", "Unleash" + all Prohibitions above
-
-### Persuasion placement map
-
-Where each lever lives on an operator page — placement is part of the system:
-
-| Lever | Placement |
-|---|---|
-| Person-over-company | Signature line at final CTA; `/about` carries the strongest personal register |
-| Risk reversal | "$2,500 audit, credited in full" adjacent to every $6,500 mention — never separated from the big number |
-| Anxiety answers | Own-the-account-from-day-one + fixed scope sit next to the price, not in an FAQ graveyard |
-| Honest scarcity | Founding seal — 3 slots, real count, never fake urgency |
-| Comprehension | Every section passes the Busy Owner Test before any cleverness survives |
-
-Gate-B note: this system re-skins approved scope. The *full* homepage rebuild (new sections, proof/case-study treatment) stays gated on the first paying client.
+3. No pill buttons, no glow effects, no colored accent bars on cards (recognized AI-design clichés — tried and rejected 2026-08-09)
 
 ### Changelog
 
-- 2026-08-09 — Execution Polish patch (radius/transition tokens) superseded by the full Draftsman system; design rules split by lane; amber ruled practitioner-only (AA failure on paper). Sources: Draftsman handoff + trust-criteria research.
+- 2026-08-09 (b) — Visual identity split into lane files (`visual-operator.md`, `visual-practitioner.md`) with this router, so sessions load one lane, not both (Simon's modular-loading rule).
+- 2026-08-09 (a) — Execution Polish patch superseded by the full Draftsman system; design rules split by lane; amber ruled practitioner-only (AA failure on paper). Sources: Draftsman handoff + trust-criteria research.
