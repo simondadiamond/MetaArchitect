@@ -52,6 +52,7 @@ Focus: AI reliability engineering content for practitioners.
 ## Repository Notes
 
 - `scripts/` is the promoted toolbox — grep `scripts/INDEX.md` before writing a new script.
+- **marketing-skills plugin** (user-scope, 49 skills by Corey Haines) is installed for strategy, validation, and conversion work. Routing precedence: estate skills own **execution** (repurpose/write-post/editorial/linkedin-publish/queue-story and the pipeline mechanics); marketing-skills own **strategy and validation** (positioning, offers, pricing stress-tests, CRO, customer research, psychology). When both could fire, the estate skill executes and the marketing skill advises. All marketing skills read `.claude/product-marketing.md` first — keep it current (it has a version + changelog); brand prohibitions in `brand/brand-summary.md` still bind every output.
 - **Content pipeline**: run all slash commands from `projects/Content-Engine/` — commands live there, not at repo root. Its `.tmp/` is runtime state, gitignored.
 
 ## Story Pipeline — default route for small code tasks
