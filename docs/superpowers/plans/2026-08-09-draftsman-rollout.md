@@ -289,13 +289,14 @@ export default function InkSeal({ label, count }: { label: string; count: string
 **Interfaces:** Consumes the `body:has(.theme-draftsman)` CSS from Task 5. Produces: `nav.site-nav` / `footer.site-footer` class hooks; inside Draftsman scope both render paper-toned (dark text on paper) without any JS/prop changes.
 
 - [ ] **Step 1:** Add `site-nav` to the root `<nav>` className and `site-footer` to the root `<footer>` className.
+- [ ] **Step 1b: Lane-aware "Work With Me" item (Simon-approved 2026-08-09).** In `Nav.tsx`, the "Work With Me" item must point to `/setup` when the current route is an operator page (`/` and `/setup`), and to `/work-with-me` everywhere else. Use `usePathname` from `@/i18n/navigation` (locale-stripped) and derive: `const isOperatorPage = pathname === "/" || pathname.startsWith("/setup"); const workHref = isOperatorPage ? "/setup" : "/work-with-me";` — label unchanged in both locales.
 - [ ] **Step 2:** Audit both components for hardcoded dark-only utility classes that `body:has()` background overrides can't fix (e.g. `text-text-primary` resolves to near-white — illegible on paper). For each such class, move the color to a CSS rule pair in `globals.css` under the existing pattern: default (dark) value outside, paper value under `body:has(.theme-draftsman)`. Keep the JSX class-name churn minimal — prefer 3–4 semantic hooks (`site-nav-link`, `site-nav-brand`) over rewriting every className string.
 - [ ] **Step 3: Verify both worlds.** `npm run build && npm run start -- -p 3001`; screenshot Nav+Footer on `/score` (dark, unchanged vs master) — no operator page uses the wrapper yet, so also temporarily add `theme-draftsman` to a scratch page or check via DevTools class toggle that the paper variant renders legibly. Commit `git commit -m "feat(draftsman): theme-aware nav/footer via :has() scoping"`.
 
 ### Task 8: `/setup` page rollout
 
 **Files:**
-- Modify: `app/[locale]/setup/page.tsx` (617 lines), `components/SetupHeroWindow.tsx`, `components/StateGrid.tsx`, `components/FailureTrace.tsx`, `components/FAQ.tsx`, `components/SetupSignupForm.tsx`, `messages/en/setup.json`, `messages/fr/setup.json` (+ `stateGrid`, `failureTrace`, `optInForm` namespaces as findings require)
+- Modify: `app/[locale]/setup/page.tsx` (617 lines), `components/SetupHeroWindow.tsx`, `components/FAQ.tsx`, `components/SetupSignupForm.tsx`, `messages/en/setup.json`, `messages/fr/setup.json`. (Verified 2026-08-09: `StateGrid`/`FailureTrace`/`OfferCards` are imported ONLY by `LegacyHomePractitioner.tsx` — the original handoff's component list was stale. Do not touch them.)
 - Read: `design/draftsman-reference.html`, brand-summary §Operator Lane — Draftsman System, `funnel/setup-offer/copy-audit-2026-08-09.md` §/setup
 
 **Interfaces:** Consumes Task 6 primitives (exact signatures above). Produces: the first shipped Draftsman page — subsequent page tasks match its rendered idiom, not just the reference file.
@@ -329,9 +330,11 @@ export default function InkSeal({ label, count }: { label: string; count: string
 
 **Interfaces:** Consumes Task 6 primitives.
 
-- [ ] **Step 1: Wrap and re-skin** (hero:106, diagnostic:125 with guarantee/founding block:164, what-you-keep:208, progression:251). The diagnostic tier presentation is the natural `SpecSheet` + `InkSeal` home (founding rate lives here); progression section: leader-dot rows, not boxes.
-- [ ] **Step 2: Copy fixes** from audit doc, en + fr — this page presents the same ladder as /setup, so cross-check the two pages tell one story (same prices, same rung boundaries, same credit language).
-- [ ] **Step 3: Verify** (Task 8 Step 5 checklist for both locales) and commit `git commit -m "feat(work-with-me): Draftsman rollout + audited copy (en/fr)"`.
+**Scope correction (Simon-approved 2026-08-09):** this page is a PRACTITIONER page (AI Readiness Diagnostic / Production Audit / Team Training / Fractional ladder — see `funnel/setup-offer/copy-audit-2026-08-09.md` headline finding). It gets the Draftsman **visual system only**; its copy stays practitioner-voiced as written — the operator tool-language rules do NOT apply here, and the no-mono rule is relaxed to "mono only where it serves the technical register" (prefer removing it anyway for visual coherence). Simon's rationale: the whole public face goes Draftsman; the practitioner lane stays open underneath until social proof justifies more.
+
+- [ ] **Step 1: Wrap and re-skin** (hero:106, diagnostic:125 with guarantee/founding block:164, what-you-keep:208, progression:251). The diagnostic tier presentation is the natural `SpecSheet` + `InkSeal` home (founding count here is **5 slots** — pass `count="5 of 5"`, don't copy /setup's 3); progression section: leader-dot rows, not boxes.
+- [ ] **Step 2: No copy changes.** The audit found zero fixes for this page (its enterprise framing is correct for its audience). Do not "operatorize" any string.
+- [ ] **Step 3: Verify** (Task 8 Step 5 checklist minus the no-mono grep, both locales) and commit `git commit -m "feat(work-with-me): Draftsman visual system (copy unchanged, practitioner register)"`.
 
 ### Task 11: `/about` rollout
 
@@ -341,9 +344,11 @@ export default function InkSeal({ label, count }: { label: string; count: string
 
 **Interfaces:** Consumes Task 6 primitives.
 
-- [ ] **Step 1: Wrap and re-skin** (hero + photo:72 — replace the "orange corner accent" on the photo (:105) with a paper-frame treatment: the photo as a physical print, slight tilt, shadow, tape; thesis:117; remaining sections to idiom). This is the person-over-company page — the signature register should be strongest here; end with the personal signature line.
-- [ ] **Step 2: Copy fixes** from audit doc, en + fr.
-- [ ] **Step 3: Verify** (standard checklist, both locales) and commit `git commit -m "feat(about): Draftsman rollout + audited copy (en/fr)"`.
+**Scope correction (Simon-approved 2026-08-09):** currently a PRACTITIONER identity page (STATE pillars, LLM copy, CTAs to /score — see audit doc headline finding). Same rule as Task 10: Draftsman **visual system only**, copy unchanged — no operatorizing, no tool-language edits, mono-grep relaxed. An operator-first /about rewrite is a separate, later decision (post-social-proof).
+
+- [ ] **Step 1: Wrap and re-skin** (hero + photo:72 — replace the "orange corner accent" on the photo (:105) with a paper-frame treatment: the photo as a physical print, slight tilt, shadow, tape; thesis:117; remaining sections to idiom). End with the personal signature line — it fits the page's register regardless of lane.
+- [ ] **Step 2: No copy changes** (audit: zero findings under its own lane's rules).
+- [ ] **Step 3: Verify** (standard checklist minus no-mono grep, both locales) and commit `git commit -m "feat(about): Draftsman visual system (copy unchanged, practitioner register)"`.
 
 ### Task 12: Remove superseded `.op-*` layer
 
