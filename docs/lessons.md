@@ -1173,3 +1173,38 @@ alerting, so it's the wrong goal to fold this into. Filed a new one instead: goa
 
 **Where documented:** This entry; `deploy/deploy-sync.sh` (PR #151); goal `87e0e4e5`
 is the open follow-up for the still-missing failure notification.
+
+## 2026-08-09 — command-center `main` test suite red for ~a day after PR #156 shipped a UI change without updating its own tests
+
+PR #156 ("drop redundant Send button for single-select AskUserQuestion cards", commit
+`731323e`, merged 2026-08-08 18:20) removed the standalone Send button for
+single-select AskUserQuestion cards — picking an option now auto-submits directly.
+`components/chat-session/__tests__/AskUserQuestionCard.test.tsx` and
+`PermissionCard.test.tsx` still queried for that Send button and were never updated,
+so 11 tests across the two files failed on every run since. Nobody noticed because
+nothing in the merge or deploy path runs the test suite and pages on failure —
+`deploy-sync` only cares whether `next build` succeeds, not whether `vitest` passes.
+
+Caught here by accident: a full `npx vitest run` during an unrelated branch's
+(`ade-chat-density`) finishing-a-development-branch check surfaced the failures.
+Verified unrelated to that branch by running the same two files against an unmodified
+`main` checkout (identical 11 failures) before proceeding — see
+`feedback_verify_blog_goals_against_live_table`-style discipline: don't assume a
+red suite is your own regression without checking, and don't assume it's *not* yours
+either (Simon pushed back — "are you sure that was a failure?" — before I confirmed
+root cause).
+
+**Fix applied:** Queued command-center story #153 (agent_target `coo`) to rewrite the
+stale tests against the current auto-submit behavior — not to touch the (correct,
+intentional) component code. No root-cause fix in CI/merge tooling yet: this repo has
+no pre-merge test gate, so a UI change can still ship without its tests being green.
+
+**Open follow-up, not yet done:** command-center has no CI step that runs `vitest`
+before a story auto-merges, so this exact failure mode (component behavior changes,
+tests don't, nobody notices until an unrelated session happens to run the full suite)
+can recur. Worth a goal: gate story auto-merge on `npx vitest run` passing repo-wide,
+not just on the touched files' own tests.
+
+**Where documented:** This entry; story #153 (test fix); no goal filed yet for the
+missing pre-merge test gate — should be added next time this repo's roadmap is
+reviewed.
