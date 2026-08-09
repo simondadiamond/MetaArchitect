@@ -56,7 +56,7 @@ if grep -qE "^($PRIMARIES)(/|$)" <<<"$cwd" && ! grep -qE "$WORKTREE_MARKERS" <<<
   in_primary=true
 fi
 mentions_primary=false
-if grep -qE "($PRIMARIES)(/[^[:space:]]*)?" <<<"$cmd" && ! grep -qE "$WORKTREE_MARKERS" <<<"$cmd"; then
+if grep -qE "($PRIMARIES)([/[:space:]]|$)" <<<"$cmd" && ! grep -qE "$WORKTREE_MARKERS" <<<"$cmd"; then
   mentions_primary=true
 fi
 if { $in_primary || $mentions_primary; } \
