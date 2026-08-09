@@ -14,7 +14,7 @@ The brand serves TWO audiences. Every content artifact declares one, and that ch
 | **Practitioner** (LLM Platform/Reliability Lead) | Pull-only | ICP + voice sections below; `brand/audiences/practitioner.md` | Burned practitioner test | `/score` (every ~3rd practitioner post) |
 
 - The ICP, Voice Tests, Content Pillars, and CTA cadence sections BELOW this line describe the **practitioner lane** and stay authoritative for it. For operator-audience work, `brand/audiences/operator.md` overrides them.
-- Shared and audience-neutral: Identity, thesis, prohibitions, post anatomy, STATE framework, visual identity.
+- Shared and audience-neutral: Identity, thesis, prohibitions, post anatomy, STATE framework. Visual identity core (dark mode, color palette, typography) is shared; execution polish (border-radius, transitions) is audience-tuned as of 2026-08-09 — see "Audience Variant — Execution Polish" under Visual Identity below.
 - `/readiness` is never a public CTA in either lane. Operator content never uses tool language (see operator.md).
 - Default LinkedIn mix ~60% operator / 40% practitioner (pending confirmation; revisit after first founding client).
 
@@ -223,8 +223,27 @@ Full LinkedIn mechanics: `.claude/skills/repurpose/references/linkedin-playbook.
 | Sans | Inter | Body text, UI text |
 | Mono | Roboto Mono | Code, labels, nav, metadata |
 
-### Non-Negotiable Design Rules
+### Non-Negotiable Design Rules (both lanes)
 1. Always dark mode — no light mode, no toggle
-2. Zero border-radius everywhere — sharp edges are the signature
-3. Orange (`#E04500`) is the only primary action color
-4. Amber (`#C97A1A`) for links only — never blue
+2. Orange (`#E04500`) is the only primary action color
+3. Amber (`#C97A1A`) for links only — never blue
+4. Structural dividers and section borders — 0px radius, both lanes. Sharp edges stay part of the signature; they just don't apply to every surface anymore (see below).
+
+### Audience Variant — Execution Polish (added 2026-08-09)
+
+Root cause: this section sits directly under the practitioner ICP and was tuned for it — raw/blocky/instant reads as engineering credibility to a burned-SRE audience. It was never re-tested when operator became primary. Evidence: ui-ux-pro-max categorizes brutalism as best-fit for portfolios/artistic/tech-blog audiences, not premium-service trust conversion; "Minimal & Direct" and "Trust & Authority" score as the categorical fits for consulting/premium-service buyers instead. A `cro` skill pass confirmed the mechanism: zero-instant-transitions is a documented UX anti-pattern (ui-ux-pro-max Touch & Interaction, priority 2, CRITICAL) that risks reading as unfinished/broken on a brand whose whole thesis is "systems that don't break." Full trail: independent research at `docs/research/operator-trust-criteria-independent-2026-08-09.md`, plus in-session ui-ux-pro-max/frontend-design/cro passes the same day.
+
+**Practitioner lane** — unchanged, keeps the original brutalist execution:
+- Zero border-radius everywhere
+- No/instant transitions
+
+**Operator lane** (primary — homepage, `/setup` funnel, other operator-facing pages) — softened execution, same palette:
+```css
+--radius-card: 6px;              /* cards/panels only — never structural dividers */
+--transition-standard: 200ms ease; /* all interactive states: hover, focus, link, button */
+```
+- Cards/panels get a small 4–8px radius; structural dividers/section borders stay sharp (0px) per the shared rule above
+- All interactive state changes get a real 150–300ms ease transition — no more instant/none
+- Color palette, dark mode, typography: unchanged — this is execution polish only, not a new brand
+
+Pre-Gate-B flag: this unlocks execution now on the existing homepage (small, revertible, ~1-5 files) — it is NOT the "full homepage rebuild" gated behind Gate B (first paying client), which is a larger scope (new sections, new proof/case-study treatment) still waiting on real client signal.
