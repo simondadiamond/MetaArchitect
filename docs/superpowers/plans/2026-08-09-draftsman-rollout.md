@@ -45,7 +45,7 @@
 - Modify: `brand/brand-summary.md` (MetaArchitect worktree) — the `### Non-Negotiable Design Rules (both lanes)` and `### Audience Variant — Execution Polish (added 2026-08-09)` blocks (currently ~lines 223–249) and the "Shared and audience-neutral" bullet near the top
 - Read first: `docs/handoffs/2026-08-09-operator-visual-rollout-draftsman.md` (§"The approved system, concretely"), `docs/research/operator-trust-criteria-independent-2026-08-09.md`, `.claude/product-marketing.md`
 
-**Interfaces:** Produces: the **"Operator Lane — Draftsman System"** section that Tasks 4–11 treat as the design authority. Section anchor text must be exactly `## Operator Lane — Draftsman System` so builder prompts can cite it.
+**Interfaces:** Produces: the operator visual system doc — since split (2026-08-09, Simon's modular-loading rule) to **`brand/visual-operator.md`**, with `brand/visual-practitioner.md` as the dark-lane counterpart and brand-summary §"Visual Identity — Lane-Routed" as the router. Tasks 4–11 cite `brand/visual-operator.md` as the design authority.
 
 - [ ] **Step 1: Replace the Execution Polish patch.** Delete the `### Audience Variant — Execution Polish` section and the `--radius-card`/`--transition-standard` css block inside it. In its place write `## Operator Lane — Draftsman System (2026-08-09)` containing, in order:
   1. *Why this register* — 3–4 sentences: operator buyer trusts a person and a craft studio, not a tech product (cite the research doc path); brutalism validated only for the practitioner lane; comprehension-over-cleverness rule (floor-plan metaphor rejection) stated as a standing law: **a first-time non-technical visitor must decode nothing**.
@@ -297,7 +297,7 @@ export default function InkSeal({ label, count }: { label: string; count: string
 
 **Files:**
 - Modify: `app/[locale]/setup/page.tsx` (617 lines), `components/SetupHeroWindow.tsx`, `components/FAQ.tsx`, `components/SetupSignupForm.tsx`, `messages/en/setup.json`, `messages/fr/setup.json`. (Verified 2026-08-09: `StateGrid`/`FailureTrace`/`OfferCards` are imported ONLY by `LegacyHomePractitioner.tsx` — the original handoff's component list was stale. Do not touch them.)
-- Read: `design/draftsman-reference.html`, brand-summary §Operator Lane — Draftsman System, `funnel/setup-offer/copy-audit-2026-08-09.md` §/setup
+- Read: `design/draftsman-reference.html`, `brand/visual-operator.md`, `funnel/setup-offer/copy-audit-2026-08-09.md` §/setup
 
 **Interfaces:** Consumes Task 6 primitives (exact signatures above). Produces: the first shipped Draftsman page — subsequent page tasks match its rendered idiom, not just the reference file.
 
