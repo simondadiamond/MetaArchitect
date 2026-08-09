@@ -1,39 +1,36 @@
 # Handoff — Execute the Draftsman rollout (spec + plan approved, build it)
 
-status: BLOCKED at Task 4 — infra bug in scripts/hooks/bash-guard.sh Rule 6, pending Simon's approval of a one-line regex fix (see docs/lessons.md 2026-08-09 entry)
-picked_up_by: sitemaster session, 2026-08-09 (COO delegate)
+status: RESUMING at Task 4 Step 3 — bash-guard.sh Rule 6 fix approved and merged (PR #102), sitemaster re-dispatched
+picked_up_by: sitemaster session, 2026-08-09 (CMO delegate)
 updated: 2026-08-09
 supersedes: `2026-08-09-operator-visual-rollout-draftsman.md` (design/context handoff — now the design authority, not the work queue)
 
-## Blocker (2026-08-09) — read before resuming
+## Blocker (2026-08-09) — RESOLVED, read before resuming
 
 Tasks 0–3 confirmed complete. Task 4 (reference mockup) was implemented, verified
 (screenshots, orange-budget grep, don't-list self-check, freshness proof), and
 `git add`-staged in `~/projects/MetaArchitect/projects/simonparis-website-draftsman`
-(branch `draftsman-rollout`) — but `git commit` is denied by
-`scripts/hooks/bash-guard.sh` Rule 6. Root cause: the `mentions_primary` check is an
+(branch `draftsman-rollout`) — but `git commit` was denied by
+`scripts/hooks/bash-guard.sh` Rule 6. Root cause: the `mentions_primary` check was an
 unanchored regex — `grep -qE "($PRIMARIES)(/[^[:space:]]*)?" <<<"$cmd"` — so the literal
 substring `.../projects/simonparis-website` inside the legitimate worktree path
-`.../projects/simonparis-website-draftsman` satisfies the pattern (the trailing group
-is optional), even though the anchored `cwd`-side check correctly does NOT treat this
+`.../projects/simonparis-website-draftsman` satisfied the pattern (the trailing group
+was optional), even though the anchored `cwd`-side check correctly did NOT treat this
 worktree as the primary checkout. Reproduced directly by the controller, not just the
-subagent. Every later task's commit in this same worktree will hit the identical
-false-positive, so the whole SDD run halted here rather than burn further subagent
-dispatches or work around a live guard hook (standing rule: hook blocks get surfaced
-to Simon, not routed around; `scripts/hooks/*.sh` is propose-only per Rule 8's own
-comment).
+subagent, then verified against 3 true-positive cases before applying.
 
-**Proposed fix (not applied — propose-only file):** require a `/`, whitespace, or
-end-of-string boundary after each `$PRIMARIES` alternative, matching how the `cwd`-side
-check is already anchored:
+**Fix applied and merged (PR #102):** anchored on a `/`, whitespace, or end-of-string
+boundary after each `$PRIMARIES` alternative, matching how the `cwd`-side check is
+already anchored:
 
 ```diff
 - if grep -qE "($PRIMARIES)(/[^[:space:]]*)?" <<<"$cmd" && ! grep -qE "$WORKTREE_MARKERS" <<<"$cmd"; then
 + if grep -qE "($PRIMARIES)([/[:space:]]|$)" <<<"$cmd" && ! grep -qE "$WORKTREE_MARKERS" <<<"$cmd"; then
 ```
 
-Once Simon approves and this lands, resume at Task 4 Step 3 (the file is already built
-and staged — just needs the commit) and continue the SDD ledger at
+`scripts/hooks/test-hooks.sh` — 69/69 pass. Sitemaster re-dispatched to resume at
+Task 4 Step 3 (the file is already built and staged — just needs the commit) and
+continue the SDD ledger at
 `~/projects/MetaArchitect/projects/simonparis-website-draftsman/.superpowers/sdd/2026-08-09-draftsman-rollout/progress.md`.
 
 ## Start here
