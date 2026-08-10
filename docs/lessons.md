@@ -1334,3 +1334,46 @@ ok"). All 70 cases in `test-hooks.sh` pass. General lesson: any bash-guard rule 
 a command-name pattern that could plausibly appear in prose (commit messages, docs
 edits) must match `$cmd_head`, not `$cmd` — check this by default for new rules, not
 just when a false positive is hit.
+
+## 2026-08-10 — round 3 of the same mobile chat-shell height bug: fixed blind twice, still not confirmed live
+
+Timeline on `command-center` in one session: PR #160 fixed a real bfcache/`dvh`
+staleness bug on Android by JS-computing `--app-height`. PR #161 fixed a keyboard-gap
+regression #160 introduced (it sourced the value from `visualViewport.height`, which
+shrinks on keyboard open; switched to `window.innerHeight`, which shouldn't). Then
+Simon reported a THIRD symptom live: the shell tracks correctly through one keyboard
+open/close cycle, then stops — same drag-to-fix blank-gap symptom as the original bug.
+
+Before touching code a third time, re-read the effect end to end against the three
+hypotheses given (listener not re-armed / stale closure / DOM node replaced by React)
+and found **none of them present as coded** — single effect, `[]` deps, listeners on
+`window`/`document` (never replaced), writes to `document.documentElement` (not a
+component-owned node, so React re-rendering AdeSurface can't orphan it). That's a real,
+checkable finding, not a shrug: this specific bug is not a JS logic bug in the sense the
+hypotheses described.
+
+The remaining plausible cause is a browser-level timing race (Android dispatching
+`resize`/`visualViewport` events mid-animation with a transient value, nothing
+correcting it once things settle) — mitigated with a trailing 120ms re-sample (PR #162),
+plus a new `tests/smoke/ade-app-height.spec.ts` that drives 3 repeated viewport
+shrink/grow cycles and asserts `--app-height` tracks every time, not just the first.
+
+**The honest, load-bearing finding:** that new test was run against the PRE-FIX PR #161
+code too, specifically to check whether it would have caught this bug. It passed there
+as well. Playwright's `setViewportSize` is a clean, non-animated resize — it validates
+listener-rearm/closure logic across cycles (real value), but cannot reproduce Android's
+actual `visualViewport`-vs-layout-viewport divergence or its animation timing (the
+actual suspected cause). **PR #162 is a defensible mitigation, not a confirmed fix.**
+
+**Lesson:** for a bug class that's now failed to fix twice in a row on real hardware
+this session can't reach, the right move is not a fourth blind patch — it's (a) stating
+plainly, before Simon re-tests, exactly what was and wasn't verified and why, so he
+isn't the test harness for a guess dressed up as a fix, and (b) naming the actual next
+diagnostic step if it recurs: remote-debugging the real device (`chrome://inspect` over
+USB/tailscale) to capture the true event sequence and timing, rather than reasoning
+about Android viewport behavior from spec docs and priors. Also: when a Playwright
+regression test is added specifically to guard a bug class, run it against the
+known-buggy prior version too — if it passes there, it's not proof of a fix, and saying
+so explicitly is what separates a real regression test from a false sense of coverage.
+
+**Where documented:** command-center PRs #160, #161, #162.
