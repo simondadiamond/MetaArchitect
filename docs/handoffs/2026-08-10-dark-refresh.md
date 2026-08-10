@@ -1,9 +1,35 @@
 # Handoff — Dark theme refresh: salvage the paper build's winning devices, drop the dev-tool tells
 
-status: queued
-picked_up_by: nobody yet
+status: built — pending Simon's live preview check (PR #107)
+picked_up_by: sitemaster session, 2026-08-10
 updated: 2026-08-10
 supersedes: nothing — this is the follow-up to `2026-08-09-draftsman-execution.md` (Draftsman/paper rollout, rejected on live check 2026-08-10)
+
+## Build complete (2026-08-10)
+
+All scope items done in one continuous pass (no per-page subagent fan-out — the
+mistake that produced the prior rollout's inconsistency): dev-tool tells removed
+(terminal-window hero chrome, blinking cursor, typing-simulation animation, `$ tree`
+ASCII directory listing), Draftsman's structural devices salvaged and re-tokened dark
+(`ResetVsRemembers`, `PricingSheet`, `FoundingSeal`, `SignatureLine` in
+`components/operator/`), applied consistently across all 4 operator pages, copy-audit
+fixes ported to `master`, a restrained 4px operator-lane radius token added (checked
+against `ui-ux-pro-max`/`frontend-design` first), reviewed against `cro` +
+`marketing-psychology` before finishing. `brand/visual-operator.md` and
+`brand/brand-summary.md`'s router section rewritten to match.
+
+PR: https://github.com/simondadiamond/simonparis-website/pull/107
+Vercel preview: https://simonparis-website-git-dark-refresh-simondadiamonds-projects.vercel.app
+(SSO-protected, same as the prior rollout — could not curl-verify directly; verified
+instead via a local `next build` + `next start` walk: Playwright screenshots of all 4
+pages × EN/FR × desktop/mobile, plus grepping the served HTML for dev-tool-tell
+discriminators before trusting any screenshot, per the 2026-07-20 lesson.)
+
+**Merge gate stays hard — PR does not merge without Simon's live preview check.**
+
+One item flagged for Simon's awareness, not fixed in this pass (predates this refresh,
+out of scope — an IA decision, not a visual one): both the homepage and `/setup` hero
+sections carry two CTAs (primary + a de-emphasized secondary "skip ahead" option).
 
 ## Why
 
