@@ -204,7 +204,7 @@ Visual identity is split by lane. **Load only the file for the lane you're worki
 
 | Working on | Load | Surfaces |
 |---|---|---|
-| **Operator** (primary) | `brand/visual-operator.md` — the Draftsman system | homepage (`HomeOperator`), `/setup`; visuals-only on `/work-with-me`, `/about` |
+| **Operator** (primary) | `brand/visual-operator.md` — dark refresh (dev-tool tells removed, Draftsman's structural devices salvaged dark-toned) | homepage (`HomeOperator`), `/setup`; visuals-only on `/work-with-me`, `/about` |
 | **Practitioner** | `brand/visual-practitioner.md` — dark brutalist system | `/score`, `/readiness`, blog + teardowns, `LegacyHomePractitioner` |
 
 Shared rules (both lanes, the only visual rules that live here):
@@ -214,5 +214,6 @@ Shared rules (both lanes, the only visual rules that live here):
 
 ### Changelog
 
+- 2026-08-10 — Draftsman/paper (2026-08-09) rejected on Simon's live preview check: cross-page inconsistency + brass token failing WCAG AA. Superseded by a dark refresh that keeps dark as canonical for the operator lane, removes the actual dev-tool tells (monospace-as-voice, blinking cursor, terminal chrome, ASCII trees) instead of the palette, and salvages Draftsman's structural devices (note cards, spec-sheet pricing, founding seal, signature line) re-tokened dark. Full detail: `brand/visual-operator.md`.
 - 2026-08-09 (b) — Visual identity split into lane files (`visual-operator.md`, `visual-practitioner.md`) with this router, so sessions load one lane, not both (Simon's modular-loading rule).
 - 2026-08-09 (a) — Execution Polish patch superseded by the full Draftsman system; design rules split by lane; amber ruled practitioner-only (AA failure on paper). Sources: Draftsman handoff + trust-criteria research.

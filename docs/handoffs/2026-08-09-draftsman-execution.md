@@ -1,10 +1,29 @@
 # Handoff — Execute the Draftsman rollout (spec + plan approved, build it)
 
-status: built — pending Simon's live preview check (PR #106)
+status: SUPERSEDED 2026-08-10 — Simon rejected the paper direction on live preview check; dark-refresh follow-up built and PR'd, see docs/handoffs/2026-08-10-dark-refresh.md
 picked_up_by: sitemaster session, 2026-08-09 (CMO delegate)
-updated: 2026-08-09
+updated: 2026-08-10
 
-## Build complete (2026-08-09)
+## Superseded (2026-08-10)
+
+Simon live-checked the Vercel preview and rejected it: the paper build read as visually
+inconsistent (each of the 4 pages was built by a separate subagent in one day with no
+cross-page component-vocabulary check, so card/panel treatment drifted section to
+section) and the brass token measurably fails AA contrast (~4.30:1 on paper, needs
+4.5:1) everywhere it's used — both real defects, not just taste. PR #106 closed without
+merge; branch `draftsman-rollout` left un-deleted as a reference for salvageable
+elements (see follow-up handoff). Decision: keep the dark theme as the base (it already
+carries weeks of real iteration the one-day paper build didn't have), strip the specific
+dev-tool signals that motivated this rollout (monospace type, blinking terminal cursor,
+traffic-light window dots), and port over only the winning structural devices —
+reset-vs-remembers note cards, spec-sheet pricing ladder, founding-rate seal, personal
+signature line, honest no-logos-yet proof framing — rendered dark-compatible. Copy-audit
+fixes (`funnel/setup-offer/copy-audit-2026-08-09.md`) were theme-independent and have
+now been ported to master. `brand/visual-operator.md`'s Draftsman/paper mandate has been
+rewritten to reflect this decision. Follow-up: simonparis-website PR #107, MetaArchitect
+PR #110.
+
+## Build complete (2026-08-09) — historical record, superseded above
 
 Resumed at Task 4 Step 3 per this doc's prior blocker resolution and ran the full `superpowers:subagent-driven-development` loop through Task 15. All 16 plan tasks complete — see the SDD ledger (now deleted per the skill's Finish step; git history in the `simonparis-website` `draftsman-rollout` branch is the record) and PR #106 for the full task-by-task commit history, review verdicts, and fix rounds.
 

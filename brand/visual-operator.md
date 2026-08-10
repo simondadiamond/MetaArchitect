@@ -1,67 +1,71 @@
-# Visual Identity — Operator Lane (The Draftsman System)
+# Visual Identity — Operator Lane (Dark Refresh)
 
-> Load this file when working on operator surfaces: homepage (`HomeOperator`), `/setup`, and — visuals only — `/work-with-me` and `/about` (their copy stays practitioner-voiced; see the 2026-08-09 scope ruling in `funnel/setup-offer/copy-audit-2026-08-09.md`). Practitioner surfaces use `brand/visual-practitioner.md` instead. Router + shared rules: `brand/brand-summary.md` §Visual Identity.
+> Load this file when working on operator surfaces: homepage (`HomeOperator`), `/setup`, and `/work-with-me` and `/about` (their copy stays practitioner-voiced; visuals only — see the 2026-08-09 scope ruling in `funnel/setup-offer/copy-audit-2026-08-09.md`). Practitioner surfaces use `brand/visual-practitioner.md` instead. Router + shared rules: `brand/brand-summary.md` §Visual Identity.
 > Audience/ICP/customer language for this lane: `.claude/product-marketing.md` (canonical) + `brand/audiences/operator.md`.
 
+**Status:** this supersedes the Draftsman/paper system (2026-08-09). Paper was built, PR'd (simonparis-website #106), and rejected on Simon's live preview check 2026-08-10 — see Changelog for the full reasoning. Dark stays canonical for the operator lane. The paper build's structural ideas were not wasted: several were salvaged and re-tokened dark (see "Signature devices" below). Branch `draftsman-rollout` stays un-deleted as a component-structure reference.
 
-**Why this register.** The operator buyer (solo consultant/coach/fractional exec — see `.claude/product-marketing.md`, canonical for ICP and customer language) hires a *person practicing a craft*, not a tech product: independent trust-criteria research found this buyer responds to a named human and visible craftsmanship over company polish (`docs/research/operator-trust-criteria-independent-2026-08-09.md`). Brutalism reads as engineering credibility only to engineers; for a premium-service buyer it reads as unfinished. The Draftsman direction leans into the brand name literally — a boutique architecture-studio register: drafting paper, ink, brass, physical artifacts. Approved by Simon 2026-08-09 after three rejected directions (token-softening, navy/gold glow, Apple-clone twins).
+**Why dark, still.** Two independent, real defects killed paper, not the color itself: the build read as visually inconsistent (four pages, four independent subagents, no cross-page component-vocabulary check — card/panel treatment drifted section to section) and the brass accent token measured ~4.30:1 on paper, failing WCAG AA at every size it was used. Dark already carries weeks of real iteration paper never had, and the operator ICP's actual objection — confirmed directly by Simon — was never "this is dark," it was "this reads like a developer built it for himself."
 
-**Standing law — comprehension beats cleverness.** A clever ownable metaphor is worth less than instant comprehension for a first-time, non-technical visitor. (An animated floor-plan metaphor was dropped mid-session for exactly this.) If a device requires decoding, label it inline or cut it. Never ship a metaphor on instinct alone.
+**The real rule: no developer-tool tells, not no-dark-mode.** The specific signals that read as "for developers, not for me" to a 2–30 person owner-operator: monospace type standing in for a whole interface's voice, a blinking terminal cursor, traffic-light window-control dots, ASCII/box-drawing directory listings, and looping typing-simulation animations. None of those are inherent to dark mode — they're specific, nameable components. Remove the components, keep the palette.
 
-### Palette
+**Standing law — comprehension beats cleverness.** Unchanged from the paper system: a clever ownable metaphor is worth less than instant comprehension for a first-time, non-technical visitor. Every device below carries an explicit inline label — nothing requires decoding.
 
-| Token | Hex | Role | Usage limit |
-|---|---|---|---|
-| paper | `#F3EEE1` | page background | — |
-| paper-deep | `#EAE3D0` | panels, cards, sheets | — |
-| ink | `#1C1712` | headings, body, buttons at rest, the closing dark panel | — |
-| ink-soft | `#5B5346` | secondary text | body-safe |
-| ink-faint | `#948C7A` | decorative metadata only | never essential text (fails AA on paper) |
-| brass | `#8C6A2F` | eyebrow labels, seal, detail accents | labels ≥14px only (large-text AA) |
-| orange | `#E04500` | exactly two uses per page | button hover/press + one full-bleed dark closing panel |
+### Palette (unchanged — this is still the site's one dark system)
 
-Text links in Draftsman scope: ink, underlined; hover brass. (Amber fails contrast on paper — it stays practitioner-only.)
+| Token | Hex | Role |
+|---|---|---|
+| background | `#0F0F0F` | page background |
+| background-surface / -elevated / -deep | `#1A1A1A` / `#1F1F1F` / `#0A0A0A` | panels, cards, artifacts |
+| text-primary / -secondary / -muted | `#EAEAEA` / `#B4B4B4` / `#777777` | body copy, hierarchy |
+| accent (orange) | `#E04500` / hover `#FF5A1A` | the only action color — buttons, one emphasis word per hero, never sprayed |
+| accent-link (amber) | `#C97A1A` | links, and — new this refresh — the seal/spec-sheet-number color. Deliberately NOT a new "brass" token: amber is already validated at AA on these dark surfaces, so reusing it closes the exact defect (brass failing AA on paper) that killed the last system instead of re-risking it |
+| border | `#333333` | hairlines |
+
+### Radius — new this refresh
+
+A small, restrained **4px** radius (`--radius-card`, down from the short-lived 6px execution-polish patch) on operator-lane surfaces only, via the existing `.op-radius` / `.op-grid` / `.op-radius-t` carve-out of the site's global zero-radius reset. Reasoning, checked against `ui-ux-pro-max`'s style database and the `frontend-design` skill before adopting: zero-radius is specifically tagged brutalist/editorial/avant-garde or developer-tool ("Terminal CLI" — which the database itself pairs with a blinking cursor, i.e. exactly the signal this refresh removes) — nothing ties it to "approachable" or "trustworthy" for a non-technical small-business buyer, and hairline-rules-plus-zero-radius is independently named by `frontend-design` as one of the generic AI-templated defaults to watch for. 4px reads as "a real workspace/document," not soft/pill-shaped SaaS. **Practitioner lane is untouched** — `/score`, `/readiness`, blog, `LegacyHomePractitioner`, `/terms`, `/privacy` keep the sharp zero-radius reset; that audience is more technical and the signal likely works differently for them. Shared chrome (Nav, Footer) is also untouched — it renders on both lanes.
 
 ### Type
 
-- **Merriweather** (serif) for display/headlines, *italic for the emphasis word* — a confident serif is a differentiator against the sea of grotesk AI/SaaS sites
-- **Inter** for body and UI text
-- **No monospace on operator surfaces.** Mono is a practitioner-audience tell — `label-mono`/`font-mono` must not appear in operator page code
+- **Merriweather** (serif) for display/headlines, *italic for emphasis* — a confident serif is a differentiator against the sea of grotesk AI/SaaS sites. Unchanged.
+- **Inter** for body and UI text.
+- **Monospace is not banned outright** — Roboto Mono still carries small structural chrome shared across both lanes (nav links, footer, `section-number` "02 / 09" counters, `label-mono` eyebrows) and changing that shared, site-wide CSS layer would bleed into practitioner surfaces this refresh must leave untouched. What's gone is monospace **standing in for a whole component's voice** — a hero eyebrow rendered as a shell prompt, an "ask" line with a blinking cursor, a directory tree rendered as literal `$ tree` output. If a new operator-lane component reaches for monospace as its primary voice rather than a wayfinding label, that's the tell to catch in review.
 
-### Component patterns
+### Don't (dev-tool tells — dropped 2026-08-10, do not reintroduce on operator surfaces)
 
-- **Note card** — a physical index card: paper-deep background, real box-shadow (`0 8px 24px rgba(28,23,18,0.12)`), rotated 1–2° off-axis, torn-tape accent pinning it down. Signature use: the *reset vs. remembers* pair — a chat that starts over ("Hi, I run a coaching business, and—" repeated, greyed) beside a workspace that persists (Voice / Rates / Clients).
-- **Spec-sheet pricing** — the rate card as a lifted physical sheet: ~0.4° tilt, pin-dot top-left, rows as numbered leader-dot lines (`01  Working Session ······ $125/hr`), never ruled table borders or a bordered box grid.
-- **Ink-stamp founding seal** — circular brass stamp graphic ("Founding rate · 3 of 3") marking the flagship tier. A stamp, never a badge or colored border.
-- **Buttons** — rectangular, ink fill, orange on hover, scale-down on press (tactile). No pills.
-- **Personal signature line** — near the final CTA, attributing the work to Simon by name. Person-over-company is a measured trust driver for this buyer; don't drop it as "extra."
+- Terminal/console window chrome: traffic-light title-bar dots, `$ command` prompts, shell-style `>` prefixes
+- Blinking cursors and looping typing-simulation animations (type → think → reveal loops)
+- ASCII/box-drawing directory listings (`├──`, `└──`, literal `tree` output)
+- A brand-new low-contrast accent token introduced without checking it against the surfaces it will actually render on (the brass lesson — always verify against the real background, not the design system in isolation)
 
-### Motion
+(Carried forward, unchanged, from the paper system's own don't-list: pill buttons, bordered card grids, glow orbs / cursor spotlights, colored accent bars on rounded cards, three-equal-card layouts, cliché copy — "Elevate", "Seamless", "Unleash".)
 
-Interactive states get real 150–300ms ease transitions. `prefers-reduced-motion` is always respected — tilt, press-scale, and fades collapse to none.
+### Signature devices (salvaged from the closed paper build, re-tokened dark)
 
-### Don't (each of these was tried or identified and rejected, 2026-08-09)
+Structural ideas from `draftsman-rollout`'s `components/draftsman/*.tsx` (PR #106) carried over — same concepts, same comprehension-first intent, repainted for the dark palette instead of paper's `#F3EEE1`. Shared components: `components/operator/{ResetVsRemembers,PricingSheet,FoundingSeal,SignatureLine}.tsx`.
 
-- Pill buttons; bordered card grids ("a table with borders turned on"); glow orbs / cursor spotlights; colored accent bars on rounded cards; three-equal-card layouts
-- Monospace anywhere; dark-mode-by-default on operator surfaces
-- Terminal/console framing devices (practitioner tell)
-- Cliché copy: "Elevate", "Seamless", "Unleash" + all Prohibitions above
+- **Reset vs. remembers** (`ResetVsRemembers`) — twin physical note cards: one muted/repeated ("Every other tool" — a chat prompt said again and again), one persisted ("This workspace" — Voice / Rates / Clients, retained). `bg-background-elevated`, real dark box-shadow, ±1–2° off-axis rotation, a small torn-tape accent. Replaces literal chat/terminal simulation with a static, labeled artifact.
+- **Spec-sheet pricing** (`PricingSheet`) — numbered rows on a dotted leader line (`01  Working Session ······ $125/hr`) instead of a bordered box grid. One shared component used identically on the homepage ladder, `/setup`'s full pricing table, and `/work-with-me`'s progression list.
+- **Founding-rate seal** (`FoundingSeal`) — circular ink-stamp SVG, amber stroke/text (not the failed brass token), marking a founding-rate tier. A stamp, never a badge or colored border.
+- **Personal signature line** (`SignatureLine`) — a quiet italic line near a page's final CTA, attributing the work to Simon by name. Person-over-company is a measured trust driver for this buyer (`docs/research/operator-trust-criteria-independent-2026-08-09.md`) — don't drop it as "extra." Placed *after* the primary CTA, not competing with it for visual anchor.
+- **Honest "no client logos yet" proof framing** — unchanged, already correct on the homepage's "Proof, honestly" section. Nothing to redo here.
+- **Hero artifact** (`SetupHeroWindow`, shared by home + `/setup`) — kept the underlying idea (a plain-language ask producing a ready invoice proves the workspace knows the business) but dropped every terminal-chrome element: static card, off-axis tilt, real shadow, a small tape accent instead of a title bar, no animation.
 
-### Persuasion placement map
-
-Where each lever lives on an operator page — placement is part of the system:
+### Persuasion placement map (unchanged from the paper system, still holds)
 
 | Lever | Placement |
 |---|---|
 | Person-over-company | Signature line at final CTA; `/about` carries the strongest personal register |
 | Risk reversal | "$2,500 audit, credited in full" adjacent to every $6,500 mention — never separated from the big number |
 | Anxiety answers | Own-the-account-from-day-one + fixed scope sit next to the price, not in an FAQ graveyard |
-| Honest scarcity | Founding seal — 3 slots, real count, never fake urgency |
+| Honest scarcity | Founding seal — real slot counts, never fake urgency |
 | Comprehension | Every section passes the Busy Owner Test before any cleverness survives |
 
-Gate-B note: this system re-skins approved scope. The *full* homepage rebuild (new sections, proof/case-study treatment) stays gated on the first paying client.
+Gate-B note: unchanged. This system re-skins approved scope. The *full* homepage rebuild (new sections, proof/case-study treatment) stays gated on the first paying client.
 
 ## Changelog
 
-- 2026-08-09 — Execution Polish patch (radius/transition tokens) superseded by the full Draftsman system; design rules split by lane; amber ruled practitioner-only (AA failure on paper). Sources: Draftsman handoff + trust-criteria research.
-- 2026-08-09 — Extracted from brand-summary.md into a lane file so sessions load only the lane they're working on. Content unchanged.
+- **2026-08-10 — Dark refresh** (supersedes Draftsman/paper). Paper tried 2026-08-09 (PR #106), rejected on Simon's live preview check 2026-08-10: cross-page visual inconsistency (4 pages, 4 independent subagents, no shared component vocabulary) and the brass token failing WCAG AA (~4.30:1) at every size used. Root cause of the original impulse to leave dark — practitioner/dev-tool tells (monospace-as-voice, blinking cursor, terminal window chrome, ASCII directory trees) — addressed directly instead: dropped those specific components, kept dark, salvaged paper's structural devices re-tokened for the dark palette (amber in place of brass), added a restrained 4px operator-lane radius token (checked against `ui-ux-pro-max` + `frontend-design`, zero-radius ties to brutalist/dev-tool categories, not this ICP), reviewed against `cro` + `marketing-psychology` for CTA hierarchy and trust-signal placement before shipping. `draftsman-rollout` branch left un-deleted as a component-structure reference.
+- 2026-08-09 (b) — Visual identity split into lane files (`visual-operator.md`, `visual-practitioner.md`) with a router, so sessions load one lane, not both (Simon's modular-loading rule).
+- 2026-08-09 (a) — Execution Polish patch superseded by the full Draftsman system; design rules split by lane; amber ruled practitioner-only (AA failure on paper). *Superseded 2026-08-10 — amber is back in the operator lane, on dark surfaces where it clears AA; it was only ever unsafe on paper.*
