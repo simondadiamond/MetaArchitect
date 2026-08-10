@@ -179,6 +179,18 @@ Loop.** Run the current setup through it:
   already applied to `founding_clients` should extend to referral events specifically —
   who referred whom, when, reward status.
 
+**Decided, 2026-08-10 (Simon):** the incentive is **3 hours of custom work
+(~$375–400 value) per successful referral, granted on the referred person's first
+payment** (not a booked call — ties the cost to real revenue). Made double-sided per
+the finding above: the referred friend also gets something small (e.g. a free first
+working-session hour) — costs little more, meaningfully improves conversion.
+Mechanic: a simple ledger — accrue on conversion, deduct on redemption, convert to a
+credit if the referrer buys a block of hours instead of using them 1:1. This is
+**separate from and additional to** the founding-client program's existing
+contractual "2 warm intros" obligation — that stays as-is; this applies to all
+clients. **V1 should be tracked manually**, not automated — there's no referral
+volume yet to justify build effort; automate once it's a real, recurring number.
+
 ---
 
 ## 7. The one experimental bet worth taking: borrowed channel via adjacent providers
