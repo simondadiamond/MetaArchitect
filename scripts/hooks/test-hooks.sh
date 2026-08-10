@@ -74,6 +74,11 @@ check "refspec push allowed"       bash-guard.sh "$(bash_payload 'git push origi
 check "bare gh pr merge denied"    bash-guard.sh "$(bash_payload 'gh pr merge --squash')"                    deny
 check "gh pr merge N allowed"      bash-guard.sh "$(bash_payload 'gh pr merge 42 --squash')"                 allow
 check "gh pr merge URL allowed"    bash-guard.sh "$(bash_payload 'gh pr merge https://github.com/x/y/pull/42 --squash')" allow
+# Rule 5 must NOT fire on prose that merely DESCRIBES it inside a heredoc body, e.g. a
+# commit message documenting a past mistake (lessons.md 2026-08-10: a real lessons.md
+# commit got blocked here because its heredoc body quoted "gh pr merge --delete-branch").
+GH_MERGE_PROSE_HEREDOC=$(printf 'git commit -m "$(cat <<EOF\ndocs: a bare %s once resolved the wrong branch\nEOF\n)"' 'gh pr merge')
+check "commit heredoc naming gh pr merge ok" bash-guard.sh "$(bash_payload "$GH_MERGE_PROSE_HEREDOC")"       allow
 # Rule 6: primary checkout — RED (by cwd and by mention)
 check "checkout in primary denied" bash-guard.sh "$(bash_payload 'git checkout feature-x' "$CC")"            deny
 check "switch in primary denied"   bash-guard.sh "$(bash_payload 'git switch -c new' "$CC")"                 deny
