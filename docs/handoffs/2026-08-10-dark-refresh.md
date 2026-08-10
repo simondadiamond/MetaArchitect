@@ -5,6 +5,61 @@ picked_up_by: sitemaster session, 2026-08-10
 updated: 2026-08-10
 supersedes: nothing — this is the follow-up to `2026-08-09-draftsman-execution.md` (Draftsman/paper rollout, rejected on live check 2026-08-10)
 
+## Follow-up fix #2 (2026-08-10, same PR #107, commit `b8e9eac`) — navy extended page-wide
+
+Simon live-checked the `309bfa8` build and correctly flagged that the navy shift only
+reached `.op-hero` (the hero/CTA band) — the rest of each operator page was still on the
+old neutral `--color-background*`/`--bg-*` tiers, so the page had two dark backgrounds
+fighting each other with a visible seam.
+
+Fix: a new `.op-lane` scope class in `app/globals.css` overrides both background-token
+systems in play (Tailwind v4 `--color-background*` theme tokens, which drive the
+`bg-background`/`bg-background-deep`/`bg-background-surface`/`bg-background-elevated`
+utilities; and the legacy `--bg-primary`/`--bg-surface`/`--bg-elevated` custom
+properties, which drive `card-surface`/`card-elevated`/`btn-secondary`) for its
+descendant subtree, reusing `.op-hero`'s exact anchor hue (`#0a0e16`, H221° S37.5%) as
+the base tier. Tiers hold the *same lightness deltas* as the neutral ramp they replace —
+computed via WCAG relative luminance, not eyeballed — so every text token's contrast
+ratio against the new tiers is within ±0.12 of its ratio against the old ones (same
+accessibility profile, hue-shifted only):
+
+- deep `#070a10` (darkest — zebra-striped section bands)
+- base `#0a0e16` (default page background — unchanged, `.op-hero`'s existing anchor)
+- surface `#131a29` (card fills)
+- elevated `#161f31` (lifted cards — invoice/pricing panels)
+
+`.op-lane` also sets its own `background-color` directly (not just the CSS var
+overrides), so sections with no explicit `bg-*` class — most of them — paint navy
+instead of falling through to whatever's behind the wrapper.
+
+Applied to the outermost content wrapper of the 4 operator pages only:
+`HomeOperator.tsx`, `about/page.tsx`, `setup/page.tsx`, `work-with-me/page.tsx` (each
+page's root `<>` fragment became `<div className="op-lane">`). Nav/Footer (shared
+chrome, rendered outside this wrapper by `[locale]/layout.tsx`, used by every page
+including practitioner ones) were deliberately left out of scope — same reasoning as
+before, they're chrome common to both lanes, not part of the "two backgrounds fighting"
+complaint.
+
+One surprise: `about/page.tsx` had 4 backgrounds hardcoded as Tailwind arbitrary-value
+hex (`bg-[#0F0F0F]`, `hover:bg-[#1A1A1A]`) instead of the semantic token utilities —
+those don't respond to a CSS-var scope override (Tailwind bakes arbitrary hex literally
+at build time), so they'd have stayed gray-black even inside `.op-lane`. Converted all 4
+to `bg-background`/`hover:bg-background-surface`.
+
+Verification: local `next build` + `next start` on port 4173, own-pid confirmed via
+`ss -ltnp` before trusting anything, served HTML grepped for `op-lane` (present on all 4
+operator pages/both locales, absent on `/score`/`/readiness`/`/blog`) and the served CSS
+grepped to confirm the compiled `.op-lane{...}` rule matched the intended hex values.
+Full-page (not hero-crop) Playwright screenshots taken for all 4 pages × EN/FR ×
+desktop/mobile (16 total) — page now reads as one continuous navy surface top to bottom,
+no seam. `/score` screenshotted separately to confirm the practitioner lane is
+byte-identical to before (its `:root { --color-background: #0f0f0f }` is untouched,
+confirmed by grepping the served CSS directly).
+
+Diff stayed small and mechanical: `app/globals.css` (+40 lines, one new scope rule),
+4 page/component files (wrapper `<>` → `<div className="op-lane">`, 4 hex-to-token
+conversions on `about/page.tsx`). No copy, layout, or component-structure changes.
+
 ## Follow-up fixes (2026-08-10, same PR #107, commit `309bfa8`)
 
 Two items Simon flagged on top of the built PR, fixed on the same `dark-refresh`
