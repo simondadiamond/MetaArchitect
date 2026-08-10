@@ -1277,3 +1277,60 @@ the same wait pattern.
 
 **Where documented:** This entry; PR #106 on simonparis-website carries the full
 task-by-task history.
+
+## 2026-08-10 — mobile viewport-height fix (PR #160) shipped a live keyboard-gap regression (fixed by PR #161)
+
+PR #160 fixed a real bug: on Android Chromium, `AdeSurface.tsx`'s `100dvh`-based chat
+shell painted a stale cached viewport height after bfcache restore (back-navigating
+into a /chat conversation), leaving blank space until a manual scroll forced a
+repaint. The fix added a JS-computed `--app-height` custom property, sourced from
+`window.visualViewport?.height ?? window.innerHeight`, refreshed on
+`resize`/`orientationchange`/`visualViewport.resize`/`visibilitychange`/`pageshow`.
+
+That shipped a new regression Simon hit live minutes later: opening the on-screen
+keyboard on /chat sometimes left a large blank gap between the input bar and the
+keyboard, reproducible on demand and "doesn't always trigger" (flaky). Root cause:
+`visualViewport.height` shrinks when the keyboard opens (default
+`interactive-widget=resizes-visual`), but `window.innerHeight` (the layout viewport)
+does not. The `visualViewport.resize` listener was live-resizing the whole container
+in response to keyboard animation — out of sync with the page's keyboard-driven
+scroll offset, and flaky because Android doesn't fire a clean `visualViewport` resize
+event on every keyboard show/hide/drag. The app had no prior keyboard-avoidance logic
+anywhere, so the pre-#160 baseline (`dvh` alone) was already keyboard-inert; the fix
+needed to preserve that, not add keyboard-reactivity nobody asked for.
+
+**Lesson:** `window.innerHeight` (layout viewport) and `window.visualViewport.height`
+(visual viewport, shrinks for on-screen keyboard) are semantically different
+properties — a JS-computed height override for a structural container must pick
+deliberately, not default to whichever is defined first. For a bfcache/dvh-staleness
+fix specifically, `innerHeight` is the safer default: it's keyboard-inert, matching
+`dvh`'s own scope (browser chrome, not virtual keyboard), and still gets refreshed
+correctly by `pageshow`/`resize`/`orientationchange`. If keyboard-aware layout is
+actually wanted, it should offset just the input bar via the
+`visualViewport`-vs-`innerHeight` delta, not resize the whole shell.
+
+**Fix:** PR #161 on command-center — dropped the `visualViewport` resize listener
+entirely and switched the `--app-height` source to `window.innerHeight`.
+
+**Process note:** `gh pr merge --delete-branch` failed its local branch-switch step
+twice in this session (`fatal: 'main' is already used by worktree at
+<primary-checkout>`) because the primary command-center checkout stays on `main`
+while merging from a worktree — this is expected per the worktree convention, not a
+real failure. The remote merge succeeds regardless; check with
+`gh pr view <n> --json state,mergedAt`, then delete the remote branch explicitly with
+`gh api -X DELETE repos/<owner>/<repo>/git/refs/heads/<branch>` if `--delete-branch`
+didn't get that far.
+
+**Second mechanical-guard bug found while writing this entry:** `bash-guard.sh` Rule 5
+("gh pr merge must name a PR") matched the raw, unstripped command string, so a commit
+whose heredoc body merely *documented* the process note above (mentioning "gh pr merge
+--delete-branch" as prose) got denied as if it were an actual bare `gh pr merge`
+invocation. Same bug class as the Rule 8/Rule 6 false positives already on record here:
+a rule that scans `$cmd` instead of the heredoc-stripped `$cmd_head` cries wolf on its
+own documentation. Fixed by hoisting the `cmd_head=${cmd%%<<*}` strip (previously local
+to Rule 8) to the top of the script and switching Rule 5 to match against it; added a
+regression fixture to `scripts/hooks/test-hooks.sh` ("commit heredoc naming gh pr merge
+ok"). All 70 cases in `test-hooks.sh` pass. General lesson: any bash-guard rule matching
+a command-name pattern that could plausibly appear in prose (commit messages, docs
+edits) must match `$cmd_head`, not `$cmd` — check this by default for new rules, not
+just when a false positive is hit.
