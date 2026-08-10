@@ -5,6 +5,68 @@ picked_up_by: sitemaster session, 2026-08-10
 updated: 2026-08-10
 supersedes: nothing — this is the follow-up to `2026-08-09-draftsman-execution.md` (Draftsman/paper rollout, rejected on live check 2026-08-10)
 
+## Follow-up fixes (2026-08-10, same PR #107, commit `309bfa8`)
+
+Two items Simon flagged on top of the built PR, fixed on the same `dark-refresh`
+branch — no new PR:
+
+1. **Card rotation, dropped again.** `components/operator/ResetVsRemembers.tsx`
+   still carried the paper build's whole-card `rotate(-1.3deg)`/`rotate(1deg)`
+   tilt — Simon asked for this removed once already (2026-08-09, on paper) and
+   it came back in via the dark-refresh salvage. Both inline `style={{ transform:
+   ... }}` props removed; cards render level. The tape accent's `-2deg` and
+   `FoundingSeal`'s `-8deg` stamp rotation are untouched — those are small
+   decorative elements, not the whole-card tilt that was the actual complaint.
+2. **Hero/CTA bands: navy + one motivated ambient light.** Simon wanted the flat
+   `#0a0a0a`/`#0f0f0f` neutral-black background to read as "next level" — dark
+   navy with a subtle, off-center light, not a centered glow (checked against
+   `frontend-design` first: a centered radial glow on near-black is one of
+   three current AI-generated-design defaults called out by that skill).
+   New `.op-hero` utility in `app/globals.css`: `background-color: #0a0e16`
+   (deep desaturated navy) + a navy-tinted grid (`#141b2c`, replaces the
+   neutral-grid `.bg-blueprint` on operator surfaces) + one soft warm-amber
+   (`--color-accent-link`, `#c97a1a` — no new color token) radial light at
+   `18% 6%` (upper-left, like a desk lamp), peak opacity 0.08, single
+   `prefers-reduced-motion`-respecting fade-in on load, otherwise static.
+   Motivated by the hero copy itself ("tuesday · 9:14 pm · invoices, again" —
+   someone working late at a desk).
+   - **Scoping**: `.op-hero` is a standalone class — `--bg-primary`/`body` and
+     `.bg-blueprint` (still shared with `LegacyHomePractitioner`) were never
+     touched, so `/score`, `/readiness`, `/blog`, and the practitioner homepage
+     render byte-identical to before. Verified: grepped the served HTML for
+     `op-hero` on `/score`, `/readiness`, `/blog` (0 matches) vs. the 4 operator
+     pages (present, both EN and FR).
+   - **Applied once per page** (brief: "spend the effect once"), on whichever
+     section is that page's hero/CTA band: `HomeOperator` + `/setup`'s hero
+     section (swapped `bg-blueprint` → `op-hero`); `/work-with-me`'s Diagnostic
+     panel (its hero has no CTA — the Diagnostic panel is where the value
+     framing + single mailto CTA live together, so it carries the treatment
+     instead); `/about`'s closing CTA panel (same reasoning — the top hero is a
+     plain bio intro with no CTA, so it's the bottom panel, newly boxed to match
+     the home/setup closing-CTA convention, that carries it).
+   - **Contrast verified analytically** (WCAG relative-luminance formula, not
+     just eyeballed): every existing text token's contrast ratio against the
+     new `#0a0e16` is equal to or slightly better than against the old
+     `#0f0f0f` (`text-muted` #777 ~4.31:1 vs. ~4.28:1 before — pre-existing
+     sub-4.5 condition on muted/label text, not a regression I introduced;
+     `text-secondary`, `text-primary`, and `accent-link` all clear AA
+     comfortably, ~5.7–9.3:1).
+   - **Verification**: local `next build` + `next start` on port 4174 (own pid
+     confirmed via `ss -ltnp` before trusting any screenshot, plus grepped the
+     served HTML for `op-hero` per the 2026-07-20 lesson) — Playwright
+     screenshots of all 4 operator pages × desktop (1440×900) + mobile
+     (390×844), plus a pixel sample at the glow's peak point confirmed the
+     expected alpha-composited color (~rgb(25,23,22) predicted vs. rgb(25,21,22)
+     observed).
+   - Note for whoever next touches `brand/visual-operator.md`: its "Don't"
+     list still carries a blanket "glow orbs / cursor spotlights" ban inherited
+     from the paper system's rejected directions. This ambient-light device is
+     a deliberate, narrow exception to that (motivated placement, single
+     source, 0.08 peak opacity, static) — not a reopening of glow effects
+     generally. Worth a one-line carve-out in that doc's changelog next time
+     it's edited, same pattern as the amber-token exception it already
+     documents.
+
 ## Build complete (2026-08-10)
 
 All scope items done in one continuous pass (no per-page subagent fan-out — the
