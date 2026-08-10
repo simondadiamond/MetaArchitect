@@ -9,6 +9,12 @@ input=$(cat)
 cmd=$(jq -r '.tool_input.command // empty' <<<"$input")
 cwd=$(jq -r '.cwd // empty' <<<"$input")
 [ -z "$cmd" ] && exit 0
+# Heredoc BODIES are data, not commands — a commit message or lessons.md entry that
+# merely quotes a command (e.g. documenting a past 'gh pr merge' mistake) must not
+# trip a rule looking for that command actually being run. Used by any rule matching
+# command-name patterns that plausibly show up in prose. (lessons.md 2026-08-10:
+# Rule 5 fired on a commit message that only mentioned 'gh pr merge' as documentation.)
+cmd_head=${cmd%%<<*}
 
 deny() {
   jq -n --arg r "$1" '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"deny",permissionDecisionReason:$r}}'
@@ -43,8 +49,8 @@ if grep -qE 'git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[[:space:]]+push\b[^;|
 fi
 
 # --- Rule 5: gh pr merge must name a PR (memory: bare merge from a worktree resolved the wrong branch) ---
-if grep -qE '(^|[;&|[:space:]])gh[[:space:]]+pr[[:space:]]+merge\b' <<<"$cmd" \
-   && ! grep -qE 'gh[[:space:]]+pr[[:space:]]+merge[[:space:]]+(https?://|[0-9])' <<<"$cmd"; then
+if grep -qE '(^|[;&|[:space:]])gh[[:space:]]+pr[[:space:]]+merge\b' <<<"$cmd_head" \
+   && ! grep -qE 'gh[[:space:]]+pr[[:space:]]+merge[[:space:]]+(https?://|[0-9])' <<<"$cmd_head"; then
   deny "Merge PRs by number: 'gh pr merge <N> --squash'. A bare 'gh pr merge' run from a worktree once resolved to the wrong branch (memory: merge-own-prs)."
 fi
 
@@ -73,7 +79,6 @@ fi
 # gate with false positives gets disabled, which is worse than no gate. The mutating verb
 # must also sit within ~60 chars of the path, i.e. actually be operating on it.
 PROTECTED='\.claude/agents/[^[:space:]]*\.md|brand/[^[:space:]]*\.md|scripts/skill-lint\.sh|scripts/hooks/[^[:space:]]*\.sh'
-cmd_head=${cmd%%<<*}          # drop heredoc body — data, not command
 # The mutating verb must be a real COMMAND WORD (start of the command or of a segment after
 # ; | && || ), not text inside a quoted argument. Otherwise a commit message or lessons entry
 # that merely quotes "sed -i on brand/foo.md" trips the gate — and a gate that cries wolf on

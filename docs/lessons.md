@@ -1277,3 +1277,103 @@ the same wait pattern.
 
 **Where documented:** This entry; PR #106 on simonparis-website carries the full
 task-by-task history.
+
+## 2026-08-10 — mobile viewport-height fix (PR #160) shipped a live keyboard-gap regression (fixed by PR #161)
+
+PR #160 fixed a real bug: on Android Chromium, `AdeSurface.tsx`'s `100dvh`-based chat
+shell painted a stale cached viewport height after bfcache restore (back-navigating
+into a /chat conversation), leaving blank space until a manual scroll forced a
+repaint. The fix added a JS-computed `--app-height` custom property, sourced from
+`window.visualViewport?.height ?? window.innerHeight`, refreshed on
+`resize`/`orientationchange`/`visualViewport.resize`/`visibilitychange`/`pageshow`.
+
+That shipped a new regression Simon hit live minutes later: opening the on-screen
+keyboard on /chat sometimes left a large blank gap between the input bar and the
+keyboard, reproducible on demand and "doesn't always trigger" (flaky). Root cause:
+`visualViewport.height` shrinks when the keyboard opens (default
+`interactive-widget=resizes-visual`), but `window.innerHeight` (the layout viewport)
+does not. The `visualViewport.resize` listener was live-resizing the whole container
+in response to keyboard animation — out of sync with the page's keyboard-driven
+scroll offset, and flaky because Android doesn't fire a clean `visualViewport` resize
+event on every keyboard show/hide/drag. The app had no prior keyboard-avoidance logic
+anywhere, so the pre-#160 baseline (`dvh` alone) was already keyboard-inert; the fix
+needed to preserve that, not add keyboard-reactivity nobody asked for.
+
+**Lesson:** `window.innerHeight` (layout viewport) and `window.visualViewport.height`
+(visual viewport, shrinks for on-screen keyboard) are semantically different
+properties — a JS-computed height override for a structural container must pick
+deliberately, not default to whichever is defined first. For a bfcache/dvh-staleness
+fix specifically, `innerHeight` is the safer default: it's keyboard-inert, matching
+`dvh`'s own scope (browser chrome, not virtual keyboard), and still gets refreshed
+correctly by `pageshow`/`resize`/`orientationchange`. If keyboard-aware layout is
+actually wanted, it should offset just the input bar via the
+`visualViewport`-vs-`innerHeight` delta, not resize the whole shell.
+
+**Fix:** PR #161 on command-center — dropped the `visualViewport` resize listener
+entirely and switched the `--app-height` source to `window.innerHeight`.
+
+**Process note:** `gh pr merge --delete-branch` failed its local branch-switch step
+twice in this session (`fatal: 'main' is already used by worktree at
+<primary-checkout>`) because the primary command-center checkout stays on `main`
+while merging from a worktree — this is expected per the worktree convention, not a
+real failure. The remote merge succeeds regardless; check with
+`gh pr view <n> --json state,mergedAt`, then delete the remote branch explicitly with
+`gh api -X DELETE repos/<owner>/<repo>/git/refs/heads/<branch>` if `--delete-branch`
+didn't get that far.
+
+**Second mechanical-guard bug found while writing this entry:** `bash-guard.sh` Rule 5
+("gh pr merge must name a PR") matched the raw, unstripped command string, so a commit
+whose heredoc body merely *documented* the process note above (mentioning "gh pr merge
+--delete-branch" as prose) got denied as if it were an actual bare `gh pr merge`
+invocation. Same bug class as the Rule 8/Rule 6 false positives already on record here:
+a rule that scans `$cmd` instead of the heredoc-stripped `$cmd_head` cries wolf on its
+own documentation. Fixed by hoisting the `cmd_head=${cmd%%<<*}` strip (previously local
+to Rule 8) to the top of the script and switching Rule 5 to match against it; added a
+regression fixture to `scripts/hooks/test-hooks.sh` ("commit heredoc naming gh pr merge
+ok"). All 70 cases in `test-hooks.sh` pass. General lesson: any bash-guard rule matching
+a command-name pattern that could plausibly appear in prose (commit messages, docs
+edits) must match `$cmd_head`, not `$cmd` — check this by default for new rules, not
+just when a false positive is hit.
+
+## 2026-08-10 — round 3 of the same mobile chat-shell height bug: fixed blind twice, still not confirmed live
+
+Timeline on `command-center` in one session: PR #160 fixed a real bfcache/`dvh`
+staleness bug on Android by JS-computing `--app-height`. PR #161 fixed a keyboard-gap
+regression #160 introduced (it sourced the value from `visualViewport.height`, which
+shrinks on keyboard open; switched to `window.innerHeight`, which shouldn't). Then
+Simon reported a THIRD symptom live: the shell tracks correctly through one keyboard
+open/close cycle, then stops — same drag-to-fix blank-gap symptom as the original bug.
+
+Before touching code a third time, re-read the effect end to end against the three
+hypotheses given (listener not re-armed / stale closure / DOM node replaced by React)
+and found **none of them present as coded** — single effect, `[]` deps, listeners on
+`window`/`document` (never replaced), writes to `document.documentElement` (not a
+component-owned node, so React re-rendering AdeSurface can't orphan it). That's a real,
+checkable finding, not a shrug: this specific bug is not a JS logic bug in the sense the
+hypotheses described.
+
+The remaining plausible cause is a browser-level timing race (Android dispatching
+`resize`/`visualViewport` events mid-animation with a transient value, nothing
+correcting it once things settle) — mitigated with a trailing 120ms re-sample (PR #162),
+plus a new `tests/smoke/ade-app-height.spec.ts` that drives 3 repeated viewport
+shrink/grow cycles and asserts `--app-height` tracks every time, not just the first.
+
+**The honest, load-bearing finding:** that new test was run against the PRE-FIX PR #161
+code too, specifically to check whether it would have caught this bug. It passed there
+as well. Playwright's `setViewportSize` is a clean, non-animated resize — it validates
+listener-rearm/closure logic across cycles (real value), but cannot reproduce Android's
+actual `visualViewport`-vs-layout-viewport divergence or its animation timing (the
+actual suspected cause). **PR #162 is a defensible mitigation, not a confirmed fix.**
+
+**Lesson:** for a bug class that's now failed to fix twice in a row on real hardware
+this session can't reach, the right move is not a fourth blind patch — it's (a) stating
+plainly, before Simon re-tests, exactly what was and wasn't verified and why, so he
+isn't the test harness for a guess dressed up as a fix, and (b) naming the actual next
+diagnostic step if it recurs: remote-debugging the real device (`chrome://inspect` over
+USB/tailscale) to capture the true event sequence and timing, rather than reasoning
+about Android viewport behavior from spec docs and priors. Also: when a Playwright
+regression test is added specifically to guard a bug class, run it against the
+known-buggy prior version too — if it passes there, it's not proof of a fix, and saying
+so explicitly is what separates a real regression test from a false sense of coverage.
+
+**Where documented:** command-center PRs #160, #161, #162.

@@ -1,6 +1,6 @@
 # Handoff — Execute the Draftsman rollout (spec + plan approved, build it)
 
-status: SUPERSEDED 2026-08-10 — Simon rejected the paper direction on live preview check; see docs/handoffs/2026-08-10-dark-refresh.md for the follow-up
+status: SUPERSEDED 2026-08-10 — Simon rejected the paper direction on live preview check; dark-refresh follow-up built and PR'd, see docs/handoffs/2026-08-10-dark-refresh.md
 picked_up_by: sitemaster session, 2026-08-09 (CMO delegate)
 updated: 2026-08-10
 
@@ -18,9 +18,10 @@ dev-tool signals that motivated this rollout (monospace type, blinking terminal 
 traffic-light window dots), and port over only the winning structural devices —
 reset-vs-remembers note cards, spec-sheet pricing ladder, founding-rate seal, personal
 signature line, honest no-logos-yet proof framing — rendered dark-compatible. Copy-audit
-fixes (`funnel/setup-offer/copy-audit-2026-08-09.md`) are theme-independent and still
-need porting to master. `brand/visual-operator.md`'s Draftsman/paper mandate is stale
-and needs rewriting to reflect this decision — tracked in the follow-up.
+fixes (`funnel/setup-offer/copy-audit-2026-08-09.md`) were theme-independent and have
+now been ported to master. `brand/visual-operator.md`'s Draftsman/paper mandate has been
+rewritten to reflect this decision. Follow-up: simonparis-website PR #107, MetaArchitect
+PR #110.
 
 ## Build complete (2026-08-09) — historical record, superseded above
 
