@@ -28,6 +28,13 @@ talk — until that sentence exists. Can't write it → not ready to build;
 say so and stop. The sentence becomes line one of the goal's
 `acceptance_criteria` when the briefing publishes (see `to-tickets`).
 
+When the interview reaches “done” or acceptance, require criteria that an
+agent can check by driving the running app or reading test output. Encourage
+literal discriminators — routes, selectors, states, exact strings, file
+paths, and values such as `#E04500` or `#C97A1A` — rather than subjective
+claims. This is the briefing-side counterpart to `to-tickets`; do not pass a
+goal forward with “make it better” as its verification plan.
+
 Work the tree in **rounds**. The **frontier** is every decision whose
 prerequisites are already settled — the questions you can ask _now_ without
 guessing at answers you haven't heard yet. Ask the whole frontier in one
@@ -63,7 +70,7 @@ user confirms you have reached a shared understanding.
 
 ## Modified from upstream
 
-Deliberate delta from `mattpocock/skills` `grilling` — do not "fix" it
+Deliberate deltas from `mattpocock/skills` `grilling` — do not "fix" them
 back:
 
 1. **Outcome-sentence gate hard-coded as question one** for any goal/spec
@@ -72,3 +79,17 @@ back:
    automate — the gate is also the project-stacking guard, and the sentence
    feeds `acceptance_criteria` line one downstream in `to-tickets`. Upstream
    has no such gate; here it is the point of the interview.
+2. **Acceptance criteria must be machine-verifiable.** When the interview
+   establishes “done,” require routes, selectors, states, literal values,
+   or test output that can prove it. Upstream leaves this unspecified; our
+   verify stage and brand rules need concrete discriminators, and file paths
+   and literal values are useful evidence rather than forbidden detail.
+3. **The handoff is Command Center’s typed goal flow, not a second tracker.**
+   Once the goal is understood, hand it to `to-tickets`: the spec is a
+   feature goal, slices are task children, code slices queue as stories with
+   `goal_id`, work belongs to the owning master, and Simon-only decisions
+   become proposals. This preserves one source of truth and advisor mode.
+4. **Slice dependencies are linear and queue on merge.** Explain this when
+   sequencing is discussed: the FIFO story worker has no blocking-edge
+   executor, so downstream stories wait until their predecessor merges.
+   This relaxes only when `stories.blocked_by` exists.
