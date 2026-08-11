@@ -4,7 +4,7 @@
 # STATE (E — Explicit): every response is validated before use. Any core-source
 # failure prints "FAILED at <stage>: <detail>" to stderr and exits non-zero.
 # Optional sources (leads, open_leads, superstars, postiz_drift, engage, lessons.md,
-# MailerLite) degrade to {"skipped": true, "reason": ...} — never abort over them.
+# subscribers) degrade to {"skipped": true, "reason": ...} — never abort over them.
 set -euo pipefail
 
 ROOT=/home/diamond/projects/MetaArchitect
@@ -165,33 +165,29 @@ else
   echo '{"skipped": true, "reason": "docs/lessons.md not found"}' > "$TMP/lessons.json"
 fi
 
-# --- MailerLite (optional — degrade, don't abort). Cloudflare blocks default curl UA. ---
-stage="mailerlite"
-ML_KEY=""
-for f in "$ROOT"/.env "$ROOT"/projects/simonparis-website/.env "$ROOT"/projects/simonparis-website/.env.local "$ROOT"/projects/simonparis-website/.env.production; do
-  [ -f "$f" ] || continue
-  v=$(grep -m1 '^MAILERLITE_API_KEY=' "$f" | cut -d= -f2- | tr -d '"' || true)
-  case "$v" in ""|*your*|*xxx*|*XXX*|*placeholder*) ;; *) ML_KEY="$v"; break ;; esac
-done
-if [ -z "$ML_KEY" ]; then
-  echo '{"skipped": true, "reason": "no MAILERLITE_API_KEY in repo root .env or simonparis-website/.env*"}' > "$TMP/ml.json"
-else
-  if curl -s --max-time 30 "https://connect.mailerlite.com/api/groups?limit=50" \
-       -H "Authorization: Bearer $ML_KEY" -H "Accept: application/json" \
-       -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0" \
-       -o "$TMP/ml_raw.json" \
-     && python3 -c "import json;d=json.load(open('$TMP/ml_raw.json'));assert isinstance(d.get('data'),list)" 2>/dev/null; then
-    python3 - "$TMP/ml_raw.json" > "$TMP/ml.json" <<'PYEOF'
+# --- Subscribers (optional — degrade, don't abort). MailerLite retired 2026-08;
+# --- the system of record is now Supabase public.email_subscribers (Resend is
+# --- sync-out only — see simonparis-website migration 0007). subscribers_total
+# --- counts delivery_status=active, matching MailerLite's old active_count. ---
+stage="subscribers"
+curl -s --max-time 30 "$SUPABASE_URL/rest/v1/email_subscribers?select=source,delivery_status" \
+  -H "apikey: $KEY" -H "Authorization: Bearer $KEY" -o "$TMP/subs_raw.json" || echo 'null' > "$TMP/subs_raw.json"
+python3 - "$TMP" <<'PYEOF' || echo '{"skipped": true, "reason": "subscriber aggregation failed"}' > "$TMP/subs.json"
 import json, sys
-d = json.load(open(sys.argv[1]))["data"]
-groups = [{"name": g.get("name"), "active_count": g.get("active_count")} for g in d]
-total = sum(g["active_count"] or 0 for g in groups)
-print(json.dumps({"groups": groups, "subscribers_total": total}))
+t = sys.argv[1]
+try:
+    rows = json.load(open(f"{t}/subs_raw.json"))
+    assert isinstance(rows, list)
+    active = [r for r in rows if r.get("delivery_status") == "active"]
+    by_source = {}
+    for r in active:
+        src = r.get("source") or "unknown"
+        by_source[src] = by_source.get(src, 0) + 1
+    out = {"subscribers_total": len(active), "all_statuses": len(rows), "by_source": by_source}
+except Exception as ex:
+    out = {"skipped": True, "reason": f"email_subscribers not readable: {ex}"}
+json.dump(out, open(f"{t}/subs.json", "w"))
 PYEOF
-  else
-    echo '{"skipped": true, "reason": "MailerLite API call failed or returned invalid JSON"}' > "$TMP/ml.json"
-  fi
-fi
 
 # --- Previous review (for subscribers_delta; optional — table may not exist yet) ---
 stage="previous_review"
@@ -221,7 +217,7 @@ print(json.dumps({
     "postiz_drift": load("postiz_drift.json"),
     "engage": load("engage.json"),
     "lessons": load("lessons.json"),
-    "mailerlite": load("ml.json"),
+    "subscribers": load("subs.json"),
     "previous_review": load("prev.json"),
 }, indent=2))
 PYEOF

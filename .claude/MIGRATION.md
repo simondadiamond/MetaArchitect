@@ -9,7 +9,7 @@ This directory holds Claude Code native subagents and skills migrated from the p
 | Agent | Purpose |
 |---|---|
 | `coo.md` | Chief Operating Officer for The Meta Architect — roadmap, brand enforcement, content pipeline coordination, lessons loop. |
-| `sitemaster.md` | Web atelier for simonparis.ca — brand-obsessed frontend engineer, Next.js 14 + Tailwind + next-intl, MailerLite, Vercel deploys. |
+| `sitemaster.md` | Web atelier for simonparis.ca — brand-obsessed frontend engineer, Next.js 14 + Tailwind + next-intl, Resend email, Vercel deploys. |
 | `blog-writer.md` | Long-form blog post writer for simonparis.ca. Coordinates the `research` → `write-post` → `editorial` pipeline. |
 | `health.md` | Personal health & performance coach — Tactical Barbell Capacity phase, Zone 2 protocol, kettlebell conditioning, daily mobility. |
 | `family.md` | Family coach (fatherhood + partnership) — evening reflections, weekend activity suggestions, Charlotte/Flo/Valerie context. |
@@ -59,7 +59,7 @@ The Sterling workspace agents (`agents/<name>/SYSTEM.md` + `CLAUDE.md`) are the 
 1. Open this repo in Claude Code (the Claude CLI / IDE extension auto-discovers `.claude/agents/` and `.claude/skills/`).
 2. Invoke a subagent by name (`@coo`, `@sitemaster`, etc.) or let Claude select based on the descriptions in each agent's frontmatter.
 3. Skills are auto-discovered too — Claude will offer them when relevant (or you can `/skill-name` if user-invocable).
-4. Credentials (Supabase service role key, MailerLite API key, `AGENT_INGEST_KEY`, etc.) come from your local `.env` / secret store. See each skill for the specific env vars it expects.
+4. Credentials (Supabase service role key, Resend API key, `AGENT_INGEST_KEY`, etc.) come from your local `.env` / secret store. See each skill for the specific env vars it expects.
 
 ## When to use popebot instead
 

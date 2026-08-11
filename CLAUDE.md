@@ -102,6 +102,6 @@ Full details: `projects/command-center/README.md` ("Story worker") and `docs/sup
 **simonparis.ca website** lives at `projects/simonparis-website/` (own git repo, gitignored from root).
 - GitHub: `github.com/simondadiamond/simonparis-website` (private)
 - Deploy target: Vercel — check if a Vercel MCP is available (`/vercel` or check MCP list) before doing anything manually
-- Env vars needed in Vercel: `MAILERLITE_API_KEY` + `MAILERLITE_GROUP_ID=182570285404260273`
+- Email: **Resend** (migrated from MailerLite, 2026-08). Vercel env vars: `RESEND_API_KEY`, `RESEND_AUDIENCE_ID`, `RESEND_WEBHOOK_SECRET`, `RESEND_TOPIC_ID_NEWSLETTER`, `RESEND_TOPIC_ID_ONBOARDING` (canonical list: the repo's `.env.local.example`). Sending domain is `mail.simonparis.ca`; root-domain mail stays on Zoho. Subscribers land in Supabase `email_subscribers` (+ append-only `email_consent_log`) first, Resend second — the consent record must survive a provider outage.
 
 For full content engine details (pipeline, data model, STATE requirements): see [projects/Content-Engine/CLAUDE.md](projects/Content-Engine/CLAUDE.md).
