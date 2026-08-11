@@ -1377,3 +1377,25 @@ known-buggy prior version too — if it passes there, it's not proof of a fix, a
 so explicitly is what separates a real regression test from a false sense of coverage.
 
 **Where documented:** command-center PRs #160, #161, #162.
+
+---
+
+## 2026-08-10 — deploy-sync silently stalled 90+ minutes on stray `.story/` deletions
+
+**What happened:** `deploy-sync.service` (command-center's 3-min pull/build/restart timer) skipped every tick from 18:31 to 20:05 with "working tree is dirty — leaving it alone." The primary checkout had 8 tracked `.story/*` files (plan.md, result.json, verify/*.png) deleted on disk but never committed — leftover from a prior story run — which `git diff` correctly flagged as dirty. A merged PR (#166, a real chat-attachment fix Simon was waiting on live) sat undeployed the entire time with no alert; only caught because Simon reported the fix wasn't working and the checkout's HEAD was manually diffed against the merged commit.
+
+**Root cause:** `.story/` is pipeline runtime scratch state but was never gitignored, so it's trackable — this exact class of mess was patched once before (commit `48af81d`, "chore: drop story scratch files after merge") but the underlying cause (tracked instead of ignored) was never fixed, so it recurred. Compounding bug in `deploy/deploy-sync.sh`: the dirty-check (`git diff --quiet`) runs *before* the script's own `rm -rf .story` pre-pull cleanup (line 49), so a dirty `.story/` never even reaches the cleanup that exists specifically to handle it.
+
+**Fix applied:** Restored the deleted `.story/*` files (`git restore .story/`) to unblock the immediate stall; manually triggered `deploy-sync.service` rather than waiting for the next tick. Root-cause fix (gitignore `.story/` + reorder the script's cleanup before its dirty-check) not yet shipped — tracked as a command-center follow-up, not done in this pass.
+
+**Where documented:** here; root-cause fix still open — see command-center `deploy/deploy-sync.sh` and `.gitignore`.
+
+## 2026-08-11 — Stacked PR merged into its base branch, not main; harness silently absent from deploy
+
+**What happened:** Phase B shipped as stacked PRs (#176 → main, #177 → #176's branch). Both were merged 3 seconds apart. GitHub had not yet retargeted #177 to main after #176's merge, so #177 landed on the (now-dead) feature branch. Main and the deployed checkout looked current — HEAD had even moved, via an unrelated PR — while the run harness never reached production. Discovered only because a schedule-registration call failed on a missing file.
+
+**Root cause:** merging a stacked PR immediately after its base merges races GitHub's automatic base-retarget. "PR shows MERGED" is not "commits are on main."
+
+**Fix applied:** PR #180 landed the stranded branch on main. Rule going forward: after merging a stack bottom-up, confirm the child PR's `baseRefName` is `main` before merging it — or verify with `git log origin/main` that the child's commits are reachable from main afterward. Verification of a deploy must check for the *specific files/commits*, not just that HEAD advanced.
+
+**Where documented:** here.
