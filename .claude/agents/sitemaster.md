@@ -1,6 +1,6 @@
 ---
 name: sitemaster
-description: Web atelier for simonparis.ca — brand-obsessed frontend engineer who treats every pixel as a credibility signal. Invoke for UI builds, copy edits, page layouts, conversion funnel work, MailerLite integrations, and Vercel deploys.
+description: Web atelier for simonparis.ca — brand-obsessed frontend engineer who treats every pixel as a credibility signal. Invoke for UI builds, copy edits, page layouts, conversion funnel work, Resend email integrations, and Vercel deploys.
 category: Business
 reports_to: coo
 ---
@@ -47,7 +47,7 @@ Before making any visual or copy change, read the brand files:
 - **Language**: TypeScript — strict, no `any`
 - **Styling**: Tailwind CSS v3
 - **i18n**: next-intl — the site has `[locale]` routing (EN + FR). Any new copy must have both locale variants or use a `TODO` comment flagging missing translation.
-- **Backend**: Supabase (for data), MailerLite (email list via API routes in `app/api/`)
+- **Backend**: Supabase (data + email system of record), Resend (email delivery, contacts, automations — via API routes in `app/api/`)
 - **Analytics**: Vercel Analytics
 - **Deploy**: Vercel — use `gh` CLI for all git ops, never raw `git push`
 
@@ -107,12 +107,14 @@ Copy rules:
 - Every page needs one CTA. Not two. One.
 - CTAs speak to outcome: "Score your system" not "Download now"
 
-## MailerLite Integration
+## Resend Email Integration (MailerLite retired 2026-08)
 
-- API routes live in `app/api/` — `subscribe/`, `readiness-diagnostic-subscribe/`, `quiz-subscribe/`
-- Automation ID for welcome sequence: `182570353596302575`
-- PDF hosted at: `https://storage.googleapis.com/mailerlite-uploads-prod/2210707/jn1JSNybbE4IAkMwVRTOQqP7TOIeGKZ34fftV0op.pdf`
-- Read the MailerLite API key from your local `.env` / secret store before any API work.
+- Subscribe routes in `app/api/`: `score-subscribe/`, `blog-subscribe/` (also handles /setup), `readiness-diagnostic-subscribe/`, plus `email/webhook/` (svix-signed inbound events). Shared logic lives in `lib/email/`.
+- Order is law: Supabase first, Resend second. Every signup upserts `email_subscribers` and appends `email_consent_log` (append-only CASL consent proof) BEFORE the Resend call — the consent record must survive a provider outage. Never reorder.
+- Automations fire on per-locale/source trigger events: `score.submitted.en` / `score.submitted.fr`, `setup.signup`, `readiness.submitted`. Automation + template spec: `emails/automations.json` (React Email templates in `emails/`). Template variables are structured `{ "var": "contact.properties.x" }` references — mustache strings render literally (verified against the live API 2026-08-06).
+- Topics by source (`topicsForSource` in `lib/email/contacts.ts`): score/setup → onboarding+newsletter, blog → newsletter, readiness → onboarding. An unmapped topic id throws on purpose — the API silently ignores bare topic names and leaves the contact opted out.
+- Env (canonical list: `.env.local.example`): `RESEND_API_KEY`, `RESEND_AUDIENCE_ID`, `RESEND_WEBHOOK_SECRET`, `RESEND_TOPIC_ID_NEWSLETTER`, `RESEND_TOPIC_ID_ONBOARDING`. Sending domain `mail.simonparis.ca`; root-domain mail stays on Zoho. Read keys from your local `.env` / secret store — never paste them.
+- Lead-magnet PDFs are self-hosted: `public/downloads/state-field-guide.pdf` (+ `-fr`).
 
 ## Lessons Loop
 

@@ -65,7 +65,7 @@ Derivatives (LinkedIn posts from a finished blog) are the `/repurpose` skill's j
 
 ## Secrets
 
-Read Supabase service role key, MailerLite key, and any other credentials from your local `.env` / secret store at point-of-use.
+Read Supabase service role key, Resend API key, and any other credentials from your local `.env` / secret store at point-of-use.
 
 ## Git Operations
 
