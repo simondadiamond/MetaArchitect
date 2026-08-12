@@ -1399,3 +1399,15 @@ so explicitly is what separates a real regression test from a false sense of cov
 **Fix applied:** PR #180 landed the stranded branch on main. Rule going forward: after merging a stack bottom-up, confirm the child PR's `baseRefName` is `main` before merging it — or verify with `git log origin/main` that the child's commits are reachable from main afterward. Verification of a deploy must check for the *specific files/commits*, not just that HEAD advanced.
 
 **Where documented:** here.
+
+## 2026-08-12 — CMO/CRO daily-run harness never read the ICP; produced enterprise-lane ideas post-pivot
+
+**What happened:** CRO's daily ops run proposed a lead magnet ("LLM production reliability checklist") that matches the retired enterprise-practitioner ICP, not the current operator/SMB ICP the business pivoted to (locked in `.claude/product-marketing.md` v2, 2026-08-09). Simon caught it by inspection, not by any harness safeguard.
+
+**Root cause:** `scripts/agents/run-master.mjs` composes the daily prompt from persona-md + goals + playbooks + journal + KPIs — no ICP/customer-context source was ever wired in, for either domain master. With nothing grounding it, the model defaulted to generic "LLM reliability" framing from prior training/context, which happened to line up with the old ICP.
+
+**Fix applied:** `run-master.mjs` now reads `~/projects/MetaArchitect/.claude/product-marketing.md` and injects it into every CMO/CRO prompt under a labeled "Customer & offer context" section, instructing the model to ground ideas in it over memory. Fixes both agents from one change point (command-center PR #192); stays current automatically as that doc is revised — no persona-file edits needed on the next ICP shift.
+
+**Lesson:** any agent/harness that generates ideas or copy needs an explicit, current ICP/offer doc wired into its context — a persona file merely *mentioning* the business is not the same as the model being handed today's target customer. When a business pivots ICP, audit every daily-run harness for stale grounding, not just the customer-facing docs.
+
+**Where documented:** here; command-center PR #192.
