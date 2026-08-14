@@ -56,6 +56,8 @@ curl -s "http://100.105.85.5:3737/api/weekly-reviews?limit=1"
 - **Latest weekly review** is the ground truth of momentum — its `next_actions`, `flags`, and metrics tell you what last week left undone. If it's older than ~10 days, note that in the brief's context rather than treating it as current.
 - API down → `systemctl --user start command-center`, retry once, then ABORT at `anchor`.
 
+**Night-build fuel gauge (mandatory read).** From the same goals payload, count two things: goals that are `agent_eligible` + `pending` (the scouting pool), and of those, how many have a non-empty `acceptance_criteria` **column** — the night-ready set the 1:00am lane actually selects from. `agent_eligible` is a capture-time scouting flag; only the scoping ritual makes a goal night-ready, so the two counts diverge silently (lessons.md 2026-08-14: the lane ran ~11 nights and built nothing because the night-ready count was structurally 0). Degrade gracefully if the column is absent from the payload — query Supabase directly rather than skipping the check.
+
 ## Step 2 — Explore (open-ended, yours)
 
 Decide what else you need to know **this week** to rank well, and dispatch **2–4 read-only sub-agents** (Agent tool) to get it. You write their prompts — each prompt states the outcome you need ("tell me which open leads have gone >5 days without a reply, oldest first, with links"), not a procedure. Angles that have mattered before — a menu, not a checklist: story pipeline state, LinkedIn cadence vs the 2x/week target, engage queue backlog, open leads aging, `docs/lessons.md` recency, Postiz queue vs `pipeline.posts`. Skip what doesn't matter this week; chase what does.
@@ -81,6 +83,8 @@ Apply the objective function to everything you now know. Output: **3–5 tasks**
 - `goal_id` — uuid of the matching goals row, or omit if genuinely none (then say in `why` why it's still on the list)
 
 Plus `title` ("Week of {week_start}: <7-word theme>") and `summary_md` — **under 200 words** of context: what shaped the ranking, what you deliberately left off, any degraded data sources. Brand voice: direct, diagnostic, no filler, no hedging.
+
+**Fuel-gauge rule (fires on the Step 1 counts).** Night-ready count is 0 while the scouting pool is non-empty → the brief MUST carry a "scope one night build" task: name the single best candidate (highest RICE, nulls → your judgment on leverage), state its Simon-minute cost (the scoping chat is ~5 minutes of his time, the build is free), and set `goal_id` to that candidate. Rank it on merit like anything else, but it is never silently omitted — a dry lane is the cheapest compounding slot on the board, and it cannot fix itself. Below ~2 night-ready goals, mention the thin queue in `summary_md`.
 
 ## Step 4 — Validation gate, then write
 

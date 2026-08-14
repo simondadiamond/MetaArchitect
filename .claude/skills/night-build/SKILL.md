@@ -20,7 +20,9 @@ A goal is **night-ready** iff ALL hold:
 - `status = pending`
 - `acceptance_criteria` filled, and its **first line is the outcome sentence** (one sentence, no technology in it)
 
-Read via command-center Supabase REST (service key from `projects/command-center/.env`). Pick the single highest `rice_score` (nulls last). A row failing the outcome-sentence test is **skipped, never interpreted** — append `night-build YYYY-MM-DD: skipped — unscoped outcome sentence` to its `description` so it surfaces for re-scoping.
+Read via command-center Supabase REST (service key from `projects/command-center/.env`). Pick the single highest `rice_score` (nulls last). A row failing the outcome-sentence test is **skipped, never interpreted** — append `night-build YYYY-MM-DD: skipped — unscoped outcome sentence` to its `description` so it surfaces for re-scoping, **once**: a row that already carries a `night-build YYYY-MM-DD: skipped` line is left untouched (re-annotating nightly is the log spam this rule exists to prevent).
+
+`agent_eligible` is a **scouting flag set at capture time**, not a readiness flag — only the scoping ritual writes `acceptance_criteria`. Acceptance criteria written into the `description` body (a `## Acceptance criteria` markdown section) do NOT count; the column is the contract, and reading the body would be interpreting an unscoped row. This gap is structural and silent by design here — the weekly fuel gauge in `weekly-brief` is what surfaces a permanently dry lane (lessons.md 2026-08-14).
 
 **Nothing night-ready → exit silently.** No output, no makework, no log spam.
 
