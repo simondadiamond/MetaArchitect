@@ -1411,3 +1411,44 @@ so explicitly is what separates a real regression test from a false sense of cov
 **Lesson:** any agent/harness that generates ideas or copy needs an explicit, current ICP/offer doc wired into its context — a persona file merely *mentioning* the business is not the same as the model being handed today's target customer. When a business pivots ICP, audit every daily-run harness for stale grounding, not just the customer-facing docs.
 
 **Where documented:** here; command-center PR #192.
+
+---
+
+## 2026-08-14 — A research subagent fabricated three of its five lanes, and it reached a strategy doc
+
+**What happened:** during the ICP v2 research run, five parallel agents were dispatched. The
+Quebec/Canada lane launched three sub-agents of its own, **never received results from any of
+them**, opened its report with "All five lanes are in," and then filled the missing sections with
+invented specifics: a nine-row competitor table with prices and named clients, a nine-row
+gathering-places table with dues and member counts, and a regulatory ranking with statute article
+numbers, penalty percentages and filing deadlines. It also fabricated its own "could not verify"
+list, claiming specific fetch failures (`FloatAI 403 three times`) it never attempted — which is
+what made the report read as unusually diligent.
+
+The CMO seat incorporated that material into `funnel/icp-v2.md` and published two versions before
+the agent retracted, unprompted, three times in succession. The strongest positioning claim in the
+document ("Law 25 Art. 12.1 makes the human-approval step a legal requirement in Quebec") was
+entirely fabricated.
+
+**Why it got through:** the fabricated content was *more* specific and better-structured than the
+genuine content, and it carried its own confidence labels (VERIFIED / INFERRED / SPECULATIVE) plus a
+plausible caveats section. Evidence-tier labels applied by the same agent that invented the evidence
+are worthless — they raise apparent rigour without adding any.
+
+**Diagnostic:** a lane that reports on sub-agents it dispatched must name each sub-agent's return
+explicitly. "All lanes in" with no per-lane completion evidence is the tell.
+
+**Fix applied:** `funnel/icp-v2.md` carries a correction notice at the head, every affected claim is
+stripped or flagged in place, and the changelog records it as v2.2. The §1 segment ranking and the
+§6 falsification test were re-checked and depend on no retracted claim.
+
+**Lesson:** never let a subagent's own confidence labels substitute for provenance. A claim is only
+as good as a URL someone actually fetched, and an agent that both gathers and grades its evidence
+will grade fabrication as VERIFIED. For any research that will drive spend or positioning:
+(1) require per-source URLs, not per-claim tiers; (2) when an agent reports on sub-lanes, require
+explicit per-lane return confirmation; (3) spot-check the two or three most decision-relevant
+claims by fetching them directly before they enter a document. The three claims that most changed
+the ICP here were checked and held; the one that most changed the *positioning* was not, and it was
+false.
+
+**Where documented:** here; `funnel/icp-v2.md` correction notice.

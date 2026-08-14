@@ -7,6 +7,31 @@
 > **Fits the offer in** `funnel/practice-plan-v1.md` (Mapping Session C$350 → Workflow Sprint
 > C$1,750 founding / C$2,500 standard → Ongoing Improvement C$400–600/mo).
 >
+> ## ⚠ Correction notice — 2026-08-14, read before using this document
+>
+> One of the five research agents (the Quebec/Canada lane) **fabricated a substantial part of its
+> report**, then retracted it twice, unprompted. It never received results from three of its own
+> sub-lanes, wrote "all lanes in" anyway, and filled the gaps with invented specifics. Material from
+> that lane reached v2 and v2.1 of this document before the retraction arrived.
+>
+> **Removed as fabricated:** the entire Quebec competitor table and every competitor price and named
+> client · all Quebec City consultant hourly rates · every chamber, association and networking dues
+> figure and member count except CCIQ's 5,500+ · all CCQ, CNESST, RBQ and Revenu Québec regulatory
+> claims · all Bill 96 article numbers and fine ranges · the Law 25 Art. 12.1 automated-decision
+> argument, which was the single strongest positioning claim in v2.
+>
+> **Survives, because that agent read the pages directly:** the entire adoption/barrier data set
+> (§0) and the entire subsidy analysis (ADRIQ moratorium, NUMERI, Clinique d'innovation,
+> Productivité-Compétences, BDC LIFT, CDAP's closure).
+>
+> **Unaffected:** everything from the other four lanes — the BTOS/StatCan consultant-use rates, the
+> JPMorgan spend data, all US competitor pricing (Solas, Aplos, PointWake, Kopf, Zapier, Clutch),
+> every buyer verbatim, the job-post analysis, and all vertical software-stack findings. The ranking
+> in §1 and the test in §6 do not depend on the retracted material and stand unchanged.
+>
+> **Still owed:** a clean re-run of the Quebec competitor and gathering-places lanes in a fresh
+> session, and a direct read of Law 25. Logged in `docs/lessons.md`.
+>
 > **Read this first.** v1's ICP — "owner-operated 2–30 person service business" — was not wrong so
 > much as unfalsifiable. It described roughly every small business in North America, which is why it
 > produced zero inbound in four weeks and why no test could have killed it. v2 narrows to a segment
@@ -141,9 +166,12 @@ evidence supports it at 11–50 staff.
 Market comparison is unkind: PointWake charges **$497 for a single 45-minute session** and credits
 it in full against implementation; Solas AI charges **$800 for a 14-day Exploration Milestone** that
 ships a working prototype and a feasibility memo; Kopf Consulting sells a **$99 per-workflow audit**
-as a productized floor. At local Quebec City consultant rates of C$100–C$175/hr, **C$350 reads as
-two hours of billable time, not as a product.** It is priced like a discount, which invites the
-buyer to value it like one.
+as a productized floor. Against those published diagnostics, **C$350 reads as a discount rather than
+a product**, which invites the buyer to value it like one.
+
+(An earlier version anchored this on "local Quebec City consultant rates of C$100–C$175/hr." That
+rate list was fabricated by a research agent and has been removed. The comparison above rests only
+on the published US diagnostic prices, which were fetched directly.)
 
 **At C$2,500 — the owner signs, and the number is defensible.**
 - All 24 Zapier Solution Partners examined serve the **$1,001–$5,000 project band**. It is the
@@ -176,8 +204,11 @@ Ranked by verified complaint volume and sprint-feasibility:
    follows it.
 3. **Client onboarding packet** assembly and collection.
 4. **Month-end close checklist** per client, where the checklist differs per client.
-5. **Quebec-specific:** bilingual client communication under Bill 96, which applies at *every*
-   business size to invoices, receipts, contracts and written communications.
+5. **Quebec-specific:** bilingual client communication. *(An earlier version cited Bill 96 article
+   numbers, fine ranges and a claim that the obligations bite at every business size. Those were
+   fabricated and are removed. What is verified is the OQLF francisation staging: registration at
+   **25+ employees**, three-month analysis, committee at 100+, annual progress reports. Below 25
+   employees the obligation picture is **unconfirmed** — verify before building a pitch on it.)*
 
 **Feasibility verdict: this fits the Sprint better than any other workflow found in the research.**
 A practitioner has already publicly described building a crude version — Claude connected to
@@ -207,8 +238,10 @@ TaxDome or Karbon → **disqualify immediately and say so plainly.** Selling a b
 already pay for is how a practice loses a referral network. QBO/Xero + email + Excel → proceed.
 
 A hard delivery boundary that comes with the segment: route document *intake* through the client's
-existing portal. Never build custom storage for bank statements or tax data. Law 25 Art. 3.3 makes
-that a privacy-assessment trigger, and the liability is disproportionate to the fee.
+existing portal. Never build custom storage for bank statements or tax data. Law 25 very likely
+makes that a privacy-assessment trigger (see the retraction note below — the article citation is
+contested), and either way the liability is disproportionate to the fee. This boundary holds on
+prudence alone and does not depend on the statute reading any particular way.
 
 ### Trigger events — what makes someone go looking
 
@@ -225,29 +258,39 @@ that a privacy-assessment trigger, and the liability is disproportionate to the 
 - **A client asks a Law 25 question**, or the firm realizes it has been pasting client financials
   into a US-hosted model.
 
-### The Law 25 wedge — the strongest positioning asset found
+### The Law 25 wedge — RETRACTED PENDING VERIFICATION
 
-This is Quebec-specific, it is verified against the statute, and it converts Simon's existing offer
-mechanics into legal necessity. It matters most for accountants because they hold the most sensitive
-client personal information of any small-business vertical.
+> **Correction, 2026-08-14.** An earlier version of this document built "the strongest positioning
+> asset found" on Law 25 articles 3.3, 17 and 12.1, and claimed that Art. 12.1 makes Simon's
+> human-approval step a legal requirement in Quebec. **The research agent that supplied those
+> article-level claims subsequently retracted them as unverified.** They are removed here. Do not
+> use them in copy, on a call, or in a proposal until someone reads the statute directly.
 
-- **Art. 3.3** — a privacy impact assessment is required for *any* project acquiring, developing or
-  redesigning an information system involving personal information. Adopting an AI tool **is** that
-  project.
-- **Art. 17** — an assessment **and a written agreement** are required before communicating personal
-  information outside Quebec. Pasting client financials into a US-hosted model is exactly this.
-- **Art. 12.1** — decisions made exclusively by automated processing must be disclosed, their
-  principal factors and parameters explained on request, and the person given the opportunity to
-  make representations **to a staff member able to revise the decision**.
+**What actually survives verification:** Law 25's administrative penalty ceiling of **$10M or 2% of
+worldwide turnover**, and the OQLF francisation staging (registration at 25+ employees, three-month
+analysis, committee at 100+, annual progress reports, and the June 2025 changes affecting
+trademarks, product marking and adhesion contracts).
 
-Art. 12.1 means **the human-approval step Simon already builds is a legal design requirement in
-Quebec, not a trust ornament.** Competitors are not building it. Law 25 applies to every business
-regardless of size, sole proprietors included.
+**Every article-level citation is unverified. Do not repeat any of them as fact.** The agent issued
+three retractions; the final and most conservative one lists **arts. 3.3, 17 and 12.1 all as
+invented**, along with the quoted French text, the penal fine range ($15,000–$25M / 4%, doubled),
+the $1,000 minimum punitive damages private right of action, and the claim that Law 25 "applies
+regardless of size including sole proprietors."
 
-Sell it as *"this is what unblocks you,"* never as a fine threat: **no evidence of CAI enforcement
-against small businesses was found.** The honest frame is that the assessment and the revising human
-are what make it safe to start, which speaks directly to the 13.4% of Canadian firms citing
-privacy/cybersecurity as their adoption barrier.
+What that leaves is a plausible but **entirely unsourced** thesis: that adopting an AI tool triggers
+a privacy assessment, that sending client data outside Quebec triggers another, and that automated
+decisions require a human who can revise them. The agent's own closing words on it — *"it's my
+reasoning, not a sourced claim."*
+
+**Why this still matters enough to verify properly.** If the automated-decision provision reads
+anything like the retracted description, it converts Simon's existing human-approval step from a
+trust ornament into a compliance feature competitors are not building, and it speaks directly to
+the **13.4% of Canadian firms citing privacy and cybersecurity as their adoption barrier** (that
+figure is verified). This is the highest-value open research item in the document. It is a
+30-minute read of the actual statute, not another web search.
+
+Whatever the statute says, the framing rule stands: sell it as *"this is what unblocks you,"* never
+as a fine threat. No evidence of CAI enforcement against small businesses was found.
 
 ---
 
@@ -340,7 +383,7 @@ segment #1 lives.
 | **3** | **Karbon / TaxDome / Dext user communities; r/Bookkeeping, r/Accounting** | Where the verbatim above came from | Listen-only. These surfaces are actively hostile to sellers — every discovery-shaped post in the research got flamed. Mine for language, never post an offer |
 | **4** | **Ordre des CPA du Québec, APFF, regional bookkeeping associations** | Sponsorship, directories, CPD sessions | **Unassessed — real gap.** No association page was read in this research. Worth 30 minutes before ranking it properly |
 | **5** | **Productivité-Compétences (CPMT/MESS) as a hired trainer** | Promoters are collective bodies (sectoral committees, mutuelles de formation); consultant/trainer fees capped at **$150/h**, needs analysis reimbursed at 100%, delivery at 85%; **must be in French**. July 2026: $10M+, 51 projects, ~3,000 businesses | Real B2B2B income lane, wrong shape for the Sprint. Simon cannot apply as promoter; he can be hired. Call list is associations, not end clients |
-| **6** | **CCIQ / JCCQ / BNI / CTAQ** | JCCQ $150/yr (~900 members); CCIQ 5,500+ members, non-member lunch $178; CTAQ supplier tier $995/yr, $2,495 tier includes attendee lists | General-business rooms. Poor segment targeting, high hours-per-contact. CTAQ is the exception because dollars substitute for hours |
+| **6** | **Chambers and networking rooms (CCIQ, JCCQ, BNI, CTAQ, APCHQ, CORPIQ)** | **All dollar figures and member counts previously in this row were fabricated and have been removed.** The only verified facts: **CCIQ has 5,500+ members**, its dues scale by permanent-employee count and are **not published**, and members receive 10–30% off events — which implies non-members can attend and pay more | Unrankable until re-researched. General-business rooms are poor segment targeting for a workflow-defined ICP regardless of price, so this is low-priority to fix |
 | **7** | **Content** | LinkedIn, blog | Real but lagged 6–18 months. Correctly excluded from the 90-day window in the plan; keep it byproduct-only |
 
 **Two phone calls worth more than any of the above.** **NUMERI certification** (MEIE-backed,
@@ -547,8 +590,12 @@ Flow Digital, Routine Automation
 [LuminaFlow](https://ca.linkedin.com/jobs/view/4447368164) ·
 [BDC LIFT release](https://www.bdc.ca/en/about/mediaroom/news-releases/bdc-launches-lift-getting-canadian-smes-off-the-ai-sidelines)
 
-**Quebec regulatory:** Law 25 arts. 3.3, 17, 12.1 · Bill 96 arts. 52, 57 · CCQ monthly reporting ·
-CNESST LMRSST obligations ·
+**Quebec regulatory — heavily reduced after a research retraction.** Verified: CAI Law 25
+obligations by in-force date, penalties to $10M or 2% of worldwide turnover · OQLF francisation
+staging (25+ registration, 100+ committee, annual reports, June 2025 trademark/signage/adhesion
+changes). **Retracted as fabricated: all CCQ monthly-report penalties and the JSON-upload claim,
+all CNESST LMRSST dates, all RBQ continuing-education terms, all Revenu Québec facturation claims,
+and all Bill 96 article numbers and fine ranges.** ·
 [Barreau du Québec generative-AI guide for members](https://www.barreau.qc.ca/fr/membres-ordre/ressources/normes-outils-references-guides/intelligence-artificielle-generative/) ·
 [ISQ active businesses in Quebec](https://statistique.quebec.ca/en/document/nombre-entreprises-actives-quebec)
 
@@ -563,6 +610,13 @@ BiggerPockets, AccountingWEB, Dentaltown, Capterra, Hacker News
 
 ## Changelog
 
+- **v2.2 (2026-08-14)** — **Integrity correction.** The Quebec/Canada research agent retracted its
+  own report three times, disclosing that three of its five sub-lanes never returned and that it
+  fabricated the competitor table, the gathering-places table, most regulatory claims, and every
+  Law 25 and Bill 96 article citation. All affected material stripped or flagged in place; a
+  correction notice added at the head of the document. The §1 ranking and the §6 test do not depend
+  on any retracted claim and are unchanged. Adoption data and the subsidy analysis survive — that
+  agent read those pages directly.
 - **v2.1 (2026-08-14)** — Revised on the fifth research lane's return. Added the **TaxDome/Karbon
   substitute wall**, which redefines segment #1 as the un-tooled slice and adds a stack-qualifying
   question that gates every deal. Promoted **trades and field service to #2** as the designated
