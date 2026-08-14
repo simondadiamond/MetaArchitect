@@ -1,4 +1,12 @@
-# Setup Venture — ICP (v1, evidence-tiered)
+# Setup Venture — ICP (v1, evidence-tiered) — ⚠ SUPERSEDED 2026-08-14
+
+> **SUPERSEDED by [`funnel/icp-v2.md`](../icp-v2.md).** Do not target from this document.
+> v1's segment #1 ("owner-operated 2–30 person service business") was not merely wrong, it was
+> **unfalsifiable** — it described every small business in North America, so no test could kill it
+> and it produced zero inbound in four weeks. v2's #1 is bookkeeping, accounting and tax practices
+> of 1–20 staff on QuickBooks Online or Xero with no practice-management layer. The offer this
+> serves also changed: see [`funnel/practice-plan-v1.md`](../practice-plan-v1.md), which replaces
+> the `offer-v4-spec.md` ladder. Kept as research history and for the refuted-claims list below.
 
 > Owner: Simon. Written 2026-07-20 from a 102-agent deep-research run (20 sources fetched,
 > 96 claims extracted, 25 adversarially verified: 8 confirmed / 17 refuted).
