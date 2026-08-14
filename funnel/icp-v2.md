@@ -54,20 +54,45 @@ Three consequences, and they are not optional:
 
 ## 1. Ranked shortlist
 
-| # | Segment | Evidence tier | The one-line case | The one-line risk |
+| # | Segment | The named workflow | Evidence tier | The one-line risk |
 |---|---|---|---|---|
-| **1** | **Bookkeeping, accounting & tax practices, 1–20 staff, Canada-first** | **INFERRED-strong** (verified pain + verified sector purchase rate; no verified transaction in-segment) | Highest consultant-use rate of any sector (6.9%), multi-year operator-authored complaint volume on one named workflow, incumbent tools explicitly do not solve it, owner signs alone | No buyer-side "I paid $X" evidence exists for this segment anywhere; a slice has already DIY'd it with Claude |
-| **2** | **Property & short-term-rental management operators, 10–200 doors** | **SPECULATIVE** (thin external evidence, strong first-party warmth) | Sym is a live warm prospect at ~100 doors; turnover-dispatch is a clean sprint-shaped workflow | The person who feels the pain is often a contract manager with **no budget authority**; best complaint thread on the surface has zero comments |
-| **3** | **Boutique agencies & studios as a *capacity channel*, not end clients** | **VERIFIED (channel exists) / INFERRED (economics)** | Ace Workflow, Globixs, LuminaFlow are visibly buying build capacity; Ace's own posting describes "4 to 6 days of build over 2 to 3 weeks," scope locked, paid upfront — Simon's Sprint, validated by someone serving The Economist and Warner | Agencies price-shop build labour globally at **$10–15/hr** and recruit from PH/VN/ID/LatAm. This is a rate-compressed channel that funds the practice; it never builds the practice |
-| **4** | **MSPs & IT shops, 5–50 staff** | **INFERRED-weak** | Best fit for Simon's actual technical depth; explicit in-segment demand for "someone developer-adjacent to build stuff for you"; a channel to their own SMB base | They have in-house devs, run build-vs-buy analysis competently, and a vocal contingent advocates hiring offshore developers instead |
-| **5** | **Dental & multi-site clinics** | **SPECULATIVE for Simon** | Densest productized-price market found (Solas, PointWake, Dentistry Growth Partners all sell here); real 2h/day pain in insurance verification | Incumbent is a **$5/hr offshore VA**; buyers arrive pre-loaded with vendor distrust ("Dentists get exploited in every aspect of purchases because of our title"); two-step sale (office manager owns process, dentist owns budget); **zero Quebec signal** |
+| **1** | **Bookkeeping, accounting & tax practices, 1–20 staff, on QBO/Xero + email with NO practice-management layer** | The monthly missing-document chase | **INFERRED-strong** (verified pain + verified sector purchase rate; no verified transaction in-segment) | **TaxDome and Karbon already ship this feature.** The segment is only the un-tooled slice, and no buyer-side "I paid $X" evidence exists anywhere |
+| **2** | **Trades & field service, 5–50 staff (HVAC, plumbing, electrical)** | Quote/estimate follow-up going cold | **SPLIT — verified pain, verified non-purchase.** The most honest disagreement in this research | **Lowest consultant-use rate of any sector (2.2%)**, documented consultant aversion, and a price question that drew zero replies. Highest pain, worst buying record |
+| **3** | **Dental & veterinary clinics running Open Dental or Cliniko** | Insurance verification / recall, human-approved | **INFERRED** | Jane App owns Canadian allied health and **has no API at all**; Dentrix/Eaglesoft gate at $3–5K. Qualify on software before anything else. Insurance pain is US-shaped; RAMQ unvalidated |
+| **4** | **Law firms, 1–20 lawyers, and Quebec notaries** | Matter-status updates + retainer chase | **INFERRED** | Profession-wide conservatism, saturated intake market, small firms are cheap. Notary angle is genuinely untested |
+| **5** | **Boutique agencies & studios as a *capacity channel*, not end clients** | Subcontracted client builds | **VERIFIED (channel exists) / INFERRED (economics)** | Agencies price-shop build labour globally at **$10–15/hr** from PH/VN/ID/LatAm. Funds the practice; never builds it |
 
 ### Why the previously assumed #1 is not #1
 
 "Owner-operated 2–30 person service business" survives as a *boundary condition*, not as a segment.
 Every candidate above sits inside it. That is precisely the problem: it cannot route a channel, it
 cannot write a hook, and it cannot be killed by any test. v2's unit of targeting is
-**(named workflow × named vertical × Canada)**.
+**(named workflow × named vertical × software stack × Canada)**.
+
+### The disagreement inside this research, stated openly
+
+The vertical lane ranked **trades #1** and the buy-side lane's national data says trades are the
+**least likely sector in the economy** to buy this. Both are right about different things, and the
+tension is worth carrying rather than resolving prematurely.
+
+Trades have the best-quantified pain found anywhere in the study — an HVAC owner doing his own math
+unprompted: *"32 hours weekly on quotes that don't convert. My overhead on fuel and time for quotes
+alone is $800+ weekly."* The build is the cleanest of all seven verticals: Jobber and Housecall Pro
+both publish open developer APIs, there is zero regulated data, and the approval gate is natural.
+Quebec has the largest pool (~38,000 construction employers).
+
+Against that: **construction has the lowest consultant-use rate of any sector at 2.2%** and the
+lowest AI adoption in Canada at 9.2% (both VERIFIED, national statistics). A member asking the
+exact question that matters — *"what would you realistically expect to pay for someone to set it up
+for you?"* — got **zero replies**. Software-selection threads list *"Avoid large upfront consultant
+fees"* as an explicit criterion, and a post demanding a ban on software developers fishing in the
+community drew 204 upvotes.
+
+**Ruling: pain intensity is not purchase probability, and confusing the two is exactly what produced
+v1's failure.** Bookkeeping stays #1 because the single most decision-relevant number available —
+sector consultant-use rate — differs by roughly 3× in its favour (6.9% highest vs 2.2% lowest).
+Trades sit at #2 as the **designated fallback**: if the §6 test kills #1, trades is the next test,
+not a re-run with better copy.
 
 ---
 
@@ -159,6 +184,31 @@ A practitioner has already publicly described building a crude version — Claud
 Box.com, running on the 3rd of each month, checking whether each client's file set is present and
 drafting a Gmail message when it is not, with a human hitting send. That is proof the workflow is
 buildable in the Sprint's scope. It is also proof a slice of the segment will build it themselves.
+
+### The substitute wall — the qualifier that decides every deal
+
+**TaxDome and Karbon already ship automated document chasing as a feature.** VERIFIED, from Karbon's
+own marketing copy: *"Automatic reminders and follow-ups chase clients for missing information on
+your behalf, without a team member having to remember to send them."* TaxDome's "Client requests"
+does the same with configurable auto-reminders. Karbon runs $59–89/user/month; TaxDome
+$700–1,200/seat/year.
+
+This does not kill the segment. It defines it. **The buyer is the firm running QuickBooks Online or
+Xero plus Excel plus email, with no practice-management layer at all** — which is precisely why they
+are the ones complaining. A practitioner describes the scale even inside tooled environments: *"In
+one real production snapshot there were 3,307 missing document lines across 60 client companies."*
+
+**The first qualifying question on every call, before anything else:**
+
+> "What do you run alongside QuickBooks — is there a practice-management tool, or is it email and
+> spreadsheets?"
+
+TaxDome or Karbon → **disqualify immediately and say so plainly.** Selling a build of a feature they
+already pay for is how a practice loses a referral network. QBO/Xero + email + Excel → proceed.
+
+A hard delivery boundary that comes with the segment: route document *intake* through the client's
+existing portal. Never build custom storage for bank statements or tax data. Law 25 Art. 3.3 makes
+that a privacy-assessment trigger, and the liability is disproportionate to the fee.
 
 ### Trigger events — what makes someone go looking
 
@@ -308,18 +358,39 @@ accrediting new consultants, which gates both Trans Num and the Clinique d'innov
 
 ## 5. Disqualifiers — who looks like a fit and is not
 
-- **Trades and field service (HVAC, plumbing, electrical).** The loudest complaints in the entire
-  research and the **lowest consultant-use rate of any sector (2.2%)**. The evening-admin pain is
-  vivid and real, and the segment answers it with "welcome to owning a business dude." When one
-  member asked the exact question that matters — *"what would you realistically expect to pay for
-  someone to set it up for you?"* — the thread returned **zero replies**. Loud pain, absent price
-  signal, plus a $39–179/mo SaaS incumbent they already resent paying. Disqualified as a primary
-  segment.
-- **Small law firms.** The hardest no found. Discovery-shaped questions were met with *"No AI and no
-  we're not trying to help you find 'pain points' to assist your marketing"* and *"How stupid do you
-  think we are?"* One practitioner stated the disqualifier outright: *"Neither me nor [my] clients
-  care about time spend. We care about the highest quality work product."* A firm that does not sell
-  hours does not buy hours back.
+- **Any firm whose software is closed.** This is now the fastest disqualifier in the practice and it
+  is checkable in one question. **Jane App has no API at all** — in their own words, *"Jane doesn't
+  currently have an open API or provide API keys, and there aren't any plans to make these
+  available"* — and Jane dominates Canadian allied health, which removes most of Quebec's physio,
+  chiro and massage market from a 2–3 week sprint. **Eaglesoft** charges $3,000–5,000 enrollment
+  plus monthly; Dentrix is similarly gated. **AppFolio** requires partner registration, a 50-unit
+  minimum, Plus tier only, and offers one-way export with no write-back. Green lights: QuickBooks
+  Online, Xero, Open Dental, Cliniko, Clio, Jobber, Housecall Pro, Guesty, Hostaway.
+- **Small law firms — for anything except the administrative lane.** Discovery-shaped questions were
+  met with *"No AI and no we're not trying to help you find 'pain points' to assist your marketing"*
+  and *"How stupid do you think we are?"* One practitioner stated it outright: *"Neither me nor [my]
+  clients care about time spend. We care about the highest quality work product."* A firm that does
+  not sell hours does not buy hours back. **Permanently excluded regardless of how loudly a prospect
+  asks: conflict checks** (a false negative is a bar complaint, not a bug) **and trust accounting**
+  (regulated three-way reconciliation, disbarment-level risk). What survives is matter-status
+  updates and retainer chasing, which the **Barreau du Québec has effectively pre-approved in
+  writing** — its generative-AI guide for members permits "administrative task support" while
+  cautioning against legal analysis and drafting opinions. That is the regulator's own words usable
+  as sales collateral, and it is why law sits at #4 rather than in this list.
+- **Property management as a *segment*.** Demoted out of the ranked list entirely. The competing
+  labour price is visible and low — a VA pitching guest messaging and turnover tracking at
+  *"$8 per hour (negotiable)"*, after-hours answering services at $35–45/month — and the most-upvoted
+  success story on the surface was someone who **built it themselves for free**. In a 37-property
+  operation described in the research, two contract managers absorbed 24/7 pain at $200/day flat
+  while an absentee owner controlled spend: the pain-holder is not the budget-holder. Sym remains a
+  genuine warm one-off worth closing on his own merits; **one friend with 100 doors is not a
+  segment**, and letting him define the ICP would repeat v1's error in a new costume.
+- **MSPs and IT shops — as customers.** They own the automation platform layer already, employ
+  in-house developers, and run competent build-vs-buy analysis. Rewst is entrenched (currently
+  churning after layoffs and a repricing, which is a distraction, not an opening), and triage and
+  QBR are saturated with funded vendors. The community actively identifies and rejects solo
+  consultants pitching this: *"I believe OP works for an n8n consultancy firm."* Worth one future
+  test as a **reseller channel to their own SMB base**; never as a direct buyer.
 - **E-commerce and DTC retail.** Highest raw volume in the buy-side data (17 of 24 Zapier partners
   serve it) and the most price-shopped, most offshore-compressed buyer in the market. Wrong first
   segment for a practice with no proof and premium positioning.
@@ -335,9 +406,9 @@ accrediting new consultants, which gates both Trans Num and the Clinique d'innov
   discovery, not operators complaining. Tell: *"Not selling anything — just trying to learn."*
   Operators have learned the tell and are hostile to it. **Read post authorship before counting a
   thread as demand.**
-- **Any prospect whose pain-holder is not the budget-holder.** This is what demotes property
-  management: in a 37-property operation described in the research, two contract managers absorbed
-  24/7 operational pain at $200/day flat while an absentee owner controlled spend.
+- **Any prospect whose pain-holder is not the budget-holder.** Generalize the property-management
+  finding above into a standing qualifier: if the person describing the pain cannot sign for
+  C$2,500, the deal is a two-step sale and should be priced and paced as one, or declined.
 
 ---
 
@@ -350,12 +421,17 @@ C$350 for a session that maps their monthly client-document chase.*
 
 1. **Agent builds the list (zero Simon-minutes).** Scrape the QuickBooks ProAdvisor and Xero Partner
    directories, filter to Quebec and Ontario, keep practices of 1–20 staff. Target 60 names to
-   yield 40 contactable.
+   yield 40 contactable. Where a firm's site advertises TaxDome or Karbon, **drop it before Simon
+   ever sees it** — the substitute wall is a list-building filter, not a call-time discovery.
 2. **Verify the Hubdoc claim first** (5 minutes). If Hubdoc is genuinely retired or degraded, it is
    the hook. If not, the hook is the 11pm line.
 3. **Simon sends 40 bilingual personal emails over three weeks.** The ask is the C$350 mapping
    session, never "do you need AI help." One workflow named in the subject line: the monthly chase.
-4. **Every call is a buyer interview.** Log trigger, verbatim problem language, what they already
+4. **Qualify on stack in the first two minutes of every call** — "is there a practice-management
+   tool, or is it email and spreadsheets?" A TaxDome or Karbon answer ends the call honestly and
+   earns a referral. Log it either way; the ratio of tooled to un-tooled firms is itself the
+   segment-sizing data this document lacks.
+5. **Every call is a buyer interview.** Log trigger, verbatim problem language, what they already
    pay for help, and whether they have already tried building it.
 
 **Cost:** ~C$0 cash. **~4 Simon-hours total** across the month, inside the protected outreach budget,
@@ -365,9 +441,16 @@ displacing nothing.
 
 | Outcome from 40 contacts | Verdict |
 |---|---|
-| 0–1 booked sessions | **Segment dead.** Move to #2 or #3; do not re-run with better copy |
+| 0–1 booked sessions | **Segment dead.** Run the same test against **trades and quote follow-up** (segment #2) — do not re-run bookkeeping with better copy |
 | 2 booked | Inconclusive. One more 40-name batch, different hook, then decide |
 | ≥3 booked, ≥1 progressing to a Sprint conversation | **Confirmed.** Harden the ICP here and raise the Mapping Session toward the C$500 market rate |
+
+**If it kills #1, the fallback test is already specified.** Same shape, different segment: pull HVAC,
+plumbing and electrical contractors of 5–50 staff running Jobber or Housecall Pro, hook on quotes
+that went quiet, and reach them **by referral and through the trade associations (CMEQ, CMMTQ) —
+never by posting in their forums**, where a ban-the-software-vendors post drew 204 upvotes. Expect
+worse reply rates and better call quality: the pain is self-quantified in dollars, and the sector's
+2.2% consultant-use rate is the thing actually being tested.
 
 **Why this test and not another.** It uses the only channel that fits four hours a week, it tests the
 narrowest falsifiable claim rather than the whole practice, it produces revenue if it works, and it
@@ -415,10 +498,18 @@ Quote C$500 to the second half of the list and compare booking rates. Cost: zero
 - **The "average SMB spends $18,000/year on AI" figure** circulating in SEO content has no traceable
   primary source and contradicts JPMorgan's transaction data by ~50×. Do not cite it.
 
+- **The size of the un-tooled slice of segment #1.** The substitute wall defines the buyer, and
+  nothing in this research sizes it. What fraction of Canadian bookkeeping practices run QBO or Xero
+  with no practice-management layer is **unknown**. The §6 test produces this number as a byproduct,
+  which is a second reason to run it.
+- **Whether Quebec clinics share the US insurance-verification pain.** The pain is US-shaped;
+  RAMQ plus a private-insurer mix may dissolve it entirely. Unvalidated, and it gates segment #3.
+
 **Not assessed at all:** Ordre des CPA du Québec and every professional-order channel; SEAO (Quebec
 public procurement) and Bonfire; Quebec Facebook/LinkedIn groups, Slack and Discord communities
 (zero findings, not a negative result — simply unread); CCIQ's actual fee schedule; Élan's prices
-(the most locally relevant competitor, sales-gated).
+(the most locally relevant competitor, sales-gated); Ordre des dentistes, CMEQ, CMMTQ and Chambre
+des notaires member counts; Buildium and DoorLoop API openness; the MSP-as-reseller hypothesis.
 
 ---
 
@@ -457,12 +548,28 @@ Flow Digital, Routine Automation
 [BDC LIFT release](https://www.bdc.ca/en/about/mediaroom/news-releases/bdc-launches-lift-getting-canadian-smes-off-the-ai-sidelines)
 
 **Quebec regulatory:** Law 25 arts. 3.3, 17, 12.1 · Bill 96 arts. 52, 57 · CCQ monthly reporting ·
-CNESST LMRSST obligations
+CNESST LMRSST obligations ·
+[Barreau du Québec generative-AI guide for members](https://www.barreau.qc.ca/fr/membres-ordre/ressources/normes-outils-references-guides/intelligence-artificielle-generative/) ·
+[ISQ active businesses in Quebec](https://statistique.quebec.ca/en/document/nombre-entreprises-actives-quebec)
+
+**Vertical / stack evidence:** Karbon and TaxDome product copy (automated document chasing) · Jane
+App API statement · Open Dental, Cliniko, Clio, Jobber, Housecall Pro, Guesty and Hostaway developer
+documentation · AppFolio and Eaglesoft partner-gate terms · r/HVAC, r/electricians, r/Plumbing,
+r/Dentistry, r/Chiropractic, r/LawFirm, r/PropertyManagement, r/ShortTermRentals, r/agency, r/msp
+threads cited inline, recovered via the Arctic Shift archive API and a redlib mirror ·
+BiggerPockets, AccountingWEB, Dentaltown, Capterra, Hacker News
 
 ---
 
 ## Changelog
 
+- **v2.1 (2026-08-14)** — Revised on the fifth research lane's return. Added the **TaxDome/Karbon
+  substitute wall**, which redefines segment #1 as the un-tooled slice and adds a stack-qualifying
+  question that gates every deal. Promoted **trades and field service to #2** as the designated
+  fallback and documented the honest disagreement between pain intensity (trades highest) and sector
+  purchase rate (trades lowest at 2.2%). Demoted property management out of the ranked list; Sym is
+  a warm one-off, not a segment. Added the closed-API disqualifier (Jane App, Eaglesoft, AppFolio)
+  and the Barreau du Québec administrative-automation permission.
 - **v2 (2026-08-14)** — Rewritten from a five-lane live external research run. Replaced the
   headcount-defined ICP with a workflow-defined one. Segment #1 moved from "owner-operated service
   SMB" to Canadian bookkeeping/accounting practices. Established that relevance, not cost, is the
