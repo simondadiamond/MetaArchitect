@@ -92,12 +92,25 @@ Where they come from, in order of warmth:
 
 1. The 17 untouched warm CRM rows — one burst, roughly two weeks of supply.
 2. Sym — website at C$1,750 with a 50% deposit, then the workflow conversation it opens.
-3. Referral partners: Phil Ross (Dempton), Anthony Nadon (Alpaga IA), plus bookkeepers,
-   accountants, MSPs and web agencies around Quebec City. These people already sell to
-   owner-operators; one good partner outperforms months of content.
-4. Sym's network after delivery — property managers and short-term-rental owners.
-5. Local rooms: chamber, BNI-shaped groups.
-6. Content — real, but lagged 6–18 months. Not counted in this window.
+3. **Bookkeeping and accounting practices** — reclassified 2026-08-14 by the ICP v2
+   research (`funnel/icp-v2.md`). This plan originally listed them as a referral channel
+   *to* owner-operators. The evidence says they are the buyer, and a channel second.
+   Sourced from the QuickBooks ProAdvisor and Xero Partner directories, geo-filtered to
+   Quebec and Ontario — public, free, finite, and it surfaces the exact stack the Sprint
+   targets.
+4. Referral partners: Phil Ross (Dempton), Anthony Nadon (Alpaga IA), plus MSPs and web
+   agencies around Quebec City. One good partner outperforms months of content.
+5. Sym's network after delivery — property managers and short-term-rental owners. Note
+   that property management dropped out of the ICP v2 ranked list entirely; Sym stays a
+   paid door and a case study, not the template client.
+6. Local rooms: chamber, BNI-shaped groups.
+7. Content — real, but lagged 6–18 months. Not counted in this window.
+
+**Disqualifying question, asked before any proposal:** does the practice already run
+TaxDome or Karbon? Both ship automated document chasing out of the box. If the answer is
+yes, there is no Sprint to sell — the buyer is the firm on QuickBooks or Xero plus email
+with no practice-management layer, which is precisely why they are the ones complaining.
+Filter these out at list-build, before they ever reach a call.
 
 **The ask in every one of those is the C$350 mapping session**, never "do you need AI help."
 
@@ -153,12 +166,24 @@ Quebec accountant produce the household-specific number before resigning.
 
 ## What is still unvalidated — say it out loud
 
-- **The ICP.** "Owner-operated 2–30 person service business" is an assumption that has
-  produced zero inbound in four weeks, and whose supporting web evidence was refuted
-  under adversarial verification. A CMO research pass is running against this.
-- Whether C$350 → Sprint conversion works at all.
-- Price level in either direction. Nobody has refused a price because nobody has been
-  quoted one.
+- **The ICP.** Superseded 2026-08-14 by `funnel/icp-v2.md`: #1 is now bookkeeping,
+  accounting and tax practices of 1–20 staff running QuickBooks Online or Xero with no
+  practice-management layer, chasing missing documents every month. Confidence is
+  **moderate and self-declared as falling**, because the research also found TaxDome and
+  Karbon already ship this automation. Trades and field service is the specified fallback
+  test, not a dead segment — the tension there is real and stated: trades showed the
+  loudest pain but has the lowest consultant-use rate in the economy (2.2% vs 6.9% for
+  accounting). Pain intensity is not purchase probability. That confusion is what broke v1.
+- **Whether the segment buys at all.** The 30-day test: 40 Canadian bookkeeping practices
+  with TaxDome and Karbon users filtered out at list-build, one named workflow, bilingual
+  personal email, asking for the C$350 session. ~4 Simon-hours, C$0 cash. Zero or one
+  booking kills the segment and triggers the trades test rather than a copy rewrite.
+- **Price level, and it now points up.** Comparable diagnostics run higher than C$350 —
+  PointWake at $497 for 45 minutes, Solas at $800 for a 14-day prototype. Quote C$500 to
+  half the outreach list as a free parallel experiment. Nobody has refused any price yet
+  because nobody has been quoted one.
+- The sharpest hook found in research — *"With Hubdoc gone, my workflow is completely
+  broken"* — is **unverified**. Confirm with Xero before it appears in any outreach.
 
 ## Decision rules (priority order for any recommendation)
 
