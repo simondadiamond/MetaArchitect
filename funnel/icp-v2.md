@@ -550,9 +550,11 @@ Quote C$500 to the second half of the list and compare booking rates. Cost: zero
 
 **Not assessed at all:** Ordre des CPA du Québec and every professional-order channel; SEAO (Quebec
 public procurement) and Bonfire; Quebec Facebook/LinkedIn groups, Slack and Discord communities
-(zero findings, not a negative result — simply unread); CCIQ's actual fee schedule; Élan's prices
-(the most locally relevant competitor, sales-gated); Ordre des dentistes, CMEQ, CMMTQ and Chambre
-des notaires member counts; Buildium and DoorLoop API openness; the MSP-as-reseller hypothesis.
+(zero findings, not a negative result — simply unread); CCIQ's actual fee schedule; **the entire
+Quebec competitor landscape — not one competitor page was fetched, so Simon currently has no idea
+what anyone local charges or whether they have proof**; Ordre des dentistes, CMEQ, CMMTQ and
+Chambre des notaires member counts; Buildium and DoorLoop API openness; the MSP-as-reseller
+hypothesis.
 
 ---
 
