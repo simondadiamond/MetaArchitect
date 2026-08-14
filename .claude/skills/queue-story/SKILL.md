@@ -48,7 +48,18 @@ curl -s -X POST http://100.105.85.5:3737/api/schedules \
   }'
 ```
 
+### Determinism gate — run this BEFORE writing the schedule
+
+Split the task into the part whose correct output is **exactly specifiable** (which rows are unpaid, which emails are overdue, which records changed since T) and the part that needs **judgment** (what to say about it, what to recommend).
+
+The specifiable part must exist as a committed script that returns a hard result. The prompt may only *interpret* that script's output — never re-derive it. **If you can't name the script, the schedule isn't ready to create**: say so and build the script first.
+
+Why this gate exists: an MCP or API call is deterministic, but a model joining two result sets is not, and its failure mode is silent — a truncated page or a timezone edge gets summarized as complete with full confidence. That is fine for a briefing and unacceptable for "was this paid" or "did the email go out." Test per CLAUDE.md #11: would a better model produce a better answer? No → script it. Yes → keep it in the prompt.
+
+So most real schedules are a pair: a `kind: script` row that produces the hard artifact, or a `kind: prompt` row whose first instruction is to run the script and read its output.
+
 - `kind`: `prompt` (needs `prompt`; `working_dir` defaults to MetaArchitect, `agent` optional) or `script` (needs absolute, executable `script_path`)
+- Scripts live in `~/scripts` or the command-center repo's `bin/` (the only dirs the `/schedules` page lists and edits). Anything a schedule runs should be editable in place from that page.
 - `cron`: standard 5-field expression, server-local time
 - Runs land in the `/runs` log; failures ping Simon's ntfy topic. Missed fires while the service is down are skipped, and overlapping fires of the same schedule are skipped.
 - **Only schedule what Simon asked to schedule** — don't create recurring tasks on your own initiative.
