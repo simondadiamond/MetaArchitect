@@ -147,6 +147,22 @@ It never touches the four outreach hours.
 | Sprint | 50% deposit; balance on acceptance after a 14-day live run; work-until-it-works |
 | After acceptance | No refunds, stated plainly |
 
+**Sequencing correction (ICP v2, 2026-08-14): relevance outranks risk reversal in
+outreach.** Among small businesses not buying AI implementation help, 63.3% say "not
+applicable" against 6.7% "too expensive." Cost is not the objection — recognition is.
+The guarantee is a *closing* instrument and belongs on the page and in the room; it does
+not belong in the first line of a cold email, where it answers a fear the reader has not
+had yet. Outreach leads with the named workflow in their own vocabulary ("the monthly
+missing-document chase"), because the job there is to be recognised, not to be trusted.
+
+## Geography — Canada first, and this is not sentiment
+
+Canadian small firms buy this specific service at roughly **3.5× the US rate** (10.7% vs
+3.1% of 1–4 employee AI users purchasing implementation help). Chasing the larger US
+market is backwards for this offer. Prices stay published in both currencies because US
+buyers will arrive anyway, but no outreach hour goes south of the border until the
+Canadian list is exhausted.
+
 ## Quit trigger (aggressive-but-evidenced)
 
 All of:
