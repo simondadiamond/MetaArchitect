@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Simon Paris - the work that only happens when you do it</title>
+<meta name="description" content="I take one piece of recurring work you personally coordinate and turn it into a workflow that runs on its own, asking you only when judgment matters. Published prices, written guarantees. Quebec City.">
+<script>document.documentElement.className+=" js";</script>
+<style>
+/* ============================================================
+   DIRECTION B - "The Practice"
+   Palette: deep petrol ground, warm bone as the single accent.
+   No chromatic accent at all: contrast IS the accent.
+   Shape system: everything soft (panels 22px, buttons full pill).
+   Type: system serif display against system sans body, wide leading.
+   ============================================================ */
+
+:root{
+  --ground:#102E33;
+  --ground-2:#0C2429;
+  --raise:#16393F;
+  --raise-2:#1B454A;
+  --bone:#F2EDE3;
+  --bone-2:#C3D0CF;
+  --bone-3:#93A6A7;
+  --line:rgba(242,237,227,.13);
+  --line-2:rgba(242,237,227,.24);
+
+  --r:22px;
+  --r-sm:14px;
+
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+
+  --gut: clamp(22px, 5.5vw, 64px);
+  --sect: clamp(76px, 11vw, 152px);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--bone);
+  font-family:var(--sans);
+  font-size:17px;
+  line-height:1.72;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+svg{max-width:100%;height:auto}
+h1,h2,h3{margin:0;font-family:var(--serif);font-weight:600;line-height:1.08;letter-spacing:-0.012em}
+p{margin:0}
+a{color:var(--bone)}
+a:focus-visible,button:focus-visible,summary:focus-visible{
+  outline:2.5px solid var(--bone);outline-offset:4px;border-radius:4px;
+}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:var(--gut)}
+.narrow{max-width:760px}
+
+/* ---------- nav ---------- */
+.nav{position:sticky;top:0;z-index:40;background:rgba(16,46,51,.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.nav-in{height:72px;display:flex;align-items:center;justify-content:space-between;gap:22px}
+.mark{font-family:var(--serif);font-size:20px;letter-spacing:-0.01em;color:var(--bone);text-decoration:none}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links a:not(.btn){color:var(--bone-2);font-size:15px;text-decoration:none;transition:color .18s ease}
+.nav-links a:not(.btn):hover{color:var(--bone)}
+/* Below the desktop breakpoint the nav keeps only the wordmark and the one CTA. */
+@media (max-width:899px){
+  .nav-links a:not(.btn){display:none}
+}
+@media (max-width:430px){
+  .nav-in{height:64px}
+  .mark{font-size:18px}
+  .nav-links .btn-sm{padding:9px 15px;font-size:13.5px}
+}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;
+  font-family:var(--sans);font-size:15.5px;font-weight:600;letter-spacing:-0.005em;
+  background:var(--bone);color:var(--ground);border:1px solid var(--bone);
+  padding:13px 26px;border-radius:999px;text-decoration:none;cursor:pointer;
+  transition:transform .14s ease, box-shadow .22s ease, background .18s ease;
+}
+.btn:hover{background:#fff;box-shadow:0 12px 30px -12px rgba(242,237,227,.5)}
+.btn:active{transform:translateY(1px)}
+.btn-sm{padding:10px 20px;font-size:14.5px}
+.btn-line{background:transparent;color:var(--bone);border-color:var(--line-2)}
+.btn-line:hover{background:rgba(242,237,227,.08);box-shadow:none;border-color:var(--bone)}
+
+/* ---------- hero ---------- */
+.hero{padding-top:clamp(36px,5.5vw,68px);padding-bottom:clamp(56px,7.5vw,100px)}
+.hero-grid{display:grid;gap:clamp(38px,6vw,56px);align-items:center}
+@media (min-width:960px){.hero-grid{grid-template-columns:1.14fr .86fr}}
+.hero h1{font-size:clamp(2.15rem,3.9vw,3.05rem);max-width:21ch;letter-spacing:-0.018em}
+.hero .lede{margin-top:26px;font-size:clamp(1.08rem,1.75vw,1.28rem);color:var(--bone-2);max-width:40ch;line-height:1.6}
+.hero-cta{margin-top:34px;display:flex;flex-wrap:wrap;gap:16px;align-items:center}
+.hero-cta .quiet{font-size:15px;color:var(--bone-3);text-decoration:none;border-bottom:1px solid var(--line-2);padding-bottom:3px;transition:color .18s ease,border-color .18s ease}
+.hero-cta .quiet:hover{color:var(--bone);border-color:var(--bone)}
+.figure-note{margin-top:16px;font-size:14px;color:var(--bone-3);max-width:46ch;line-height:1.55}
+
+/* ---------- diagram ---------- */
+.diagram .node{fill:var(--bone-3)}
+.diagram .lbl{fill:var(--bone-3);font-family:var(--sans);font-size:15px}
+.diagram .wire{fill:none;stroke:var(--bone-2);stroke-width:1.4;opacity:.5}
+.diagram .hub{fill:var(--bone)}
+.diagram .hub-t{fill:var(--ground);font-family:var(--serif);font-size:26px;text-anchor:middle}
+.diagram .rail{fill:var(--bone)}
+.diagram .rail-t{fill:var(--ground);font-family:var(--sans);font-size:15px;font-weight:600;text-anchor:middle}
+.diagram .branch{fill:none;stroke:var(--bone);stroke-width:1.6}
+.diagram .pill{fill:none;stroke:var(--bone);stroke-width:1.4}
+.diagram .pill-t{fill:var(--bone);font-family:var(--sans);font-size:13.5px;text-anchor:middle}
+.diagram .out{fill:var(--bone-3);font-family:var(--sans);font-size:15px}
+/* SVG text is in user units, so it shrinks with the viewBox. Scale it back up
+   as the diagram gets narrower to keep the labels readable. */
+@media (max-width:1100px){.diagram .lbl{font-size:17px}.diagram .rail-t{font-size:17px}.diagram .pill-t{font-size:16px}.diagram .out{font-size:16px}}
+@media (max-width:640px){.diagram .lbl{font-size:22px}.diagram .rail-t{font-size:22px}.diagram .pill-t{font-size:21px}.diagram .out{font-size:21px}.diagram .hub-t{font-size:34px}}
+
+.js .draw path{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 1.15s cubic-bezier(.22,1,.36,1)}
+.js .diagram.go .draw path{stroke-dashoffset:0}
+.js .fade{opacity:0;transition:opacity .7s ease}
+.js .diagram.go .fade{opacity:1}
+
+/* ---------- sections ---------- */
+.sect{padding-block:var(--sect)}
+.sect.well{background:var(--ground-2)}
+.kicker{font-family:var(--serif);font-size:clamp(1.9rem,4vw,3rem);max-width:15ch;letter-spacing:-0.018em}
+.sub{margin-top:22px;font-size:1.1rem;color:var(--bone-2);max-width:52ch}
+
+/* problem statements */
+.claims{margin-top:52px;display:grid;gap:0}
+.claim{padding:26px 0;border-top:1px solid var(--line);display:grid;gap:6px}
+.claim:last-child{border-bottom:1px solid var(--line)}
+.claim b{font-family:var(--serif);font-size:clamp(1.28rem,2.5vw,1.72rem);font-weight:600;letter-spacing:-0.012em;line-height:1.25}
+.claim span{color:var(--bone-3);font-size:16px}
+@media (min-width:820px){
+  .claim{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:36px;align-items:baseline}
+}
+.claims-tail{margin-top:38px;font-family:var(--serif);font-size:clamp(1.35rem,2.6vw,1.85rem);line-height:1.32;max-width:26ch;letter-spacing:-0.015em}
+
+/* process */
+.proc{margin-top:56px;display:grid;gap:0}
+.proc-item{position:relative;padding:30px 0 30px 34px;border-top:1px solid var(--line)}
+.proc-item:last-child{border-bottom:1px solid var(--line)}
+.proc-item::before{
+  content:"";position:absolute;left:0;top:38px;width:14px;height:14px;border-radius:50%;
+  border:1.6px solid var(--bone);
+}
+.proc-item h3{font-size:clamp(1.25rem,2.3vw,1.6rem)}
+.proc-item .meta{margin-top:6px;font-size:14px;color:var(--bone-3)}
+.proc-item p{margin-top:12px;font-size:16.5px;color:var(--bone-2);max-width:54ch}
+@media (min-width:860px){
+  .proc-item{display:grid;grid-template-columns:270px minmax(0,1fr);gap:40px;padding-left:34px}
+  .proc-item p{margin-top:0}
+}
+
+/* pricing shelves */
+.shelf{
+  margin-top:22px;background:var(--raise);border:1px solid var(--line);border-radius:var(--r);
+  padding:clamp(26px,3.4vw,42px);display:grid;gap:26px;
+}
+.shelf.lead{background:var(--raise-2);border-color:var(--line-2)}
+.shelf.quiet{background:transparent;border-style:dashed}
+@media (min-width:900px){.shelf{grid-template-columns:280px minmax(0,1fr);gap:52px}}
+.shelf h3{font-size:1.45rem}
+.figure{margin-top:14px;font-family:var(--serif);font-size:clamp(2.5rem,5vw,3.4rem);line-height:1;letter-spacing:-0.03em}
+.figure-alt{margin-top:10px;font-size:14.5px;color:var(--bone-3);line-height:1.5}
+.shelf .body{font-size:1.05rem;color:var(--bone-2)}
+.list{margin:22px 0 0;padding:0;list-style:none;display:grid;gap:11px}
+.list li{position:relative;padding-left:26px;font-size:16px;color:var(--bone-2)}
+.list li::before{
+  content:"";position:absolute;left:0;top:10px;width:12px;height:7px;
+  border-left:1.8px solid var(--bone);border-bottom:1.8px solid var(--bone);
+  transform:rotate(-45deg);
+}
+.promise{
+  margin-top:24px;border-top:1px solid var(--line-2);padding-top:20px;
+  font-size:16.5px;color:var(--bone);line-height:1.6;max-width:56ch;
+}
+.promise b{font-family:var(--serif);font-weight:600}
+.shelf .btn{margin-top:26px}
+.terms{margin-top:18px;font-size:14.5px;color:var(--bone-3);line-height:1.6;max-width:60ch}
+.rate-note{margin-top:30px;font-size:15.5px;color:var(--bone-3);max-width:60ch}
+
+/* practice */
+.practice-grid{margin-top:48px;display:grid;gap:clamp(28px,4vw,56px)}
+@media (min-width:900px){.practice-grid{grid-template-columns:1.1fr .9fr;align-items:start}}
+.practice-grid p{font-size:1.08rem;color:var(--bone-2)}
+.practice-grid p + p{margin-top:20px}
+.practice-grid strong{color:var(--bone);font-weight:600}
+.card{
+  background:var(--raise);border-radius:var(--r);padding:clamp(26px,3.2vw,36px);
+  border:1px solid var(--line);
+}
+.card h3{font-size:1.3rem}
+.card p{margin-top:14px;font-size:16.5px;color:var(--bone-2)}
+.card .sig{margin-top:24px;padding-top:20px;border-top:1px solid var(--line);font-size:15px;color:var(--bone-3)}
+
+/* questions */
+.qa{margin-top:48px}
+.qa details{border-top:1px solid var(--line)}
+.qa details:last-of-type{border-bottom:1px solid var(--line)}
+.qa summary{
+  cursor:pointer;list-style:none;padding:26px 46px 26px 0;position:relative;
+  font-family:var(--serif);font-size:clamp(1.15rem,2.1vw,1.42rem);line-height:1.3;
+  transition:color .18s ease;
+}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::after{
+  content:"";position:absolute;right:8px;top:50%;width:14px;height:2px;background:var(--bone);
+  transform:translateY(-50%);
+}
+.qa summary::before{
+  content:"";position:absolute;right:14px;top:50%;width:2px;height:14px;background:var(--bone);
+  transform:translateY(-50%);transition:transform .22s ease, opacity .22s ease;
+}
+.qa details[open] summary::before{transform:translateY(-50%) scaleY(0);opacity:0}
+.qa summary:hover{color:var(--bone-2)}
+.qa .ans{padding:0 0 30px;max-width:62ch;color:var(--bone-2);font-size:16.5px}
+.qa .ans p + p{margin-top:14px}
+
+/* close */
+.close{padding-block:var(--sect);text-align:left}
+.close h2{font-size:clamp(2.1rem,5vw,3.5rem);max-width:15ch;letter-spacing:-0.02em}
+.close p{margin-top:24px;font-size:1.14rem;color:var(--bone-2);max-width:48ch}
+.close .btn{margin-top:36px}
+.close .fine{margin-top:24px;font-size:14.5px;color:var(--bone-3);max-width:48ch}
+
+/* footer */
+.foot{border-top:1px solid var(--line);padding-block:40px 56px}
+.foot-in{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px 40px;align-items:baseline}
+.foot p{font-size:14.5px;color:var(--bone-3)}
+.foot a{color:var(--bone-2);text-decoration:none}
+.foot a:hover{color:var(--bone)}
+
+/* motion */
+.js .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1)}
+.js .reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition-duration:.01ms !important}
+  .js .reveal{opacity:1;transform:none}
+  .js .draw path{stroke-dashoffset:0}
+  .js .fade{opacity:1}
+}
+
+/* ---- carried into all three variants ----------------------
+   BASE DEFECT: below 640px the diagram label size is bumped to
+   22 user units so it stays readable, but the labels are anchored
+   at x=134 inside a 560-unit viewBox and "Supplier orders" needs
+   ~165 units. The overspill was being clipped by the SVG viewport,
+   rendering "plier orders" and "eekly report" on every phone.
+   Letting the diagram overflow costs ~18 CSS px at 360px, which
+   fits inside the 22px gutter - verified against scrollWidth.
+   ----------------------------------------------------------- */
+@media (max-width:640px){
+  .diagram{overflow:visible}
+}
+
+/* ============================================================
+   TREATMENT B - "Brass"
+   The emptiness is answered with warmth and presence: one warm
+   accent used only where a human commitment is made, a static
+   ground wash so the petrol is lit rather than flat, a real
+   tonal progression through the bands, and display type sized
+   to occupy the column instead of hugging the left edge.
+   Brass #D2A968 sits at 6.6:1 on the ground - AA at any size.
+   The primary CTA stays bone on purpose: it is already the
+   loudest element and brass would weaken it.
+   ============================================================ */
+:root{
+  --brass:#D2A968;
+  --brass-line:rgba(210,169,104,.34);
+  --ground-2:#0A2126;
+}
+
+/* the ground is lit, not flat ------------------------------ */
+body{background:var(--ground)}
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(1100px 720px at 84% -10%, rgba(210,169,104,.11), transparent 60%),
+    radial-gradient(900px 720px at -8% 32%, rgba(31,78,84,.55), transparent 58%),
+    radial-gradient(1000px 820px at 46% 106%, rgba(210,169,104,.075), transparent 62%);
+}
+.nav,main,.foot{position:relative;z-index:1}
+
+/* bands become a sequence, not an on/off alternation -------- */
+.sect.well{
+  background:linear-gradient(180deg,#0B2429 0%,#07191E 60%,#0A2126 100%);
+  border-top:1px solid rgba(242,237,227,.07);
+}
+#pricing.sect.well{background:linear-gradient(180deg,#0D282D 0%,#081E23 72%)}
+
+/* display type takes the column ---------------------------- */
+.hero h1{font-size:clamp(2.4rem,4.7vw,3.75rem);max-width:17ch}
+.kicker{font-size:clamp(2.05rem,4.6vw,3.5rem);max-width:17ch}
+.close h2{font-size:clamp(2.3rem,5.4vw,3.9rem);max-width:14ch}
+.sub{max-width:58ch;font-size:1.13rem}
+.hero h1,.kicker,.close h2,.claims-tail{text-wrap:balance}
+
+/* The band rule - the one repeating brass mark. It starts solid at the
+   left margin and fades out across the full column, so the space beside
+   a short heading reads as bounded margin rather than as nothing. */
+.sect > .wrap,.close{position:relative}
+.sect > .wrap::before,.close::before{
+  content:"";position:absolute;left:var(--gut);right:var(--gut);top:0;height:2px;
+  pointer-events:none;
+  background:linear-gradient(90deg,
+    var(--brass) 0 60px,
+    var(--brass-line) 60px,
+    rgba(210,169,104,.07) 58%,
+    transparent 100%);
+}
+.sect > .wrap{padding-top:6px}
+/* .close is itself a .wrap, so its rule is offset past the section padding */
+.close{padding-top:calc(var(--sect) + 6px)}
+.close::before{top:var(--sect)}
+
+/* brass marks the human commitments: what you pay, what you
+   are promised, and where you stay in control ---------------- */
+.figure{color:var(--brass);font-size:clamp(2.7rem,5.4vw,3.7rem)}
+.promise{
+  border-top:none;border-left:2px solid var(--brass);
+  padding:3px 0 3px 22px;margin-top:28px;
+}
+.promise b{color:var(--brass)}
+.list li::before{border-left-color:var(--brass);border-bottom-color:var(--brass)}
+.diagram .branch{stroke:var(--brass)}
+.diagram .pill{stroke:var(--brass)}
+.diagram .pill-t{fill:var(--brass)}
+.shelf.lead{border-color:var(--brass-line);box-shadow:inset 0 1px 0 rgba(210,169,104,.22)}
+.rate-note{border-left:2px solid var(--brass-line);padding-left:22px}
+.hero-cta .quiet{border-color:var(--brass-line)}
+.hero-cta .quiet:hover{color:var(--brass);border-color:var(--brass)}
+
+/* panels read as lit planes -------------------------------- */
+.shelf,.card{
+  box-shadow:inset 0 1px 0 rgba(242,237,227,.055),0 30px 70px -52px rgba(0,0,0,.9);
+}
+.shelf.quiet{box-shadow:none}
+
+/* the hero diagram stops floating. The horizontal bleed is gated to the
+   two-column breakpoint - below it the figure is full-width and a 12%
+   bleed pushes the document 20px past the viewport. */
+.hero-grid > figure{position:relative;isolation:isolate}
+.hero-grid > figure::before{
+  content:"";position:absolute;inset:-16% 0 -10%;z-index:-1;
+  background:radial-gradient(58% 58% at 60% 46%, rgba(210,169,104,.11), transparent 68%);
+}
+@media (min-width:960px){
+  .hero-grid > figure::before{inset:-16% -12% -10%}
+}
+
+
+/* ============================================================
+   V3 shared - accessibility
+   --bone-3 raised from #93A6A7 to #9FB2B3. At the old value the
+   muted 14.5px roles inside .shelf.lead (--raise-2) measured
+   4.13:1 against the painted pixel, which is a fail, and it is a
+   fail inherited from the base rather than introduced here.
+   New value measures 4.76:1 on the worst ground on this page.
+   ============================================================ */
+:root{--bone-3:#9FB2B3}
+
+/* ============================================================
+   V3-A - "Lantern"
+   Per-section corner-to-corner gradient, replacing B's fixed
+   radial wash. Corner rotates TL, BR, TR, BL down the page so
+   light crosses each section boundary on alternating sides.
+   ============================================================ */
+
+:root{
+  /* the cool lift. rgba over #102E33 lands around #1A464D at full weight */
+  --lift:  rgba(38,98,106,.52);
+  /* the warm lift, hero and close only */
+  --liftw: rgba(210,169,104,.14);
+  /* how far the ramp travels before it is fully out */
+  --reach: 880px;
+}
+
+/* B's fixed wash is off. One light system per page. */
+body::before{ display:none }
+body{ background:var(--ground) }
+
+/* --- the four corner treatments -------------------------------------- */
+/* Named for where the LIGHT is, not where the ramp points. */
+
+.lit-tl{
+  background-image:linear-gradient(to bottom right,var(--lift) 0%,transparent 60%);
+  background-repeat:no-repeat;background-position:left top;
+  background-size:100% var(--reach);
+}
+.lit-br{
+  background-image:linear-gradient(to top left,var(--lift) 0%,transparent 60%);
+  background-repeat:no-repeat;background-position:left bottom;
+  background-size:100% var(--reach);
+}
+.lit-tr{
+  background-image:linear-gradient(to bottom left,var(--lift) 0%,transparent 60%);
+  background-repeat:no-repeat;background-position:left top;
+  background-size:100% var(--reach);
+}
+.lit-bl{
+  background-image:linear-gradient(to top right,var(--lift) 0%,transparent 60%);
+  background-repeat:no-repeat;background-position:left bottom;
+  background-size:100% var(--reach);
+}
+
+/* --- shaded bands keep their own tonal base underneath the ramp ------- */
+/* Layer order in background-image is front-to-back, so the corner ramp is
+   listed first and the band's vertical gradient sits behind it. */
+#problem.sect.well{
+  background-image:
+    linear-gradient(to top left,var(--lift) 0%,transparent 60%),
+    linear-gradient(180deg,#0B2429 0%,#07191E 60%,#0A2126 100%);
+  background-repeat:no-repeat,no-repeat;
+  background-position:left bottom,left top;
+  background-size:100% var(--reach),100% 100%;
+}
+#pricing.sect.well{
+  background-image:
+    linear-gradient(to top right,var(--lift) 0%,transparent 60%),
+    linear-gradient(180deg,#0D282D 0%,#081E23 72%);
+  background-repeat:no-repeat,no-repeat;
+  background-position:left bottom,left top;
+  background-size:100% var(--reach),100% 100%;
+}
+#questions.sect.well{
+  background-image:
+    linear-gradient(to top left,var(--lift) 0%,transparent 60%),
+    linear-gradient(180deg,#0B2429 0%,#07191E 60%,#0A2126 100%);
+  background-repeat:no-repeat,no-repeat;
+  background-position:left bottom,left top;
+  background-size:100% var(--reach),100% 100%;
+}
+
+/* The hero and the close are .wrap elements, so they are 1120px wide with
+   auto margins. Painting the ramp on them directly leaves two hard vertical
+   edges at the column boundary - caught on the first render, not in source.
+   Each gets a full-bleed band wrapper instead. */
+.band{width:100%}
+
+/* --- warm at the two ends -------------------------------------------- */
+/* A short warm core inside a longer cool one. Warm light in a cool room. */
+.band.lit-tl{
+  background-image:
+    linear-gradient(to bottom right,var(--liftw) 0%,transparent 46%),
+    linear-gradient(to bottom right,var(--lift) 0%,transparent 60%);
+  background-repeat:no-repeat,no-repeat;
+  background-position:left top,left top;
+  background-size:100% 620px,100% var(--reach);
+}
+.band.lit-tr{
+  background-image:
+    linear-gradient(to bottom left,var(--liftw) 0%,transparent 46%),
+    linear-gradient(to bottom left,var(--lift) 0%,transparent 60%);
+  background-repeat:no-repeat,no-repeat;
+  background-position:left top,left top;
+  background-size:100% 620px,100% var(--reach);
+}
+
+/* The sticky nav sits over the hero's lit top-left corner. Its own tint was
+   matched to the flat ground; drop it slightly so the lit corner reads
+   through the blur instead of being flattened by it. */
+.nav{background:rgba(16,46,51,.72)}
+
+/* The footer is the one surface that stays unlit, so the page has a floor. */
+.foot{background:var(--ground-2)}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="mark" href="#top">Simon Paris</a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#sprint">The sprint</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#questions">Questions</a>
+      <a class="btn btn-sm" href="mailto:me@simonparis.ca?subject=Mapping%20session">Book a mapping session</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <div class="band lit-tl">
+  <section class="wrap hero">
+    <div class="hero-grid">
+      <div>
+        <h1>The work that only happens when you do it.</h1>
+        <p class="lede">I turn one of those into a workflow that runs on its own, and asks you only when it matters.</p>
+        <div class="hero-cta">
+          <a class="btn" href="mailto:me@simonparis.ca?subject=Mapping%20session">Book a mapping session</a>
+          <a class="quiet" href="#sprint">What a sprint is</a>
+        </div>
+      </div>
+
+      <figure style="margin:0">
+        <svg class="diagram" id="d1" viewBox="0 0 560 400" role="img" aria-label="Six recurring tasks in a business, every one of them routed through the owner.">
+          <g class="wire draw">
+            <path d="M158,44 C250,44 300,200 354,200" pathLength="1"/>
+            <path d="M158,100 C250,100 300,200 354,200" pathLength="1"/>
+            <path d="M158,156 C250,156 300,200 354,200" pathLength="1"/>
+            <path d="M158,244 C250,244 300,200 354,200" pathLength="1"/>
+            <path d="M158,300 C250,300 300,200 354,200" pathLength="1"/>
+            <path d="M158,356 C250,356 300,200 354,200" pathLength="1"/>
+          </g>
+
+          <g class="fade">
+            <circle class="node" cx="150" cy="44" r="5.5"/>
+            <circle class="node" cx="150" cy="100" r="5.5"/>
+            <circle class="node" cx="150" cy="156" r="5.5"/>
+            <circle class="node" cx="150" cy="244" r="5.5"/>
+            <circle class="node" cx="150" cy="300" r="5.5"/>
+            <circle class="node" cx="150" cy="356" r="5.5"/>
+
+            <text class="lbl" x="134" y="49" text-anchor="end">Quotes</text>
+            <text class="lbl" x="134" y="105" text-anchor="end">Scheduling</text>
+            <text class="lbl" x="134" y="161" text-anchor="end">Client email</text>
+            <text class="lbl" x="134" y="249" text-anchor="end">Invoicing</text>
+            <text class="lbl" x="134" y="305" text-anchor="end">Supplier orders</text>
+            <text class="lbl" x="134" y="361" text-anchor="end">Weekly report</text>
+          </g>
+
+          <g class="fade">
+            <circle class="hub" cx="400" cy="200" r="46"/>
+            <text class="hub-t" x="400" y="209">You</text>
+          </g>
+        </svg>
+        <figcaption class="figure-note">Every one of them waits on a decision only you make, so every one of them waits on you being free.</figcaption>
+      </figure>
+    </div>
+  </section>
+  </div>
+
+  <!-- PROBLEM -->
+  <section class="sect well lit-br" id="problem">
+    <div class="wrap">
+      <h2 class="kicker reveal">You are not the bottleneck. You are the junction.</h2>
+      <p class="sub reveal">There is a category of work that never appears on anyone's job description. It is small, it repeats, and it quietly belongs to the owner.</p>
+
+      <div class="claims reveal">
+        <div class="claim">
+          <b>The quote that needs your numbers.</b>
+          <span>Same document, same fields, and then remembering who has not replied.</span>
+        </div>
+        <div class="claim">
+          <b>The follow up nobody sends if you forget.</b>
+          <span>Not a system. A note in your head, carried from Thursday to Monday.</span>
+        </div>
+        <div class="claim">
+          <b>The intake form that is really six emails.</b>
+          <span>The client sends what they feel like sending. You collect the rest by hand.</span>
+        </div>
+        <div class="claim">
+          <b>The Friday report you rebuild from four places.</b>
+          <span>Twenty minutes of copying, every week, so somebody can glance at it.</span>
+        </div>
+      </div>
+
+      <p class="claims-tail reveal">Each one is fifteen minutes. Together they are the reason you work Sundays.</p>
+    </div>
+  </section>
+
+  <!-- SPRINT -->
+  <section class="sect lit-tr" id="sprint">
+    <div class="wrap">
+      <h2 class="kicker reveal">What a sprint actually is.</h2>
+      <p class="sub reveal">One recurring workflow, built into the business, running live on real work before you are ever asked to accept it.</p>
+
+      <figure class="reveal" style="margin:44px 0 0">
+        <svg class="diagram" id="d2" viewBox="0 0 560 300" role="img" aria-label="The same six tasks routed into one workflow, with a single branch back to the owner for approval.">
+          <g class="wire draw">
+            <path d="M158,34 C210,34 210,150 248,150" pathLength="1"/>
+            <path d="M158,76 C210,76 210,150 248,150" pathLength="1"/>
+            <path d="M158,118 C210,118 210,150 248,150" pathLength="1"/>
+            <path d="M158,190 C210,190 210,150 248,150" pathLength="1"/>
+            <path d="M158,232 C210,232 210,150 248,150" pathLength="1"/>
+            <path d="M158,274 C210,274 210,150 248,150" pathLength="1"/>
+          </g>
+
+          <g class="fade">
+            <circle class="node" cx="150" cy="34" r="5"/>
+            <circle class="node" cx="150" cy="76" r="5"/>
+            <circle class="node" cx="150" cy="118" r="5"/>
+            <circle class="node" cx="150" cy="190" r="5"/>
+            <circle class="node" cx="150" cy="232" r="5"/>
+            <circle class="node" cx="150" cy="274" r="5"/>
+            <text class="lbl" x="134" y="39" text-anchor="end">Quotes</text>
+            <text class="lbl" x="134" y="81" text-anchor="end">Scheduling</text>
+            <text class="lbl" x="134" y="123" text-anchor="end">Client email</text>
+            <text class="lbl" x="134" y="195" text-anchor="end">Invoicing</text>
+            <text class="lbl" x="134" y="237" text-anchor="end">Supplier orders</text>
+            <text class="lbl" x="134" y="279" text-anchor="end">Weekly report</text>
+          </g>
+
+          <g class="fade">
+            <rect class="rail" x="248" y="132" width="184" height="36" rx="18"/>
+            <text class="rail-t" x="340" y="155">the workflow</text>
+          </g>
+
+          <g class="fade">
+            <path class="branch" d="M300,132 L300,86"/>
+            <rect class="pill" x="234" y="54" width="132" height="32" rx="16"/>
+            <text class="pill-t" x="300" y="75">you approve</text>
+          </g>
+
+          <g class="fade">
+            <path class="branch" d="M432,150 L516,150"/>
+            <path class="branch" d="M508,144 L516,150 L508,156" style="fill:none"/>
+            <text class="out" x="516" y="174" text-anchor="end">done</text>
+          </g>
+        </svg>
+        <figcaption class="figure-note">One workflow, not six. The branch is the point: it comes back to you where judgment is required, and only there.</figcaption>
+      </figure>
+
+      <div class="proc">
+        <div class="proc-item reveal">
+          <div>
+            <h3>Map</h3>
+            <p class="meta">Ninety to one hundred twenty minutes, with you</p>
+          </div>
+          <p>We choose the job, estimate what it is worth, and confirm it can be built. You keep the written plan whatever happens next.</p>
+        </div>
+        <div class="proc-item reveal">
+          <div>
+            <h3>Build</h3>
+            <p class="meta">Two to three weeks, almost none of it yours</p>
+          </div>
+          <p>One workflow, up to two integrations, inside tools you already use or can keep using after I leave.</p>
+        </div>
+        <div class="proc-item reveal">
+          <div>
+            <h3>Run live</h3>
+            <p class="meta">Fourteen days, on real work</p>
+          </div>
+          <p>It does the actual job in the actual business, with an approval step wherever judgment is required, and the result gets measured.</p>
+        </div>
+        <div class="proc-item reveal">
+          <div>
+            <h3>Hand off</h3>
+            <p class="meta">One document, in plain language</p>
+          </div>
+          <p>What it does, where it lives, and what to do the day it asks you something unusual. Then it is yours.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="sect well lit-bl" id="pricing">
+    <div class="wrap">
+      <h2 class="kicker reveal">Two things to buy, both published, both guaranteed.</h2>
+      <p class="sub reveal">Prices are the same number in Canadian and US dollars. There is no hourly rate on this page because you are not buying hours.</p>
+
+      <article class="shelf reveal">
+        <div>
+          <h3>Workflow Mapping Session</h3>
+          <p class="figure">C$350</p>
+          <p class="figure-alt">US$350<br>Credited in full toward a sprint booked within thirty days.</p>
+        </div>
+        <div>
+          <p class="body">Ninety to one hundred twenty minutes together, then a written plan you keep either way.</p>
+          <ul class="list">
+            <li>The workflow mapped end to end</li>
+            <li>Value and feasibility estimated honestly</li>
+            <li>A recommended implementation, with the tools named</li>
+          </ul>
+          <p class="promise"><b>The guarantee.</b> You leave with at least one workflow worth building, or you do not pay for the session.</p>
+          <a class="btn" href="mailto:me@simonparis.ca?subject=Mapping%20session">Book a mapping session</a>
+        </div>
+      </article>
+
+      <article class="shelf lead reveal">
+        <div>
+          <h3>Workflow Sprint</h3>
+          <p class="figure">C$1,750</p>
+          <p class="figure-alt">US$1,750, founding rate for the first three clients.<br>C$2,500 / US$2,500 after that.</p>
+        </div>
+        <div>
+          <p class="body">One recurring workflow, live in your business and measured before you accept it.</p>
+          <ul class="list">
+            <li>One workflow, up to two integrations</li>
+            <li>A human approval step wherever judgment is required</li>
+            <li>A short written handoff in plain language</li>
+            <li>A fourteen day live run with a measured result</li>
+          </ul>
+          <p class="promise"><b>The guarantee.</b> If it is not doing the job at the end of the fourteen days, I keep working at no charge until it is, or the balance is waived.</p>
+          <a class="btn" href="mailto:me@simonparis.ca?subject=Mapping%20session">Book a mapping session</a>
+          <p class="terms">Fifty percent deposit to start, balance due on acceptance after the live run. The deposit covers discovery and is not refundable. Once you accept the work there are no refunds, because labour cannot be un-delivered, and I would rather write that here than bury it.</p>
+        </div>
+      </article>
+
+      <article class="shelf quiet reveal">
+        <div>
+          <h3>Ongoing improvement</h3>
+          <p class="figure-alt" style="margin-top:14px">C$400 to C$600 per month</p>
+        </div>
+        <div>
+          <p class="body">Bounded scope and response times, for a workflow that is already running. Available after a sprint only. It is not something I will try to sell you first, and there is nothing to sign up for here.</p>
+        </div>
+      </article>
+
+      <p class="rate-note reveal">The founding rate ends after three delivered sprints. That is a real capacity limit rather than a countdown, and if you ask me how many are left I will tell you the number.</p>
+    </div>
+  </section>
+
+  <!-- PRACTICE -->
+  <section class="sect lit-tl" id="practice">
+    <div class="wrap">
+      <h2 class="kicker reveal">No platform. No licence. Nothing to renew.</h2>
+      <div class="practice-grid">
+        <div class="reveal">
+          <p>I choose tools the way a contractor chooses materials: whatever fits this job, and whatever you can live with after I leave. Sometimes that is ChatGPT or Claude. Sometimes it is a scheduler, or software you already pay for, or forty lines of code that nobody ever needs to look at again.</p>
+          <p><strong>You own all of it.</strong> There is no licence to renew with me, no reseller margin hidden in the price, and nothing that stops working the day you decide to stop working with me.</p>
+          <p>The work happens in French or in English, whichever one your team actually speaks to each other in. Based in Quebec City.</p>
+        </div>
+        <aside class="card reveal">
+          <h3>This practice is new.</h3>
+          <p>I have no client logos and I am not going to borrow anyone else's. What I have instead is a deliberately narrow scope: one workflow, one business, one measured result at a time.</p>
+          <p>That narrowness is the reason the guarantee can be this specific. A firm juggling twelve engagements cannot promise to keep working for free until yours is right.</p>
+          <p class="sig">Three founding clients at the founding rate, then the price goes up and the scope grows.</p>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUESTIONS -->
+  <section class="sect well lit-br" id="questions">
+    <div class="wrap">
+      <h2 class="kicker reveal">Fair questions.</h2>
+      <div class="qa reveal">
+
+        <details open>
+          <summary>Why can I not just use ChatGPT myself?</summary>
+          <div class="ans">
+            <p>You can, and for some things you should. The gap is not the writing. A chat window answers when you open it. It does not run on Tuesday at six in the morning, it does not read the inbox, it does not stop and ask you when it is unsure, and it never tells you whether it saved you anything.</p>
+            <p>That plumbing is most of the work. Deciding which job is worth the plumbing is the rest of it, and that decision is what the mapping session is for.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>What if it does not work?</summary>
+          <div class="ans">
+            <p>Two answers, both written into the offer. If the mapping session does not leave you with at least one workflow worth building, you do not pay for it. If the sprint is not doing the job at the end of the fourteen day live run, I keep working at no charge until it is, or the balance is waived.</p>
+            <p>The deposit covers discovery and is not refundable, and once you accept the work there are no refunds. Saying that plainly now is part of the offer.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>How long does it take?</summary>
+          <div class="ans">
+            <p>The mapping session is one meeting and a written plan. A sprint is usually two to three weeks of building, then fourteen days running live before the balance is due.</p>
+            <p>Your share of that is the first session, a handful of questions while I build, and the handoff conversation. If a sprint starts consuming your week, I have designed it wrong.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Do I need to be technical?</summary>
+          <div class="ans">
+            <p>No. You need to know the job well enough to tell me when an answer is wrong. That judgment is the only expertise the build depends on, and it is exactly why there is an approval step instead of a black box.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>What happens to the C$350 if I go ahead?</summary>
+          <div class="ans">
+            <p>It comes off the sprint in full, as long as the sprint is booked within thirty days. If you decide not to go ahead, you keep the written plan and owe nothing else. You are welcome to hand that plan to somebody else and have them build it.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>What about my client data?</summary>
+          <div class="ans">
+            <p>Ask me in the session, about the specific tools we would actually use, and the answer will be concrete: what leaves your systems, what does not, and what the safer option costs instead. Anyone who answers that question in a FAQ is guessing about your business.</p>
+          </div>
+        </details>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CLOSE -->
+  <div class="band lit-tr">
+  <section class="wrap close">
+    <h2 class="reveal">Start with the one that bothers you most.</h2>
+    <p class="reveal">Bring a single recurring task to a ninety minute session. You leave with a written plan and an honest answer about whether it is worth building at all.</p>
+    <a class="btn reveal" href="mailto:me@simonparis.ca?subject=Mapping%20session">Book a mapping session</a>
+    <p class="fine reveal">C$350 / US$350. Credited toward a sprint. Nothing worth building means no charge.</p>
+  </section>
+  </div>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <p>Simon Paris. Independent AI implementation practice, Quebec City, Canada.</p>
+    <p><a href="mailto:me@simonparis.ca">me@simonparis.ca</a> &nbsp; Service in French or English.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var diagrams = document.querySelectorAll('.diagram');
+  var reveals = document.querySelectorAll('.reveal');
+
+  if (reduce || !('IntersectionObserver' in window)) {
+    diagrams.forEach(function(d){ d.classList.add('go'); });
+    reveals.forEach(function(el){ el.classList.add('in'); });
+    return;
+  }
+
+  /* Diagram wires draw once when seen. The drawing IS the argument:
+     six separate obligations resolving into one route. */
+  var dio = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (!e.isIntersecting) return;
+      var svg = e.target;
+      svg.querySelectorAll('.draw path').forEach(function(p, i){
+        p.style.transitionDelay = (120 + i * 110) + 'ms';
+      });
+      svg.querySelectorAll('.fade').forEach(function(g, i){
+        g.style.transitionDelay = (420 + i * 180) + 'ms';
+      });
+      svg.classList.add('go');
+      dio.unobserve(svg);
+    });
+  }, { threshold: 0.25 });
+  diagrams.forEach(function(d){ dio.observe(d); });
+
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { rootMargin: '0px 0px -10% 0px', threshold: 0.1 });
+  reveals.forEach(function(el){ io.observe(el); });
+})();
+</script>
+
+</body>
+</html>
