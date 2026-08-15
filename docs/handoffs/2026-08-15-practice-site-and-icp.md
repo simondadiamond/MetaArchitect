@@ -117,14 +117,32 @@ boundary, so light zigzags down the page. Also: his old site puts the brand acce
 in every corner. Copying that here would mean eight warm blooms and would triple the brass
 footprint — the mechanic transfers, the colour does not.
 
-### The second reference — a different idea, not a gradient
+### The second reference — bookends, NOT alternating (corrected by Simon)
 
-Simon also shared a reference described as *"dark and light at the same time"*: alternating
-**full-bleed dark and light sections** — deep forest green blocks against warm bone blocks,
-gold accent, serif display with italic gold subheads. Note this is close to The Practice's
-existing palette (petrol / bone / brass) but uses petrol and bone as **alternating grounds**
-rather than one ground and one ink. That is a genuine alternative direction to the gradient
-and worth building as its own variant.
+Simon shared a second reference described as *"dark and light at the same time."* An earlier
+version of this handoff recorded it as alternating dark/light sections. **That was wrong and
+he corrected it:**
+
+> "I didn't want alternating patterns. I wanted, like he's doing — dark green header and
+> footer, and the rest more light theme. I don't have to use his exact colors, my colors."
+
+So: **a dark petrol header/hero block, a light bone body through the middle, a dark petrol
+footer/close block.** Bookends, not a rhythm. Same three colours The Practice already uses
+(petrol, bone, brass), redistributed — petrol becomes the bookend ground and bone becomes
+the body ground, instead of petrol-ground-with-bone-ink throughout. Simon indicated The
+Practice itself could take this treatment.
+
+**Two technical constraints that will bite whoever builds it:**
+
+1. **Brass does not survive on bone.** `#D2A968` on `#F2EDE3` is roughly 1.8:1 — a hard
+   fail for any text. Brass currently marks human commitments (price, guarantee,
+   checkmarks, approval branch), and several of those live in the middle of the page, which
+   is now light. On light sections the marker needs a darker bronze for text, or brass gets
+   demoted to rules and marks only with petrol carrying the ink. **Do not solve this by
+   deleting the brass rule** — the rule is the idea; only its light-ground execution changes.
+2. **Both SVG diagrams are drawn bone-on-petrol** and need inverting to petrol-on-bone if
+   they land in the light body. The sprint diagram's brass approval branch has the same
+   contrast problem as above.
 
 ### The portrait — no photo shoot needed
 
