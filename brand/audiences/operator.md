@@ -1,5 +1,29 @@
 # Audience: The Expertise Operator (PRIMARY — active lane)
 
+> **General ICP vs. test segment (2026-08-16).** This file is the GENERAL operator ICP — the
+> umbrella the homepage speaks to. Beneath it sit narrower **test segments**, one at a time, each
+> with its own landing page and its own outbound test. The general doc keeps positioning coherent;
+> the segment doc/page is where the pain gets specific enough to cold-email.
+>
+> | Layer | Who | Surface |
+> |---|---|---|
+> | General ICP | The Expertise Operator (this file) | Homepage — generalized |
+> | Test segment #1 (ACTIVE) | Canadian bookkeeping/accounting practices, 1–20 staff, sold on the monthly client-document chase | Its own landing page |
+> | Test segment #2 (QUEUED) | Trades — chosen because they don't typically buy consulting, so the framing has to be outcome-not-advice | Its own landing page |
+>
+> **Segment #1 qualifier (hard):** TaxDome and Karbon already ship automated client-document
+> chasing. The buyable firms are on QBO/Xero + email with NO practice-management layer. First call
+> question: *"Practice-management tool, or email and spreadsheets?"* Evidence: finance/insurance has
+> the highest consultant-use rate of any sector (6.9%); Canada buys implementation help ~3.5× more
+> than the US (10.7% vs 3.1%).
+>
+> **Validation method:** ~100 cold emails per segment, then read the result before switching. A
+> segment is not "invalidated" by a quiet week — state the reply/call numbers before moving on.
+>
+> **Positioning note:** Simon is not a consultant and shouldn't sell like one — he implements one
+> workflow and hands back a working thing. Consulting is the shelf buyers file him on, not the
+> promise.
+
 > The /setup buyer. Primary audience for all new positioning since 2026-07-20.
 > Companion lane: `practitioner.md` (enterprise, pull-only). Shared identity, voice, visual rules: `brand-summary.md`.
 > Plan + stress test: `docs/brand-repositioning-plan-2026-07-20.md`.
@@ -52,13 +76,17 @@ The wedge — never argue against it, build on top of it:
 - The free tier proves the demand and teaches the category. Position the OS Setup as what comes after the toggle disappoints: generic workflows for generic businesses vs. a workspace that knows YOURS.
 - Concrete line for copy: "Claude now ships ready-made workflows for a generic small business. You don't run a generic small business."
 
-## Ladder → segment mapping
+## Offer → segment mapping (replaced the five-rung ladder, 2026-08-16)
 
-| Rung | Who it's for |
-|---|---|
-| Working Sessions $125/hr | Anyone, including indie/curious — the honest entry; no targeting spend |
-| Audit + Roadmap $2,500 | Operators with an established mess and real revenue |
-| Business OS Setup $6,500 (founding 3× $5,000) | Delegation-proven operators whose billable rate makes it rational |
+The live offer is a **service-led implementation practice**, one workflow at a time. The old
+$125/hr → $2,500 → $6,500 Business OS ladder is DEPRECATED — it closed zero clients and priced an
+"OS" when the real scope was one workflow.
+
+| Step | Price (CAD) | Who it's for |
+|---|---|---|
+| Workflow Mapping Session | $350, credited, no-value-no-charge | Anyone qualified — paid discovery, produces the map |
+| Workflow Sprint | $1,750 founding / $2,500 standard | ONE workflow. 50% deposit, balance on acceptance after a 14-day live run, work-until-it-works |
+| Ongoing Improvement | $400–600/mo, post-Sprint only | Never sold before a Sprint has shipped |
 
 ## Content rules (operator lane)
 

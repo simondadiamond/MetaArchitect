@@ -47,7 +47,19 @@ Your job is to push Simon toward his goals, keep him on the roadmap, and make su
 # The Meta Architect — Brand OS
 
 This is the command-driven workspace for Simon Paris's solo content brand: **The Meta Architect** (simonparis.ca).
-Focus: AI reliability engineering content for practitioners.
+
+**What is actually being sold (2026-08-16):** a **service-led AI implementation practice** — Simon
+implements ONE workflow, end to end, for an owner-operated business. Not a productized software
+product, not a genericized Command Center sold per-seat: commercial agent platforms (Cursor, the
+big labs' agent products) commoditize any interface on a months-long cycle, so the durable asset is
+the engagement and the workflow, not the app. The general ICP is the **Expertise Operator**
+(`brand/audiences/operator.md`); the **active test segment** is Canadian bookkeeping/accounting
+practices, 1–20 staff, on QBO/Xero + email with no practice-management layer. Trades are the
+queued second test. The enterprise/practitioner lane stays **pull-only, later** — not never.
+
+Deprecated as of 2026-08-16, do not optimize for them: the five-rung Business OS ladder
+(`funnel/setup-offer/offer-v4-spec.md`), the "genericized Command Center as flagship product"
+thesis, and "AI reliability engineering content for practitioners" as the brand's primary focus.
 
 ## Repository Notes
 

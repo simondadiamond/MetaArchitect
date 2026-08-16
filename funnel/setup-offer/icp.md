@@ -1,4 +1,10 @@
-# Setup Venture — ICP (v1, evidence-tiered)
+# Setup Venture — ICP (v1, evidence-tiered) — **SUPERSEDED by ICP v2, 2026-08-16**
+
+> ⛔ ICP v2 is now live: general ICP = the Expertise Operator (`brand/audiences/operator.md`);
+> ACTIVE test segment = Canadian bookkeeping/accounting practices 1–20 staff on QBO/Xero + email
+> with no practice-management layer; trades queued as segment #2; ~100 cold emails per segment is
+> the validation method. This file's segment ranking is historical. Its methodology note — that ALL
+> web claims on who-pays/triggers were refuted — still stands and still applies to v2.
 
 > Owner: Simon. Written 2026-07-20 from a 102-agent deep-research run (20 sources fetched,
 > 96 claims extracted, 25 adversarially verified: 8 confirmed / 17 refuted).

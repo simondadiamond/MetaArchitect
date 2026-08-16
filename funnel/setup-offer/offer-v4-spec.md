@@ -1,4 +1,10 @@
-# Setup Offer v4 — Spec (locked 2026-07-27)
+# Setup Offer v4 — Spec (locked 2026-07-27) — **SUPERSEDED 2026-08-16, HISTORICAL ONLY**
+
+> ⛔ **Do not price, position, or write copy from this file.** The five-rung ladder it locks
+> (free demo → $125/hr → $2,500 audit → $6,500 OS Setup → $600/mo retainer) closed zero clients and
+> is deprecated. The live offer is a service-led one-workflow implementation practice —
+> see `brand/audiences/operator.md` ("Offer → segment mapping") and `.claude/product-marketing.md` v4.
+> Kept for the research base and the objection-handling material only.
 
 > Supersedes v3 (Working Sessions / Audit / OS Setup, CLI-delivered). Research base:
 > 4 deep-research passes 2026-07-27 (form factor, UI pricing, feature benchmark,

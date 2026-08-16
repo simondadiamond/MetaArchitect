@@ -1,7 +1,26 @@
 # Product Marketing Context
 
-**Document version:** v2
-**Last updated:** 2026-08-09
+**Document version:** v4
+**Last updated:** 2026-08-16
+
+> **v4 CORRECTION — read before anything below.** Two theses in this doc are DEPRECATED:
+> (1) the five-rung Business OS ladder (free demo → $125/hr → $2,500 audit → $6,500 setup →
+> $600/mo retainer), and (2) selling a genericized Command Center as a product. Reason: commercial
+> agent platforms commoditize any interface on a months-long release cycle, and the ladder closed
+> zero clients. The live offer is a **service-led implementation practice, one workflow at a time**:
+> Workflow Mapping Session C$350 (credited, no-value-no-charge) → Workflow Sprint C$1,750 founding /
+> C$2,500 standard for ONE workflow (50% deposit, balance on acceptance after a 14-day live run,
+> work-until-it-works) → Ongoing Improvement C$400–600/mo, post-Sprint only.
+>
+> **ICP v2:** general ICP stays the Expertise Operator. The ACTIVE test segment is Canadian
+> bookkeeping/accounting practices, 1–20 staff, sold on the monthly client-document chase — and only
+> those on QBO/Xero + email with no practice-management layer (TaxDome and Karbon already automate
+> the chase). Trades are test segment #2, queued. Validation = ~100 cold emails per segment.
+> Site shape: generalized homepage, one landing page per test segment.
+>
+> Everything below this block that describes the ladder, the $6,500 Setup, or Cowork-as-delivery is
+> historical context only. Current source of truth: `brand/audiences/operator.md` +
+> brain note `notes/10-19-business/setup-offer.md`.
 
 > Foundation doc for the marketing-skills plugin (all 49 skills read this first).
 > Compiled from: `brand/audiences/operator.md`, `funnel/setup-offer/icp.md` (v1, evidence-tiered),
@@ -122,5 +141,7 @@ Single-stakeholder sale. The owner wears every hat:
 
 ## Changelog
 *Newest first. One line per revision: what changed and why.*
+- v4 (2026-08-16) — Deprecated the five-rung ladder AND the "genericized Command Center as flagship product" thesis; recorded the live service-led one-workflow practice (C$350 / C$1,750–2,500 / C$400–600) and ICP v2 (general = Expertise Operator; active test segment = Canadian bookkeeping/accounting 1–20 on QBO/Xero + email; trades queued second; ~100 cold emails per segment as the test). Reason: agent platforms commoditize any interface on a months-long cycle, and the ladder closed zero clients. Source: brain `notes/10-19-business/setup-offer.md`, confirmed live with Simon.
+- v3 (2026-08-10) — Command Center named as flagship over Cowork configuration (SUPERSEDED by v4).
 - v2 (2026-08-09) — Added data-handling/account-ownership objection + differentiator (client owns the Claude account from day one, Simon never independently holds credentials) after independent trust-criteria research flagged data privacy as underweighted; policy confirmed live with Simon. Source: `docs/research/operator-trust-criteria-independent-2026-08-09.md`.
 - v1 (2026-08-09) — Initial context, compiled from operator.md, icp.md v1, offer-v4-spec, brand-summary for the marketing-skills plugin install.
