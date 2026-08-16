@@ -1421,3 +1421,17 @@ so explicitly is what separates a real regression test from a false sense of cov
 **Fix applied:** `weekly-brief` SKILL.md gains a mandatory night-build fuel-gauge anchor (Step 1) plus a composition rule (Step 3): when the night-ready count is 0 while unscoped `agent_eligible` goals exist, the brief must carry a "scope one night build" task naming the top candidate and its Simon-minute cost. That puts the dry lane in front of Simon every Monday without adding nightly noise. `night-build` SKILL.md now states explicitly that `agent_eligible` is a scouting flag, not a readiness flag. The five unannotated eligible goals were annotated per the skip contract.
 
 **The generalizable rule:** a scheduled job whose no-op path is silent needs a *separate* periodic surface reporting its input inventory — "ran and found nothing" and "has been structurally unable to find anything" look identical from the outside. And when one field gates an automated lane, only the ritual that verifies readiness may write it; a capture-time flag must never be the same field.
+
+## 2026-08-16 — Every agent email through `resend_send.py` had been failing since the script was written
+
+**What happened:** The 2026-08-16 night build finished its artifact and hit the notify step. `python3 ~/.claude/scripts/resend_send.py` died with a bare `urllib.error.HTTPError: HTTP Error 403: Forbidden`. The identical request sent with `curl` and the same API key succeeded on the first try, so the key, the sending domain, and the payload were all fine.
+
+**Root cause:** Resend's edge rejects the default `User-Agent: Python-urllib/3.12` that `urllib.request` sends when no UA is set. Confirmed by isolating the single variable: `curl -A "Python-urllib/3.12"` → 403, `curl -A "sterling-agent/1.0"` → 200, everything else held constant. The script never set a User-Agent, so it had been broken for every caller since it was written (2026-08-13) — and because `~/.claude/CLAUDE.md` names it the *preferred* send path in every agent profile, every agent that "emailed Simon" was failing, not sending.
+
+**Why nobody noticed:** the failure surfaced only as a Python traceback ending in `HTTP Error 403`, with the response body — which carries Resend's actual reason — swallowed by `HTTPError`. A 403 next to an API key reads as "credential problem", which sends you auditing secrets instead of headers.
+
+**Fix applied:** `~/.claude/scripts/resend_send.py` now sends an explicit `User-Agent`, and catches `HTTPError` to print Resend's response body instead of a bare status line. Verified with a real send.
+
+**The generalizable rule:** when a request fails from one client and succeeds from another with the same credentials, the difference is in the headers the client adds for you, not in the credential — diff the two requests before touching secrets. And any shared script that talks to a third-party API must surface the provider's error body; a status code alone routes the next person to the wrong suspect. Related: a "preferred path" named in every agent profile deserves one live end-to-end send at adoption time, not just a syntax check.
+
+**Where documented:** here; `~/.claude/scripts/resend_send.py`.
