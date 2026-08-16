@@ -109,6 +109,12 @@ tokens, before claiming a pass (this is the recurring miss — see §7).
 
 ## 5. What to build — the fusion
 
+> **Built 2026-08-16 (later session): `funnel/site-drafts/fusion.html`.** All seven
+> items below are done and verified per §7 — 0 contrast failures across 165 painted-pixel
+> samples, no overflow at any of the six widths, reduced motion clean, zero external
+> requests. Build record and every decision: `funnel/site-drafts/fusion-notes.md`.
+> `atelier-a` and `stitch-quiet-luxury-v2` are now reference only. Next is §6.
+
 Take `stitch-quiet-luxury-v2.html` as the layout donor and `atelier-a.src.html` as the
 content donor. Specifically:
 
