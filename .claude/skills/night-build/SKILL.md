@@ -19,6 +19,7 @@ A goal is **night-ready** iff ALL hold:
 - `agent_eligible = true`
 - `status = pending`
 - `acceptance_criteria` filled, and its **first line is the outcome sentence** (one sentence, no technology in it)
+- its `description` carries **no prior `night-build YYYY-MM-DD: built` line** — a built goal stays `pending` until Simon reviews it (invariant 3), so without this clause the same goal is re-selected every night and its unreviewed output gets overwritten
 
 Read via command-center Supabase REST (service key from `projects/command-center/.env`). Pick the single highest `rice_score` (nulls last). A row failing the outcome-sentence test is **skipped, never interpreted** — append `night-build YYYY-MM-DD: skipped — unscoped outcome sentence` to its `description` so it surfaces for re-scoping, **once**: a row that already carries a `night-build YYYY-MM-DD: skipped` line is left untouched (re-annotating nightly is the log spam this rule exists to prevent).
 

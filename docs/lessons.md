@@ -1435,3 +1435,15 @@ so explicitly is what separates a real regression test from a false sense of cov
 **The generalizable rule:** when a request fails from one client and succeeds from another with the same credentials, the difference is in the headers the client adds for you, not in the credential — diff the two requests before touching secrets. And any shared script that talks to a third-party API must surface the provider's error body; a status code alone routes the next person to the wrong suspect. Related: a "preferred path" named in every agent profile deserves one live end-to-end send at adoption time, not just a syntax check.
 
 **Where documented:** here; `~/.claude/scripts/resend_send.py`.
+
+## 2026-08-17 — A built-but-unreviewed goal was still night-ready, so the lane would have rebuilt it
+
+**What happened:** The 2026-08-17 run selected `520c1928` (bookkeeper prospect list) as the single night-ready goal — the same goal the 2026-08-16 run had already built. The CSV (127 rows) was sitting on disk unreviewed. Under the selection contract as written, the correct move was to build it again: overwrite an artifact Simon hadn't looked at, re-send the notification email, and burn the night's one build slot on work already done.
+
+**Root cause:** Two rules that composed into a loop. Invariant 3 forbids the lane from flipping goal status — Simon flips it after review — so a built goal stays `status = pending`. The night-ready test checked only `agent_eligible` + `pending` + a scoped `acceptance_criteria`, none of which a completed build changes. The `night-build YYYY-MM-DD: built` annotation the lane writes was treated as a note for Simon, not as state the selector reads back. Every night after a successful build, the same goal wins again until Simon happens to review it — and the higher its RICE score, the more reliably it blocks the whole queue.
+
+**Fix applied:** `night-build` SKILL.md selection contract gains a fourth night-ready condition — the goal's `description` must carry no prior `night-build YYYY-MM-DD: built` line. Same shape as the existing skip-once rule: the annotation is the state. Tonight's run selected nothing and exited without building.
+
+**The generalizable rule:** when an automated lane is deliberately barred from mutating the field that marks work done (because a human owns that transition), whatever it *does* write has to become part of its own input filter — otherwise "waiting for review" is indistinguishable from "not started" and the job repeats itself forever. Check this on any propose-only or gated automation: what does it write, and does its selector read it back?
+
+**Where documented:** here; `.claude/skills/night-build/SKILL.md`.
