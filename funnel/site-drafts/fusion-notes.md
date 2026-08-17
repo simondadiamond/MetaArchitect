@@ -34,16 +34,16 @@ then `http://100.105.85.5:8086/fusion.html`. Tailscale IP, never `0.0.0.0`.
   node where each step begins. Four steps, not Stitch's three — Simon's sequence
   is Map / Build / Run live / Hand off. This replaced `atelier-a`'s offset
   staircase, and it took the big serif ordinal with it: the node carries the
-  sequence visually, the small `01 —` label carries it in text, and the 34px
-  numeral was only competing with the step heading. (It was also the page's
-  tightest contrast at 3.11:1. Two problems, one deletion.)
+  sequence visually, the `Phase I` label carries it in text, and the 34px numeral
+  was only competing with the step heading. (It was also the page's tightest
+  contrast at 3.11:1. Two problems, one deletion.)
 - **Two cards, the sprint on mass, lifted 22px.** `atelier-a` ran the tiers as
   full-width horizontal shelves; the mockup's paired cards make the two things
   comparable at a glance, which is the whole job of that section.
 - **The sticky-rail questions.** "Fair questions." stays put while the answers
   scroll past it.
 - **The dark closing band**, and the band-ground footer under it.
-- The hero split, the portrait with a card floating over its corner, and the
+- The portrait with a card floating over its corner, and the
   whitespace budget (1200px measure, ~110–130px between sections).
 
 ## What did NOT come from it
@@ -68,16 +68,17 @@ the segment test resolves. Specifically killed, per handoff §5:
 - **Both stock photographs** (the executive portrait, the profile thumbnail beside
   the wordmark), **the logo seal**, and **the "Get Started" nav CTA** — now "Book
   a mapping session", the real one.
-- **The hero scribble**, replaced by the audited `#d1`: six labelled jobs
-  converging on a node called "You". The tangle-into-a-line illustration asserts
-  that messy becomes tidy; this one shows the mechanism. `#d2` sits in the sprint
-  section. Both are ink-on-paper line art, both draw on scroll, both keep their
-  labels legible at 360px because the type is bumped in viewBox units rather than
-  the drawing being scaled.
+- **The hero scribble.** The tangle-into-a-line illustration asserts that messy
+  becomes tidy; the audited drawings show the mechanism. `#d2` — the six jobs
+  resolving into one workflow with a single approval branch — now lives in the
+  blueprint section. `#d1`, the same six jobs converging on "You", is parked in
+  the source with no home yet. Both are ink-on-paper line art, both draw on
+  scroll, and both stay legible at 360px because the type is bumped in viewBox
+  units rather than the drawing being scaled.
 
 ## The mark — nine uses, one of them a label
 
-Handoff §3: one accent, and it marks a number or a commitment. The six:
+Handoff §3: one accent, and it marks a number or a commitment. The nine:
 
 1. C$350
 2. C$1,750 (`#C08A3E` on mass, 5.23:1)
