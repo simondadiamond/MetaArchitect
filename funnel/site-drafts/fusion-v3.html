@@ -67,7 +67,10 @@
   --gutter:32px;
   /* Half at each edge, so two adjacent sections give one full gap and a
      banded section still gets its own internal air. */
-  --sect:clamp(54px,5.6vw,66px);
+  /* half at each edge, so two adjacent sections give one full gap.  Raised
+     2026-08-17: the page had drifted tight and lost the air that was doing the
+     work.  ~128-172px between sections now. */
+  --sect:clamp(64px,6.8vw,86px);
 
   /* Stitch's pair, on Simon's call (2026-08-17).  EB Garamond sets smaller
      than Libre Caslon Text at the same px, so the display sizes are nudged up
@@ -137,7 +140,7 @@ ul{margin:0;padding:0;list-style:none}
 .head .sub{margin-inline:auto}
 /* prose under a centred head sits in a centred column, left aligned — centring
    the body text as well would cost the reader a ragged left edge on every line */
-.body-col{margin:clamp(44px,4.6vw,58px) auto 0;max-width:62ch}
+.body-col{margin:clamp(52px,5.4vw,72px) auto 0;max-width:62ch}
 
 /* ---------- buttons ---------- */
 .btn{
@@ -197,7 +200,7 @@ a:focus-visible,summary:focus-visible,.btn:focus-visible{
 /* ---------- hero ---------- */
 /* copy | Simon.  The portrait moves up here from the about section: the thing
    being bought is a person's judgment, so the person is the hero image. */
-.hero{padding-block:clamp(52px,6vw,92px) clamp(56px,6vw,96px)}
+.hero{padding-block:clamp(64px,7.2vw,112px) clamp(68px,7vw,112px)}
 .hero-grid{display:grid;gap:clamp(48px,5vw,60px)}
 @media (min-width:960px){
   .hero-grid{grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(48px,5vw,72px);align-items:center}
@@ -222,10 +225,22 @@ h1{
   font-size:14.5px;letter-spacing:.01em;color:var(--muted);
 }
 
-/* ---------- problem ---------- */
-.prose{margin-top:34px;max-width:52ch;font-size:clamp(17px,1.35vw,19.5px)}
+/* ---------- the two prose sections ---------- */
+/* Simon, 2026-08-17: the Stitch "THE CHALLENGE" rail comes back on these two,
+   because it mirrors the questions section and gives the prose a column to sit
+   in rather than floating in the middle of the measure.  Every other section
+   keeps its centred head. */
+.rail-grid{display:grid;gap:18px}
+@media (min-width:900px){
+  .rail-grid{grid-template-columns:minmax(0,3fr) minmax(0,9fr);gap:var(--gutter)}
+  .rail-label .eyebrow{padding-top:16px}
+}
+.rail-body{min-width:0}
+.rail-body .h2{margin-inline:0;text-align:left}
+.prose{margin-top:34px;max-width:56ch;font-size:clamp(18px,1.5vw,21px);line-height:1.6}
+.prose + .prose{margin-top:26px}
 .pull{
-  margin-top:40px;font-family:var(--f-display);
+  margin-top:46px;font-family:var(--f-display);
   font-size:clamp(23px,2.5vw,32px);line-height:1.3;letter-spacing:-.015em;
   max-width:24ch;
 }
@@ -248,7 +263,7 @@ h1{
 /* ---------- how I work ---------- */
 /* A real sequence, so it is drawn as one: a hairline running the width of the
    section with a node on it where each step starts. */
-.proc{margin-top:clamp(58px,6vw,80px);display:grid;gap:36px;position:relative}
+.proc{margin-top:clamp(66px,6.8vw,94px);display:grid;gap:36px;position:relative}
 .proc-item{position:relative;border-left:1px solid var(--rule);padding-left:22px}
 .proc-item::before{
   content:"";position:absolute;left:-4px;top:0;width:8px;height:8px;background:var(--ink);
@@ -274,11 +289,13 @@ h1{
 /* ---------- pricing ---------- */
 /* start, not stretch: the Sprint carries less on the page than the session
    does, and stretching it to match made both cards read as equally heavy */
-.cards{display:grid;gap:26px;margin-top:clamp(50px,5vw,66px);align-items:start}
+.cards{display:grid;gap:26px;margin-top:clamp(58px,5.8vw,78px)}
 @media (min-width:900px){
-  /* deliberately not two equal tiers: one has a price and a spec, the other is
-     a conversation.  Equal cards would invite a comparison that is not on offer. */
-  .cards{grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:var(--gutter)}
+  /* Equal columns and equal height, deterministically: 1fr/1fr with stretch.
+     The buttons line up because everything below them is the same height in
+     both cards — the fine print carries a min-height of two lines, and the
+     block above the button absorbs the slack with margin-bottom:auto. */
+  .cards{grid-template-columns:1fr 1fr;gap:var(--gutter);align-items:stretch}
 }
 .card{padding:36px 30px 40px;border:1px solid var(--rule);display:flex;flex-direction:column}
 @media (min-width:900px){.card{padding:42px 36px 46px}}
@@ -316,22 +333,24 @@ h1{
 .card--mass .promise{border-left-color:var(--umber-d)}
 .promise b{font-weight:600;color:var(--umber)}
 .card--mass .promise b{color:var(--umber-d)}
-.card .btn{margin-top:32px;align-self:flex-start}
-.terms{margin-top:26px;font-size:13.5px;line-height:1.6;color:var(--muted)}
+.card .promise{margin-bottom:auto}
+.card .btn{margin-top:34px;align-self:stretch;text-align:center}
+.card .terms{margin-top:20px;min-height:3.1em}
+.terms{font-size:13.5px;line-height:1.55;color:var(--muted)}
 .card--mass .terms{color:var(--on-mass-2)}
 
 /* one quiet block under the two cards — never a third tier, and one rule
    across the measure rather than two ragged ones */
 /* Stitch's treatment, which Simon prefers: a quiet line under the cards, no
    rule above it and no bold. */
-.after{margin-top:clamp(34px,3.4vw,44px);text-align:center}
+.after{margin-top:clamp(42px,4.2vw,56px);text-align:center}
 .after p{font-size:15px;line-height:1.55;color:var(--muted);margin-inline:auto;max-width:76ch}
 
 /* ---------- the report ---------- */
 /* A table of contents for the thing you leave with.  It is the section's proof
    artifact and it is honest: these are the report's headings, not a mock of a
    document that does not exist and not a link to a sample there isn't one of. */
-.sheet-grid{display:grid;gap:clamp(44px,4.5vw,58px);margin-top:clamp(46px,4.6vw,60px)}
+.sheet-grid{display:grid;gap:clamp(48px,4.8vw,64px);margin-top:clamp(54px,5.4vw,72px)}
 @media (min-width:1000px){
   .sheet-grid{grid-template-columns:minmax(0,6fr) minmax(0,5fr);gap:clamp(48px,5vw,80px);align-items:center}
 }
@@ -353,7 +372,7 @@ h1{
 }
 
 /* ---------- practice ---------- */
-.practice-grid{display:grid;gap:clamp(56px,5vw,72px);margin-top:clamp(46px,4.6vw,60px)}
+.practice-grid{display:grid;gap:clamp(60px,5.4vw,80px);margin-top:clamp(54px,5.4vw,72px)}
 @media (min-width:960px){
   .practice-grid{grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:clamp(56px,6vw,88px);align-items:center}
 }
@@ -401,7 +420,7 @@ h1{
    stays put while the answers scroll past it.  Left aligned, unlike every other
    section title on the page — a heading that sticks has to sit on an edge, and
    a centred one would drift against the column it is pinned beside. */
-.qa-grid{display:grid;gap:30px}
+.qa-grid{display:grid;gap:34px;margin-top:clamp(46px,4.6vw,62px)}
 @media (min-width:900px){
   .qa-grid{grid-template-columns:minmax(0,3fr) minmax(0,9fr);gap:var(--gutter)}
   .qa-head{position:sticky;top:124px;align-self:start}
@@ -425,7 +444,7 @@ h1{
 .qa .ans p + p{margin-top:16px}
 
 /* ---------- close ---------- */
-.close{padding-block:clamp(92px,9.5vw,128px);text-align:center}
+.close{padding-block:clamp(104px,10.5vw,152px);text-align:center}
 .close h2{
   font-size:clamp(36px,4.9vw,60px);line-height:1.08;letter-spacing:-.028em;
   max-width:17ch;margin:0 auto;
@@ -501,14 +520,14 @@ h1{
   <!-- PROBLEM -->
   <section class="sect" id="problem">
     <div class="wrap">
-      <div class="head">
+      <div class="rail-grid">
+        <div class="rail-label"><span class="eyebrow reveal">The challenge</span></div>
+        <div class="rail-body">
         <h2 class="h2 reveal">The work around the work.</h2>
-      </div>
-
-      <div class="body-col">
         <p class="prose reveal">Repetitive follow-ups. Information copied between systems. Documents that need sorting. Status checks. Reports rebuilt by hand. Tasks that depend on someone remembering the next step.</p>
         <p class="prose reveal">Individually, they seem small. Across a business, they consume hours, create errors and keep good people doing work software should be handling.</p>
         <p class="pull reveal">That is where I look first.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -562,8 +581,8 @@ h1{
             <li>A recommended implementation, with the tools named</li>
           </ul>
           <p class="promise"><b>The guarantee.</b> You&#8217;ll leave with a written recommendation you can act on. If, after reviewing it, you genuinely don&#8217;t believe the session was worth C$350, I&#8217;ll refund it.</p>
-          <p class="terms">Credited in full toward implementation if we build the opportunity together within thirty days.</p>
           <a class="btn btn-line" href="https://cal.com/simonparis/opportunity-session">Book a session</a>
+          <p class="terms">Credited in full toward implementation if we build the opportunity together within thirty days.</p>
         </article>
 
         <article class="card card--mass reveal">
@@ -621,15 +640,15 @@ h1{
   <!-- ABOUT -->
   <section class="sect" id="about">
     <div class="wrap">
-      <div class="head">
+      <div class="rail-grid">
+        <div class="rail-label"><span class="eyebrow reveal">The practice</span></div>
+        <div class="rail-body">
         <h2 class="h2 reveal">Builder first.</h2>
-      </div>
-
-      <div class="body-col">
         <p class="prose reveal">I am a software developer and technical lead who works deeply with AI, automation and agentic systems.</p>
         <p class="prose reveal">My work sits between business operations and implementation: understanding how work actually happens, deciding where AI helps and where it does not, and then building the system required to make the improvement real.</p>
         <p class="prose reveal">I do not sell a particular AI platform. I use the simplest combination of existing software, automation and custom development that gets the job done reliably. Your accounts stay yours, and custom work is handed over to you. Any third-party software costs are explicit &#8212; I don&#8217;t make money by reselling subscriptions.</p>
         <p class="quote reveal">The goal isn&#8217;t more AI. It&#8217;s more capacity.</p>
+        </div>
       </div>
     </div>
   </section>
