@@ -16,8 +16,10 @@ const URL = 'file://' + file;
 const WIDTHS = [360, 390, 768, 1024, 1180, 1440];
 
 /* every text role on the page, with the ground it is expected to paint on */
+/* sampled before the nav is hidden for the crop pass (see below) */
+const NAV_ROLES = ['.mark', '.nav-links a:not(.btn)', '.nav .btn-sm'];
+
 const ROLES = [
-  '.mark', '.nav-links a:not(.btn)', '.nav .btn-sm',
   'h1', '.lede', '.hero-cta .btn', '.quiet', '.figure-note',
   '.status .eyebrow', '.status p',
   '.eyebrow', '.h2', '.sub',
@@ -30,6 +32,8 @@ const ROLES = [
   '.card--mass .body', '.card--mass .list li', '.card--mass .promise',
   '.card--mass .promise b', '.card--mass .terms', '.card--mass .btn-paper',
   '.after-cards', '.after-cards b', '.rate-note',
+  '.card .kicker', '.card--mass .kicker', '.sheet .n', '.sheet .t',
+  '.sheet-copy p', '.quote', '.signature', '.prose', '.pull', '.fine a',
   '.practice-copy p', '.note h3', '.note .body', '.sig',
   '.place .eyebrow', '.place p',
   '.qa summary', '.qa .ans p',
@@ -38,13 +42,18 @@ const ROLES = [
   '#d1 .lbl', '#d1 .hub-t', '#d2 .lbl', '#d2 .rail-t', '#d2 .pill-t', '#d2 .out',
 ];
 
+/* Kill transitions before forcing the end state, so every crop is of a finished
+ * paint.  Waiting a fixed 400ms against a 700ms reveal sampled elements
+ * mid-fade and reported a 1.15:1 "failure" on text that computes at 5.61:1 —
+ * the audit has to sample the pixel, but it has to sample the FINAL pixel. */
 const settle = async (page) => {
+  await page.addStyleTag({ content: '*,*::before,*::after{transition:none!important;animation:none!important}' });
   await page.evaluate(() => {
     document.querySelectorAll('.reveal').forEach((e) => e.classList.add('in'));
     document.querySelectorAll('.diagram').forEach((e) => e.classList.add('go'));
     document.querySelectorAll('details').forEach((d) => (d.open = true));
   });
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(250);
 };
 
 (async () => {
@@ -87,6 +96,22 @@ const settle = async (page) => {
     });
     await page.goto(URL, { waitUntil: 'load' });
     await settle(page);
+    /* The sticky nav is translucent with a backdrop blur.  element.screenshot()
+     * scrolls its target into view, and anything that lands under the nav gets
+     * captured through it — which reported "PHASE I" as umber at 10% on paper
+     * (1.15:1) when it is umber at 100% on band (5.61:1).  Take the nav out for
+     * the crop pass; its own roles are sampled from the top of the page anyway. */
+    for (const sel of NAV_ROLES) {
+      const els = await page.$$(sel);
+      for (let i = 0; i < Math.min(els.length, 2); i++) {
+        const box = await els[i].boundingBox();
+        if (!box || box.width < 2 || box.height < 2) continue;
+        const name = `${label}_nav_${sel.replace(/[^a-z0-9]+/gi, '_')}_${i}.png`;
+        try { await els[i].screenshot({ path: path.join(OUT, name) }); } catch (e) { continue; }
+        report.crops.push({ sel, i, label, width, file: name });
+      }
+    }
+    await page.addStyleTag({ content: '.nav{display:none!important}' });
     for (const sel of ROLES) {
       const els = await page.$$(sel);
       for (let i = 0; i < Math.min(els.length, 2); i++) {
