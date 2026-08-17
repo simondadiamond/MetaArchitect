@@ -102,36 +102,22 @@ ul{margin:0;padding:0;list-style:none}
   text-wrap:balance;
 }
 .sub{
-  margin-top:20px;
-  max-width:50ch;
+  margin-top:22px;
+  max-width:52ch;
   font-size:clamp(17px,1.35vw,19.5px);
   color:var(--muted);
 }
 
-/* Section head — the twelve-column label rail. The eyebrow sits out in the
-   margin; the argument runs in the wide column. Above them a hairline with a
-   single ink node on it: the same mark the sequence row uses, so a point on a
-   line means the same thing everywhere on the page. */
-.head-rule{
-  display:block;height:1px;background:var(--rule);position:relative;
-  margin-bottom:30px;
-}
-.head-rule::before{
-  content:"";position:absolute;left:0;top:-3.5px;width:8px;height:8px;background:var(--ink);
-}
-.head{display:grid;gap:14px}
-@media (min-width:900px){
-  .head{grid-template-columns:minmax(0,3fr) minmax(0,9fr);gap:var(--gutter)}
-  .head .eyebrow{padding-top:9px}
-}
-.head-body{min-width:0}
-.body-col{margin-top:clamp(44px,4.6vw,58px)}
-@media (min-width:900px){
-  /* the section body stays in the wide column, so the rail reads as a margin.
-     The head grid is 3fr 9fr with one gutter between, so the wide column
-     starts at 25% of (100% - gutter), plus that gutter. */
-  .body-col{margin-left:calc(25% + (var(--gutter) * 0.75))}
-}
+/* Section head — centred, and that is all it is (2026-08-17). The rail, the
+   hairline and the eyebrow label all came out on Simon's call, so a section now
+   opens on its title and nothing else. Everything below a head keeps its own
+   alignment; only the title and subtitle centre. */
+.head{text-align:center}
+.head .h2{margin-inline:auto}
+.head .sub{margin-inline:auto}
+/* prose under a centred head sits in a centred column, left aligned — centring
+   the body text as well would cost the reader a ragged left edge on every line */
+.body-col{margin:clamp(44px,4.6vw,58px) auto 0;max-width:62ch}
 
 /* ---------- buttons ---------- */
 .btn{
@@ -205,6 +191,12 @@ h1{
   line-height:1.55;color:var(--muted);
 }
 .hero-cta{display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin-top:44px}
+/* no rule above it: every hairline on the page came out with the section
+   heads, and one left behind in the hero would be the only one */
+.signature{
+  margin-top:52px;max-width:58ch;
+  font-size:14.5px;letter-spacing:.01em;color:var(--muted);
+}
 
 /* ---------- diagrams: ink on paper, drawn like a plan ---------- */
 .diagram{display:block;width:100%;height:auto;overflow:visible}
@@ -300,7 +292,7 @@ h1{
 /* ---------- pricing ---------- */
 /* stretch, not start: two shelves of different content length still have to
    bottom out together or the shorter one reads as unfinished */
-.cards{display:grid;gap:26px;margin-top:clamp(48px,5vw,64px);align-items:stretch}
+.cards{display:grid;gap:26px;margin-top:clamp(50px,5vw,66px);align-items:stretch}
 @media (min-width:900px){
   .cards{grid-template-columns:1fr 1fr;gap:var(--gutter)}
   /* the sprint is the thing being bought; the session is the door to it */
@@ -388,12 +380,9 @@ h1{
 }
 
 /* ---------- questions ---------- */
-.qa-grid{display:grid;gap:34px}
-@media (min-width:900px){
-  /* same 3/9 split as every section head, so the page has one left axis */
-  .qa-grid{grid-template-columns:minmax(0,3fr) minmax(0,9fr);gap:var(--gutter)}
-  .qa-head{position:sticky;top:120px;align-self:start}
-}
+/* the sticky rail went with the other rails — the questions now sit in one
+   centred column under the centred title */
+.qa-wrap{margin-top:clamp(40px,4.2vw,54px);max-width:860px;margin-inline:auto}
 .qa{border-top:1px solid var(--rule)}
 .qa details{border-bottom:1px solid var(--rule)}
 .qa summary{
@@ -469,11 +458,12 @@ h1{
   <section class="sect hero">
     <div class="wrap">
       <h1>The work that only happens when you do it.</h1>
-      <p class="lede">I turn one of those into a workflow that runs on its own, and asks you only when it matters.</p>
+      <p class="lede">I take one of those and build it into an AI workflow that runs on its own, does the job inside your business, and asks you only when it matters.</p>
       <div class="hero-cta">
         <a class="btn" href="mailto:me@simonparis.ca?subject=Mapping%20session">Book a mapping session</a>
         <a class="quiet" href="#sprint">What a sprint is</a>
       </div>
+      <p class="signature">Independent AI implementation practice. Quebec City, in French or English.</p>
     </div>
   </section>
 
@@ -523,13 +513,9 @@ h1{
   <!-- PROBLEM -->
   <section class="sect" id="problem">
     <div class="wrap">
-      <span class="head-rule reveal"></span>
       <div class="head">
-        <span class="eyebrow reveal">The problem</span>
-        <div class="head-body">
-          <h2 class="h2 reveal">You are not the bottleneck. You are the junction.</h2>
-          <p class="sub reveal">There is a category of work that never appears on anyone's job description. It is small, it repeats, and it quietly belongs to the owner.</p>
-        </div>
+        <h2 class="h2 reveal">You are not the bottleneck. You are the junction.</h2>
+        <p class="sub reveal">There is a category of work that never appears on anyone's job description. It is small, it repeats, and it quietly belongs to the owner.</p>
       </div>
 
       <div class="body-col">
@@ -545,13 +531,9 @@ h1{
   <!-- SPRINT -->
   <section class="sect sect--band" id="sprint">
     <div class="wrap">
-      <span class="head-rule reveal"></span>
       <div class="head">
-        <span class="eyebrow reveal">The sprint</span>
-        <div class="head-body">
-          <h2 class="h2 reveal">What a sprint actually is.</h2>
-          <p class="sub reveal">One recurring workflow, built into the business, running live on real work before you are ever asked to accept it.</p>
-        </div>
+        <h2 class="h2 reveal">What a sprint actually is.</h2>
+        <p class="sub reveal">One recurring workflow, built into the business, running live on real work before you are ever asked to accept it.</p>
       </div>
 
       <div class="proc">
@@ -582,13 +564,9 @@ h1{
   <!-- PRICING -->
   <section class="sect" id="pricing">
     <div class="wrap">
-      <span class="head-rule reveal"></span>
       <div class="head">
-        <span class="eyebrow reveal">Pricing</span>
-        <div class="head-body">
-          <h2 class="h2 reveal">Engagements</h2>
-          <p class="sub reveal">Prices are the same number in Canadian and US dollars. There is no hourly rate on this page because you are not buying hours.</p>
-        </div>
+        <h2 class="h2 reveal">Engagements</h2>
+        <p class="sub reveal">Prices are the same number in Canadian and US dollars. There is no hourly rate on this page because you are not buying hours.</p>
       </div>
 
       <div class="cards">
@@ -635,12 +613,8 @@ h1{
        The workflow drawing lives here now instead of in the sprint section. -->
   <section class="sect" id="blueprint">
     <div class="wrap">
-      <span class="head-rule reveal"></span>
       <div class="head">
-        <span class="eyebrow reveal">What you keep</span>
-        <div class="head-body">
-          <h2 class="h2 reveal">The blueprint.</h2>
-        </div>
+        <h2 class="h2 reveal">The blueprint.</h2>
       </div>
 
       <div class="blueprint-grid">
@@ -696,12 +670,8 @@ h1{
   <!-- PRACTICE -->
   <section class="sect" id="practice">
     <div class="wrap">
-      <span class="head-rule reveal"></span>
       <div class="head">
-        <span class="eyebrow reveal">The practice</span>
-        <div class="head-body">
-          <h2 class="h2 reveal">The human component.</h2>
-        </div>
+        <h2 class="h2 reveal">The human component.</h2>
       </div>
 
       <div class="practice-grid">
@@ -742,13 +712,11 @@ h1{
   <!-- QUESTIONS -->
   <section class="sect" id="questions">
     <div class="wrap">
-      <span class="head-rule reveal"></span>
-      <div class="qa-grid">
-        <div class="qa-head">
-          <span class="eyebrow reveal">Questions</span>
-          <h2 class="h2 reveal" style="margin-top:16px">Fair questions.</h2>
-        </div>
+      <div class="head">
+        <h2 class="h2 reveal">Fair questions.</h2>
+      </div>
 
+      <div class="qa-wrap">
         <div class="qa reveal">
           <details open>
             <summary>Why can I not just use ChatGPT myself?</summary>

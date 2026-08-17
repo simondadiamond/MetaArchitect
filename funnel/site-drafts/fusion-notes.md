@@ -26,10 +26,10 @@ then `http://100.105.85.5:8086/fusion.html`. Tailscale IP, never `0.0.0.0`.
 
 ## What came from Stitch (the layout donor)
 
-- **The twelve-column label rail.** Eyebrow out in a 3-col margin, the argument in
-  the 9-col column. This is the single strongest thing in the mockup and it now
-  sets the page's left axis: every section head, every body column, and the
-  questions accordion hang off the same line.
+- ~~**The twelve-column label rail.**~~ Removed 2026-08-17 — see the second
+  revision below. It was the strongest device in the mockup and it set the page's
+  left axis, but Simon wanted the eyebrows and the hairlines gone and the titles
+  centred, which leaves nothing for a rail to hold.
 - **The node-on-a-line sequence.** A hairline across the section with a square
   node where each step begins. Four steps, not Stitch's three — Simon's sequence
   is Map / Build / Run live / Hand off. This replaced `atelier-a`'s offset
@@ -186,6 +186,51 @@ He walked it and cut hard. Every item below is his, not a design change I chose.
 - The floating card over the portrait is the same device as the hero post-it he
   rejected. He did not call this one out and Stitch's approved layout has an
   offset element there, so it stayed.
+
+## Second revision — 2026-08-17, later
+
+Two more from Simon, both on the whole page rather than one section.
+
+**1. No rules, no section eyebrows, titles centred.** Every section used to open
+with a hairline carrying an ink node, then a small uppercase label out in a
+three-column margin (`PRICING`, `THE PROBLEM`), then the title in the wide
+column. All of that is gone. A section now opens on its centred title, and its
+subtitle centres under it. Consequences worth knowing:
+
+- **The page's left axis went with it.** Five sections used to hang off the same
+  line at 25%; body content now sits in centred columns instead (`.body-col` is
+  62ch, the questions column 860px). Everything below a head keeps its own
+  alignment — only the title and subtitle centre. Centring the body prose as well
+  would give the reader a ragged left edge on every line.
+- **The sticky-rail questions are gone.** "Fair questions." held the left rail
+  while the answers scrolled past it; with the rails removed it is a centred
+  title over a centred accordion.
+- **The node-on-a-line motif now appears once**, in the sequence row, rather than
+  once per section head. The list bullets still use the same square.
+- The eyebrow class survives on the floating card over the portrait ("WHERE AND
+  IN WHICH LANGUAGE"). That is a label on an object, not a section mini-title, so
+  it stayed — one word if it should go too.
+
+**2. The hero names AI.** Simon: *"just because outcomes should not talk about
+technology, doesn't mean my brand can't."* This is the first change to frozen
+main-page copy, so it wants his sign-off rather than mine:
+
+- lede was *"I turn one of those into a workflow that runs on its own, and asks
+  you only when it matters."* → *"I take one of those and build it into an **AI
+  workflow** that runs on its own, does the job inside your business, and asks you
+  only when it matters."*
+- a signature line under the action: *"Independent AI implementation practice.
+  Quebec City, in French or English."* — his own words, lifted from the footer.
+
+The headline is untouched. It leads with the problem, which is the brand rule;
+naming the technology in the line under it means the hero says what he does
+without opening on what he uses. The signature sits **below** the CTA
+deliberately — the same words above the headline would be the eyebrow device he
+had just removed.
+
+The hero also stays left aligned while the section heads centre. That is the
+Stitch pattern (its hero was left, its pricing head centred) and it keeps the
+opening from reading as a fully centred, and much more generic, page.
 
 ## Open, unchanged
 
