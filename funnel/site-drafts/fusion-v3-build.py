@@ -23,21 +23,34 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, 'fusion-v3.src.html')
 OUT = os.path.join(HERE, 'fusion-v3.html')
 FACES = os.path.join(HERE, 'faces-v2.css')
-PORTRAIT = '/home/diamond/projects/MetaArchitect/projects/simonparis-website/public/simon-paris.png'
+# Simon's re-cut, less shadow (2026-08-17).  Canonical copy lives in the
+# website repo at public/simon-paris-v3.png; this is a fetched copy so the draft
+# builds without reaching into that checkout.
+PORTRAIT = os.path.join(HERE, 'simon-paris-v3.png')
 
 for p in (SRC, FACES, PORTRAIT):
     if not os.path.exists(p):
         sys.exit('missing input: ' + p)
 
+# Enhance the SUBJECT, then composite.  Doing it the other way round runs the
+# contrast curve over the paper background too, which lifted #F8F6F1 toward
+# white and left the portrait sitting in a visible pale rectangle on the page.
 im = Image.open(PORTRAIT).convert('RGBA')
+alpha = im.getchannel('A')
+rgb = im.convert('RGB')
+rgb = ImageEnhance.Color(rgb).enhance(0.42)
+rgb = ImageEnhance.Contrast(rgb).enhance(1.06)
+im = rgb.convert('RGBA'); im.putalpha(alpha)
 bg = Image.new('RGBA', im.size, (248, 246, 241, 255))       # --paper, not a plate
 im = Image.alpha_composite(bg, im).convert('RGB')
+# The source is already 3:4 and framed the way Simon wants it, so the only crop
+# is the bottom 7%: the export carries a four-point "edited with AI" sparkle
+# watermark near the bottom-right, and a generative-AI watermark on the
+# consultant's own portrait is the exact credibility leak this page is fighting.
+# Replace with a clean export and drop this crop.
 W, H = im.size
-w = int(H * 0.72)                                           # taller than 4:5
-left = max(0, min(W - w, 660 - w // 2))
-im = im.crop((left, 0, left + w, H)).resize((760, 1056), Image.LANCZOS)
-im = ImageEnhance.Color(im).enhance(0.42)
-im = ImageEnhance.Contrast(im).enhance(1.06)
+im = im.crop((0, 0, W, int(H * 0.93)))
+im = im.resize((760, round(760 * im.height / im.width)), Image.LANCZOS)
 buf = io.BytesIO()
 im.save(buf, 'JPEG', quality=84, optimize=True, progressive=True)
 
