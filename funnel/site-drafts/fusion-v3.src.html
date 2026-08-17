@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Simon Paris - put AI to work in your business</title>
+<meta name="description" content="I help businesses find where AI can save time, improve how work gets done, and turn those opportunities into reliable systems.">
+<script>document.documentElement.className+=" js";</script>
+<style>
+/*@FONTS@*/
+
+/* ============================================================
+   FUSION v3 — the offer, put back together.
+
+   v2 dissolved the implementation product and then could not
+   price it.  v3 restores it as a named, scoped, priced Sprint
+   with acceptance-based sign-off, adds a refund guarantee to the
+   session, and replaces every mailto with a booking link.
+   See fusion-v3-notes.md.
+
+   PREVIOUSLY: FUSION v2 — the repositioning.
+
+   Same visual system as fusion.html, different offer. The
+   homepage now publishes one price (the session) and no price
+   for implementation; the method is FIND / DESIGN / IMPLEMENT
+   rather than a four-phase sprint; the portrait moves into the
+   hero; and both line drawings are out. See fusion-v2-notes.md
+   for what came from the outside review and what did not.
+
+   Layout donor: stitch-quiet-luxury-v2.html (twelve-column label
+   rail, node-on-a-line sequence, two-card shelf with the featured
+   tier on mass, sticky-rail questions, dark closing band).
+   Content donor: atelier-a.src.html — every word carried over
+   byte for byte. Copy is frozen until the segment test resolves.
+
+   One ground: paper. One ink: petrol. One mark: umber. It marks
+   a number or a commitment — the two prices, the two guarantees,
+   the approval branch — plus the four phase labels, which are
+   Simon's call (2026-08-17) and the one label the mark lands on.
+   Nine marks. A mark that repeats becomes a texture.
+   ============================================================ */
+
+:root{
+  --paper:#F8F6F1;
+  --band:#F1EDE3;
+  --ink:#102E33;
+  --mass:#0D262A;
+  --muted:#43585C;
+  --umber:#7E5518;      /* the mark, on light grounds  6.08:1 on paper */
+  --umber-d:#C08A3E;    /* the mark, on mass           5.23:1 on mass  */
+  --on-mass:#F8F6F1;    /* 14.64:1 */
+  --on-mass-2:#93A9AC;  /*  6.41:1 */
+
+  --rule:rgba(16,46,51,.16);
+  --rule-soft:rgba(16,46,51,.09);
+  --rule-mass:rgba(248,246,241,.20);
+
+  --measure:1200px;
+  --gutter:32px;
+  /* Half at each edge, so two adjacent sections give one full gap and a
+     banded section still gets its own internal air. */
+  --sect:clamp(54px,5.6vw,66px);
+
+  /* Stitch's pair, on Simon's call (2026-08-17).  EB Garamond sets smaller
+     than Libre Caslon Text at the same px, so the display sizes are nudged up
+     to hold the scale. */
+  --f-display:'EB Garamond',Georgia,'Times New Roman',serif;
+  --f-body:'Source Sans 3',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--f-body);
+  font-size:17px;
+  line-height:1.62;
+  font-weight:400;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+@media (min-width:900px){body{font-size:18px}}
+
+img,svg{max-width:100%}
+a{color:inherit}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0}
+p{margin:0}
+ul{margin:0;padding:0;list-style:none}
+
+.wrap{width:100%;max-width:var(--measure);margin:0 auto;padding:0 24px}
+@media (min-width:900px){.wrap{padding:0 var(--gutter)}}
+
+/* padding-block, never the padding shorthand — a shorthand on anything that
+   also carries .wrap silently zeroes the side padding and dumps the text
+   against the edge of the phone. */
+.sect{padding-block:var(--sect)}
+.sect--band{background:var(--band)}
+.sect--mass{background:var(--mass);color:var(--on-mass)}
+
+/* ---------- type roles ---------- */
+.eyebrow{
+  font-size:11.5px;font-weight:600;letter-spacing:.19em;text-transform:uppercase;
+  color:var(--muted);display:block;
+}
+@media (min-width:900px){.eyebrow{font-size:12px}}
+
+.h2{
+  font-size:clamp(32px,3.9vw,48px);
+  line-height:1.13;
+  letter-spacing:-.018em;
+  max-width:22ch;
+  text-wrap:balance;
+}
+.sub{
+  margin-top:22px;
+  max-width:52ch;
+  font-size:clamp(17px,1.35vw,19.5px);
+  color:var(--muted);
+}
+
+/* Section head — centred, and that is all it is (2026-08-17). The rail, the
+   hairline and the eyebrow label all came out on Simon's call, so a section now
+   opens on its title and nothing else. Everything below a head keeps its own
+   alignment; only the title and subtitle centre. */
+.head{text-align:center}
+.head .h2{margin-inline:auto}
+.head .sub{margin-inline:auto}
+/* prose under a centred head sits in a centred column, left aligned — centring
+   the body text as well would cost the reader a ragged left edge on every line */
+.body-col{margin:clamp(44px,4.6vw,58px) auto 0;max-width:62ch}
+
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--ink);color:var(--paper);
+  font-family:var(--f-body);font-size:13px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;text-decoration:none;
+  padding:18px 28px;border:1px solid var(--ink);
+  transition:background .25s ease,color .25s ease,border-color .25s ease;
+}
+.btn:hover{background:transparent;color:var(--ink)}
+.btn-sm{padding:11px 17px;font-size:11.5px;letter-spacing:.09em}
+.btn-line{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn-line:hover{background:var(--ink);color:var(--paper)}
+.btn-paper{background:var(--paper);border-color:var(--paper);color:var(--ink)}
+.btn-paper:hover{background:transparent;color:var(--paper)}
+
+.quiet{
+  font-size:13px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);text-decoration:none;
+  border-bottom:1px solid var(--rule);padding-bottom:5px;
+  transition:color .2s ease,border-color .2s ease;
+}
+.quiet:hover{color:var(--ink);border-color:var(--ink)}
+
+a:focus-visible,summary:focus-visible,.btn:focus-visible{
+  outline:2px solid var(--umber);outline-offset:3px;
+}
+.sect--mass a:focus-visible,.sect--mass .btn:focus-visible{outline-color:var(--umber-d)}
+
+/* ---------- nav ---------- */
+.nav{
+  position:sticky;top:0;z-index:40;
+  background:rgba(248,246,241,.90);
+  backdrop-filter:saturate(140%) blur(14px);
+  border-bottom:1px solid var(--rule-soft);
+}
+.nav-in{display:flex;align-items:center;justify-content:space-between;height:80px;gap:24px}
+/* The wordmark is his name in the display serif. There is no logo. */
+.mark{
+  font-family:var(--f-display);font-size:23px;letter-spacing:-.012em;
+  text-decoration:none;white-space:nowrap;
+}
+.nav-links{display:flex;align-items:center;gap:30px}
+.nav-links a:not(.btn){
+  font-size:12px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--muted);text-decoration:none;transition:color .2s ease;
+}
+.nav-links a:not(.btn):hover{color:var(--ink)}
+@media (max-width:860px){.nav-links a:not(.btn){display:none}}
+@media (max-width:560px){
+  .nav-in{height:68px}
+  .mark{font-size:20px}
+  .nav .btn-sm{padding:10px 13px;font-size:10.5px;letter-spacing:.06em}
+}
+
+/* ---------- hero ---------- */
+/* copy | Simon.  The portrait moves up here from the about section: the thing
+   being bought is a person's judgment, so the person is the hero image. */
+.hero{padding-block:clamp(52px,6vw,92px) clamp(56px,6vw,96px)}
+.hero-grid{display:grid;gap:clamp(48px,5vw,60px)}
+@media (min-width:960px){
+  .hero-grid{grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(48px,5vw,72px);align-items:center}
+}
+h1{
+  font-size:clamp(43px,5.8vw,70px);
+  line-height:1.03;
+  letter-spacing:-.03em;
+  max-width:15ch;
+  text-wrap:balance;
+}
+.lede{
+  margin-top:30px;max-width:44ch;
+  font-size:clamp(18px,1.7vw,22px);
+  line-height:1.55;color:var(--muted);
+}
+.hero-cta{display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin-top:44px}
+/* no rule above it: every hairline on the page came out with the section
+   heads, and one left behind in the hero would be the only one */
+.signature{
+  margin-top:52px;max-width:58ch;
+  font-size:14.5px;letter-spacing:.01em;color:var(--muted);
+}
+
+/* ---------- problem ---------- */
+.prose{margin-top:34px;max-width:52ch;font-size:clamp(17px,1.35vw,19.5px)}
+.pull{
+  margin-top:40px;font-family:var(--f-display);
+  font-size:clamp(23px,2.5vw,32px);line-height:1.3;letter-spacing:-.015em;
+  max-width:24ch;
+}
+
+/* The Stitch methodology head, which Simon asked for by name: the title holds
+   the left and a small tracked caption sits out on the right, on the same
+   baseline.  This is the one section head that is not centred. */
+.head--split{text-align:left;display:grid;gap:14px}
+@media (min-width:820px){
+  .head--split{grid-template-columns:auto auto;justify-content:space-between;align-items:baseline}
+  .head--split .caption{text-align:right}
+}
+.head--split .h2{margin-inline:0}
+.caption{
+  font-size:11.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);max-width:40ch;
+}
+@media (min-width:900px){.caption{font-size:12px}}
+
+/* ---------- how I work ---------- */
+/* A real sequence, so it is drawn as one: a hairline running the width of the
+   section with a node on it where each step starts. */
+.proc{margin-top:clamp(58px,6vw,80px);display:grid;gap:36px;position:relative}
+.proc-item{position:relative;border-left:1px solid var(--rule);padding-left:22px}
+.proc-item::before{
+  content:"";position:absolute;left:-4px;top:0;width:8px;height:8px;background:var(--ink);
+}
+@media (min-width:900px){
+  /* three steps, three columns — a four-column grid left a hole where the
+     fourth step used to be */
+  .proc{grid-template-columns:repeat(3,1fr);gap:var(--gutter);padding-top:26px}
+  .proc::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--rule)}
+  .proc-item{border-left:0;padding-left:0;padding-right:var(--gutter)}
+  .proc-item::before{left:0;top:-30px}
+}
+/* Gold, on Simon's call (2026-08-17) — matching the Stitch original, where the
+   phase label is the accent.  It is the one place the mark lands on a label
+   rather than on a number or a commitment.  5.61:1 on band. */
+.proc-item .meta{
+  font-size:11.5px;font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--umber);
+}
+.proc-item h3{margin-top:14px;font-size:clamp(21px,1.9vw,25px);letter-spacing:-.01em}
+.proc-item p.body{margin-top:14px;font-size:15.5px;color:var(--muted)}
+
+/* ---------- pricing ---------- */
+/* stretch, not start: two shelves of different content length still have to
+   bottom out together or the shorter one reads as unfinished */
+.cards{display:grid;gap:26px;margin-top:clamp(50px,5vw,66px);align-items:stretch}
+@media (min-width:900px){
+  /* deliberately not two equal tiers: one has a price and a spec, the other is
+     a conversation.  Equal cards would invite a comparison that is not on offer. */
+  .cards{grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:var(--gutter)}
+}
+.card{padding:40px 34px 44px;border:1px solid var(--rule);display:flex;flex-direction:column}
+@media (min-width:900px){.card{padding:48px 40px 52px}}
+.card--mass{background:var(--mass);border-color:var(--mass);color:var(--on-mass)}
+.card .kicker{
+  font-size:11.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--umber);margin-bottom:14px;
+}
+.card--mass .kicker{color:var(--umber-d)}
+.card h3{font-size:clamp(23px,2.1vw,28px);letter-spacing:-.012em}
+.figure{
+  margin-top:16px;font-family:var(--f-display);
+  font-size:clamp(42px,4.6vw,56px);line-height:1;letter-spacing:-.03em;
+  color:var(--umber);
+}
+.card--mass .figure{color:var(--umber-d)}
+.figure-alt{margin-top:14px;font-size:14.5px;line-height:1.5;color:var(--muted);max-width:34ch}
+.card--mass .figure-alt{color:var(--on-mass-2)}
+.card .body{margin-top:30px;font-size:clamp(16.5px,1.3vw,18px);max-width:44ch}
+.card--mass .body{color:var(--on-mass)}
+.list{margin-top:22px;display:grid;gap:10px}
+.list li{position:relative;padding-left:24px;font-size:15.5px;color:var(--muted)}
+.card--mass .list li{color:var(--on-mass-2)}
+/* the same node the section heads and the sequence row use — a point on a line
+   means one thing everywhere on this page */
+.list li::before{
+  content:"";position:absolute;left:0;top:9px;width:5px;height:5px;background:var(--muted);
+}
+.card--mass .list li::before{background:var(--umber-d)}
+/* the guarantee is a commitment — the mark belongs here */
+.promise{
+  margin-top:28px;margin-bottom:34px;padding-left:20px;border-left:2px solid var(--umber);
+  font-size:15.5px;line-height:1.55;
+}
+.card--mass .promise{border-left-color:var(--umber-d)}
+.promise b{font-weight:600;color:var(--umber)}
+.card--mass .promise b{color:var(--umber-d)}
+/* auto, so the action bottoms out on both shelves whatever the copy above it
+   does */
+.card .btn{margin-top:auto;align-self:flex-start}
+.terms{margin-top:26px;font-size:13.5px;line-height:1.6;color:var(--muted)}
+.card--mass .terms{color:var(--on-mass-2)}
+
+/* one quiet block under the two cards — never a third tier, and one rule
+   across the measure rather than two ragged ones */
+/* Stitch's treatment, which Simon prefers: a quiet line under the cards, no
+   rule above it and no bold. */
+.after{margin-top:clamp(34px,3.4vw,44px);text-align:center}
+.after p{font-size:15px;line-height:1.55;color:var(--muted);margin-inline:auto;max-width:76ch}
+
+/* ---------- the report ---------- */
+/* A table of contents for the thing you leave with.  It is the section's proof
+   artifact and it is honest: these are the report's headings, not a mock of a
+   document that does not exist and not a link to a sample there isn't one of. */
+.sheet-grid{display:grid;gap:clamp(44px,4.5vw,58px);margin-top:clamp(46px,4.6vw,60px)}
+@media (min-width:1000px){
+  .sheet-grid{grid-template-columns:minmax(0,6fr) minmax(0,5fr);gap:clamp(48px,5vw,80px);align-items:center}
+}
+.sheet{border-top:1px solid var(--ink)}
+.sheet li{
+  display:flex;gap:20px;align-items:baseline;
+  border-bottom:1px solid var(--rule);padding:15px 0;
+}
+.sheet .n{
+  font-family:var(--f-body);font-size:11.5px;font-weight:600;letter-spacing:.12em;
+  color:var(--muted);min-width:22px;
+}
+.sheet .t{font-family:var(--f-display);font-size:clamp(17px,1.5vw,20px);line-height:1.3}
+.sheet-copy p{font-size:clamp(17px,1.4vw,19.5px);line-height:1.55;max-width:40ch}
+.sheet-copy p + p{margin-top:20px;font-size:16px;color:var(--muted);max-width:46ch}
+.sheet-copy .btn{margin-top:30px}
+.sample-note{
+  margin-top:16px;font-size:13.5px;line-height:1.5;color:var(--muted);max-width:44ch;
+}
+
+/* ---------- practice ---------- */
+.practice-grid{display:grid;gap:clamp(56px,5vw,72px);margin-top:clamp(46px,4.6vw,60px)}
+@media (min-width:960px){
+  .practice-grid{grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:clamp(56px,6vw,88px);align-items:center}
+}
+.practice-copy p{max-width:52ch}
+.practice-copy p + p{margin-top:20px}
+.practice-copy strong{font-weight:600}
+
+.portrait-wrap{position:relative}
+/* the only dark object on this half of the page, because the photograph is a
+   rim-lit cutout and needs the plate to sit on */
+/* No plate.  The source is a true cutout, so it composites onto the page ground
+   and reads as an editorial portrait instead of the only dark object around. */
+.portrait{position:relative}
+.portrait img{width:100%;height:auto;display:block}
+.place{
+  position:absolute;right:-20px;bottom:-28px;z-index:3;
+  background:var(--paper);border:1px solid var(--rule);
+  padding:20px 22px;max-width:268px;
+  box-shadow:0 22px 44px -30px rgba(16,46,51,.42);
+}
+@media (max-width:760px){.place{position:static;max-width:none;margin-top:20px;box-shadow:none}}
+.place .eyebrow{margin-bottom:9px}
+.place p{font-size:14.5px;line-height:1.5}
+
+/* the disclosure sits after the positives, never above them */
+.note{margin-top:clamp(44px,4vw,56px);border-top:1px solid var(--rule);padding-top:30px}
+.note h3{font-size:clamp(21px,1.9vw,26px);letter-spacing:-.012em;margin-bottom:16px}
+.note p + p{margin-top:18px}
+.note .body{font-size:16px;color:var(--muted);max-width:52ch}
+.sig{
+  margin-top:24px;padding-top:18px;border-top:1px solid var(--rule);
+  font-size:14.5px;color:var(--ink);font-weight:500;max-width:46ch;
+}
+
+/* the line the outside review picked out, and it is the better one: the goal is
+   not more AI */
+.quote{
+  margin-top:clamp(38px,3.6vw,48px);padding-left:22px;border-left:2px solid var(--umber);
+  font-family:var(--f-display);font-size:clamp(21px,2vw,27px);line-height:1.32;
+  letter-spacing:-.012em;max-width:26ch;
+}
+
+/* ---------- questions ---------- */
+/* The one rail Simon kept (2026-08-17): the title holds the left column and
+   stays put while the answers scroll past it.  Left aligned, unlike every other
+   section title on the page — a heading that sticks has to sit on an edge, and
+   a centred one would drift against the column it is pinned beside. */
+.qa-grid{display:grid;gap:30px}
+@media (min-width:900px){
+  .qa-grid{grid-template-columns:minmax(0,3fr) minmax(0,9fr);gap:var(--gutter)}
+  .qa-head{position:sticky;top:124px;align-self:start}
+}
+.qa{border-top:1px solid var(--rule)}
+.qa details{border-bottom:1px solid var(--rule)}
+.qa summary{
+  list-style:none;cursor:pointer;padding:26px 44px 26px 0;position:relative;
+  font-family:var(--f-display);font-size:clamp(19px,1.75vw,23px);line-height:1.32;
+  letter-spacing:-.01em;
+}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::after{
+  content:"";position:absolute;right:6px;top:50%;width:11px;height:11px;
+  border-right:1px solid var(--muted);border-bottom:1px solid var(--muted);
+  transform:translateY(-70%) rotate(45deg);transition:transform .25s ease;
+}
+.qa details[open] summary::after{transform:translateY(-30%) rotate(-135deg)}
+.qa .ans{padding:0 0 30px;max-width:58ch}
+.qa .ans p{font-size:16px;color:var(--muted)}
+.qa .ans p + p{margin-top:16px}
+
+/* ---------- close ---------- */
+.close{padding-block:clamp(92px,9.5vw,128px);text-align:center}
+.close h2{
+  font-size:clamp(36px,4.9vw,60px);line-height:1.08;letter-spacing:-.028em;
+  max-width:17ch;margin:0 auto;
+}
+.close p.body{
+  margin:28px auto 0;max-width:52ch;
+  font-size:clamp(17px,1.4vw,19.5px);color:var(--on-mass-2);
+}
+.close .btn{margin-top:42px}
+.fine{margin-top:24px;font-size:13.5px;color:var(--on-mass-2)}
+.fine a{color:var(--on-mass);text-decoration:none;border-bottom:1px solid rgba(248,246,241,.45)}
+.fine a:hover{border-color:var(--on-mass)}
+
+/* ---------- footer ---------- */
+.foot{background:var(--band);padding-block:38px 46px}
+.foot-in{display:flex;flex-wrap:wrap;gap:14px 32px;justify-content:space-between;align-items:baseline}
+.foot p{font-size:13.5px;color:var(--muted)}
+.foot .mark{font-size:20px;color:var(--ink)}
+.foot a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--rule)}
+.foot a:hover{border-color:var(--ink)}
+
+/* ---------- reveal ---------- */
+.js .reveal{opacity:0;transform:translateY(14px);transition:opacity .7s ease,transform .7s cubic-bezier(.22,.61,.36,1)}
+.js .reveal.in{opacity:1;transform:none}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .js .reveal{opacity:1;transform:none}
+  .js .diagram .draw path{stroke-dashoffset:0}
+  .js .diagram .fade{opacity:1}
+}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="mark" href="#top">Simon Paris</a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#how">How I work</a>
+      <a href="#session">The session</a>
+      <a href="#about">About</a>
+      <a class="btn btn-sm" href="https://cal.com/simonparis/opportunity-session">Find an opportunity</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO — copy | Simon -->
+  <section class="sect hero">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div>
+          <h1>Put AI to work in your business.</h1>
+          <p class="lede">I help businesses find where AI can save time, improve how work gets done, and turn those opportunities into reliable systems.</p>
+          <div class="hero-cta">
+            <a class="btn" href="https://cal.com/simonparis/opportunity-session">Find an opportunity</a>
+            <a class="quiet" href="#how">See how I work</a>
+          </div>
+          <p class="signature">Independent AI implementation practice. Quebec City, in French or English.</p>
+        </div>
+
+        <div class="portrait-wrap reveal">
+          <div class="portrait">
+            <img src="@PORTRAIT@" alt="Simon Paris" width="760" height="1056">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section class="sect" id="problem">
+    <div class="wrap">
+      <div class="head">
+        <h2 class="h2 reveal">The work around the work.</h2>
+      </div>
+
+      <div class="body-col">
+        <p class="prose reveal">Repetitive follow-ups. Information copied between systems. Documents that need sorting. Status checks. Reports rebuilt by hand. Tasks that depend on someone remembering the next step.</p>
+        <p class="prose reveal">Individually, they seem small. Across a business, they consume hours, create errors and keep good people doing work software should be handling.</p>
+        <p class="pull reveal">That is where I look first.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW I WORK -->
+  <section class="sect sect--band" id="how">
+    <div class="wrap">
+      <div class="head head--split">
+        <h2 class="h2 reveal">How I work.</h2>
+        <p class="caption reveal">Nothing here assumes the answer is AI.</p>
+      </div>
+
+      <div class="proc">
+        <div class="proc-item reveal">
+          <p class="meta">Phase I</p>
+          <h3>Find</h3>
+          <p class="body">Identify one worthwhile opportunity: a job that repeats, costs real hours, and has a clear enough shape to improve.</p>
+        </div>
+        <div class="proc-item reveal">
+          <p class="meta">Phase II</p>
+          <h3>Design</h3>
+          <p class="body">Determine the simplest reliable way to improve it — AI, deterministic automation, existing software, custom code, or a combination.</p>
+        </div>
+        <div class="proc-item reveal">
+          <p class="meta">Phase III</p>
+          <h3>Implement</h3>
+          <p class="body">Build it, test it with the people who use it, and measure whether it actually improves the workflow.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ENGAGEMENTS — one price, one conversation.  Deliberately unequal. -->
+  <section class="sect" id="session">
+    <div class="wrap">
+      <div class="head">
+        <h2 class="h2 reveal">Engagements</h2>
+        <p class="sub reveal">Two prices, both published. What sits outside them is scoped separately rather than guessed at.</p>
+      </div>
+
+      <div class="cards">
+        <article class="card reveal">
+          <p class="kicker">A focused place to start</p>
+          <h3>AI Workflow Opportunity Session</h3>
+          <p class="figure">C$350</p>
+          <p class="body">A focused working session to identify one high-value opportunity where AI or automation could save time, reduce repetitive work or improve an existing process.</p>
+          <ul class="list">
+            <li>A short pre-session questionnaire</li>
+            <li>A ninety minute working session</li>
+            <li>Your current workflow mapped, and the proposed one</li>
+            <li>Where AI helps, where automation does, and where a person should stay</li>
+            <li>Feasibility, risks and expected impact</li>
+            <li>A recommended implementation, with the tools named</li>
+          </ul>
+          <p class="promise"><b>The guarantee.</b> You&#8217;ll leave with a written recommendation you can act on. If, after reviewing it, you genuinely don&#8217;t believe the session was worth C$350, I&#8217;ll refund it.</p>
+          <p class="terms">Credited in full toward implementation if we build the opportunity together within thirty days.</p>
+          <a class="btn btn-line" href="https://cal.com/simonparis/opportunity-session">Book a session</a>
+        </article>
+
+        <article class="card card--mass reveal">
+          <p class="kicker">Ready to build?</p>
+          <h3>Workflow Sprint</h3>
+          <p class="figure">C$1,750</p>
+          <p class="figure-alt">Founding client rate.</p>
+          <p class="body">One recurring workflow, built into your business and validated on real work before the final payment is due.</p>
+          <ul class="list">
+            <li>One recurring workflow</li>
+            <li>Up to two major integrations</li>
+            <li>Human approval wherever judgment is required</li>
+            <li>Implementation and testing</li>
+            <li>A fourteen day live validation period</li>
+            <li>A measured result and a short written handoff</li>
+          </ul>
+          <p class="promise"><b>How it is signed off.</b> Before implementation we define in writing what &#8220;working&#8221; means. The workflow is validated against those criteria during the fourteen day live run, and the final payment is due when they are met.</p>
+          <a class="btn btn-paper" href="https://cal.com/simonparis/fit-call">See if your workflow fits &#8212; 20 min</a>
+          <p class="terms">Larger builds and multi-workflow systems are scoped separately.</p>
+        </article>
+      </div>
+
+      <div class="after reveal">
+        <p>Defined scope, clear success criteria, and human oversight where it matters. Ongoing support is available once a workflow is running.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHAT YOU LEAVE WITH -->
+  <section class="sect" id="report">
+    <div class="wrap">
+      <div class="head">
+        <h2 class="h2 reveal">See what you&#8217;ll leave with.</h2>
+      </div>
+
+      <div class="sheet-grid">
+        <ul class="sheet reveal">
+          <li><span class="n">01</span><span class="t">Current workflow</span></li>
+          <li><span class="n">02</span><span class="t">Friction</span></li>
+          <li><span class="n">03</span><span class="t">Proposed workflow</span></li>
+          <li><span class="n">04</span><span class="t">What stays human</span></li>
+          <li><span class="n">05</span><span class="t">What gets automated</span></li>
+          <li><span class="n">06</span><span class="t">Systems involved</span></li>
+          <li><span class="n">07</span><span class="t">Expected impact</span></li>
+          <li><span class="n">08</span><span class="t">Implementation options</span></li>
+        </ul>
+
+        <div class="sheet-copy reveal">
+          <p>The session ends in a written report, and those are its headings. You keep it whether or not I build anything.</p>
+          <p>It is specific enough to hand to somebody else and have them build it. That is deliberate: if the recommendation only makes sense coming from me, it was not a recommendation.</p>
+          <a class="btn btn-line" href="sample-opportunity-report.html">Read a sample report</a>
+          <p class="sample-note">An illustrative example, not a client engagement. The workflow is real and common; the practice in it is not a real client.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="sect" id="about">
+    <div class="wrap">
+      <div class="head">
+        <h2 class="h2 reveal">Builder first.</h2>
+      </div>
+
+      <div class="body-col">
+        <p class="prose reveal">I am a software developer and technical lead who works deeply with AI, automation and agentic systems.</p>
+        <p class="prose reveal">My work sits between business operations and implementation: understanding how work actually happens, deciding where AI helps and where it does not, and then building the system required to make the improvement real.</p>
+        <p class="prose reveal">I do not sell a particular AI platform. I use the simplest combination of existing software, automation and custom development that gets the job done reliably. Your accounts stay yours, and custom work is handed over to you. Any third-party software costs are explicit &#8212; I don&#8217;t make money by reselling subscriptions.</p>
+        <p class="quote reveal">The goal isn&#8217;t more AI. It&#8217;s more capacity.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUESTIONS -->
+  <section class="sect" id="questions">
+    <div class="wrap">
+      <div class="qa-grid">
+        <div class="qa-head">
+          <h2 class="h2 reveal">Fair questions.</h2>
+        </div>
+
+        <div class="qa reveal">
+          <details open>
+            <summary>Why can I not just use ChatGPT myself?</summary>
+            <div class="ans">
+              <p>You can, and for some things you should. The gap is not the writing. A chat window answers when you open it. It does not run on Tuesday at six in the morning, it does not read the inbox, it does not stop and ask you when it is unsure, and it never tells you whether it saved you anything.</p>
+              <p>That plumbing is most of the work. Deciding which job is worth the plumbing is the rest of it, and that decision is what the session is for.</p>
+            </div>
+          </details>
+          <details>
+            <summary>What if AI is not the right answer?</summary>
+            <div class="ans">
+              <p>Then I say so, and the report says so. Plenty of these jobs are solved better by deterministic automation, by a setting in software you already pay for, or by changing who does what. AI is one option on the table, not the conclusion I start from.</p>
+              <p>A session that ends in &#8220;do not build this, do that instead&#8221; is a session that did its job.</p>
+            </div>
+          </details>
+          <details>
+            <summary>How do you handle sensitive information?</summary>
+            <div class="ans">
+              <p>Security and privacy requirements are part of the design rather than an afterthought to it. Which tools, permissions, data flows and AI providers get used depends on how sensitive the workflow is, on the systems you already run, and on the requirements you have to meet. Where AI should not have access to particular data, it does not.</p>
+              <p>The specifics come out of looking at your systems, so that is a conversation in the session rather than a paragraph here.</p>
+            </div>
+          </details>
+          <details>
+            <summary>How do you know when it is done?</summary>
+            <div class="ans">
+              <p>We define acceptance criteria before deployment, test the workflow against real scenarios, document the system, and agree on any post-launch support before implementation begins.</p>
+              <p>No system is perfect. That&#8217;s why we define acceptance criteria, test against real scenarios, and keep human approval wherever judgment matters.</p>
+            </div>
+          </details>
+          <details>
+            <summary>Do I need to be technical?</summary>
+            <div class="ans">
+              <p>No. You need to know the job well enough to tell me when an answer is wrong. That judgment is the only expertise the build depends on, and it is exactly why there is an approval step instead of a black box.</p>
+            </div>
+          </details>
+          <details>
+            <summary>What happens to the C$350 if we go ahead?</summary>
+            <div class="ans">
+              <p>It comes off the project in full, as long as we start within thirty days. If you decide not to go ahead, you keep the report and owe nothing else. You are welcome to hand it to somebody else and have them build it.</p>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLOSE -->
+  <section class="sect--mass close">
+    <div class="wrap">
+      <h2 class="reveal">What work should AI be doing for you?</h2>
+      <p class="body reveal">Start with one workflow. We will determine where the friction is, whether AI can actually help, and what implementing the improvement would look like.</p>
+      <a class="btn btn-paper reveal" href="https://cal.com/simonparis/opportunity-session">Find an opportunity &#8212; C$350</a>
+      <p class="fine reveal">Not sure the session is right for you? <a href="https://cal.com/simonparis/fit-call">Start a conversation</a>.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <span class="mark">Simon Paris</span>
+    <p>Independent AI implementation practice, Quebec City, Canada.</p>
+    <p><a href="mailto:me@simonparis.ca">me@simonparis.ca</a> &nbsp; Service in French or English.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reveals = document.querySelectorAll('.reveal');
+  if (reduce || !('IntersectionObserver' in window)) {
+    reveals.forEach(function(el){ el.classList.add('in'); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { rootMargin: '0px 0px -10% 0px', threshold: 0.1 });
+  reveals.forEach(function(el){ io.observe(el); });
+})();
+</script>
+
+</body>
+</html>
