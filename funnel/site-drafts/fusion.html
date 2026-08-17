@@ -380,9 +380,15 @@ h1{
 }
 
 /* ---------- questions ---------- */
-/* the sticky rail went with the other rails — the questions now sit in one
-   centred column under the centred title */
-.qa-wrap{margin-top:clamp(40px,4.2vw,54px);max-width:860px;margin-inline:auto}
+/* The one rail Simon kept (2026-08-17): the title holds the left column and
+   stays put while the answers scroll past it.  Left aligned, unlike every other
+   section title on the page — a heading that sticks has to sit on an edge, and
+   a centred one would drift against the column it is pinned beside. */
+.qa-grid{display:grid;gap:30px}
+@media (min-width:900px){
+  .qa-grid{grid-template-columns:minmax(0,3fr) minmax(0,9fr);gap:var(--gutter)}
+  .qa-head{position:sticky;top:124px;align-self:start}
+}
 .qa{border-top:1px solid var(--rule)}
 .qa details{border-bottom:1px solid var(--rule)}
 .qa summary{
@@ -712,11 +718,11 @@ h1{
   <!-- QUESTIONS -->
   <section class="sect" id="questions">
     <div class="wrap">
-      <div class="head">
-        <h2 class="h2 reveal">Fair questions.</h2>
-      </div>
+      <div class="qa-grid">
+        <div class="qa-head">
+          <h2 class="h2 reveal">Fair questions.</h2>
+        </div>
 
-      <div class="qa-wrap">
         <div class="qa reveal">
           <details open>
             <summary>Why can I not just use ChatGPT myself?</summary>

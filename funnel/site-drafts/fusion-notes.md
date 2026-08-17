@@ -202,9 +202,13 @@ subtitle centres under it. Consequences worth knowing:
   62ch, the questions column 860px). Everything below a head keeps its own
   alignment — only the title and subtitle centre. Centring the body prose as well
   would give the reader a ragged left edge on every line.
-- **The sticky-rail questions are gone.** "Fair questions." held the left rail
-  while the answers scrolled past it; with the rails removed it is a centred
-  title over a centred accordion.
+- **The sticky-rail questions came back** the same day, on Simon's word — "it
+  was cool and looked great." It is the one rail left on the page: no eyebrow,
+  but "Fair questions." holds the left column and stays pinned at 124px while the
+  answers scroll past it, releasing as the section ends (verified by scrolling,
+  not by reading the CSS). Its title is left aligned, unlike every other title on
+  the page — a heading that sticks has to sit on an edge, and a centred one would
+  drift against the column it is pinned beside.
 - **The node-on-a-line motif now appears once**, in the sequence row, rather than
   once per section head. The list bullets still use the same square.
 - The eyebrow class survives on the floating card over the portrait ("WHERE AND
