@@ -1,3 +1,7 @@
+> **SUPERSEDED 2026-08-17.** This draft's palette and typefaces are dead.
+> The live design system is `THEME.md`; the live page is `fusion-v3.html`.
+> Kept for lineage only — do not build on anything below.
+
 # atelier-a — the Stitch direction, rebuilt on the practice offer
 
 Sibling draft to `bookend-c.html`. Nothing existing was overwritten.

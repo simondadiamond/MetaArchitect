@@ -1,3 +1,7 @@
+> **SUPERSEDED 2026-08-17.** This draft's palette and typefaces are dead.
+> The live design system is `THEME.md`; the live page is `fusion-v3.html`.
+> Kept for lineage only — do not build on anything below.
+
 # Practice v2 — three answers to "it looks empty"
 
 Base: `sm-site-b.html` (Direction B, "The Practice"). Untouched.

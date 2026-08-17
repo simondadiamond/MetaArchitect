@@ -1,3 +1,8 @@
+> **SUPERSEDED by `fusion-v3` on 2026-08-17.** v2 dissolved the implementation
+> product and could not price it; v3 restores it. Kept because the CRO verdict
+> and the review-provenance table below are still the record. Design system:
+> `THEME.md`.
+
 # fusion v2 — the repositioning
 
 A sibling to `fusion.html`, not a replacement. Both build, both verify, both are

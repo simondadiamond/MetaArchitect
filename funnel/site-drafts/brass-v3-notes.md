@@ -1,3 +1,7 @@
+> **SUPERSEDED 2026-08-17.** This draft's palette and typefaces are dead.
+> The live design system is `THEME.md`; the live page is `fusion-v3.html`.
+> Kept for lineage only — do not build on anything below.
+
 # Brass v3 — the gradient question and the imagery question
 
 Base: `practice-v2-b.html` ("Brass"). Untouched on disk (md5 verified before and
