@@ -62,9 +62,9 @@ the segment test resolves. Specifically killed, per handoff §5:
 - **The invented deliverables in the pricing cards** — "Custom Agent Development
   (Up to 3)", "90 Days Retained Support", "30 Days Post-Deploy Support". None of
   those are the offer.
-- **The Blueprint section.** It advertised a downloadable sample deliverable that
-  does not exist. Cut rather than faked; the sprint diagram does that section's
-  job of showing what you get.
+- **The Blueprint section's download button.** It advertised a sample deliverable
+  that does not exist. The section itself is back at Simon's request (2026-08-17)
+  and now carries the workflow drawing; there is still nothing to download.
 - **Both stock photographs** (the executive portrait, the profile thumbnail beside
   the wordmark), **the logo seal**, and **the "Get Started" nav CTA** — now "Book
   a mapping session", the real one.
@@ -75,16 +75,18 @@ the segment test resolves. Specifically killed, per handoff §5:
   labels legible at 360px because the type is bumped in viewBox units rather than
   the drawing being scaled.
 
-## The mark — six uses, none of them a label
+## The mark — nine uses, one of them a label
 
 Handoff §3: one accent, and it marks a number or a commitment. The six:
 
-1. the hero CTA fill (`#7E5518`, paper label, 6.08:1)
-2. C$350
-3. C$1,750 (`#C08A3E` on mass, 5.23:1)
-4. the mapping guarantee
-5. the sprint guarantee
-6. the approval branch in `#d2`
+1. C$350
+2. C$1,750 (`#C08A3E` on mass, 5.23:1)
+3. the mapping guarantee
+4. the sprint guarantee
+5. the approval branch in `#d2`
+6–9. the four phase labels — Simon's call on 2026-08-17, matching the Stitch
+original. This is the one place the mark lands on a label, which §3 rules out;
+it is deliberate and it is his, not a slip. 5.61:1 on band.
 
 Plus the focus ring, which is a state and not a paint. **Pulled off** everything
 `atelier-a` and Stitch had it on: the dark card's list bullets, the phase labels,
@@ -92,11 +94,10 @@ every section-head tick (six on its own), the deliverable checkmarks, and the
 founding-rate rule. Bullets are now the same square node the section heads and
 the sequence row use — one motif, meaning one thing, in three places.
 
-The hero CTA is umber-filled, which reverses `atelier-a`'s call that the primary
-action stays petrol for contrast. Handoff §3 names "the primary CTA fill" as one
-of the three sanctioned accent uses and measures the label at 6.08:1, so it
-passes AA and it puts the page's one warm mark on the one element the page exists
-to get clicked. The other four CTAs stay ink, ink-outline, or paper.
+The hero CTA was umber-filled for one pass, on §3's line about "the primary CTA
+fill". Simon reversed it on 2026-08-17 — "the call to action should be the
+greenish colour" — so every CTA is now ink, ink-outline, or paper, and the mark
+never lands on an action.
 
 ## Grounds
 
@@ -111,13 +112,13 @@ section without producing a seam to line up. Everything else is paper, mass
 ## Verification — rendered in Chromium, not reasoned about
 
 - **No horizontal overflow** at 360, 390, 768, 1024, 1180, 1440.
-- **WCAG AA against actually painted pixels.** 165 crops at 3×, ink sampled as
+- **WCAG AA against actually painted pixels.** 136 crops at 3×, ink sampled as
   the extreme painted pixel and ground as the modal painted pixel. **0 failures.**
   Tightest: `#C08A3E` on mass at 5.23 (prices and guarantee marks), then
   `#7E5518` on band at 5.61, then the paper-on-umber button label at 6.08.
   Sampling the computed colour instead of the pixel is what hid two real failures
   in earlier drafts — audit the pixel, not the token.
-- **Reduced motion:** 35 reveals, 0 hidden; 12 diagram paths, 0 undrawn.
+- **Reduced motion:** 39 reveals, 0 hidden; 6 diagram paths, 0 undrawn.
 - **Self-contained:** 0 network requests outside `file://` and `data:`.
 
 ## What the render changed after the first pass
@@ -137,6 +138,53 @@ screenshots:
    pinned by `margin-top:auto`, so both shelves close on an action.
 
 Prose measure was also pulled in to ~50–58ch across the page.
+
+## Revision — Simon's pass, 2026-08-17
+
+He walked it and cut hard. Every item below is his, not a design change I chose.
+
+| Was | Now |
+|---|---|
+| hero: type + the six-jobs drawing + a founding-rate card | **type only.** "That little box looks like a post-it added to the website." The drawing "has its place somewhere else"; the figure plus its caption was "starting to be much for the hero" |
+| problem: 2×2 grid of four claim cards | **heading, one paragraph, the four jobs in one line, the display pull line.** "There's way too much" — he wants the shape of the Stitch original back. The four one-line descriptions under each claim are gone |
+| sprint: the workflow drawing + `01 — ninety to one hundred twenty minutes, with you` | **no drawing, and `Phase I — 90 minutes` in gold**, like the Stitch original. "There's already a description, don't need to do that" |
+| pricing head: "Two things to buy, both published, both guaranteed." | **"Engagements."** "What does that even mean? I'm the one that's supposed to be doing it" |
+| ongoing: four sentences | **"Ongoing monthly support is available following the completion of a sprint."** — the original's line, verbatim |
+| blueprint: cut | **back**, and it is where the workflow drawing lives now |
+| practice head: "No platform. No licence. Nothing to renew." | **"The human component."** He objected that it overclaims — the tools he picks may well carry a subscription |
+| practice: the "This practice is new" disclosure | **parked.** "How about we just skip that part for now? I'll have hopefully some testimonials soon" |
+
+**Two costs he accepted, both flagged to him:**
+
+1. The gold phase labels put the mark on a label, which handoff §3 rules out. It
+   is four more uses of the accent, taking the page from six to nine.
+2. Parking the disclosure also parks *"that narrowness is the reason the
+   guarantee can be this specific"* — the line that explains why a seller with no
+   track record can promise what he promises. The guarantee now stands
+   unexplained. It comes back with the testimonials, or that sentence needs a new
+   home.
+
+**Two things still open from his pass:**
+
+- **The six-jobs drawing (`#d1`) has no home.** It is parked in an HTML comment
+  in the source, not deleted. He said it belongs somewhere; he did not say where.
+  The obvious candidate is the problem section — it is literally a picture of
+  "you are the junction" — but he had just asked for that section to carry *less*,
+  so I did not put it there on my own.
+- **"What a sprint is"**, the quiet link beside the hero CTA. "We could leave it,
+  but whatever… I think it'll look great without it, but nah, that's okay." Read
+  as keep. One word either way.
+
+**Judgment calls inside his instructions**, so they are easy to reverse:
+
+- The blueprint copy is the only place frozen sentences were recombined: the
+  workflow drawing's old caption became the section's opening line, and "you keep
+  the written plan whatever happens next" was spliced with the hand-off sentence.
+- The phase durations are shortened to fit the `Phase I — 1 week` shape of the
+  original: `90 minutes`, `2 to 3 weeks`, `14 days`, `one document`.
+- The floating card over the portrait is the same device as the hero post-it he
+  rejected. He did not call this one out and Stitch's approved layout has an
+  offset element there, so it stayed.
 
 ## Open, unchanged
 

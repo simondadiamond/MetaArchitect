@@ -24,9 +24,11 @@
    Content donor: atelier-a.src.html — every word carried over
    byte for byte. Copy is frozen until the segment test resolves.
 
-   One ground: paper. One ink: petrol. One mark: umber, and it
-   marks a number or a commitment, never a label. Eight marks on
-   the page. A mark that repeats becomes a texture.
+   One ground: paper. One ink: petrol. One mark: umber. It marks
+   a number or a commitment — the two prices, the two guarantees,
+   the approval branch — plus the four phase labels, which are
+   Simon's call (2026-08-17) and the one label the mark lands on.
+   Nine marks. A mark that repeats becomes a texture.
    ============================================================ */
 
 :root{
@@ -142,10 +144,6 @@ ul{margin:0;padding:0;list-style:none}
 }
 .btn:hover{background:transparent;color:var(--ink)}
 .btn-sm{padding:11px 17px;font-size:11.5px;letter-spacing:.09em}
-/* The one warm fill above the fold, on the one element the page exists to get
-   clicked. Paper on umber measures 6.08:1. */
-.btn-mark{background:var(--umber);border-color:var(--umber);color:var(--paper)}
-.btn-mark:hover{background:transparent;color:var(--umber)}
 .btn-line{background:transparent;color:var(--ink);border-color:var(--ink)}
 .btn-line:hover{background:var(--ink);color:var(--paper)}
 .btn-paper{background:var(--paper);border-color:var(--paper);color:var(--ink)}
@@ -191,44 +189,22 @@ a:focus-visible,summary:focus-visible,.btn:focus-visible{
 }
 
 /* ---------- hero ---------- */
-.hero{padding-block:clamp(52px,6.4vw,88px) var(--sect)}
-.hero-grid{display:grid;gap:clamp(46px,5vw,58px)}
-@media (min-width:960px){
-  .hero-grid{grid-template-columns:minmax(0,6fr) minmax(0,6fr);align-items:center;gap:var(--gutter)}
-}
+/* Type only now, so the type has to carry it: the display size goes up and the
+   line runs longer, and the air around it is the composition. */
+.hero{padding-block:clamp(64px,8vw,128px) clamp(64px,7vw,104px)}
 h1{
-  font-size:clamp(40px,5.2vw,62px);
-  line-height:1.04;
-  letter-spacing:-.028em;
-  max-width:13ch;
+  font-size:clamp(42px,6.2vw,74px);
+  line-height:1.03;
+  letter-spacing:-.03em;
+  max-width:15ch;
   text-wrap:balance;
 }
 .lede{
-  margin-top:28px;max-width:38ch;
-  font-size:clamp(18px,1.6vw,21px);
+  margin-top:30px;max-width:44ch;
+  font-size:clamp(18px,1.7vw,22px);
   line-height:1.55;color:var(--muted);
 }
-.hero-cta{display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin-top:40px}
-@media (max-width:959px){.hero-fig .diagram{max-width:520px}}
-
-.hero-fig{margin:0}
-.plate{position:relative}
-.figure-note{
-  margin-top:26px;font-size:14.5px;line-height:1.55;color:var(--muted);max-width:42ch;
-}
-/* sits in the drawing's empty lower-right quadrant, so it reads as part of the
-   figure rather than as a card floating in the margin */
-.status{
-  display:none;
-  position:absolute;right:-16px;bottom:-8px;z-index:3;
-  background:var(--paper);border:1px solid var(--rule);
-  padding:20px 22px;width:226px;
-  box-shadow:0 22px 44px -30px rgba(16,46,51,.42);
-}
-@media (min-width:1180px){.status{display:block}}
-.status .eyebrow{margin-bottom:9px}
-.status p{font-size:14.5px;line-height:1.45}
-.status b{font-weight:600}
+.hero-cta{display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin-top:44px}
 
 /* ---------- diagrams: ink on paper, drawn like a plan ---------- */
 .diagram{display:block;width:100%;height:auto;overflow:visible}
@@ -276,35 +252,27 @@ h1{
 .js .diagram.go .fade{opacity:1}
 
 /* ---------- problem ---------- */
-.claims{
-  margin-top:52px;display:grid;gap:2px;
-  background:var(--rule-soft);
-  border-top:1px solid var(--rule-soft);border-bottom:1px solid var(--rule-soft);
-}
-@media (min-width:760px){.claims{grid-template-columns:1fr 1fr}}
-.claim{background:var(--paper);padding:32px 32px 32px 0}
-@media (min-width:760px){
-  .claim{padding:36px 40px 36px 0}
-  .claim:nth-child(even){padding-left:40px}
-}
-.claim b{
-  display:block;font-family:var(--f-display);font-weight:400;
-  font-size:clamp(20px,1.8vw,24px);line-height:1.28;letter-spacing:-.01em;
-}
-.claim span{display:block;margin-top:11px;font-size:15.5px;color:var(--muted)}
-.claims-tail{
-  margin-top:48px;font-family:var(--f-display);
+.prose{margin-top:34px;max-width:52ch;font-size:clamp(17px,1.35vw,19.5px)}
+.pull{
+  margin-top:40px;font-family:var(--f-display);
   font-size:clamp(23px,2.5vw,32px);line-height:1.3;letter-spacing:-.015em;
   max-width:24ch;
 }
 
-/* ---------- sprint ---------- */
-/* the plan hangs off the same left axis as the section head, so the caption
-   and the drawing share an edge with the argument above them */
-.plan{margin:clamp(48px,5vw,64px) 0 0;max-width:840px}
-@media (min-width:900px){.plan{margin-left:calc(25% + (var(--gutter) * 0.75))}}
-.claims .claim{background:var(--paper)}
-.sect--band .claim{background:var(--band)}
+/* ---------- blueprint ---------- */
+.blueprint-grid{display:grid;gap:clamp(44px,4.5vw,58px);margin-top:clamp(46px,4.6vw,60px)}
+/* 1100, not 960: below that the drawing's column is too narrow to keep the
+   labels legible, so it takes the full measure instead */
+@media (min-width:1100px){
+  .blueprint-grid{grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(48px,5vw,72px);align-items:center}
+}
+/* no frame: the drawing already contains two rectangles and a third one round
+   the outside was a box drawn around a box.  Ink on paper, like a plan. */
+.plate .diagram{max-width:660px}
+.blueprint-copy p{font-size:clamp(19px,1.7vw,23px);line-height:1.45;max-width:34ch}
+.blueprint-copy p.body{
+  margin-top:22px;font-size:16px;line-height:1.6;color:var(--muted);max-width:42ch;
+}
 
 /* A real sequence, so it is drawn as one: a hairline running the width of the
    section with a node on it where each step starts. */
@@ -319,9 +287,12 @@ h1{
   .proc-item{border-left:0;padding-left:0;padding-right:var(--gutter)}
   .proc-item::before{left:0;top:-30px}
 }
+/* Gold, on Simon's call (2026-08-17) — matching the Stitch original, where the
+   phase label is the accent.  It is the one place the mark lands on a label
+   rather than on a number or a commitment.  5.61:1 on band. */
 .proc-item .meta{
   font-size:11.5px;font-weight:600;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--muted);
+  text-transform:uppercase;color:var(--umber);
 }
 .proc-item h3{margin-top:14px;font-size:clamp(21px,1.9vw,25px);letter-spacing:-.01em}
 .proc-item p.body{margin-top:14px;font-size:15.5px;color:var(--muted)}
@@ -385,7 +356,7 @@ h1{
 /* ---------- practice ---------- */
 .practice-grid{display:grid;gap:clamp(56px,5vw,72px);margin-top:clamp(46px,4.6vw,60px)}
 @media (min-width:960px){
-  .practice-grid{grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:clamp(56px,6vw,88px);align-items:start}
+  .practice-grid{grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:clamp(56px,6vw,88px);align-items:center}
 }
 .practice-copy p{max-width:52ch}
 .practice-copy p + p{margin-top:20px}
@@ -490,61 +461,64 @@ h1{
 
 <main id="top">
 
-  <!-- HERO — the page opens by drawing its own argument -->
+  <!-- HERO — type only.  The drawing and the founding-rate card both came out:
+       the card read as a post-it stuck on the page, and the figure plus its
+       caption was too much weight for an opening.  Their CSS came out with
+       them (.hero-grid, .hero-fig, .status) — putting either back means
+       restyling, not just uncommenting. -->
   <section class="sect hero">
     <div class="wrap">
-      <div class="hero-grid">
-        <div>
-          <h1>The work that only happens when you do it.</h1>
-          <p class="lede">I turn one of those into a workflow that runs on its own, and asks you only when it matters.</p>
-          <div class="hero-cta">
-            <a class="btn btn-mark" href="mailto:me@simonparis.ca?subject=Mapping%20session">Book a mapping session</a>
-            <a class="quiet" href="#sprint">What a sprint is</a>
-          </div>
-        </div>
-
-        <figure class="hero-fig">
-          <div class="plate">
-          <svg class="diagram" id="d1" viewBox="0 0 560 400" role="img" aria-label="Six recurring tasks in a business, every one of them routed through the owner.">
-            <g class="wire draw">
-              <path d="M158,44 C250,44 300,200 354,200" pathLength="1"/>
-              <path d="M158,100 C250,100 300,200 354,200" pathLength="1"/>
-              <path d="M158,156 C250,156 300,200 354,200" pathLength="1"/>
-              <path d="M158,244 C250,244 300,200 354,200" pathLength="1"/>
-              <path d="M158,300 C250,300 300,200 354,200" pathLength="1"/>
-              <path d="M158,356 C250,356 300,200 354,200" pathLength="1"/>
-            </g>
-            <g class="fade">
-              <circle class="node" cx="150" cy="44" r="4.5"/>
-              <circle class="node" cx="150" cy="100" r="4.5"/>
-              <circle class="node" cx="150" cy="156" r="4.5"/>
-              <circle class="node" cx="150" cy="244" r="4.5"/>
-              <circle class="node" cx="150" cy="300" r="4.5"/>
-              <circle class="node" cx="150" cy="356" r="4.5"/>
-              <text class="lbl" x="134" y="49" text-anchor="end">Quotes</text>
-              <text class="lbl" x="134" y="105" text-anchor="end">Scheduling</text>
-              <text class="lbl" x="134" y="161" text-anchor="end">Client email</text>
-              <text class="lbl" x="134" y="249" text-anchor="end">Invoicing</text>
-              <text class="lbl" x="134" y="305" text-anchor="end">Supplier orders</text>
-              <text class="lbl" x="134" y="361" text-anchor="end">Weekly report</text>
-            </g>
-            <g class="fade">
-              <circle class="hub" cx="400" cy="200" r="46"/>
-              <text class="hub-t" x="400" y="208">You</text>
-            </g>
-          </svg>
-
-          <aside class="status">
-            <span class="eyebrow">Founding rate</span>
-            <p>Three founding clients at the founding rate, then <b>the price goes up and the scope grows.</b></p>
-          </aside>
-          </div>
-
-          <figcaption class="figure-note">Every one of them waits on a decision only you make, so every one of them waits on you being free.</figcaption>
-        </figure>
+      <h1>The work that only happens when you do it.</h1>
+      <p class="lede">I turn one of those into a workflow that runs on its own, and asks you only when it matters.</p>
+      <div class="hero-cta">
+        <a class="btn" href="mailto:me@simonparis.ca?subject=Mapping%20session">Book a mapping session</a>
+        <a class="quiet" href="#sprint">What a sprint is</a>
       </div>
     </div>
   </section>
+
+  <!-- PARKED — the six-jobs-converging-on-you drawing.  Simon: "it has its
+       place somewhere else."  Kept here rather than deleted; the obvious home
+       is the problem section, on his word.  It needs ~520px of width or the
+       labels drop below legibility, so it cannot go in a half column.
+  <svg class="diagram" id="d1" viewBox="0 0 560 400" role="img" aria-label="Six recurring tasks in a business, every one of them routed through the owner.">
+    <g class="wire draw">
+      <path d="M158,44 C250,44 300,200 354,200" pathLength="1"/>
+      <path d="M158,100 C250,100 300,200 354,200" pathLength="1"/>
+      <path d="M158,156 C250,156 300,200 354,200" pathLength="1"/>
+      <path d="M158,244 C250,244 300,200 354,200" pathLength="1"/>
+      <path d="M158,300 C250,300 300,200 354,200" pathLength="1"/>
+      <path d="M158,356 C250,356 300,200 354,200" pathLength="1"/>
+    </g>
+    <g class="fade">
+      <circle class="node" cx="150" cy="44" r="4.5"/>
+      <circle class="node" cx="150" cy="100" r="4.5"/>
+      <circle class="node" cx="150" cy="156" r="4.5"/>
+      <circle class="node" cx="150" cy="244" r="4.5"/>
+      <circle class="node" cx="150" cy="300" r="4.5"/>
+      <circle class="node" cx="150" cy="356" r="4.5"/>
+      <text class="lbl" x="134" y="49" text-anchor="end">Quotes</text>
+      <text class="lbl" x="134" y="105" text-anchor="end">Scheduling</text>
+      <text class="lbl" x="134" y="161" text-anchor="end">Client email</text>
+      <text class="lbl" x="134" y="249" text-anchor="end">Invoicing</text>
+      <text class="lbl" x="134" y="305" text-anchor="end">Supplier orders</text>
+      <text class="lbl" x="134" y="361" text-anchor="end">Weekly report</text>
+    </g>
+    <g class="fade">
+      <circle class="hub" cx="400" cy="200" r="46"/>
+      <text class="hub-t" x="400" y="208">You</text>
+    </g>
+  </svg>
+  <figcaption class="figure-note">Every one of them waits on a decision only you make, so every one of them waits on you being free.</figcaption>
+  -->
+
+  <!-- PARKED — the founding-rate card.  The rate is still stated in pricing,
+       which is where Simon wants it.
+  <aside class="status">
+    <span class="eyebrow">Founding rate</span>
+    <p>Three founding clients at the founding rate, then <b>the price goes up and the scope grows.</b></p>
+  </aside>
+  -->
 
   <!-- PROBLEM -->
   <section class="sect" id="problem">
@@ -559,26 +533,11 @@ h1{
       </div>
 
       <div class="body-col">
-        <div class="claims reveal">
-          <div class="claim">
-            <b>The quote that needs your numbers.</b>
-            <span>Same document, same fields, and then remembering who has not replied.</span>
-          </div>
-          <div class="claim">
-            <b>The follow up nobody sends if you forget.</b>
-            <span>Not a system. A note in your head, carried from Thursday to Monday.</span>
-          </div>
-          <div class="claim">
-            <b>The intake form that is really six emails.</b>
-            <span>The client sends what they feel like sending. You collect the rest by hand.</span>
-          </div>
-          <div class="claim">
-            <b>The Friday report you rebuild from four places.</b>
-            <span>Twenty minutes of copying, every week, so somebody can glance at it.</span>
-          </div>
-        </div>
-
-        <p class="claims-tail reveal">Each one is fifteen minutes. Together they are the reason you work Sundays.</p>
+        <!-- Was a 2x2 grid of four cards.  Simon: "way too much."  Same four
+             jobs, now one line of prose, and the four one-line descriptions
+             under them are gone. -->
+        <p class="prose reveal">The quote that needs your numbers. The follow up nobody sends if you forget. The intake form that is really six emails. The Friday report you rebuild from four places.</p>
+        <p class="pull reveal">Each one is fifteen minutes. Together they are the reason you work Sundays.</p>
       </div>
     </div>
   </section>
@@ -595,66 +554,24 @@ h1{
         </div>
       </div>
 
-      <figure class="plan reveal">
-        <svg class="diagram" id="d2" viewBox="0 0 560 300" role="img" aria-label="The same six tasks routed into one workflow, with a single branch back to the owner for approval.">
-          <g class="wire draw">
-            <path d="M158,34 C210,34 210,150 248,150" pathLength="1"/>
-            <path d="M158,76 C210,76 210,150 248,150" pathLength="1"/>
-            <path d="M158,118 C210,118 210,150 248,150" pathLength="1"/>
-            <path d="M158,190 C210,190 210,150 248,150" pathLength="1"/>
-            <path d="M158,232 C210,232 210,150 248,150" pathLength="1"/>
-            <path d="M158,274 C210,274 210,150 248,150" pathLength="1"/>
-          </g>
-          <g class="fade">
-            <circle class="node" cx="150" cy="34" r="4"/>
-            <circle class="node" cx="150" cy="76" r="4"/>
-            <circle class="node" cx="150" cy="118" r="4"/>
-            <circle class="node" cx="150" cy="190" r="4"/>
-            <circle class="node" cx="150" cy="232" r="4"/>
-            <circle class="node" cx="150" cy="274" r="4"/>
-            <text class="lbl" x="134" y="39" text-anchor="end">Quotes</text>
-            <text class="lbl" x="134" y="81" text-anchor="end">Scheduling</text>
-            <text class="lbl" x="134" y="123" text-anchor="end">Client email</text>
-            <text class="lbl" x="134" y="195" text-anchor="end">Invoicing</text>
-            <text class="lbl" x="134" y="237" text-anchor="end">Supplier orders</text>
-            <text class="lbl" x="134" y="279" text-anchor="end">Weekly report</text>
-          </g>
-          <g class="fade">
-            <rect class="rail" x="248" y="132" width="184" height="36"/>
-            <text class="rail-t" x="340" y="155">the workflow</text>
-          </g>
-          <g class="fade">
-            <path class="branch" d="M300,132 L300,86"/>
-            <rect class="pill" x="234" y="54" width="132" height="32"/>
-            <text class="pill-t" x="300" y="75">you approve</text>
-          </g>
-          <g class="fade">
-            <path class="branch" d="M432,150 L516,150"/>
-            <path class="branch" d="M508,144 L516,150 L508,156"/>
-            <text class="out" x="516" y="174" text-anchor="end">done</text>
-          </g>
-        </svg>
-        <figcaption class="figure-note">One workflow, not six. The branch is the point: it comes back to you where judgment is required, and only there.</figcaption>
-      </figure>
-
       <div class="proc">
         <div class="proc-item reveal">
-          <p class="meta">01 — Ninety to one hundred twenty minutes, with you</p>
+          <p class="meta">Phase I — 90 minutes</p>
           <h3>Map</h3>
           <p class="body">We choose the job, estimate what it is worth, and confirm it can be built. You keep the written plan whatever happens next.</p>
         </div>
         <div class="proc-item reveal">
-          <p class="meta">02 — Two to three weeks, almost none of it yours</p>
+          <p class="meta">Phase II — 2 to 3 weeks</p>
           <h3>Build</h3>
           <p class="body">One workflow, up to two integrations, inside tools you already use or can keep using after I leave.</p>
         </div>
         <div class="proc-item reveal">
-          <p class="meta">03 — Fourteen days, on real work</p>
+          <p class="meta">Phase III — 14 days</p>
           <h3>Run live</h3>
           <p class="body">It does the actual job in the actual business, with an approval step wherever judgment is required, and the result gets measured.</p>
         </div>
         <div class="proc-item reveal">
-          <p class="meta">04 — One document, in plain language</p>
+          <p class="meta">Phase IV — one document</p>
           <h3>Hand off</h3>
           <p class="body">What it does, where it lives, and what to do the day it asks you something unusual. Then it is yours.</p>
         </div>
@@ -669,7 +586,7 @@ h1{
       <div class="head">
         <span class="eyebrow reveal">Pricing</span>
         <div class="head-body">
-          <h2 class="h2 reveal">Two things to buy, both published, both guaranteed.</h2>
+          <h2 class="h2 reveal">Engagements</h2>
           <p class="sub reveal">Prices are the same number in Canadian and US dollars. There is no hourly rate on this page because you are not buying hours.</p>
         </div>
       </div>
@@ -707,8 +624,71 @@ h1{
       </div>
 
       <div class="after reveal">
-        <p><b>Ongoing improvement — C$400 to C$600 per month.</b> Bounded scope and response times, for a workflow that is already running. Available after a sprint only. It is not something I will try to sell you first, and there is nothing to sign up for here.</p>
+        <p>Ongoing monthly support is available following the completion of a sprint.</p>
         <p class="rate-note">The founding rate ends after three delivered sprints. That is a real capacity limit rather than a countdown, and if you ask me how many are left I will tell you the number.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLUEPRINT — Stitch had this section and it is back, but without its
+       "View Sample Blueprint" button: no sample document exists to link to.
+       The workflow drawing lives here now instead of in the sprint section. -->
+  <section class="sect" id="blueprint">
+    <div class="wrap">
+      <span class="head-rule reveal"></span>
+      <div class="head">
+        <span class="eyebrow reveal">What you keep</span>
+        <div class="head-body">
+          <h2 class="h2 reveal">The blueprint.</h2>
+        </div>
+      </div>
+
+      <div class="blueprint-grid">
+        <div class="plate reveal">
+          <svg class="diagram" id="d2" viewBox="0 0 560 300" role="img" aria-label="The same six tasks routed into one workflow, with a single branch back to the owner for approval.">
+            <g class="wire draw">
+              <path d="M158,34 C210,34 210,150 248,150" pathLength="1"/>
+              <path d="M158,76 C210,76 210,150 248,150" pathLength="1"/>
+              <path d="M158,118 C210,118 210,150 248,150" pathLength="1"/>
+              <path d="M158,190 C210,190 210,150 248,150" pathLength="1"/>
+              <path d="M158,232 C210,232 210,150 248,150" pathLength="1"/>
+              <path d="M158,274 C210,274 210,150 248,150" pathLength="1"/>
+            </g>
+            <g class="fade">
+              <circle class="node" cx="150" cy="34" r="4"/>
+              <circle class="node" cx="150" cy="76" r="4"/>
+              <circle class="node" cx="150" cy="118" r="4"/>
+              <circle class="node" cx="150" cy="190" r="4"/>
+              <circle class="node" cx="150" cy="232" r="4"/>
+              <circle class="node" cx="150" cy="274" r="4"/>
+              <text class="lbl" x="134" y="39" text-anchor="end">Quotes</text>
+              <text class="lbl" x="134" y="81" text-anchor="end">Scheduling</text>
+              <text class="lbl" x="134" y="123" text-anchor="end">Client email</text>
+              <text class="lbl" x="134" y="195" text-anchor="end">Invoicing</text>
+              <text class="lbl" x="134" y="237" text-anchor="end">Supplier orders</text>
+              <text class="lbl" x="134" y="279" text-anchor="end">Weekly report</text>
+            </g>
+            <g class="fade">
+              <rect class="rail" x="248" y="132" width="184" height="36"/>
+              <text class="rail-t" x="340" y="155">the workflow</text>
+            </g>
+            <g class="fade">
+              <path class="branch" d="M300,132 L300,86"/>
+              <rect class="pill" x="234" y="54" width="132" height="32"/>
+              <text class="pill-t" x="300" y="75">you approve</text>
+            </g>
+            <g class="fade">
+              <path class="branch" d="M432,150 L516,150"/>
+              <path class="branch" d="M508,144 L516,150 L508,156"/>
+              <text class="out" x="516" y="174" text-anchor="end">done</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="blueprint-copy reveal">
+          <p>One workflow, not six. The branch is the point: it comes back to you where judgment is required, and only there.</p>
+          <p class="body">You keep the written plan whatever happens next: what it does, where it lives, and what to do the day it asks you something unusual.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -720,7 +700,7 @@ h1{
       <div class="head">
         <span class="eyebrow reveal">The practice</span>
         <div class="head-body">
-          <h2 class="h2 reveal">No platform. No licence. Nothing to renew.</h2>
+          <h2 class="h2 reveal">The human component.</h2>
         </div>
       </div>
 
@@ -741,12 +721,19 @@ h1{
             <p><strong>You own all of it.</strong> There is no licence to renew with me, no reseller margin hidden in the price, and nothing that stops working the day you decide to stop working with me.</p>
           </div>
 
+
+          <!-- PARKED — the "this practice is new" disclosure.  Simon is
+               holding it until there are testimonials.  Worth knowing when it
+               comes back: it carried the line that justifies the guarantee —
+               "that narrowness is the reason the guarantee can be this
+               specific" — so the guarantee now stands unexplained.
           <div class="note">
             <h3>This practice is new.</h3>
             <p class="body">I have no client logos and I am not going to borrow anyone else's. What I have instead is a deliberately narrow scope: one workflow, one business, one measured result at a time.</p>
             <p class="body">That narrowness is the reason the guarantee can be this specific. A firm juggling twelve engagements cannot promise to keep working for free until yours is right.</p>
             <p class="sig">Three founding clients at the founding rate, then the price goes up and the scope grows.</p>
           </div>
+          -->
         </div>
       </div>
     </div>
