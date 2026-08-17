@@ -456,6 +456,11 @@ h1{
 /* the head sits on the same axis as the numbered sections below it, so the
    document reads as one column rather than as a page with a banner */
 .hero .wrap{max-width:838px}
+/* the closing question fits on one line at every width, including 360 — the
+   clamp floor is set from measured line counts, not from taste */
+.close h2{max-width:none;font-size:clamp(25px,3.6vw,52px)}
+.close p.body{max-width:72ch}
+@media (max-width:620px){.close p.body{max-width:36ch}}
 .stamp{
   display:inline-block;margin-bottom:26px;
   border:1px solid var(--umber);padding:8px 14px;
@@ -480,6 +485,22 @@ h1{
   margin-top:22px;padding-left:20px;border-left:2px solid var(--rule);
   font-size:15px;line-height:1.6;
 }
+/* the parts a practitioner reads to decide whether the author has done this
+   before: what it is signed off against, what it does when it is unsure, and
+   how the number gets taken */
+.rep-sub{margin-top:30px;border-top:1px solid var(--rule);padding-top:24px}
+.rep-sub h3{
+  font-family:var(--f-body);font-size:11.5px;font-weight:600;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--umber);margin-bottom:16px;
+}
+.crit{display:grid;gap:0}
+.crit li{
+  display:grid;gap:4px;border-bottom:1px solid var(--rule);padding:13px 0;
+  font-size:15.5px;line-height:1.55;color:var(--muted);
+}
+.crit li:first-child{border-top:1px solid var(--rule)}
+.crit .k{font-weight:600;color:var(--ink)}
+.crit .v{}
 .rep .rep-note{color:var(--muted)}
 </style>
 </head>
@@ -542,6 +563,19 @@ h1{
         </ul>
       </article>
 
+        <div class="rep-sub">
+          <h3>Acceptance criteria, as they would be written</h3>
+          <ul class="crit">
+            <li><span class="k">Coverage</span><span class="v">Over one full period, every client on the list receives a first request on the 1st and no client is missed.</span></li>
+            <li><span class="k">Matching</span><span class="v">Of documents that arrive by email, at least 90% are filed to the right client and the right item without a person touching them. The remainder are queued, not misfiled &#8212; a wrong file counts as a failure, an escalation does not.</span></li>
+            <li><span class="k">Reminders</span><span class="v">No reminder is sent for an item already received. This is the one that gets a practice complained about, so it is a hard failure, not a percentage.</span></li>
+            <li><span class="k">Time</span><span class="v">Hands-on time for the chase, measured over the period, is under four hours across the practice.</span></li>
+            <li><span class="k">Recoverability</span><span class="v">If the workflow is switched off mid-period, the practice can finish the month by hand from what is already filed, with no reconstruction.</span></li>
+          </ul>
+          <p class="rep-note">These are drafted in the session and agreed in writing before implementation. They are what the fourteen-day live run is validated against, and what the final payment is due on.</p>
+        </div>
+      </article>
+
       <article class="rep">
         <p class="rep-n">04</p>
         <h2>What stays human</h2>
@@ -552,6 +586,18 @@ h1{
           <li>The decision to close a period.</li>
         </ul>
         <p class="rep-note">The point is not that a person checks the work. The point is that the workflow knows which cases it is not entitled to decide, and stops.</p>
+
+        <div class="rep-sub">
+          <h3>What it does when it is unsure</h3>
+          <ul class="crit">
+            <li><span class="k">Two clients could match</span><span class="v">Files nothing. Queues the message with both candidates named and the reason for the ambiguity.</span></li>
+            <li><span class="k">The document is the right client, wrong period</span><span class="v">Files it, marks the item still outstanding, and says so in the queue. Filing it is safe; closing the item is not.</span></li>
+            <li><span class="k">A statement is short pages, or the totals do not agree</span><span class="v">Escalates. This is a &#8220;looks wrong&#8221; case, and the workflow has no business forming an opinion about it.</span></li>
+            <li><span class="k">The client replies with a question instead of a document</span><span class="v">Stops the reminder clock and escalates. Nothing is worse than a chase that keeps chasing someone who already answered.</span></li>
+            <li><span class="k">The mailbox or the document store is unreachable</span><span class="v">Sends nothing, retries, and tells a person after the second failure. It never sends a request it cannot record.</span></li>
+          </ul>
+          <p class="rep-note">Every one of these was chosen because getting it wrong costs the practice a client relationship rather than an hour. That is the line the approval step is drawn on.</p>
+        </div>
       </article>
 
       <article class="rep">
@@ -590,6 +636,16 @@ h1{
           <li>The owner sees the escalations and nothing else.</li>
         </ul>
         <p class="rep-note">These are estimates made from the practice&#8217;s own numbers during the session, not benchmarks. The measurement that matters is the one taken during the live run.</p>
+
+        <div class="rep-sub">
+          <h3>How the number actually gets taken</h3>
+          <ul class="crit">
+            <li><span class="k">Baseline</span><span class="v">One period before anything is built. The bookkeeper notes start and stop times against the chase, on paper, five times a week. Crude, and it is the only honest baseline available, because nothing currently records this.</span></li>
+            <li><span class="k">After</span><span class="v">The same tally over the fourteen-day live run, plus the queue&#8217;s own count of how many items needed a person.</span></li>
+            <li><span class="k">The number that decides</span><span class="v">Hands-on hours for the period, compared against the acceptance criterion of four. Not documents processed, not messages sent &#8212; those go up, and they are not the point.</span></li>
+            <li><span class="k">What would invalidate it</span><span class="v">An unusually light month, or a period run while someone was away. If the live run lands on one of those, it runs again rather than being written up.</span></li>
+          </ul>
+        </div>
       </article>
 
       <article class="rep">

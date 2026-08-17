@@ -34,6 +34,7 @@ const ROLES = [
   '.after-cards', '.after-cards b', '.rate-note',
   '.card .kicker', '.card--mass .kicker', '.sheet .n', '.sheet .t',
   '.stamp', '.rep-n', '.rep h2', '.rep p', '.rep-list li', '.rep-list b', '.rep-note',
+  '.rep-sub h3', '.crit .k', '.crit .v',
   '.sample-note', '.sheet-copy .btn',
   '.sheet-copy p', '.quote', '.signature', '.prose', '.pull', '.fine a',
   '.practice-copy p', '.note h3', '.note .body', '.sig',

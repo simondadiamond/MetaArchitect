@@ -89,6 +89,35 @@ the moment a real engagement produces a redacted one.
 The homepage → sample-report link was verified by clicking it in Chromium and
 reading the title of the page it landed on, not by eyeballing the href.
 
+## Revision — 2026-08-17, Simon's walk of v3
+
+- **The sample report's closing question is one line at every width**, 360
+  included, and its subtitle is one line from 768 up and two on a phone, which is
+  what he asked for. The clamp floor was set from measured line counts at four
+  widths, not from taste.
+- **The engagements section was too dense.** It is ~300px shorter now. The
+  session's opening paragraph is one line instead of three, its bullets go six to
+  four, the Sprint's go six to four by merging, the Sprint's opening paragraph is
+  gone (it repeated the first bullet and the sign-off block), and the sign-off
+  block is two sentences instead of three. The standing line under the cards keeps
+  only the ongoing-support sentence — the "defined scope, clear success criteria"
+  half had become a duplicate of the sign-off block above it. **Both guarantees
+  stayed**, per his instruction that they are the strongest part.
+- **The cards are no longer stretched to equal height.** `align-items:start`, so
+  the Sprint sits at 665px against the session's 693 — the smaller commitment now
+  reads as the smaller card instead of being padded out to match.
+- **The sample report gained the parts a practitioner reads.** Three new blocks:
+  the acceptance criteria as they would actually be written (five, including two
+  that are hard failures rather than percentages), what the workflow does when it
+  is unsure (five named cases, each chosen because getting it wrong costs a client
+  relationship rather than an hour), and how the number actually gets taken
+  (baseline method, the one metric that decides, and what would invalidate the
+  measurement). The acceptance-criteria block also does double duty: it shows the
+  Sprint's sign-off mechanism in concrete form rather than as a promise.
+- **The portrait is unchanged.** Simon has a new, less-shadowed cutout but it
+  exists only as a chat attachment; it needs to be on disk before the build can
+  use it.
+
 ## Still open
 
 - **Which page the outreach links to** — the CRO's sharpest point, still unanswered.
