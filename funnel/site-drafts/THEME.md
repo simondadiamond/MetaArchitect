@@ -69,6 +69,7 @@ Every ratio was measured against **rendered pixels**, not tokens.
 | `--on-mass-2` | `#93A9AC` | secondary text on mass |
 | `--rule` | `rgba(16,46,51,.16)` | hairlines |
 | `--rule-soft` | `rgba(16,46,51,.09)` | the nav's bottom hairline |
+| `--accent-red` | `#A33028` | errors. `#F85149` is 3.10:1 on paper and fails |
 
 | Pair | Ratio |
 |---|---|
@@ -178,3 +179,52 @@ This is verified, not assumed.
   unaudited.
 - **Look at the render.** Every composition defect in this project's history was
   found by looking at a screenshot and none by reading CSS.
+
+---
+
+## 7. Amendments from the Next.js implementation (2026-08-18)
+
+The design above was written against a single self-contained artifact. Carrying
+it onto a nine-page site produced three decisions that this file did not
+anticipate. They are Simon's calls, they are live in
+`simonparis-website`, and they are recorded here so the next agent does not
+"restore" the original and file it as a regression.
+
+**1. The footer is `--mass`, not `--band`.** §2 reserves mass for "large dark
+blocks only — the featured card, the closing band". On a site, the footer *is*
+the closing band: it is the one block every page shares. Five pages
+(`/privacy`, `/terms`, `/blog`, `/score`, `/readiness`) are text documents with
+no featured card and no closing CTA, so before this they carried no dark block
+at all and read as unbroken paper.
+
+The measurement that settled it: **ink is only 0.4–0.7% of the painted pixels
+on any page.** The ground does nearly all the work, so the ground is the only
+thing that can change how a page reads. And `--band` against `--paper` is a
+difference of roughly seven values out of 255 — it is deliberately almost
+invisible, and it cannot carry that load. The dark block can.
+
+**2. Band stays exceptional. It is not an alternation.** This was tried and
+reverted the same day. §2 says band is "*a* section that needs separating",
+singular, and `fusion-v3.html` uses `sect--band` exactly once across eight
+sections. Alternating paper and band down a page dilutes the ground, reads as a
+generic light-sections template, and inverts "one ground: paper". Target, as
+painted pixels: **paper 60–80%, band under ~15%, mass 5–20%.**
+
+**3. Long-form body text is `--muted`, not `--ink`.** §2 says ink is "all body
+and heading text", which is right for the artifact's short prose blocks. For
+sustained reading — a legal page, a blog post, a bio — the reference itself
+already uses muted for its longest passages (`.qa .ans p`, `.list li`,
+`.proc-item p.body`). Headings, pull lines and prices stay ink. Muted is
+6.97:1 on paper, comfortably AA.
+
+**Known, and not solved here:** `--paper` is close to white and `--ink` is close
+to black, so the pairing reads as high-contrast black-on-white to some eyes even
+though neither value is pure and neither is cool. Softening it means re-opening
+the palette, which §2 forbids on principle and which no evidence supports.
+The levers that stay inside the system are air (§1 rule 1), the dark blocks
+above, and keeping sustained reading text on muted.
+
+**Implementation guide:** `BRAND.md` in the `simonparis-website` repo — where
+the tokens live, the alias scheme that keeps ~30 legacy files working, and the
+traps already hit (specificity killing top margins, a token that silently
+changed meaning).
