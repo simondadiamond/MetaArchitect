@@ -35,9 +35,11 @@ actually price: a dev shop quoting a custom internal tool, or the cost of the hi
 make instead. That comparison is real, verifiable, and makes $4,500 land without
 inventing a former price.
 
-**4. No refund on the Working Session.** Dropped by request. The credit-toward-build is
-the risk reversal at that rung and it's enough at $750. Real risk lives on the build, and
-payment structure handles it without promising anything.
+**4. Unconditional refund on the Working Session.** Reinstated 2026-08-18 at Simon's
+call. It costs close to nothing — a half-day that produces a plan the owner doesn't rate
+should be refunded on the merits anyway, and you keep everything you learned about how
+their business runs either way. What it buys is a stranger's first yes at zero risk,
+which is the hardest yes in the whole ladder.
 
 ---
 
@@ -47,7 +49,7 @@ payment structure handles it without promising anything.
 |---|---|---|
 | 0 | Discovery call, 20 min, behind a 3-question form | Free |
 | 1 | Workshop / training half-day | $1,500 direct · $1,200–3,000/day subcontracted |
-| 2 | Working Session (half day, written plan) | $750, credited in full toward a build within 60 days |
+| 2 | Working Session (half day, written plan) | $750 — unconditionally refundable, and credited in full toward a build within 60 days |
 | 3 | Build | $4,500 founding rate, first three only |
 | 4 | Run & Improve | $500/month, offered at handoff |
 
@@ -61,7 +63,11 @@ on a warm lead. Cold and direct pays it; partner-sourced doesn't.
 
 ---
 
-## Risk structure (replaces the refund)
+## Risk structure
+
+**Working Session: unconditional refund.** If the written plan isn't worth what they
+paid, they say so and the $750 goes back — no conditions, no deliverables returned. Say it
+plainly in the offer; a refund nobody can find isn't risk reversal.
 
 **Payment terms are risk reversal that costs no promise.**
 
