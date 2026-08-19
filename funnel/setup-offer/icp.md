@@ -1,5 +1,10 @@
 # Setup Venture — ICP (v1, evidence-tiered) — **SUPERSEDED by ICP v2, 2026-08-16**
 
+> **SUPERSEDED 2026-08-18 — HISTORICAL CONTEXT, NOT THE CURRENT PLAN.**
+> Current direction: `funnel/setup-offer/positioning-brief-2026-08.md` and
+> `funnel/setup-offer/offer-v5-ladder.md`. Kept for the research and language in it;
+> do not optimize for the ICP, ladder or segment described below.
+
 > ⛔ ICP v2 is now live: general ICP = the Expertise Operator (`brand/audiences/operator.md`);
 > ACTIVE test segment = Canadian bookkeeping/accounting practices 1–20 staff on QBO/Xero + email
 > with no practice-management layer; trades queued as segment #2; ~100 cold emails per segment is

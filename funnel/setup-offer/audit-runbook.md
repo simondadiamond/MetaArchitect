@@ -1,5 +1,10 @@
 # Audit + Roadmap — delivery runbook (draft v1, 2026-07-29)
 
+> **SUPERSEDED 2026-08-18 — HISTORICAL CONTEXT, NOT THE CURRENT PLAN.**
+> Current direction: `funnel/setup-offer/positioning-brief-2026-08.md` and
+> `funnel/setup-offer/offer-v5-ladder.md`. Kept for the research and language in it;
+> do not optimize for the ICP, ladder or segment described below.
+
 > Fills the gap behind the ladder line in [offer-v4-spec.md](offer-v4-spec.md):
 > "Bounded verdict: system map + ROI-ranked automation roadmap." Anatomy mirrors the
 > proven corporate Diagnostic shape (same $2,500 point: short turnaround, written memo,

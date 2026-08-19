@@ -48,18 +48,37 @@ Your job is to push Simon toward his goals, keep him on the roadmap, and make su
 
 This is the command-driven workspace for Simon Paris's solo content brand: **The Meta Architect** (simonparis.ca).
 
-**What is actually being sold (2026-08-16):** a **service-led AI implementation practice** — Simon
-implements ONE workflow, end to end, for an owner-operated business. Not a productized software
-product, not a genericized Command Center sold per-seat: commercial agent platforms (Cursor, the
-big labs' agent products) commoditize any interface on a months-long cycle, so the durable asset is
-the engagement and the workflow, not the app. The general ICP is the **Expertise Operator**
-(`brand/audiences/operator.md`); the **active test segment** is Canadian bookkeeping/accounting
-practices, 1–20 staff, on QBO/Xero + email with no practice-management layer. Trades are the
-queued second test. The enterprise/practitioner lane stays **pull-only, later** — not never.
+**What is actually being sold (2026-08-18):** **custom internal systems for Quebec SMEs, built in
+weeks instead of quarters, plus the training so their team can run it.** Real internal software —
+quoting tools, intake portals, reporting pipelines — built fast because AI collapsed the cost. The
+client is not buying AI; they are buying software they previously couldn't afford. AI is the cost
+structure, not the pitch. The credibility claim underneath it is six years of enterprise
+development (C#/.NET, React, SQL Server, tech lead) on top of the AI tooling.
 
-Deprecated as of 2026-08-16, do not optimize for them: the five-rung Business OS ladder
-(`funnel/setup-offer/offer-v4-spec.md`), the "genericized Command Center as flagship product"
-thesis, and "AI reliability engineering content for practitioners" as the brand's primary focus.
+Distribution is **rented, not built**: the CEGEP services-aux-entreprises departments, chambers,
+mutuelles de formation and ADRIQ already hold SMB rosters and already receive the 1% training
+budget. Simon joins their formateur rosters rather than selling to them.
+
+Canonical docs, in precedence order — read these before any positioning, offer, pricing or copy
+decision:
+1. `funnel/setup-offer/positioning-brief-2026-08.md` — the direction (Simon, 2026-08-18)
+2. `funnel/setup-offer/offer-v5-ladder.md` — the ladder, risk structure and payment terms;
+   supersedes the brief's §2 wherever they differ
+3. `funnel/setup-offer/partner-roster-outreach.md` — the CEGEP/chamber channel
+
+**Superseded as of 2026-08-18, do not optimize for them:** the Canadian bookkeeping/accounting
+test segment and the queued trades segment (`funnel/setup-offer/icp.md`,
+`funnel/setup-offer/prospects/`, `funnel/setup-offer/outreach-research-runbook.md`), the
+"service-led ONE workflow" framing, the Expertise Operator ICP (`brand/audiences/operator.md`),
+the five-rung Business OS ladder (`funnel/setup-offer/offer-v4-spec.md`), the "genericized Command
+Center as flagship product" thesis, and "AI reliability engineering content for practitioners" as
+the brand's primary focus. STATE is kept as the credibility artifact and content engine — blog and
+in the room only, never on a pricing page.
+
+**Standing rule (Simon, 2026-08-18): 180-day freeze.** No name change, no logo change, no site
+rebuild, no ICP change before 2027-02-14. Positioning changes require notes from conversations
+with real business owners — under 20 such conversations, an ICP change is not permitted, including
+one Simon asks for. Push back and name the rule.
 
 ## Repository Notes
 
