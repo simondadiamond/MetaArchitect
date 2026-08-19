@@ -30,9 +30,9 @@ the reply.
 > l'IA, et que peu de formateurs ont réellement construit ces systèmes plutôt que d'en
 > parler.
 >
-> Avez-vous un processus pour ajouter un formateur externe à votre banque ? J'ai une
-> proposition d'atelier de deux heures que je peux vous faire parvenir si c'est
-> pertinent.
+> J'aimerais être ajouté à votre banque de formateurs. Qui s'en occupe, et que vous
+> faut-il de ma part ? J'ai une proposition d'atelier de deux heures que je peux vous
+> faire parvenir.
 >
 > Je livre en français comme en anglais, en entreprise ou chez vous.
 >
@@ -42,8 +42,12 @@ the reply.
 
 ## Why it's shaped this way
 
-- **One ask.** "What's your process" is answerable in one line by someone who has the
-  answer, and forwardable by someone who doesn't.
+- **The ask is concrete.** "I'd like to be on your roster — who handles that, and what do
+  you need from me?" names an outcome and a next step. "Do you have a process?" invites
+  "no" from anyone who doesn't run a formal banque, which is many of them. The revised
+  version works whether or not one exists.
+- **The gap does the persuading, not the credentials.** Their corporate clients are asking
+  about AI and their roster is people who talk about it. That sentence is the email.
 - **The outline is withheld.** Offering it rather than attaching it gives them a reason
   to reply and keeps the first email short.
 - **No pitch, no price.** Rates come up after they've decided you're worth adding.
