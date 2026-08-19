@@ -1447,3 +1447,15 @@ so explicitly is what separates a real regression test from a false sense of cov
 **The generalizable rule:** when an automated lane is deliberately barred from mutating the field that marks work done (because a human owns that transition), whatever it *does* write has to become part of its own input filter — otherwise "waiting for review" is indistinguishable from "not started" and the job repeats itself forever. Check this on any propose-only or gated automation: what does it write, and does its selector read it back?
 
 **Where documented:** here; `.claude/skills/night-build/SKILL.md`.
+
+## 2026-08-18 — Strategy docs written in a session worktree were invisible to every other agent
+
+**What happened:** A CRO session recorded the new Aug 2026 positioning (Quebec SMEs, custom internal systems, rented CEGEP distribution) across four new files under `funnel/setup-offer/` and committed all of them to its own worktree branch, `ade/cro-bf333692`. The branch was never pushed or merged. Simon then asked another agent to work from those docs and it reported it could not find them — while continuing to optimize for the bookkeeper segment. Both behaviours were correct: `main` had none of the files, and root `CLAUDE.md` still declared Canadian bookkeeping the active test segment.
+
+**Root cause:** Two failures that only bite together. First, worktree discipline is written for *code* — it protects shared checkouts from concurrent sessions — and it was applied to strategy documents, where isolation has no upside and invisibility is the whole cost. Second, and worse: writing a new canonical doc does not demote the old one. `CLAUDE.md` is what every agent reads at session start, and it still routed to `icp.md` and the bookkeeper prospect list. A new file that no instruction points at loses to a stale instruction every time.
+
+**Fix applied:** branch merged to `main` and pushed. Root `CLAUDE.md` "what is actually being sold" block rewritten to the Aug 2026 positioning, with the three canonical docs named in precedence order and every superseded artifact listed explicitly. Supersede banners added to `icp.md`, `offer-v4-spec.md`, `acquisition-playbook.md`, `audit-runbook.md` and `outreach-research-runbook.md`. Simon's 180-day freeze recorded in `CLAUDE.md` as a standing rule agents must enforce against him.
+
+**The generalizable rule:** documents that other agents must act on go to `main` in the same session that writes them — worktrees are for code, not for canon. And superseding is two operations, never one: write the new doc *and* repoint `CLAUDE.md` plus banner the old one in the same commit. If a session ends with a new strategy file that `CLAUDE.md` doesn't mention, the strategy has not shipped. Diagnostic when an agent "can't find" a file or seems to be working from an old plan: `git log --oneline main..HEAD` and `git ls-tree main <path>` before assuming the file is missing.
+
+**Where documented:** here; root `CLAUDE.md`.

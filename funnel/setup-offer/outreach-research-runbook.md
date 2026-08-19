@@ -1,5 +1,10 @@
 # Per-firm research runbook — bookkeeper segment test
 
+> **SUPERSEDED 2026-08-18 — HISTORICAL CONTEXT, NOT THE CURRENT PLAN.**
+> Current direction: `funnel/setup-offer/positioning-brief-2026-08.md` and
+> `funnel/setup-offer/offer-v5-ladder.md`. Kept for the research and language in it;
+> do not optimize for the ICP, ladder or segment described below.
+
 For the 2026-08 bookkeeper cold-email test (`prospects/bookkeepers-2026-08.csv`).
 One pass per firm before the email is written. **Target: 4 minutes of research, 3 minutes
 to write.** If a firm eats more than 5 minutes of research, use the fallback opener and

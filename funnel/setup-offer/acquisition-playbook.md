@@ -1,5 +1,10 @@
 # Setup Venture — Acquisition Playbook (rung-zero, least-work)
 
+> **SUPERSEDED 2026-08-18 — HISTORICAL CONTEXT, NOT THE CURRENT PLAN.**
+> Current direction: `funnel/setup-offer/positioning-brief-2026-08.md` and
+> `funnel/setup-offer/offer-v5-ladder.md`. Kept for the research and language in it;
+> do not optimize for the ICP, ladder or segment described below.
+
 > Owner: Simon. Written 2026-07-19 (Fable session). The operating SOP for getting clients into the
 > setup pipeline with minimum effort. Pairs with the `/build-story` skill (the content half of the
 > flywheel). Offer context: goal `2116b881`; pricing evidence in brain (`tags: pricing setup-offer`).

@@ -1,5 +1,10 @@
 # Setup Offer v4 — Spec (locked 2026-07-27) — **SUPERSEDED 2026-08-16, HISTORICAL ONLY**
 
+> **SUPERSEDED 2026-08-18 — HISTORICAL CONTEXT, NOT THE CURRENT PLAN.**
+> Current direction: `funnel/setup-offer/positioning-brief-2026-08.md` and
+> `funnel/setup-offer/offer-v5-ladder.md`. Kept for the research and language in it;
+> do not optimize for the ICP, ladder or segment described below.
+
 > ⛔ **Do not price, position, or write copy from this file.** The five-rung ladder it locks
 > (free demo → $125/hr → $2,500 audit → $6,500 OS Setup → $600/mo retainer) closed zero clients and
 > is deprecated. The live offer is a service-led one-workflow implementation practice —
